@@ -235,6 +235,10 @@ export class WatchOnlyWallet extends LegacyWallet {
     return this.getAddress() === address;
   }
 
+  allowHodlHodlTrading() {
+    return this.isHd();
+  }
+
   allowMasterFingerprint() {
     return this.getSecret().startsWith('zpub');
   }

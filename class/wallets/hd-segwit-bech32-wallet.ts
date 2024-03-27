@@ -15,6 +15,10 @@ export class HDSegwitBech32Wallet extends AbstractHDElectrumWallet {
     return true;
   }
 
+  allowHodlHodlTrading() {
+    return true;
+  }
+
   allowRBF() {
     return true;
   }

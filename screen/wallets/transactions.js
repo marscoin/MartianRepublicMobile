@@ -6,13 +6,14 @@ import {
   FlatList,
   InteractionManager,
   PixelRatio,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
+  findNodeHandle,
   TouchableOpacity,
   View,
   I18nManager,
-  findNodeHandle,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -32,9 +33,8 @@ import TransactionsNavigationHeader, { actionKeys } from '../../components/Trans
 import { TransactionListItem } from '../../components/TransactionListItem';
 import presentAlert from '../../components/Alert';
 import PropTypes from 'prop-types';
-import { scanQrHelper } from '../../helpers/scan-qr';
+import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
-import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 
 const fs = require('../../blue_modules/fs');
 const BlueElectrum = require('../../blue_modules/BlueElectrum');
@@ -366,13 +366,7 @@ const WalletTransactions = ({ navigation }) => {
   };
 
   const choosePhoto = () => {
-    fs.showImagePickerAndReadImage()
-      .then(onBarCodeRead)
-      .catch(error => {
-        console.log(error);
-        triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-        presentAlert({ title: loc.errors.error, message: error.message });
-      });
+    fs.showImagePickerAndReadImage().then(onBarCodeRead);
   };
 
   const copyFromClipboard = async () => {
@@ -410,38 +404,70 @@ const WalletTransactions = ({ navigation }) => {
 
   const sendButtonLongPress = async () => {
     const isClipboardEmpty = (await BlueClipboard().getClipboardContent()).trim().length === 0;
-    const options = [loc._.cancel, loc.wallets.list_long_choose, loc.wallets.list_long_scan];
-    const cancelButtonIndex = 0;
-
-    if (!isClipboardEmpty) {
-      options.push(loc.wallets.list_long_clipboard);
-    }
-
-    ActionSheet.showActionSheetWithOptions(
-      {
-        title: loc.send.header,
-        options,
-        cancelButtonIndex,
-        anchor: findNodeHandle(walletActionButtonsRef.current),
-      },
-      async buttonIndex => {
-        switch (buttonIndex) {
-          case 0:
-            break;
-          case 1:
+    if (Platform.OS === 'ios') {
+      const options = [loc._.cancel, loc.wallets.list_long_choose, loc.wallets.list_long_scan];
+      if (!isClipboardEmpty) {
+        options.push(loc.wallets.list_long_clipboard);
+      }
+      ActionSheet.showActionSheetWithOptions(
+        { options, cancelButtonIndex: 0, anchor: findNodeHandle(walletActionButtonsRef.current) },
+        buttonIndex => {
+          if (buttonIndex === 1) {
             choosePhoto();
-            break;
-          case 2:
-            scanQrHelper(navigate, name, true).then(data => onBarCodeRead(data));
-            break;
-          case 3:
-            if (!isClipboardEmpty) {
-              copyFromClipboard();
-            }
-            break;
-        }
-      },
-    );
+          } else if (buttonIndex === 2) {
+            requestCameraAuthorization().then(() =>
+              navigate('ScanQRCodeRoot', {
+                screen: 'ScanQRCode',
+                params: {
+                  launchedBy: name,
+                  onBarScanned: onBarCodeRead,
+                  showFileImportButton: false,
+                },
+              }),
+            );
+          } else if (buttonIndex === 3) {
+            copyFromClipboard();
+          }
+        },
+      );
+    } else if (Platform.OS === 'android') {
+      const buttons = [
+        {
+          text: loc._.cancel,
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: loc.wallets.list_long_choose,
+          onPress: choosePhoto,
+        },
+        {
+          text: loc.wallets.list_long_scan,
+          onPress: () =>
+            requestCameraAuthorization().then(() => {
+              navigate('ScanQRCodeRoot', {
+                screen: 'ScanQRCode',
+                params: {
+                  launchedBy: name,
+                  onBarScanned: onBarCodeRead,
+                  showFileImportButton: false,
+                },
+              });
+            }),
+        },
+      ];
+      if (!isClipboardEmpty) {
+        buttons.push({
+          text: loc.wallets.list_long_clipboard,
+          onPress: copyFromClipboard,
+        });
+      }
+      ActionSheet.showActionSheetWithOptions({
+        title: '',
+        message: '',
+        buttons,
+      });
+    }
   };
 
   const navigateToViewEditCosigners = () => {

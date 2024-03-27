@@ -97,7 +97,7 @@ export class HDSegwitBech32Transaction {
   /**
    * Checks that tx belongs to a wallet and also
    * tx value is < 0, which means its a spending transaction
-   * definitely initiated by us, can be RBF'ed.
+   * definately initiated by us, can be RBF'ed.
    *
    * @returns {Promise<boolean>}
    */

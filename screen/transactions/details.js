@@ -10,7 +10,6 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import ToolTipMenu from '../../components/TooltipMenu';
 import presentAlert from '../../components/Alert';
 import { useTheme } from '../../components/themes';
-import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 const dayjs = require('dayjs');
 
 function onlyUnique(value, index, self) {
@@ -114,33 +113,27 @@ const TransactionsDetails = () => {
   const handleOnSaveButtonTapped = () => {
     Keyboard.dismiss();
     txMetadata[tx.hash] = { memo };
-    saveToDisk().then(_success => {
-      triggerHapticFeedback(HapticFeedbackTypes.Success);
-      presentAlert({ message: loc.transactions.transaction_note_saved });
-    });
+    saveToDisk().then(_success => presentAlert({ message: loc.transactions.transaction_note_saved }));
   };
 
-  const handleOnOpenTransactionOnBlockExplorerTapped = () => {
+  const handleOnOpenTransactionOnBlockExporerTapped = () => {
     const url = `https://mempool.space/tx/${tx.hash}`;
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
           Linking.openURL(url).catch(e => {
-            console.log('openURL failed in handleOnOpenTransactionOnBlockExplorerTapped');
+            console.log('openURL failed in handleOnOpenTransactionOnBlockExporerTapped');
             console.log(e.message);
-            triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
             presentAlert({ message: e.message });
           });
         } else {
-          console.log('canOpenURL supported is false in handleOnOpenTransactionOnBlockExplorerTapped');
-          triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
+          console.log('canOpenURL supported is false in handleOnOpenTransactionOnBlockExporerTapped');
           presentAlert({ message: loc.transactions.open_url_error });
         }
       })
       .catch(e => {
-        console.log('canOpenURL failed in handleOnOpenTransactionOnBlockExplorerTapped');
+        console.log('canOpenURL failed in handleOnOpenTransactionOnBlockExporerTapped');
         console.log(e.message);
-        triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
         presentAlert({ message: e.message });
       });
   };
@@ -318,10 +311,11 @@ const TransactionsDetails = () => {
             },
           ]}
           onPressMenuItem={handleCopyPress}
-          onPress={handleOnOpenTransactionOnBlockExplorerTapped}
-          buttonStyle={[styles.greyButton, stylesHooks.greyButton]}
+          onPress={handleOnOpenTransactionOnBlockExporerTapped}
         >
-          <Text style={[styles.Link, stylesHooks.Link]}>{loc.transactions.details_show_in_block_explorer}</Text>
+          <View style={[styles.greyButton, stylesHooks.greyButton]}>
+            <Text style={[styles.Link, stylesHooks.Link]}>{loc.transactions.details_show_in_block_explorer}</Text>
+          </View>
         </ToolTipMenu>
       </BlueCard>
     </ScrollView>

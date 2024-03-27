@@ -167,6 +167,10 @@ export class AbstractWallet {
     return false;
   }
 
+  allowHodlHodlTrading(): boolean {
+    return false;
+  }
+
   allowPayJoin(): boolean {
     return false;
   }

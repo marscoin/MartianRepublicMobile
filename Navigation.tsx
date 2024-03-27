@@ -66,7 +66,7 @@ import PsbtMultisigQRCode from './screen/send/psbtMultisigQRCode';
 import PsbtWithHardwareWallet from './screen/send/psbtWithHardwareWallet';
 import Success from './screen/send/success';
 
-import UnlockWith from './screen/UnlockWith';
+import UnlockWith from './UnlockWith';
 import { isDesktop, isHandset, isTablet } from './blue_modules/environment';
 import navigationStyle from './components/navigationStyle';
 import { useTheme } from './components/themes';
@@ -83,7 +83,7 @@ import LnurlPay from './screen/lnd/lnurlPay';
 import LnurlPaySuccess from './screen/lnd/lnurlPaySuccess';
 import ScanLndInvoice from './screen/lnd/scanLndInvoice';
 import SettingsPrivacy from './screen/settings/SettingsPrivacy';
-import DrawerList from './screen/wallets/DrawerList';
+import DrawerList from './screen/wallets/drawerList';
 import LdkViewLogs from './screen/wallets/ldkViewLogs';
 import PaymentCode from './screen/wallets/paymentCode';
 import PaymentCodesList from './screen/wallets/paymentCodesList';
@@ -360,10 +360,7 @@ const ScanQRCodeRoot = () => (
 
 const UnlockWithScreenStack = createNativeStackNavigator();
 const UnlockWithScreenRoot = () => (
-  <UnlockWithScreenStack.Navigator
-    id="UnlockWithScreenRoot"
-    screenOptions={{ headerShown: false, statusBarStyle: 'auto', autoHideHomeIndicator: true }}
-  >
+  <UnlockWithScreenStack.Navigator id="UnlockWithScreenRoot" screenOptions={{ headerShown: false, statusBarStyle: 'auto' }}>
     <UnlockWithScreenStack.Screen name="UnlockWithScreen" component={UnlockWith} />
   </UnlockWithScreenStack.Navigator>
 );
@@ -383,17 +380,12 @@ const ReorderWalletsStackRoot = () => {
   );
 };
 
-const DrawerListContent = (props: any) => {
-  return <DrawerList {...props} />;
-};
-
 const Drawer = createDrawerNavigator();
 const DrawerRoot = () => {
   const dimensions = useWindowDimensions();
   const isLargeScreen = useMemo(() => {
     return Platform.OS === 'android' ? isTablet() : (dimensions.width >= Dimensions.get('screen').width / 2 && isTablet()) || isDesktop;
   }, [dimensions.width]);
-
   const drawerStyle: DrawerNavigationOptions = useMemo(
     () => ({
       drawerPosition: I18nManager.isRTL ? 'right' : 'left',
@@ -404,7 +396,7 @@ const DrawerRoot = () => {
   );
 
   return (
-    <Drawer.Navigator screenOptions={drawerStyle} drawerContent={DrawerListContent}>
+    <Drawer.Navigator screenOptions={drawerStyle} drawerContent={DrawerList}>
       <Drawer.Screen
         name="Navigation"
         component={Navigation}
@@ -600,7 +592,7 @@ const Navigation = () => {
       <RootStack.Screen
         name="ViewEditMultisigCosignersRoot"
         component={ViewEditMultisigCosignersRoot}
-        options={{ ...NavigationDefaultOptions, ...StatusBarLightOptions, gestureEnabled: false, fullScreenGestureEnabled: false }}
+        options={{ ...NavigationDefaultOptions, ...StatusBarLightOptions }}
       />
       <RootStack.Screen
         name="WalletXpubRoot"

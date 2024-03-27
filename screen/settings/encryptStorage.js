@@ -136,6 +136,7 @@ const EncryptStorage = () => {
     return isCapable ? (
       <>
         <BlueText />
+
         <BlueText>{loc.formatString(loc.settings.biometrics_fail, { type: biometrics.biometricsType })}</BlueText>
       </>
     ) : null;

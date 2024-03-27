@@ -101,6 +101,7 @@ const iStyles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     minHeight: 164,
+    elevation: 5,
   },
   image: {
     width: 99,
@@ -133,20 +134,6 @@ const iStyles = StyleSheet.create({
     fontWeight: 'bold',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
     fontSize: 16,
-  },
-  shadowContainer: {
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 25 / 100,
-        shadowRadius: 8,
-        borderRadius: 12,
-      },
-      android: {
-        elevation: 8,
-        borderRadius: 12,
-      },
-    }),
   },
 });
 
@@ -196,6 +183,9 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
         isLargeScreen ? iStyles.rootLargeDevice : customStyle ?? { ...iStyles.root, width: itemWidth },
         { opacity, transform: [{ scale: scaleValue }] },
       ]}
+      shadowOpacity={25 / 100}
+      shadowOffset={{ width: 0, height: 3 }}
+      shadowRadius={8}
     >
       <Pressable
         accessibilityRole="button"
@@ -210,35 +200,33 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
           }, 50);
         }}
       >
-        <View style={[iStyles.shadowContainer, { backgroundColor: colors.background, shadowColor: colors.shadowColor }]}>
-          <LinearGradient colors={WalletGradient.gradientsFor(item.type)} style={iStyles.grad}>
-            <Image source={image} style={iStyles.image} />
-            <Text style={iStyles.br} />
-            <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
-              {item.getLabel()}
+        <LinearGradient shadowColor={colors.shadowColor} colors={WalletGradient.gradientsFor(item.type)} style={iStyles.grad}>
+          <Image source={image} style={iStyles.image} />
+          <Text style={iStyles.br} />
+          <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
+            {item.getLabel()}
+          </Text>
+          {item.hideBalance ? (
+            <BluePrivateBalance />
+          ) : (
+            <Text
+              numberOfLines={1}
+              key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
+              adjustsFontSizeToFit
+              style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
+            >
+              {balance}
             </Text>
-            {item.hideBalance ? (
-              <BluePrivateBalance />
-            ) : (
-              <Text
-                numberOfLines={1}
-                key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
-                adjustsFontSizeToFit
-                style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
-              >
-                {balance}
-              </Text>
-            )}
-            <Text style={iStyles.br} />
-            <Text numberOfLines={1} style={[iStyles.latestTx, { color: colors.inverseForegroundColor }]}>
-              {loc.wallets.list_latest_transaction}
-            </Text>
+          )}
+          <Text style={iStyles.br} />
+          <Text numberOfLines={1} style={[iStyles.latestTx, { color: colors.inverseForegroundColor }]}>
+            {loc.wallets.list_latest_transaction}
+          </Text>
 
-            <Text numberOfLines={1} style={[iStyles.latestTxTime, { color: colors.inverseForegroundColor }]}>
-              {latestTransactionText}
-            </Text>
-          </LinearGradient>
-        </View>
+          <Text numberOfLines={1} style={[iStyles.latestTxTime, { color: colors.inverseForegroundColor }]}>
+            {latestTransactionText}
+          </Text>
+        </LinearGradient>
       </Pressable>
     </Animated.View>
   );
@@ -330,7 +318,7 @@ const WalletsCarousel = forwardRef((props, ref) => {
       showsHorizontalScrollIndicator={false}
       initialNumToRender={10}
       ListHeaderComponent={ListHeaderComponent}
-      style={{ minHeight: sliderHeight + 12 }}
+      style={{ minHeight: sliderHeight + 9 }}
       onScrollToIndexFailed={onScrollToIndexFailed}
       {...props}
     />

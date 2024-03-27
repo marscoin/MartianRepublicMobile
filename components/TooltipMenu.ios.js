@@ -55,9 +55,10 @@ const ToolTipMenu = (props, ref) => {
         menuTitle,
         menuItems,
       }}
+      style={buttonStyle}
     >
       {props.onPress ? (
-        <TouchableOpacity accessibilityRole="button" style={buttonStyle} onPress={props.onPress}>
+        <TouchableOpacity accessibilityRole="button" onPress={props.onPress}>
           {props.children}
         </TouchableOpacity>
       ) : (
