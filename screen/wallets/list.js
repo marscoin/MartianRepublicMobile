@@ -408,6 +408,7 @@ const styles = StyleSheet.create({
   },
   walletsListWrapper: {
     flex: 1,
+    //backgroundColor: 'red'
   },
   headerTouch: {
     height: 48,
