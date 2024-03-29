@@ -151,6 +151,7 @@ const UnlockWith: React.FC = () => {
   return (
     <SafeArea style={styles.root}>
       <View style={styles.container}>
+        {/* <Image source={require('./img/MRCIcon.png')} style={styles.logoImage} resizeMode="contain" /> */}
         <Image source={require('./img/icon.png')} style={styles.logoImage} resizeMode="contain" />
       </View>
       <View style={styles.biometricRow}>{renderUnlockOptions()}</View>
@@ -181,8 +182,8 @@ const styles = StyleSheet.create({
     height: 64,
   },
   logoImage: {
-    width: 100,
-    height: 75,
+    width: 300,
+    height: 300,
     alignSelf: 'center',
   },
 });
