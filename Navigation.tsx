@@ -90,6 +90,9 @@ import PaymentCodesList from './screen/wallets/paymentCodesList';
 import { BlueStorageContext } from './blue_modules/storage-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Header } from 'react-native-elements/dist/header/Header';
+import LinearGradient from 'react-native-linear-gradient';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
 
 const WalletsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -102,7 +105,7 @@ const BottomTabNavigator = () => {
         tabBarActiveTintColor: '#FF7400', // Color of the tab text and icon when active
         tabBarInactiveTintColor: 'white', // Color of the tab text and icon when inactive
         tabBarStyle: {
-          backgroundColor: 'black', // Background color of the tab bar
+          backgroundColor: 'black',
         }}}
     >
       <Tab.Screen
@@ -142,17 +145,17 @@ const BottomTabNavigator = () => {
                   position: 'absolute'
                 }}
               >
-                {/* <LinearGradient
+                <LinearGradient
                     colors={['#rgba(255, 255, 255, 0.1)', 'rgba(0, 0, 0, 0.3)']} 
                     style={{ flex: 1, width: '100%', borderRadius: 40 }}
                 >
                 <MaterialCommunityIcons
                     name="camera"
                     size={46}
-                    color={Colors.whiteColor}
+                    color='white'
                     style={{ alignSelf: 'center', marginTop: 12}}
                 />
-                </LinearGradient> */}
+                </LinearGradient>
               </View>
              )
            } 
