@@ -3,25 +3,25 @@ import { Appearance } from 'react-native';
 
 export const BlueDefaultTheme = {
   ...DefaultTheme,
-  closeImage: require('../img/close.png'),
+  closeImage: require('../img/close-white.png'),
   barStyle: 'light-content',
-  scanImage: require('../img/scan.png'),
+  scanImage: require('../img/scan-white.png'),
   colors: {
     ...DefaultTheme.colors,
     brandingColor: 'black',
     customHeader: 'black',
     foregroundColor: 'white',////text
     borderTopColor: 'rgba(0, 0, 0, 0.1)',
-    buttonBackgroundColor: '#FF8A3E',///orange
+    buttonBackgroundColor: '#FF7400',///orange
     buttonTextColor: 'white',
     buttonAlternativeTextColor: 'white',
-    buttonDisabledBackgroundColor: '#A4A7A7',////type of crypto
+    buttonDisabledBackgroundColor: '#2F2D2B',////type of crypto
     buttonDisabledTextColor: 'white',
-    inputBorderColor: '#A4A7A7',
-    inputBackgroundColor: '#A4A7A7',
-    alternativeTextColor: 'black',
+    inputBorderColor: 'white',
+    inputBackgroundColor: '#2F2D2B', //bg of text input
+    alternativeTextColor: 'white',
     alternativeTextColor2: 'red',
-    buttonBlueBackgroundColor: '#FF8A3E',///
+    buttonBlueBackgroundColor: '#FF7400',///
     incomingBackgroundColor: '#d2f8d6',///
     incomingForegroundColor: '#37c0a1',//
     outgoingBackgroundColor: '#f8d2d2',//
@@ -32,33 +32,34 @@ export const BlueDefaultTheme = {
     inverseForegroundColor: 'black',
     hdborderColor: 'red',
     hdbackgroundColor: 'red',
-    lnborderColor: '#FFB600',///
-    lnbackgroundColor: '#FFFAEF',////
+    lnborderColor: 'white',///
+    //lnborderColor: '#FFB600',
+    lnbackgroundColor: '#FFFAEF',////lightning text and border
     background: 'black',
-    lightButton: '#232424',
+    lightButton: '#2F2D2B', ////add wallet area in flatList
     ballReceive: '#d2f8d6',///
     ballOutgoing: '#f8d2d2',///
     lightBorder: 'red',
     ballOutgoingExpired: '#EEF0F4',///
     modal: 'black',
-    formBorder: '#FF8A3E',///
-    modalButton: '#FF8A3E',
-    darkGray: '#9AA0AA',///
+    formBorder: 'white',///orange frame of Qr iand input
+    modalButton: '#FF7400',
+    darkGray: 'red',///
     scanLabel: '#9AA0AA',///
     feeText: '#81868e',
     feeLabel: '#d2f8d6',
     feeValue: '#37c0a1',
     feeActive: '#d2f8d6',
-    labelText: '#81868e',
+    labelText: 'white',
     cta2: '#062453',///
     outputValue: '#13244D',
     elevated: 'black',
-    mainColor: '#FF8A3E',
+    mainColor: '#FF7400',
     success: '#ccddf9',
     successCheck: '#0f5cc0',
     msSuccessBG: '#37c0a1',
     msSuccessCheck: 'black',
-    newBlue: '#007AFF',
+    newBlue: 'white',///btc border and text
     redBG: '#F8D2D2',
     redText: '#D0021B',
     changeBackground: 'red',

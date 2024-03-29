@@ -194,6 +194,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
         onPressOut={onPressedOut}
         onLongPress={handleLongPress}
         onPress={() => {
+          console.log('type',item.type )
           onPressedOut();
           setTimeout(() => {
             onPress(item); // Replace 'onPress' with your navigation function
@@ -307,6 +308,7 @@ const WalletsCarousel = forwardRef((props, ref) => {
       ref={flatListRef}
       renderItem={renderItem}
       extraData={data}
+      horizontal={false}
       keyExtractor={(_, index) => index.toString()}
       showsVerticalScrollIndicator={false}
       pagingEnabled

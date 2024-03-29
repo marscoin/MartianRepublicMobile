@@ -131,7 +131,9 @@ const WalletsRoot = () => {
       <WalletsStack.Screen
         name="PlausibleDeniability"
         component={PlausibleDeniability}
-        options={navigationStyle({ title: loc.plausibledeniability.title })(theme)}
+        options={navigationStyle({ title: loc.plausibledeniability.title , headerStyle:{
+          backgroundColor:'black'
+        }})(theme)}
       />
       <WalletsStack.Screen name="LightningSettings" component={LightningSettings} options={LightningSettings.navigationOptions(theme)} />
       <WalletsStack.Screen name="ElectrumSettings" component={ElectrumSettings} options={ElectrumSettings.navigationOptions(theme)} />
@@ -180,6 +182,9 @@ const AddWalletRoot = () => {
           closeButton: true,
           headerBackVisible: false,
           title: loc.wallets.add_title,
+          headerStyle:{
+            backgroundColor:'black'
+          }
         })(theme)}
       />
       <AddWalletStack.Screen name="ImportWallet" component={ImportWallet} options={ImportWallet.navigationOptions(theme)} />
@@ -187,6 +192,7 @@ const AddWalletRoot = () => {
         name="ImportWalletDiscovery"
         component={ImportWalletDiscovery}
         options={ImportWalletDiscovery.navigationOptions(theme)}
+        
       />
       <AddWalletStack.Screen
         name="ImportCustomDerivationPath"
@@ -201,6 +207,9 @@ const AddWalletRoot = () => {
           gestureEnabled: false,
           headerBackVisible: false,
           title: loc.pleasebackup.title,
+          headerStyle:{
+            backgroundColor:'black'
+          }
         })(theme)}
       />
       <AddWalletStack.Screen
@@ -434,6 +443,9 @@ const WalletXpubStackRoot = () => {
           closeButton: true,
           headerBackVisible: false,
           headerTitle: loc.wallets.xpub_title,
+          headerStyle:{
+            backgroundColor:'black'
+          }
         })(theme)}
       />
     </WalletXpubStack.Navigator>

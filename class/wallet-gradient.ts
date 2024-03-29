@@ -16,7 +16,7 @@ import { useTheme } from '../components/themes';
 
 export default class WalletGradient {
   static hdSegwitP2SHWallet: string[] = ['#007AFF', '#0040FF'];
-  static hdSegwitBech32Wallet: string[] = ['#6CD9FC', '#44BEE5'];
+  static hdSegwitBech32Wallet: string[] = ['#FFB67D','#FF8A3E', '#FF7400']; ////BTC wallet HDsegwitBech32
   static segwitBech32Wallet: string[] = ['#6CD9FC', '#44BEE5'];
   static watchOnlyWallet: string[] = ['#474646', '#282828'];
   static legacyWallet: string[] = ['#37E8C0', '#15BE98'];
