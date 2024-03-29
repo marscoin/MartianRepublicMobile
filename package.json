@@ -105,6 +105,7 @@
     "@react-native-async-storage/async-storage": "1.22.3",
     "@react-native-clipboard/clipboard": "1.13.2",
     "@react-native-community/push-notification-ios": "1.11.0",
+    "@react-navigation/bottom-tabs": "^6.5.20",
     "@react-navigation/drawer": "6.6.13",
     "@react-navigation/native": "6.1.15",
     "@react-navigation/native-stack": "6.9.24",

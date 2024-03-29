@@ -1,7 +1,7 @@
 import { DrawerNavigationOptions, createDrawerNavigator } from '@react-navigation/drawer';
 import { NativeStackNavigationOptions, createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useContext, useMemo } from 'react';
-import { Dimensions, I18nManager, Platform, useWindowDimensions } from 'react-native';
+import { Dimensions, I18nManager, Platform, useWindowDimensions, View } from 'react-native';
 
 import PlausibleDeniability from './screen/PlausibleDeniability';
 import Selftest from './screen/selftest';
@@ -88,8 +88,90 @@ import LdkViewLogs from './screen/wallets/ldkViewLogs';
 import PaymentCode from './screen/wallets/paymentCode';
 import PaymentCodesList from './screen/wallets/paymentCodesList';
 import { BlueStorageContext } from './blue_modules/storage-context';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Header } from 'react-native-elements/dist/header/Header';
 
 const WalletsStack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+const BottomTabNavigator = () => {
+  return (
+    <Tab.Navigator 
+      initialRouteName="Wallet"
+      screenOptions={{
+        tabBarActiveTintColor: '#FF7400', // Color of the tab text and icon when active
+        tabBarInactiveTintColor: 'white', // Color of the tab text and icon when inactive
+        tabBarStyle: {
+          backgroundColor: 'black', // Background color of the tab bar
+        }}}
+    >
+      <Tab.Screen
+        name="Citizen"
+        component={WalletsRoot}
+        options={{
+          tabBarIcon: () => null, // Hides the icon
+          tabBarLabel: 'Citizen',
+          tabBarLabelStyle: {fontSize: 25, color: '#FF7400'}
+        }}
+      />
+      <Tab.Screen
+        name="Send"
+        component={SendDetailsRoot}
+        options={{
+          tabBarLabel: '',
+           title: "Camera", 
+           tabBarIcon: ({focused}) => {
+             return(
+              <View
+                style={{
+                  alignItems:"center",
+                  justifyContent:"center",
+                  backgroundColor: '#FF7400',
+                  width: Platform.OS == "ios" ? 70 : 70,
+                  height: Platform.OS == "ios" ? 70 : 70,
+                  top: Platform.OS == "ios" ? -20 : -20,
+                  borderRadius: Platform.OS == "ios" ? 35 : 35,
+                  shadowColor: "#000",
+                  shadowOffset: {
+                    width: 0,
+                    height: 3,
+                  },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 3.65,
+                  elevation: 8,
+                  position: 'absolute'
+                }}
+              >
+                {/* <LinearGradient
+                    colors={['#rgba(255, 255, 255, 0.1)', 'rgba(0, 0, 0, 0.3)']} 
+                    style={{ flex: 1, width: '100%', borderRadius: 40 }}
+                >
+                <MaterialCommunityIcons
+                    name="camera"
+                    size={46}
+                    color={Colors.whiteColor}
+                    style={{ alignSelf: 'center', marginTop: 12}}
+                />
+                </LinearGradient> */}
+              </View>
+             )
+           } 
+         }}
+      />
+       
+      <Tab.Screen
+        name="Wallet"
+        component={WalletsRoot}
+        options={{
+          tabBarIcon: () => null, // Hides the icon
+          tabBarLabel: 'Wallet',
+          tabBarLabelStyle: {fontSize: 25, color: '#FF7400'}
+        }}
+      />    
+    </Tab.Navigator>
+  );
+};
+
 
 const WalletsRoot = () => {
   const theme = useTheme();
@@ -583,6 +665,7 @@ const StatusBarLightOptions: NativeStackNavigationOptions = { statusBarStyle: 'l
 const Navigation = () => {
   return (
     <RootStack.Navigator initialRouteName="UnlockWithScreenRoot" screenOptions={{ headerShadowVisible: false, statusBarStyle: 'auto' }}>
+      <RootStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
       {/* stacks */}
       <RootStack.Screen name="WalletsRoot" component={WalletsRoot} options={{ headerShown: false, statusBarTranslucent: false }} />
       <RootStack.Screen name="AddWalletRoot" component={AddWalletRoot} options={NavigationFormModalOptions} />
