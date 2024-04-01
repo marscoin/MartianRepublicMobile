@@ -24,14 +24,14 @@ const CitizenScreen = () => {
   const styles = StyleSheet.create({
     root: {
       paddingTop: 10,
-      flex:1
+      //flex:1
       //backgroundColor: colors.elevated,
     },
     center: {
       height:80,
-      backgroundColor:'red',
       flexDirection:'row',
       marginHorizontal: 16,
+      backgroundColor:'red',
       backgroundColor: colors.elevated,
       justifyContent:'center',
       alignItems:'center'
@@ -58,11 +58,15 @@ const CitizenScreen = () => {
         fontWeight:"600",
     },
     joinButton: {
-        backgroundColor: '#FF7400',
         height: 60,
         borderRadius: 20,
         marginHorizontal: 20,
         justifyContent:'center',
+    },
+    joinButtonGradient: {
+        height: 60,
+        borderRadius: 20,
+        marginHorizontal: 20,
     },
     iconStyle: {
         width:80,
@@ -83,7 +87,7 @@ const CitizenScreen = () => {
     },
     transparentText: {
         backgroundColor: 'transparent',
-      },
+    },
     label: {
         backgroundColor: 'transparent',
         fontSize: 14,
@@ -104,6 +108,40 @@ const CitizenScreen = () => {
         width: 120,
         elevation: 5,
     },
+    noWallet: {
+        height: 200,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#FF7400',
+        borderStyle:'dashed',
+        marginHorizontal: 20,
+        alignItems:'center',
+        justifyContent: 'center', 
+        padding:30
+    },
+    noWalletText: {
+        color:'white', 
+        textAlign: 'center',
+        fontSize: 18,
+        fontWeight:"600",
+    },
+    // noWalletButton: {
+    //     color:'white', 
+    //     textAlign: 'center',
+    //     fontSize: 18,
+    //     fontWeight:"600",
+    // },
+    // joinButton: {
+    //     height: 60,
+    //     borderRadius: 20,
+    //     marginHorizontal: 20,
+    //     justifyContent:'center',
+    // },
+    // joinButtonGradient: {
+    //     height: 60,
+    //     borderRadius: 20,
+    //     marginHorizontal: 20,
+    // },
   });
 
   const renderWalletItem = ({ item }) => (
@@ -115,7 +153,7 @@ const CitizenScreen = () => {
     >
       <View style={styles.itemRoot}>
         <LinearGradient colors={WalletGradient.gradientsFor(item.type)} style={styles.gradient}>
-        <Image
+            <Image
               source={(() => {
                 switch (item.type) {
                   case LightningLdkWallet.type:
@@ -129,8 +167,8 @@ const CitizenScreen = () => {
               })()}
               style={styles.image}
             />
-          <Text style={styles.label}>{item.getLabel()}</Text>
-          <Text style={styles.balance}>{item.getBalance()} BTC</Text>
+            <Text style={styles.label}>{item.getLabel()}</Text>
+            <Text style={styles.balance}>{item.getBalance()} BTC</Text>
         </LinearGradient>
       </View>
     </TouchableOpacity>
@@ -143,19 +181,36 @@ const CitizenScreen = () => {
             <Image style={styles.iconStyle} source={require('../../img/icon.png')} accessible={false} />
         </View>
         <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
-
-        <FlatList
-            data={wallets}
-            renderItem={renderWalletItem}
-            keyExtractor={(item) => item.getID()}
-            horizontal={true}
-        />
-
-        <TouchableOpacity style={styles.joinButton}>
-            <Text style={styles.buttonText}>JOIN GENERAL MARTIAN PUBLIC</Text>
-        </TouchableOpacity>
-     
         
+        <View style={{marginVertical: 5}}>
+            <FlatList
+                data={wallets}
+                renderItem={renderWalletItem}
+                keyExtractor={(item) => item.getID()}
+                horizontal={true}
+            />
+        </View>
+
+        {/* ///////////NO MARSCOIN WALLET BLOCK///////// */}
+        {/* <View style={{flex:1, alignItems: 'center', justifyContent:'center'}}>    
+            <View style={styles.noWallet}>
+                <Text style={[styles.noWalletText, {marginBottom: 15}]}>TO JOIN GENERAL MARTIAN PUBLIC YOU NEED TO CREATE MARSCOIN WALLET</Text>
+                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                    <TouchableOpacity style={[styles.joinButton]}>
+                        <Text style={styles.noWalletText}>GENERATE WALLET</Text>
+                    </TouchableOpacity>
+                </LinearGradient>
+            </View>  
+        </View> */}
+
+        {/* ///////////WALLET EXIST BLOCK///////// */}
+        <View style={{flex:1, alignItems: 'center', justifyContent:'center'}}>   
+            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                <TouchableOpacity style={styles.joinButton}>
+                    <Text style={styles.buttonText}>JOIN GENERAL MARTIAN PUBLIC</Text>
+                </TouchableOpacity>  
+            </LinearGradient>
+        </View>
     </SafeArea>
   );
 };
