@@ -20,6 +20,7 @@ import NotificationSettings from './screen/settings/notificationSettings';
 import ReleaseNotes from './screen/settings/releasenotes';
 import Tools from './screen/settings/tools';
 
+import CitizenScreen from './screen/citizen/citizenScreen';
 import AddWallet from './screen/wallets/add';
 import WalletsAddMultisig from './screen/wallets/addMultisig';
 import WalletsAddMultisigHelp, { WalletAddMultisigHelpNavigationOptions } from './screen/wallets/addMultisigHelp';
@@ -100,21 +101,22 @@ const Tab = createBottomTabNavigator();
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator 
-      initialRouteName="Wallet"
+      initialRouteName="Citizen"
       screenOptions={{
-        tabBarActiveTintColor: '#FF7400', // Color of the tab text and icon when active
-        tabBarInactiveTintColor: 'white', // Color of the tab text and icon when inactive
+        tabBarActiveTintColor: '#FF7400',
+        tabBarInactiveTintColor: 'white', 
         tabBarStyle: {
           backgroundColor: 'black',
         }}}
     >
       <Tab.Screen
         name="Citizen"
-        component={WalletsRoot}
+        component={CitizenScreen}
         options={{
-          tabBarIcon: () => null, // Hides the icon
+          tabBarIcon: () => null, 
           tabBarLabel: 'Citizen',
-          tabBarLabelStyle: {fontSize: 25, color: '#FF7400'}
+          tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontWeight:"800"},
+          headerShown: false,
         }}
       />
       <Tab.Screen
@@ -122,7 +124,8 @@ const BottomTabNavigator = () => {
         component={SendDetailsRoot}
         options={{
           tabBarLabel: '',
-           title: "Camera", 
+           title: "Send", 
+           headerShown: false,
            tabBarIcon: ({focused}) => {
              return(
               <View
@@ -146,13 +149,15 @@ const BottomTabNavigator = () => {
                 }}
               >
                 <LinearGradient
-                    colors={['#rgba(255, 255, 255, 0.1)', 'rgba(0, 0, 0, 0.3)']} 
+                    colors={['#rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.5)']} 
                     style={{ flex: 1, width: '100%', borderRadius: 40 }}
                 >
                 <MaterialCommunityIcons
-                    name="camera"
-                    size={46}
-                    color='white'
+                    // name="lightning-bolt"
+                    name="line-scan"
+                    //name="rocket"
+                    size={44}
+                    color='black'
                     style={{ alignSelf: 'center', marginTop: 12}}
                 />
                 </LinearGradient>
@@ -166,9 +171,10 @@ const BottomTabNavigator = () => {
         name="Wallet"
         component={WalletsRoot}
         options={{
-          tabBarIcon: () => null, // Hides the icon
+          tabBarIcon: () => null, 
           tabBarLabel: 'Wallet',
-          tabBarLabelStyle: {fontSize: 25, color: '#FF7400'}
+          tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontWeight:"800"},
+          headerShown: false,
         }}
       />    
     </Tab.Navigator>
@@ -330,7 +336,7 @@ const SendDetailsRoot = () => {
   const theme = useTheme();
 
   return (
-    <SendDetailsStack.Navigator screenOptions={{ headerShadowVisible: false }}>
+    <SendDetailsStack.Navigator screenOptions={{headerShown:false, headerShadowVisible: false }}>
       <SendDetailsStack.Screen
         name="SendDetails"
         component={SendDetails}

@@ -20,7 +20,7 @@ export const BlueDefaultTheme = {
     inputBorderColor: 'white',
     inputBackgroundColor: '#2F2D2B', //bg of text input
     alternativeTextColor: 'white',
-    alternativeTextColor2: 'red',
+    alternativeTextColor2: 'white',
     buttonBlueBackgroundColor: '#FF7400',///
     incomingBackgroundColor: '#d2f8d6',///
     incomingForegroundColor: '#37c0a1',//
@@ -63,7 +63,7 @@ export const BlueDefaultTheme = {
     redBG: '#F8D2D2',
     redText: '#D0021B',
     changeBackground: 'red',
-    changeText: 'red',
+    changeText: 'white',
     receiveBackground: '#D1F9D6',
     receiveText: '#37C0A1',
     navigationBarColor: 'black',

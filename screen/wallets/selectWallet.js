@@ -69,7 +69,6 @@ const SelectWallet = () => {
       fontWeight: 'bold',
       fontSize: 36,
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-
       color: '#fff',
     },
     latestTxLabel: {

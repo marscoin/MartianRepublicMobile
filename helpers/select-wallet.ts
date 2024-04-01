@@ -1,5 +1,5 @@
 /**
- * Helper function to select wallet.
+ * Helper function to .
  * Navigates to selector screen, and then navigates back while resolving promise with selected wallet.
  *
  * @param navigateFunc {function} Function that does navigatino should be passed from outside
