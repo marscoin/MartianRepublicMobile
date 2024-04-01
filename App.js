@@ -304,9 +304,9 @@ const App = () => {
           <DeviceQuickActions />
         </NavigationContainer>
       </View>
-      <WatchConnectivity />
+      {/* <WatchConnectivity /> */}
       <Biometric />
-      <WidgetCommunication />
+      {/* <WidgetCommunication /> */}
     </SafeAreaProvider>
   );
 };

@@ -20,7 +20,6 @@ import NotificationSettings from './screen/settings/notificationSettings';
 import ReleaseNotes from './screen/settings/releasenotes';
 import Tools from './screen/settings/tools';
 
-import CitizenScreen from './screen/citizen/citizenScreen';
 import AddWallet from './screen/wallets/add';
 import WalletsAddMultisig from './screen/wallets/addMultisig';
 import WalletsAddMultisigHelp, { WalletAddMultisigHelpNavigationOptions } from './screen/wallets/addMultisigHelp';
@@ -94,6 +93,9 @@ import { Header } from 'react-native-elements/dist/header/Header';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
+import CitizenScreen from './screen/citizen/citizenScreen';
+import JoinGeneralPublicApplicationScreen from './screen/citizen/joinGeneralPublicApplication';
+
 
 const WalletsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -111,7 +113,7 @@ const BottomTabNavigator = () => {
     >
       <Tab.Screen
         name="Citizen"
-        component={CitizenScreen}
+        component={CitizenRoot}
         options={{
           tabBarIcon: () => null, 
           tabBarLabel: 'Citizen',
@@ -180,6 +182,19 @@ const BottomTabNavigator = () => {
     </Tab.Navigator>
   );
 };
+
+const CitizenStack = createNativeStackNavigator();
+
+const CitizenRoot = () => {
+  return (
+    <CitizenStack.Navigator screenOptions={{ headerShown: false }}>
+      <CitizenStack.Screen name="CitizenScreen" component={CitizenScreen} />
+      <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen} />
+      
+    </CitizenStack.Navigator>
+  );
+};
+
 
 
 const WalletsRoot = () => {
