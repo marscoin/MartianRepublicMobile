@@ -20,8 +20,7 @@ import {
   BlueSpacing20,
   BlueSpacing40,
   BlueText,
-  LightningButton,
-  VaultButton,
+  MarscoinButton,
 } from '../../BlueComponents';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -33,6 +32,7 @@ import {
   LightningLdkWallet,
   SegwitP2SHWallet,
 } from '../../class';
+import { MarsElectrumWallet } from './mars-wallet';
 import presentAlert from '../../components/Alert';
 import Button from '../../components/Button';
 import { LdkButton } from '../../components/LdkButton';
@@ -278,6 +278,25 @@ const WalletsAdd: React.FC = () => {
     }
   };
 
+  const createMarskWallet= async () => {
+    setIsLoading(true)
+    //const label = label || "Wallet"
+    let wallet
+    wallet = new MarsElectrumWallet()
+        await wallet.generate()
+        wallet.setLabel(label)
+      
+    setIsLoading(false)
+
+    sheetRef.current?.close()
+
+    // navigation.navigate("BackupPhrase", {
+    //   network: selectedNetwork ?? "BTC",
+    //   wallet,
+    // })
+  }
+
+
   const createLightningLdkWallet = async () => {
     const foundLdk = wallets.find((w: AbstractWallet) => w.type === LightningLdkWallet.type);
     if (foundLdk) {
@@ -394,15 +413,15 @@ const WalletsAdd: React.FC = () => {
         </View>
         <BlueFormLabel>{loc.wallets.add_wallet_type}</BlueFormLabel>
         <View style={styles.buttons}>
-          <BitcoinButton
+          {/* <BitcoinButton
             testID="ActivateBitcoinButton"
             active={selectedWalletType === ButtonSelected.ONCHAIN}
             onPress={handleOnBitcoinButtonPressed}
             style={styles.button}
-          />
-          <LightningButton
-            active={selectedWalletType === ButtonSelected.OFFCHAIN}
-            onPress={handleOnLightningButtonPressed}
+          /> */}
+          <MarscoinButton
+            active={selectedWalletType === ButtonSelected.ONCHAIN}
+            onPress={handleOnBitcoinButtonPressed}
             style={styles.button}
           />
           {backdoorPressed > 10 ? (
@@ -414,12 +433,12 @@ const WalletsAdd: React.FC = () => {
               text="LDK"
             />
           ) : null}
-          <VaultButton
+          {/* <VaultButton
             testID="ActivateVaultButton"
             active={selectedWalletType === ButtonSelected.VAULT}
             onPress={handleOnVaultButtonPressed}
             style={styles.button}
-          />
+          /> */}
         </View>
 
         <View style={styles.advanced}>
@@ -491,7 +510,8 @@ const WalletsAdd: React.FC = () => {
                 disabled={
                   !selectedWalletType || (selectedWalletType === ButtonSelected.OFFCHAIN && (walletBaseURI ?? '').trim().length === 0)
                 }
-                onPress={createWallet}
+                //onPress={createWallet}
+                onPress={createMarskWallet}
               />
 
               <BlueButtonLink
