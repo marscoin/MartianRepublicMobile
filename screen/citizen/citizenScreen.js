@@ -20,20 +20,17 @@ const CitizenScreen = () => {
     const navigation = useNavigation();
     const { colors } = useTheme();
     const { wallets } = useContext(BlueStorageContext);
-    const citizenPageRef = useRef(0);
-    const publicPageRef = useRef(0);
-    const applicantPageRef = useRef(0);
+    const citizenPageRef = useRef(1);
+    const publicPageRef = useRef(1);
+    const applicantPageRef = useRef(1);
     const initialState = {
         filterCitizen: true,
         filterPublic: false,
         filterApplicants: false,
         citizens: [],
         generalPublic: [],
-        applicants: {
-            data: [],
-            current_page: 1,
-            last_page: 1, // Initialized to 1 to ensure fetching starts
-        },
+        applicants: [],
+        lastPageApplicants: 1,
       };
     //console.log('wallets', wallets)
     const route = useRoute();
@@ -41,25 +38,27 @@ const CitizenScreen = () => {
 
     function martianReducer(state, action) {
         switch (action.type) {
-          case 'SET_FILTER_CITIZEN':
-            return { ...state, filterCitizen: true, filterPublic: false, filterApplicants: false };
-          case 'SET_FILTER_PUBLIC':
-            return { ...state, filterCitizen: false, filterPublic: true, filterApplicants: false };
-          case 'SET_FILTER_APPLICANTS':
-            return { ...state, filterCitizen: false, filterPublic: false, filterApplicants: true };
-          case 'SET_CITIZENS':
-            return { ...state, citizens: action.payload };
-          case 'SET_GENERAL_PUBLIC':
-            return { ...state, generalPublic: action.payload };
-          case 'SET_APPLICANTS':
-            // return { ...state, 
-            //     applicants: {
-            //         ...state.applicants,
-            //         data: [...state.applicants.data, ...action.payload.data],
-            //         current_page: action.payload.current_page,
-            //         last_page: action.payload.last_page,
-            //       }}
-            return { ...state, applicants: action.payload };
+            case 'SET_FILTER_CITIZEN':
+                return { ...state, filterCitizen: true, filterPublic: false, filterApplicants: false };
+            case 'SET_FILTER_PUBLIC':
+                return { ...state, filterCitizen: false, filterPublic: true, filterApplicants: false };
+            case 'SET_FILTER_APPLICANTS':
+                return { ...state, filterCitizen: false, filterPublic: false, filterApplicants: true };
+            case 'SET_CITIZENS':
+                return { ...state, citizens: action.payload };
+            case 'SET_GENERAL_PUBLIC':
+                return { ...state, generalPublic: action.payload };
+            case 'SET_APPLICANTS':
+                return { ...state, 
+                    applicants: {
+                        ...state.applicants,
+                        data: [...(state.applicants?.data || []), ...action.payload.data],
+                    }
+                }
+            case 'SET_LAST_PAGE_APPLICANTS':
+                return { ...state, lastPageApplicants: action.payload }; 
+            
+           
           default:
             throw new Error();
         }
@@ -308,8 +307,9 @@ const CitizenScreen = () => {
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`)
-            // console.log('APPLICANTS', response.data)
+            console.log('APPLICANTS', response.data)
             dispatch({ type: 'SET_APPLICANTS', payload: response.data });   
+            dispatch({ type: 'SET_LAST_PAGE_APPLICANTS', payload: response.data.last_page });   
         } catch (error) {
             console.error(`Error fetching applicants:`, error);   
         } finally {
@@ -323,13 +323,20 @@ const CitizenScreen = () => {
     }, []);
 
     useEffect(() => {
-        console.log('APPLICANTS', state.applicants)
+        console.log('APPLICANTS usestate', state.applicants)
     }, [state.applicants]);
+    useEffect(() => {
+        console.log('APPLICANTS usestate lastPageApplicants', state.lastPageApplicants)
+    }, [state.lastPageApplicants]);
 
 
     const handleEndApplicantsReached = async () => {
-        if (state.applicants.current_page < state.applicants.last_page) {
+        console.log('handleEndApplicantsReached')
+        console.log('applicantPageRef', applicantPageRef)
+
+        if (applicantPageRef.current < state.lastPageApplicants) {
           applicantPageRef.current += 1; // Prepare to fetch the next page
+          console.log('applicantPageRef', applicantPageRef)
           await fetchApplicants(); // Fetch the next page of applicants
         } else {
           console.log("No more applicants to fetch.");
@@ -341,6 +348,7 @@ const CitizenScreen = () => {
         <ScrollView 
             style={styles.root}
             showsVerticalScrollIndicator={false}
+            
         >
             <View style={styles.center}>
                 <Text style={styles.welcomeText}>Welcome to  </Text>
@@ -397,7 +405,7 @@ const CitizenScreen = () => {
                     }}
                 >
                     <LinearGradient
-                        colors={state.filterPublic ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // Change to grey gradient if inactive
+                        colors={state.filterPublic ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
                         style={state.filterPublic ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
                     >
                         <Text style={styles.filterButtonText}>PUBLIC</Text>
@@ -411,7 +419,7 @@ const CitizenScreen = () => {
                     }}
                 >
                     <LinearGradient
-                        colors={state.filterApplicants ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // Change to grey gradient if inactive
+                        colors={state.filterApplicants ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
                         style={state.filterApplicants ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
                     >
                         <Text style={styles.filterButtonText}>APPLICANTS</Text>
@@ -462,7 +470,25 @@ const CitizenScreen = () => {
 
                 {state.filterApplicants &&
                     <View style={styles.citizensContainer}>
-                        {state.applicants && state.applicants.data && state.applicants.data.map((person, index) => (
+                        <FlatList
+                                key={'applicants-list'}
+                                data={state.applicants.data}
+                                extraData={state.applicants.data}
+                                renderItem={({ item }) => (
+                                    <View key={item.userid} style={styles.citizenItem}>
+                                        <View style={{ marginLeft: 10 }}>
+                                            <Text style={styles.citizenName}>{item.fullname}</Text>
+                                            <Text style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
+                                        </View>
+                                        
+                                    </View>
+                                )}
+                                keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                                onEndReached={handleEndApplicantsReached}
+                                onEndReachedThreshold={0.5} 
+                                scrollEnabled={false}
+                        />
+                        {/* {state.applicants && state.applicants.data && state.applicants.data.map((person, index) => (
                             <View key={index} style={styles.citizenItem}>
                                 <View style={{ marginLeft: 10 }}>
                                     <Text style={styles.citizenName}>{person.fullname}</Text>
@@ -470,29 +496,8 @@ const CitizenScreen = () => {
                                 </View>
                                 
                             </View>
-                            // <FlatList
-                            //     data={state.applicants.data}
-                            //     renderItem={({ item }) => (
-                            //         <View key={index} style={styles.citizenItem}>
-                            //     <View style={{ marginLeft: 10 }}>
-                            //         <Text style={styles.citizenName}>{person.fullname}</Text>
-                            //         <Text style={styles.citizenAddress}>Address: {person.address.slice(0,9)}</Text>
-                            //     </View>
-                                
-                            // </View>
-                            //     )}
-                            //     keyExtractor={(item) => item.userid.toString()} // Use userid as the key
-                            //     //onEndReached={handleEndApplicantsReached}
-                            //     onEndReachedThreshold={0.5} // Trigger the call when half of the last item is visible
-                            //     ListFooterComponent={() => (
-                            //         <View style={styles.loadingIndicator}>
-                            //         <ActivityIndicator size="large" color="#0000ff" />
-                            //         </View>
-                            //     )}
-                            //     scrollEnabled={false}
-                            //     />
-                        ))}
-                        {/* <TouchableOpacity title="Load More Citizens" onPress={handleEndApplicantsReached} /> */}
+                            
+                        ))} */}
                     </View>
                     
                 }
