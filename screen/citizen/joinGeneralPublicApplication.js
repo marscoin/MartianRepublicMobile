@@ -16,7 +16,7 @@ import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
-  const { colors } = useTheme();
+  const { colors, fonts } = useTheme();
   const route = useRoute();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -43,7 +43,7 @@ const JoinGeneralPublicApplicationScreen = () => {
         textAlign: 'center',
         justifyContent:'center',
         fontSize: 24,
-        fontWeight:"600",
+        fontFamily: 'Orbitron-Black',
         marginTop: 30
     },
     smallText: {
@@ -51,20 +51,23 @@ const JoinGeneralPublicApplicationScreen = () => {
         textAlign: 'center',
         justifyContent:'center',
         fontSize: 10,
-        fontWeight:"400",
+        fontFamily: 'Orbitron-SemiBold'
     },
     medText: {
       color:'white', 
       //textAlign: 'center',
       //justifyContent:'center',
       fontSize: 16,
+      fontFamily: fonts.fontFamily,
       fontWeight:"400",
+      fontFamily: 'Orbitron-Regular',
     },
     buttonText: {
         color:'white', 
         textAlign: 'center',
         fontSize: 18,
         fontWeight:"600",
+        fontFamily: fonts.regular.fontFamily
     },
     joinButton: {
         paddingVertical:10,
@@ -116,16 +119,16 @@ const JoinGeneralPublicApplicationScreen = () => {
         <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC </Text>
 
         <View style={{flexDirection:'row', justifyContent:'space-between', marginTop: 50,}}>
-          <Text style={[styles.buttonText, {alignSelf: 'flex-start',  marginLeft: 20,fontSize: 20}]}>APPLICATION</Text>
+          <Text style={{fontFamily: fonts.regular.fontFamily, marginLeft: 20,color: 'white', fontSize: 20,}}>APPLICATION</Text>
           <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>1/3</Text>
         </View>
 
-        <View style={{ marginTop: 20, marginHorizontal: 20 }}>
+        <View style={{ marginTop: 30, marginHorizontal: 20 }}>
             <Text style={styles.medText}>First Name *</Text>
             <TextInput
                 //selectionColor={Colors.primaryColor}
                 value={firstName}
-                placeholder="Enter your first name"
+                placeholder=""
                 placeholderTextColor="white"
                 onChangeText={(text) => setFirstName({ firstName: text })}
                 style={styles.textFieldWrapStyle}
@@ -135,12 +138,12 @@ const JoinGeneralPublicApplicationScreen = () => {
             />
           </View>
 
-          <View style={{ marginTop: 20, marginHorizontal: 20 }}>
+          <View style={{ marginTop: 30, marginHorizontal: 20 }}>
             <Text style={styles.medText}>Last Name *</Text>
             <TextInput
                 //selectionColor={Colors.primaryColor}
                 value={lastName}
-                placeholder="Enter your last name"
+                placeholder=""
                 placeholderTextColor="white"
                 onChangeText={(text) => setLastName({ firstName: text })}
                 style={styles.textFieldWrapStyle}
@@ -150,12 +153,12 @@ const JoinGeneralPublicApplicationScreen = () => {
             />
           </View>
 
-          <View style={{ marginTop: 20, marginHorizontal: 20 }}>
+          <View style={{ marginTop: 30, marginHorizontal: 20 }}>
             <Text style={styles.medText}>Display Name *</Text>
             <TextInput
                 //selectionColor={Colors.primaryColor}
                 value={displayName}
-                placeholder="Enter your display name"
+                placeholder=""
                 placeholderTextColor="white"
                 onChangeText={(text) => setDisplayName({ firstName: text })}
                 style={styles.textFieldWrapStyle}
@@ -165,12 +168,12 @@ const JoinGeneralPublicApplicationScreen = () => {
             />
           </View>
 
-          <View style={{ marginTop: 20, marginHorizontal: 20 }}>
+          <View style={{ marginTop: 30, marginHorizontal: 20 }}>
             <Text style={styles.medText}>Short Bio *</Text>
             <TextInput
                 //selectionColor={Colors.primaryColor}
                 value={bio}
-                placeholder="Your short bio...."
+                placeholder=""
                 placeholderTextColor="white"
                 onChangeText={(text) => setBio({ firstName: text })}
                 style={[styles.textFieldWrapStyle, {height: 100}]}

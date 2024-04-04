@@ -6,6 +6,12 @@ export const BlueDefaultTheme = {
   closeImage: require('../img/close-white.png'),
   barStyle: 'light-content',
   scanImage: require('../img/scan-white.png'),
+  fonts:{
+    regular:{
+      fontFamily: 'Orbitron-Regular', 
+      color: 'white',
+    }
+  },
   colors: {
     ...DefaultTheme.colors,
     brandingColor: 'black',

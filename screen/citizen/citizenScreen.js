@@ -84,7 +84,7 @@ const CitizenScreen = () => {
             textAlign: 'center',
             justifyContent:'center',
             fontSize: 24,
-            fontWeight:"600",
+            fontFamily: 'Orbitron-Black',
             marginTop: 30
         },
         smallText: {
@@ -92,13 +92,13 @@ const CitizenScreen = () => {
             textAlign: 'center',
             justifyContent:'center',
             fontSize: 10,
-            fontWeight:"400",
+            fontFamily: 'Orbitron-SemiBold'
         },
         buttonText: {
             color:'white', 
             textAlign: 'center',
             fontSize: 18,
-            fontWeight:"600",
+            fontFamily: 'Orbitron-Black',
         },
         joinButton: {
             height: 60,
@@ -135,12 +135,14 @@ const CitizenScreen = () => {
         },
         transparentText: {
             backgroundColor: 'transparent',
+            fontFamily: 'Orbitron-Black',
         },
         label: {
             backgroundColor: 'transparent',
             fontSize: 14,
             color: '#fff',
             writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+            fontFamily: 'Orbitron-Black',
         },
         balance: {
             backgroundColor: 'transparent',
@@ -148,6 +150,7 @@ const CitizenScreen = () => {
             fontSize: 20,
             writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
             color: '#fff',
+            fontFamily: 'Orbitron-Black',
         },
         gradient: {
             padding: 15,
@@ -172,6 +175,7 @@ const CitizenScreen = () => {
             textAlign: 'center',
             fontSize: 18,
             fontWeight:"600",
+            fontFamily: 'Orbitron-Regular',
         },
         filterButton: {
             height: 24,
@@ -183,7 +187,7 @@ const CitizenScreen = () => {
         filterButtonText: {
             color:'white', 
             fontSize: 10,
-            fontWeight:"400",
+            fontFamily: 'Orbitron-Black',
         },
         filterButtonGradientActive: {
             height: 24,
@@ -249,6 +253,7 @@ const CitizenScreen = () => {
           citizenName: {
             fontSize: 18,
             color:  '#FF7400',
+            fontFamily: 'Orbitron-Regular',
           },
     });
 
