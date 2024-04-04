@@ -187,6 +187,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       return this._xpub; // cache hit
     }
     const seed = this._getSeed();
+    console.log('SEEEEEEED!!!',seed)
     const root = bitcoin.bip32.fromSeed(seed, Marscoin.mainnet);
 
     const path = this.getDerivationPath();

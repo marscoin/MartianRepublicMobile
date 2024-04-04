@@ -188,8 +188,8 @@ const CitizenStack = createNativeStackNavigator();
 const CitizenRoot = () => {
   return (
     <CitizenStack.Navigator screenOptions={{ headerShown: false }}>
-      <CitizenStack.Screen name="CitizenScreen" component={CitizenScreen} />
-      <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen} />
+      <CitizenStack.Screen name="CitizenScreen" component={CitizenScreen} options={{headerShown: false}}  />
+      <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen}  options={{headerShown: false}} />
       
     </CitizenStack.Navigator>
   );

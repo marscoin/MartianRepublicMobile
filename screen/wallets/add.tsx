@@ -288,11 +288,11 @@ const WalletsAdd: React.FC = () => {
     wallet = new MarsElectrumWallet()
         await wallet.generate()
         wallet.setLabel(label)
-        //wallet.getXpub()
-        //await wallet.getAddressAsync(); 
+        //wallet.getXpub() 
         //console.log(address);
         addWallet(wallet);
         await saveToDisk();
+        await wallet.getAddressAsync();
         A(A.ENUM.CREATED_WALLET);
         triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
         navigate('PleaseBackup', {

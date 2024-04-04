@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext , useRef, useReducer} from 'react';
-import { ScrollView, Platform,ActivityIndicator, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
+import { ScrollView, Platform,ActivityIndicator, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import navigationStyle from '../../components/navigationStyle';
 import loc from '../../loc';
@@ -14,6 +14,7 @@ import WalletGradient from '../../class/wallet-gradient';
 import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
 import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
 import axios from 'axios';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const CitizenScreen = () => {
@@ -57,8 +58,6 @@ const CitizenScreen = () => {
                 }
             case 'SET_LAST_PAGE_APPLICANTS':
                 return { ...state, lastPageApplicants: action.payload }; 
-            
-           
           default:
             throw new Error();
         }
@@ -68,9 +67,10 @@ const CitizenScreen = () => {
     
     const styles = StyleSheet.create({
         root: {
-            paddingTop: 10,
+            flex:1,
         },
         center: {
+            marginTop: 20,
             height:80,
             flexDirection:'row',
             marginHorizontal: 16,
@@ -219,42 +219,39 @@ const CitizenScreen = () => {
         },
         citizensContainer: {
             flex: 1, 
-            //alignItems: 'center', 
-            //justifyContent: 'center', 
-            //marginHorizontal: 20,
             borderWidth: 0.5,
             borderColor: '#FF7400',
+            //backgroundColor: 'white'
           },
-          citizenItem: {
+        citizenItem: {
             height: 100,
             flexDirection: 'row',
             alignItems: 'center',
-            //marginBottom: 10,
             borderBottomWidth: 0.3,
             borderColor: '#FF7400',
             padding: 10,
             //backgroundColor: 'white'
-          },
-          citizenImage: {
+        },
+        citizenImage: {
             width: 70,
             height: 70,
             marginHorizontal: 10,
-          },
-          citizenAddress: {
+        },
+        citizenAddress: {
             fontSize: 18,
             color: '#FFF',
             marginTop: 5
-          },
-          citizenDate: {
+        },
+        citizenDate: {
             fontSize: 14,
             color: '#AAA',
             marginTop: 5
-          },
-          citizenName: {
+        },
+        citizenName: {
             fontSize: 18,
             color:  '#FF7400',
             fontFamily: 'Orbitron-Regular',
-          },
+        },
     });
 
     // const renderWalletItem = ({ item }) => (
@@ -334,7 +331,6 @@ const CitizenScreen = () => {
     //     console.log('APPLICANTS usestate lastPageApplicants', state.lastPageApplicants)
     // }, [state.lastPageApplicants]);
 
-
     const handleEndApplicantsReached = async () => {
         console.log('handleEndApplicantsReached')
         console.log('applicantPageRef', applicantPageRef)
@@ -346,15 +342,18 @@ const CitizenScreen = () => {
         } else {
           console.log("No more applicants to fetch.");
         }
-      };
+    };
     
   return (
-    <SafeArea style={styles.root}>
+    <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
+    {/* ////margin -80 sticks screen to the tabbar///// */}
+        <View style={styles.root}>
         <ScrollView 
             style={styles.root}
             showsVerticalScrollIndicator={false}
-            
+            contentContainerStyle={{ paddingBottom: 100 }}
         >
+            
             <View style={styles.center}>
                 <Text style={styles.welcomeText}>Welcome to  </Text>
                 <Image style={styles.iconStyle} source={require('../../img/icon.png')} accessible={false} />
@@ -430,84 +429,74 @@ const CitizenScreen = () => {
                         <Text style={styles.filterButtonText}>APPLICANTS</Text>
                     </LinearGradient>
                 </TouchableOpacity>
+            </View>
+
+            {state.filterCitizen &&
+                <View style={styles.citizensContainer}>
+                    {state.citizens && state.citizens.data && state.citizens.data.map((citizen, index) => (
+                        <View key={index} style={styles.citizenItem}>
+                            <Image
+                                source={{ uri: citizen.profile_image }}
+                                style={styles.citizenImage} 
+                            />
+                            <View style={{ marginLeft: 10 }}>
+                                <Text style={styles.citizenName}>{citizen.user.fullname}</Text>
+                                <Text style={styles.citizenAddress}>Address: {citizen.address.slice(0,9)}</Text>
+                                <Text style={styles.citizenDate}>Citizen since: {new Date(citizen.mined).toLocaleDateString()}</Text>
+                            </View>
+                        </View>
+                    ))}
                 </View>
+            }
 
-                {state.filterCitizen &&
-                    <View style={styles.citizensContainer}>
-                        {state.citizens && state.citizens.data && state.citizens.data.map((citizen, index) => (
-                            <View key={index} style={styles.citizenItem}>
-                                <Image
-                                    source={{ uri: citizen.profile_image }}
-                                    style={styles.citizenImage} 
-                                />
+            {state.filterPublic &&
+                <View style={styles.citizensContainer}>
+                    {state.generalPublic && state.generalPublic.data && state.generalPublic.data.map((person, index) => (
+                        <View key={index} style={styles.citizenItem}>
+                            <Image    
+                                source={imageLoadError.current[person.id]? require('../../img/genericprofile.png') :{ uri: person.profile_image }}
+                                style={styles.citizenImage} 
+                                onError={() => {
+                                    console.log('Image Load Error for item:', person.index);
+                                    imageLoadError.current[person.id] = true;
+                                }}
+                            />
+                            <View style={{ marginLeft: 10 }}>
+                                <Text style={styles.citizenName}>{person.user.fullname}</Text>
+                                <Text style={styles.citizenAddress}>Address: {person.address.slice(0,9)}</Text>
+                                <Text style={styles.citizenDate}>Joined: {new Date(person.created_at).toLocaleDateString()}</Text>
+                            </View>
+                        </View>
+                    ))}
+                </View>
+            }
+
+            {state.filterApplicants &&
+                <View style={styles.citizensContainer}>
+                    <FlatList
+                        key={'applicants-list'}
+                        data={state.applicants.data}
+                        extraData={state.applicants.data}
+                        renderItem={({ item }) => (
+                            <View key={item.userid} style={styles.citizenItem}>
                                 <View style={{ marginLeft: 10 }}>
-                                    <Text style={styles.citizenName}>{citizen.user.fullname}</Text>
-                                    <Text style={styles.citizenAddress}>Address: {citizen.address.slice(0,9)}</Text>
-                                    <Text style={styles.citizenDate}>Citizen since: {new Date(citizen.mined).toLocaleDateString()}</Text>
+                                    <Text style={styles.citizenName}>{item.fullname}</Text>
+                                    <Text style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
                                 </View>
                             </View>
-                        ))}
-                    </View>
-                }
-
-                {state.filterPublic &&
-                    <View style={styles.citizensContainer}>
-                        {state.generalPublic && state.generalPublic.data && state.generalPublic.data.map((person, index) => (
-                            <View key={index} style={styles.citizenItem}>
-                                <Image
-                                    
-                                    source={imageLoadError.current[person.id]? require('../../img/genericprofile.png') :{ uri: person.profile_image }}
-                                    style={styles.citizenImage} 
-                                    onError={() => {
-                                        console.log('Image Load Error for item:', person.index);
-                                        imageLoadError.current[person.id] = true;
-                                    }}
-                                />
-                                <View style={{ marginLeft: 10 }}>
-                                    <Text style={styles.citizenName}>{person.user.fullname}</Text>
-                                    <Text style={styles.citizenAddress}>Address: {person.address.slice(0,9)}</Text>
-                                    <Text style={styles.citizenDate}>Joined: {new Date(person.created_at).toLocaleDateString()}</Text>
-                                </View>
-                            </View>
-                        ))}
-                    </View>
-                }
-
-                {state.filterApplicants &&
-                    <View style={styles.citizensContainer}>
-                        <FlatList
-                                key={'applicants-list'}
-                                data={state.applicants.data}
-                                extraData={state.applicants.data}
-                                renderItem={({ item }) => (
-                                    <View key={item.userid} style={styles.citizenItem}>
-                                        <View style={{ marginLeft: 10 }}>
-                                            <Text style={styles.citizenName}>{item.fullname}</Text>
-                                            <Text style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
-                                        </View>
-                                        
-                                    </View>
-                                )}
-                                keyExtractor={(item) => item.userid.toString()} // Use userid as the key
-                                onEndReached={handleEndApplicantsReached}
-                                onEndReachedThreshold={0.5} 
-                                scrollEnabled={false}
-                        />
-                        {/* {state.applicants && state.applicants.data && state.applicants.data.map((person, index) => (
-                            <View key={index} style={styles.citizenItem}>
-                                <View style={{ marginLeft: 10 }}>
-                                    <Text style={styles.citizenName}>{person.fullname}</Text>
-                                    <Text style={styles.citizenAddress}>Address: {person.address.slice(0,9)}</Text>
-                                </View>
-                                
-                            </View>
-                            
-                        ))} */}
-                    </View>
-                    
-                }
+                        )}
+                        keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                        onEndReached={handleEndApplicantsReached}
+                        onEndReachedThreshold={0.5} 
+                        scrollEnabled={false}
+                    />
+                </View>
+            }
+           
         </ScrollView>
-    </SafeArea>
+        </View>
+   
+    </SafeAreaView>
   );
 };
 

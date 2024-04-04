@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Platform, ScrollView, Image, StyleSheet, View, Text, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, View, Text, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import navigationStyle from '../../components/navigationStyle';
 import loc from '../../loc';
@@ -25,9 +25,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   
   const styles = StyleSheet.create({
     root: {
-      paddingTop: 10,
-      //flex:1
-      //backgroundColor: colors.elevated,
+      flex:1
     },
     center: {
       height:80,
@@ -107,10 +105,12 @@ const JoinGeneralPublicApplicationScreen = () => {
   });
 
   return (
-    <SafeArea style={styles.root}>
+    <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
+    {/* ////margin -80 sticks screen to the tabbar///// */}
       <ScrollView 
             style={styles.root}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View style={styles.center}>
             <Text style={styles.welcomeText}>Welcome to  </Text>
@@ -192,7 +192,7 @@ const JoinGeneralPublicApplicationScreen = () => {
             </LinearGradient>
         </View> 
       </ScrollView>  
-    </SafeArea>
+    </SafeAreaView>
   );
 };
 
