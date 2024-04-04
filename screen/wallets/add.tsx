@@ -41,9 +41,14 @@ import { useTheme } from '../../components/themes';
 import useAsyncPromise from '../../hooks/useAsyncPromise';
 import loc from '../../loc';
 import { Chain } from '../../models/bitcoinUnits';
+import BIP32Factory from 'bip32';
 const BlueApp = require('../../BlueApp');
 const AppStorage = BlueApp.AppStorage;
 const A = require('../../blue_modules/analytics');
+
+// const bitcoin = require('bitcoinjs-lib'); // Use bitcoinjs-lib or similar library
+// const bip32 = require('bip32')
+// const bip39 = require('bip39');
 
 enum ButtonSelected {
   // @ts-ignore: Return later to update
@@ -278,24 +283,59 @@ const WalletsAdd: React.FC = () => {
     }
   };
 
-  const createMarskWallet= async () => {
-    setIsLoading(true)
-    //const label = label || "Wallet"
+  const createMarsWallet= async () => {
     let wallet
     wallet = new MarsElectrumWallet()
         await wallet.generate()
         wallet.setLabel(label)
+        //wallet.getXpub()
+        //await wallet.getAddressAsync(); 
+        //console.log(address);
+        addWallet(wallet);
+        await saveToDisk();
+        A(A.ENUM.CREATED_WALLET);
+        triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
+        navigate('PleaseBackup', {
+          walletID: wallet.getID(),
+        });
       
-    setIsLoading(false)
-
-    sheetRef.current?.close()
-
-    // navigation.navigate("BackupPhrase", {
-    //   network: selectedNetwork ?? "BTC",
-    //   wallet,
-    // })
   }
-
+  
+  const createMarskWallet = async () => {
+    // Assuming the wallet object has been initialized and the seed generated
+    let wallet;
+    // Network details for Marscoin, adjust according to the actual network parameters
+    const marscoinNetwork = {
+      messagePrefix: '\x18Marscoin Signed Message:\n',
+      bech32: 'M',
+      bip44: 2,
+      bip32: {
+        public: 0x043587cf,
+        private: 0x04358394,
+      },
+      pubKeyHash: 0x32,
+      scriptHash: 0x32,
+      wif: 0x80,
+    };
+  
+    try {
+      const mnemonic = bip39.generateMnemonic(); // Generates new mnemonic
+      const seed = await bip39.mnemonicToSeed(mnemonic); // Converts mnemonic to seed
+      const root = bip32.fromSeed(seed, marscoinNetwork); // Creates a root node using the seed
+      const account = root.derivePath("m/44'/0'/0'"); // Derives the first account based on BIP44
+      const node = account.derive(0).derive(0); // Derives the first address in the account
+  
+      const marscoinAddress = bitcoin.payments.p2pkh({
+        pubkey: node.publicKey,
+        network: marscoinNetwork,
+      }).address;
+  
+      console.log(`Marscoin Address: ${marscoinAddress}`);
+      // Use the address for your wallet operations
+    } catch (error) {
+      console.error('Failed to create Marscoin wallet:', error);
+    }
+  };
 
   const createLightningLdkWallet = async () => {
     const foundLdk = wallets.find((w: AbstractWallet) => w.type === LightningLdkWallet.type);
@@ -424,7 +464,7 @@ const WalletsAdd: React.FC = () => {
             onPress={handleOnBitcoinButtonPressed}
             style={styles.button}
           />
-          {backdoorPressed > 10 ? (
+          {/* {backdoorPressed > 10 ? (
             <LdkButton
               active={selectedWalletType === ButtonSelected.LDK}
               onPress={handleOnLdkButtonPressed}
@@ -432,7 +472,7 @@ const WalletsAdd: React.FC = () => {
               subtext={LightningLdkWallet.getPackageVersion()}
               text="LDK"
             />
-          ) : null}
+          ) : null} */}
           {/* <VaultButton
             testID="ActivateVaultButton"
             active={selectedWalletType === ButtonSelected.VAULT}
@@ -511,7 +551,7 @@ const WalletsAdd: React.FC = () => {
                   !selectedWalletType || (selectedWalletType === ButtonSelected.OFFCHAIN && (walletBaseURI ?? '').trim().length === 0)
                 }
                 //onPress={createWallet}
-                onPress={createMarskWallet}
+                onPress={createMarsWallet}
               />
 
               <BlueButtonLink

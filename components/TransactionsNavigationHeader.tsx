@@ -156,7 +156,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
             case MultisigHDWallet.type:
               return I18nManager.isRTL ? require('../img/vault-shape-rtl.png') : require('../img/vault-shape.png');
             default:
-              return I18nManager.isRTL ? require('../img/btc-shape-rtl.png') : require('../img/btc-shape.png');
+              return I18nManager.isRTL ? require('../img/marscoin_transparent2.png') : require('../img/marscoin_transparent2.png');
           }
         })()}
         style={styles.chainIcon}
@@ -278,8 +278,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chainIcon: {
-    width: 99,
-    height: 94,
+    width: 150,
+    height: 150,
     position: 'absolute',
     bottom: 0,
     right: 0,

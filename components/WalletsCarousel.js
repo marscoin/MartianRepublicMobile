@@ -104,8 +104,8 @@ const iStyles = StyleSheet.create({
     elevation: 5,
   },
   image: {
-    width: 99,
-    height: 94,
+    width: 150,
+    height: 150,
     position: 'absolute',
     bottom: 0,
     right: 0,
@@ -163,7 +163,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
       image = I18nManager.isRTL ? require('../img/vault-shape-rtl.png') : require('../img/vault-shape.png');
       break;
     default:
-      image = I18nManager.isRTL ? require('../img/btc-shape-rtl.png') : require('../img/btc-shape.png');
+      image = I18nManager.isRTL ? require('../img/marscoin_transparent2.png') : require('../img/marscoin_transparent2.png');
   }
 
   const latestTransactionText =
@@ -206,6 +206,9 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
           <Text style={iStyles.br} />
           <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
             {item.getLabel()}
+          </Text>
+          <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
+            {item.getAddress()}
           </Text>
           {item.hideBalance ? (
             <BluePrivateBalance />

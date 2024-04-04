@@ -307,7 +307,7 @@ const CitizenScreen = () => {
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`)
-            console.log('APPLICANTS', response.data)
+            //console.log('APPLICANTS', response.data)
             dispatch({ type: 'SET_APPLICANTS', payload: response.data });   
             dispatch({ type: 'SET_LAST_PAGE_APPLICANTS', payload: response.data.last_page });   
         } catch (error) {
@@ -322,12 +322,12 @@ const CitizenScreen = () => {
         fetchCitizerns()
     }, []);
 
-    useEffect(() => {
-        console.log('APPLICANTS usestate', state.applicants)
-    }, [state.applicants]);
-    useEffect(() => {
-        console.log('APPLICANTS usestate lastPageApplicants', state.lastPageApplicants)
-    }, [state.lastPageApplicants]);
+    // useEffect(() => {
+    //     console.log('APPLICANTS usestate', state.applicants)
+    // }, [state.applicants]);
+    // useEffect(() => {
+    //     console.log('APPLICANTS usestate lastPageApplicants', state.lastPageApplicants)
+    // }, [state.lastPageApplicants]);
 
 
     const handleEndApplicantsReached = async () => {

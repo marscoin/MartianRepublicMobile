@@ -6,7 +6,6 @@ import { AbstractHDElectrumWallet } from "../../class/wallets/abstract-hd-electr
 import { HDLegacyP2PKHWallet } from "../../class";
 import { getUniqueId } from "react-native-device-info";
 
-
 // import { checkReporting } from "../../blue_modules/balanceAnalytics";
 // import checkReporting
 
@@ -73,11 +72,11 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   async generate() {
     const buf = await randomBytes(16);
     this.secret = bip39.entropyToMnemonic(buf.toString("hex"));
-    console.log(this.secret);
+    console.log('secret: ', this.secret);
   }
 
   getAddress() {
-    // console.log('==== [MARS] getAddress ====');
+    console.log('==== [MARS] getAddress ====');
     return this._address;
   }
 
@@ -148,6 +147,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     for (const value of Object.values(BitcoinUnit)) {
       if (value === this.preferredBalanceUnit) {
         return this.preferredBalanceUnit;
+        console.log('this.preferredBalanceUnit', this.preferredBalanceUnit)
       }
     }
 

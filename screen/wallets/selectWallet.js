@@ -152,7 +152,7 @@ const SelectWallet = () => {
                   case MultisigHDWallet.type:
                     return I18nManager.isRTL ? require('../../img/vault-shape-rtl.png') : require('../../img/vault-shape.png');
                   default:
-                    return I18nManager.isRTL ? require('../../img/btc-shape-rtl.png') : require('../../img/btc-shape.png');
+                    return I18nManager.isRTL ? require('../../img/marscoin_transparent2.png') : require('../../img/marscoin_transparent2.png');
                 }
               })()}
               style={styles.image}
