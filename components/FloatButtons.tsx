@@ -106,6 +106,7 @@ const bStyles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: ICON_MARGIN,
     backgroundColor: 'transparent',
+    fontFamily: 'Orbitron-Black',
   },
 });
 
@@ -129,6 +130,7 @@ export const FButton = ({ text, icon, width, first, last, ...props }: FButtonPro
     },
     textDisabled: {
       color: colors.formBorder,
+      fontFamily: 'Orbitron-Black',
     },
   });
   const style: Record<string, any> = {};

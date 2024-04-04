@@ -485,6 +485,7 @@ export const BlueHeaderDefaultMain = props => {
           fontWeight: 'bold',
           fontSize: 34,
           color: colors.foregroundColor,
+          fontFamily: 'Orbitron-Black',
         }}
       >
         {props.leftText}

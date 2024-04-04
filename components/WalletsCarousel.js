@@ -33,11 +33,13 @@ const nStyles = StyleSheet.create({
   },
   addAWAllet: {
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular',
     fontSize: 24,
     marginBottom: 4,
   },
   addLine: {
     fontSize: 13,
+    //fontFamily: 'Orbitron-Regular',
   },
   button: {
     marginTop: 12,
@@ -48,6 +50,7 @@ const nStyles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: '500',
+    fontFamily: 'Orbitron-Regular',
   },
 });
 
@@ -80,7 +83,7 @@ const NewWalletPanel = ({ onPress }) => {
           isLargeScreen ? {} : { width: itemWidth },
         ]}
       >
-        <Text style={[nStyles.addAWAllet, { color: colors.foregroundColor }]}>{loc.wallets.list_create_a_wallet}</Text>
+        <Text style={[nStyles.addAWAllet, { color: colors.foregroundColor,  }]}>{loc.wallets.list_create_a_wallet}</Text>
         <Text style={[nStyles.addLine, { color: colors.alternativeTextColor }]}>{loc.wallets.list_create_a_wallet_text}</Text>
         <View style={nStyles.button}>
           <Text style={[nStyles.buttonText, { color: colors.brandingColor }]}>{loc.wallets.list_create_a_button}</Text>
@@ -117,9 +120,17 @@ const iStyles = StyleSheet.create({
     backgroundColor: 'transparent',
     fontSize: 19,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+    fontFamily: 'Orbitron-Black',
+  },
+  address: {
+    backgroundColor: 'transparent',
+    fontSize: 16,
+    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+    fontFamily: 'Orbitron-Regular',
   },
   balance: {
     backgroundColor: 'transparent',
+    fontFamily: 'Orbitron-black',
     fontWeight: 'bold',
     fontSize: 36,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
@@ -208,7 +219,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
           <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
             {item.getLabel()}
           </Text>
-          <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
+          <Text numberOfLines={1} style={[iStyles.address, { color: colors.inverseForegroundColor, marginTop: 5 }]}>
             {item.getAddress()}
           </Text>
           {item.hideBalance ? (

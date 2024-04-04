@@ -69,6 +69,7 @@ const WalletsList = () => {
     },
     listHeaderText: {
       color: colors.foregroundColor,
+      fontFamily: 'Orbitron-Black',
     },
   });
 
@@ -193,7 +194,7 @@ const WalletsList = () => {
     return (
       <View style={[styles.listHeaderBack, stylesHook.listHeaderBack]}>
         <Text textBreakStrategy="simple" style={[styles.listHeaderText, stylesHook.listHeaderText]}>
-          {`${loc.transactions.list_title}${'  '}`}
+          {`${loc.transactions.list_title}${'  '}`} 
         </Text>
       </View>
     );
@@ -420,11 +421,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 16,
+    fontFamily: 'Orbitron-Black',
   },
   listHeaderText: {
     fontWeight: 'bold',
     fontSize: 24,
     marginVertical: 16,
+    fontFamily: 'Orbitron-Black',
   },
   footerRoot: {
     top: 80,
