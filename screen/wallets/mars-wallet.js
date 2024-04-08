@@ -5,6 +5,13 @@ import { randomBytes } from "../../class/rng";
 import { AbstractHDElectrumWallet } from "../../class/wallets/abstract-hd-electrum-wallet";
 import { HDLegacyP2PKHWallet } from "../../class";
 import { getUniqueId } from "react-native-device-info";
+const ecc = require('tiny-secp256k1');
+const bip32 = require('bip32');
+const BIP32Factory = require('bip32').BIP32Factory;
+
+// Create a bip32 instance using the factory
+const bip32Instance = BIP32Factory(ecc);
+
 
 // import { checkReporting } from "../../blue_modules/balanceAnalytics";
 // import checkReporting
@@ -230,13 +237,15 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
     if (node === 0 && !this._node0) {
       const xpub = this.getXpub();
-      const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet);
+      console.log('HDNode!!!',HDNode)
+      const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
       this._node0 = hdNode.derive(node);
     }
 
     if (node === 1 && !this._node1) {
       const xpub = this.getXpub();
-      const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet);
+      const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
+
       this._node1 = hdNode.derive(node);
     }
 
