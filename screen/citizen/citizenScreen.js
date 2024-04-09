@@ -92,13 +92,15 @@ const CitizenScreen = () => {
             textAlign: 'center',
             justifyContent:'center',
             fontSize: 10,
-            fontFamily: 'Orbitron-SemiBold'
+            fontFamily: 'Orbitron-SemiBold',
+            letterSpacing: 1.5, 
         },
         buttonText: {
             color:'white', 
             textAlign: 'center',
             fontSize: 18,
             fontFamily: 'Orbitron-Black',
+            letterSpacing: 1.5, 
         },
         joinButton: {
             height: 60,
@@ -136,6 +138,7 @@ const CitizenScreen = () => {
         transparentText: {
             backgroundColor: 'transparent',
             fontFamily: 'Orbitron-Black',
+            letterSpacing: 1.5, 
         },
         label: {
             backgroundColor: 'transparent',
@@ -143,6 +146,7 @@ const CitizenScreen = () => {
             color: '#fff',
             writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
             fontFamily: 'Orbitron-Black',
+            letterSpacing: 1.5, 
         },
         balance: {
             backgroundColor: 'transparent',
@@ -151,6 +155,7 @@ const CitizenScreen = () => {
             writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
             color: '#fff',
             fontFamily: 'Orbitron-Black',
+            letterSpacing: 1.1, 
         },
         gradient: {
             padding: 15,
@@ -176,6 +181,7 @@ const CitizenScreen = () => {
             fontSize: 18,
             fontWeight:"600",
             fontFamily: 'Orbitron-Regular',
+            letterSpacing: 1.1, 
         },
         filterButton: {
             height: 24,
@@ -188,6 +194,7 @@ const CitizenScreen = () => {
             color:'white', 
             fontSize: 10,
             fontFamily: 'Orbitron-Black',
+            letterSpacing: 1.5, 
         },
         filterButtonGradientActive: {
             height: 24,
@@ -215,7 +222,9 @@ const CitizenScreen = () => {
             borderWidth: 1,
             borderBottomWidth: 0.5,
             borderColor: '#FF7400',
-            padding: 10
+            padding: 10,
+            borderTopRightRadius: 10,
+            borderTopLeftRadius: 10
         },
         citizensContainer: {
             flex: 1, 
@@ -236,11 +245,12 @@ const CitizenScreen = () => {
             width: 70,
             height: 70,
             marginHorizontal: 10,
+            borderRadius: 10
         },
         citizenAddress: {
             fontSize: 18,
             color: '#FFF',
-            marginTop: 5
+            marginTop: 5,
         },
         citizenDate: {
             fontSize: 14,
@@ -251,6 +261,9 @@ const CitizenScreen = () => {
             fontSize: 18,
             color:  '#FF7400',
             fontFamily: 'Orbitron-Regular',
+            fontWeight:"500",
+            letterSpacing: 1.1, 
+            marginRight: 30,
         },
     });
 
@@ -436,8 +449,12 @@ const CitizenScreen = () => {
                     {state.citizens && state.citizens.data && state.citizens.data.map((citizen, index) => (
                         <View key={index} style={styles.citizenItem}>
                             <Image
-                                source={{ uri: citizen.profile_image }}
+                                source={imageLoadError.current[citizen.id]? require('../../img/genericprofile.png') :{ uri: citizen.profile_image }}
                                 style={styles.citizenImage} 
+                                onError={() => {
+                                    console.log('Image Load Error for item:', citizen.index);
+                                    imageLoadError.current[citizen.id] = true;
+                                }}
                             />
                             <View style={{ marginLeft: 10 }}>
                                 <Text style={styles.citizenName}>{citizen.user.fullname}</Text>
@@ -481,7 +498,9 @@ const CitizenScreen = () => {
                             <View key={item.userid} style={styles.citizenItem}>
                                 <View style={{ marginLeft: 10 }}>
                                     <Text style={styles.citizenName}>{item.fullname}</Text>
-                                    <Text style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
+                                    {item.address &&
+                                     <Text style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text> 
+                                    }
                                 </View>
                             </View>
                         )}

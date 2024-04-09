@@ -33,11 +33,15 @@ const nStyles = StyleSheet.create({
   },
   addAWAllet: {
     fontWeight: '600',
+    fontFamily: 'Orbitron-Black',
     fontSize: 24,
     marginBottom: 4,
+    letterSpacing: 1.2, 
   },
   addLine: {
     fontSize: 13,
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.5, 
   },
   button: {
     marginTop: 12,
@@ -47,7 +51,8 @@ const nStyles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    fontWeight: '500',
+    fontFamily: 'Orbitron-Black',
+    letterSpacing: 1.5, 
   },
 });
 
@@ -116,11 +121,19 @@ const iStyles = StyleSheet.create({
   label: {
     backgroundColor: 'transparent',
     fontSize: 19,
+    fontFamily: 'Orbitron-Black',
+    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+  },
+  address: {
+    backgroundColor: 'transparent',
+    marginTop:5,
+    fontSize: 16,
+    fontFamily: 'Orbitron-Regular',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   balance: {
     backgroundColor: 'transparent',
-    fontWeight: 'bold',
+    fontFamily: 'Orbitron-Black',
     fontSize: 36,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
@@ -132,6 +145,7 @@ const iStyles = StyleSheet.create({
   latestTxTime: {
     backgroundColor: 'transparent',
     fontWeight: 'bold',
+    fontFamily: 'Orbitron-Black',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
     fontSize: 16,
   },
@@ -207,7 +221,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
           <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
             {item.getLabel()}
           </Text>
-          <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
+          <Text numberOfLines={1} style={[iStyles.address, { color: colors.inverseForegroundColor }]}>
             {item.getAddress()}
           </Text>
           {item.hideBalance ? (
