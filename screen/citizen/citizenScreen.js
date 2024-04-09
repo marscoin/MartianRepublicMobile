@@ -32,6 +32,7 @@ const CitizenScreen = () => {
         generalPublic: [],
         applicants: [],
         lastPageApplicants: 1,
+        imageLoadErrors: {},
       };
     //console.log('wallets', wallets)
     const route = useRoute();
@@ -58,6 +59,10 @@ const CitizenScreen = () => {
                 }
             case 'SET_LAST_PAGE_APPLICANTS':
                 return { ...state, lastPageApplicants: action.payload }; 
+            case 'SET_IMAGE_LOAD_ERROR':
+                const newState = { ...state };
+                newState.imageLoadErrors[action.payload.id] = true; // Use a unique ID for each image
+                return newState;
           default:
             throw new Error();
         }
@@ -449,12 +454,9 @@ const CitizenScreen = () => {
                     {state.citizens && state.citizens.data && state.citizens.data.map((citizen, index) => (
                         <View key={index} style={styles.citizenItem}>
                             <Image
-                                source={imageLoadError.current[citizen.id]? require('../../img/genericprofile.png') :{ uri: citizen.profile_image }}
+                                source={state.imageLoadErrors[citizen.id] ? require('../../img/genericprofile.png') : { uri: citizen.profile_image }}
                                 style={styles.citizenImage} 
-                                onError={() => {
-                                    console.log('Image Load Error for item:', citizen.index);
-                                    imageLoadError.current[citizen.id] = true;
-                                }}
+                                onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
                             />
                             <View style={{ marginLeft: 10 }}>
                                 <Text style={styles.citizenName}>{citizen.user.fullname}</Text>
@@ -471,12 +473,9 @@ const CitizenScreen = () => {
                     {state.generalPublic && state.generalPublic.data && state.generalPublic.data.map((person, index) => (
                         <View key={index} style={styles.citizenItem}>
                             <Image    
-                                source={imageLoadError.current[person.id]? require('../../img/genericprofile.png') :{ uri: person.profile_image }}
+                                source={state.imageLoadErrors[person.id] ? require('../../img/genericprofile.png') : { uri: person.profile_image }}
                                 style={styles.citizenImage} 
-                                onError={() => {
-                                    console.log('Image Load Error for item:', person.index);
-                                    imageLoadError.current[person.id] = true;
-                                }}
+                                onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: person.id } })}
                             />
                             <View style={{ marginLeft: 10 }}>
                                 <Text style={styles.citizenName}>{person.user.fullname}</Text>
