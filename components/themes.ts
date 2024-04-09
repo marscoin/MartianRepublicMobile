@@ -138,6 +138,12 @@ export type Theme = typeof BlueDefaultTheme;
 
 export const BlueDarkTheme: Theme = {
   ...DarkTheme,
+  fonts:{
+    regular:{
+      fontFamily: 'Orbitron-Regular', 
+      color: 'white',
+    }
+  },
   closeImage: require('../img/close-white.png'),
   scanImage: require('../img/scan-white.png'),
   barStyle: 'light-content',

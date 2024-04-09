@@ -527,7 +527,21 @@ const ReceiveDetailsStackRoot = () => {
 
   return (
     <ReceiveDetailsStack.Navigator id="ReceiveDetailsRoot" screenOptions={{ headerShadowVisible: false }} initialRouteName="ReceiveDetails">
-      <ReceiveDetailsStack.Screen name="ReceiveDetails" component={ReceiveDetails} options={ReceiveDetails.navigationOptions(theme)} />
+      {/* <ReceiveDetailsStack.Screen name="ReceiveDetails" component={ReceiveDetails} options={ReceiveDetails.navigationOptions(theme)} /> */}
+      <ReceiveDetailsStack.Screen 
+        name="ReceiveDetails" 
+        component={ReceiveDetails} 
+        options={
+          navigationStyle({
+            closeButton: true,
+            headerBackVisible: false,
+            headerTitle: ' ',
+            headerStyle:{
+              backgroundColor:'black'
+            }
+            })(theme)}
+        
+      />
     </ReceiveDetailsStack.Navigator>
   );
 };

@@ -245,7 +245,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     if (node === 1 && !this._node1) {
       const xpub = this.getXpub();
       const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
-
       this._node1 = hdNode.derive(node);
     }
 

@@ -10,6 +10,7 @@ const styles = StyleSheet.create({
   root: {
     justifyContent: 'flex-end',
     margin: 0,
+    //backgroundColor: 'red'
   },
   hasDoneButton: {
     padding: 16,
