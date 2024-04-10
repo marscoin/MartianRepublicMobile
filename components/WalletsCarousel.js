@@ -23,6 +23,8 @@ import { BluePrivateBalance } from '../BlueComponents';
 import { BlueStorageContext } from '../blue_modules/storage-context';
 import { isTablet, isDesktop } from '../blue_modules/environment';
 import { useTheme } from './themes';
+import { BitcoinUnit } from '../models/bitcoinUnits';
+import { removeTrailingZeros } from '../loc';
 
 const nStyles = StyleSheet.create({
   container: {
@@ -189,7 +191,13 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
           ? loc.transactions.pending
           : transactionTimeToReadable(item.getLatestTransactionTime());
 
-  const balance = !item.hideBalance && (Number(item.getBalance()) + ' ' + item.preferredBalanceUnit);
+  //const balance = !item.hideBalance && (Number(formatBalance(item.getBalance())) + ' ' + item.preferredBalanceUnit);
+  // function removeTrailingZeros(value) {
+  //   return value.replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1");
+  // }
+  const prebalance = Number((item.getBalance()))/100000000
+  const balance = !item.hideBalance && (removeTrailingZeros(prebalance) + ' ' + item.preferredBalanceUnit);
+  //const balance = !item.hideBalance && formatBalance(item.getBalance(), item.preferredBalanceUnit, true);
 
   return (
     <Animated.View

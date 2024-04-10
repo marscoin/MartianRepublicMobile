@@ -298,42 +298,7 @@ const WalletsAdd: React.FC = () => {
         });
       
   }
-  
-  const createMarskWallet = async () => {
-    // Assuming the wallet object has been initialized and the seed generated
-    let wallet;
-    // Network details for Marscoin, adjust according to the actual network parameters
-    const marscoinNetwork = {
-      messagePrefix: '\x18Marscoin Signed Message:\n',
-      bech32: 'M',
-      bip44: 2,
-      bip32: {
-        public: 0x043587cf,
-        private: 0x04358394,
-      },
-      pubKeyHash: 0x32,
-      scriptHash: 0x32,
-      wif: 0x80,
-    };
-  
-    try {
-      const mnemonic = bip39.generateMnemonic(); // Generates new mnemonic
-      const seed = await bip39.mnemonicToSeed(mnemonic); // Converts mnemonic to seed
-      const root = bip32.fromSeed(seed, marscoinNetwork); // Creates a root node using the seed
-      const account = root.derivePath("m/44'/0'/0'"); // Derives the first account based on BIP44
-      const node = account.derive(0).derive(0); // Derives the first address in the account
-  
-      const marscoinAddress = bitcoin.payments.p2pkh({
-        pubkey: node.publicKey,
-        network: marscoinNetwork,
-      }).address;
-  
-      console.log(`Marscoin Address: ${marscoinAddress}`);
-      // Use the address for your wallet operations
-    } catch (error) {
-      console.error('Failed to create Marscoin wallet:', error);
-    }
-  };
+
 
   const createLightningLdkWallet = async () => {
     const foundLdk = wallets.find((w: AbstractWallet) => w.type === LightningLdkWallet.type);

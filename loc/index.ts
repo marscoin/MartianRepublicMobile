@@ -10,6 +10,7 @@ import { BitcoinUnit } from '../models/bitcoinUnits';
 import { AvailableLanguages } from './languages';
 import { I18nManager } from 'react-native';
 import { satoshiToLocalCurrency } from '../blue_modules/currency';
+const currency = require("../blue_modules/currency");
 
 export const STORAGE_KEY = 'lang';
 
@@ -19,6 +20,7 @@ dayjs.extend(localizedFormat);
 const setDateTimeLocale = async () => {
   let lang = (await AsyncStorage.getItem(STORAGE_KEY)) ?? '';
   let localeForDayJSAvailable = true;
+  
   switch (lang) {
     case 'ar':
       require('dayjs/locale/ar');
@@ -172,6 +174,50 @@ const setDateTimeLocale = async () => {
   }
 };
 
+const strings = new Localization({
+  en: require("./en.json"),
+  ar: require("./ar.json"),
+  bg_bg: require("./bg_bg.json"),
+  ca: require("./ca.json"),
+  cy: require("./cy.json"),
+  cs_cz: require("./cs_cz.json"),
+  da_dk: require("./da_dk.json"),
+  de_de: require("./de_de.json"),
+  el: require("./el.json"),
+  es: require("./es.json"),
+  es_419: require("./es_419.json"),
+  fa: require("./fa.json"),
+  fi_fi: require("./fi_fi.json"),
+  fr_fr: require("./fr_fr.json"),
+  he: require("./he.json"),
+  hr_hr: require("./hr_hr.json"),
+  hu_hu: require("./hu_hu.json"),
+  id_id: require("./id_id.json"),
+  it: require("./it.json"),
+  jp_jp: require("./jp_jp.json"),
+  ko_kr: require("./ko_KR.json"),
+  ms: require("./ms.json"),
+  nb_no: require("./nb_no.json"),
+  nl_nl: require("./nl_nl.json"),
+  pt_br: require("./pt_br.json"),
+  pt_pt: require("./pt_pt.json"),
+  pl: require("./pl.json"),
+  ro: require("./ro.json"),
+  ru: require("./ru.json"),
+  si_lk: require("./si_LK.json"),
+  sk_sk: require("./sk_sk.json"),
+  sl_si: require("./sl_SI.json"),
+  sv_se: require("./sv_se.json"),
+  th_th: require("./th_th.json"),
+  tr_tr: require("./tr_tr.json"),
+  ua: require("./ua.json"),
+  vi_vn: require("./vi_vn.json"),
+  zar_afr: require("./zar_afr.json"),
+  zar_xho: require("./zar_xho.json"),
+  zh_cn: require("./zh_cn.json"),
+  zh_tw: require("./zh_tw.json"),
+});
+
 const init = async () => {
   // finding out whether lang preference was saved
   const lang = await AsyncStorage.getItem(STORAGE_KEY);
@@ -298,26 +344,74 @@ export const removeTrailingZeros = (value: number | string) => {
   return ret;
 };
 
-/**
- *
- * @param balance {number} Satoshis
- * @param toUnit {string} Value from models/bitcoinUnits.js
- * @param withFormatting {boolean} Works only with `BitcoinUnit.SATS`, makes spaces wetween groups of 000
- * @returns {string}
- */
-export function formatBalance(balance: number, toUnit: string, withFormatting = false) {
+// /**
+//  *
+//  * @param balance {number} Satoshis
+//  * @param toUnit {string} Value from models/bitcoinUnits.js
+//  * @param withFormatting {boolean} Works only with `BitcoinUnit.SATS`, makes spaces wetween groups of 000
+//  * @returns {string}
+//  */
+
+export function formatBalance(
+  balance,
+  toUnit,
+  withFormatting = false,
+  fromUnit = BitcoinUnit.BTC
+) {
+  balance = balance || 0;
+  
+  // Define conversion rates
+  const BTC_TO_SATOSHI = 100000000;
+  const MARS_TO_SATOSHI = 100000000; // Example conversion rate
+
   if (toUnit === undefined) {
-    return balance + ' ' + loc.units[BitcoinUnit.BTC];
+    return balance + " " + strings.units[BitcoinUnit.BTC];
   }
+  
+  // Handling conversion to BTC
   if (toUnit === BitcoinUnit.BTC) {
-    const value = new BigNumber(balance).dividedBy(100000000).toFixed(8);
-    return removeTrailingZeros(+value) + ' ' + loc.units[BitcoinUnit.BTC];
-  } else if (toUnit === BitcoinUnit.SATS) {
-    return (withFormatting ? new Intl.NumberFormat().format(balance).toString() : String(balance)) + ' ' + loc.units[BitcoinUnit.SATS];
-  } else if (toUnit === BitcoinUnit.LOCAL_CURRENCY) {
-    return satoshiToLocalCurrency(balance);
+    const value = new BigNumber(balance).dividedBy(BTC_TO_SATOSHI).toFixed(8);
+    return removeTrailingZeros(value) + " " + strings.units[BitcoinUnit.BTC];
+  } 
+  // Handling conversion to SATS
+  else if (toUnit === BitcoinUnit.SATS) {
+    return (
+      (withFormatting
+        ? new Intl.NumberFormat().format(balance).toString()
+        : String(balance)) +
+      " " +
+      strings.units[BitcoinUnit.SATS]
+    );
+  } 
+  // Conversion to local currency (assuming this is correctly implemented elsewhere)
+  else if (toUnit === BitcoinUnit.LOCAL_CURRENCY) {
+    return currency.satoshiToLocalCurrency(fromUnit, balance);
+  } 
+  // Handling conversion to MARS
+  else if (toUnit === BitcoinUnit.MARS) {
+    let valueInSatoshi = balance;
+    if (fromUnit === BitcoinUnit.BTC) {
+      valueInSatoshi = new BigNumber(balance).times(BTC_TO_SATOSHI);
+    }
+    const value = valueInSatoshi.dividedBy(MARS_TO_SATOSHI).toFixed(8);
+    return removeTrailingZeros(value) + " MARS";
+  } else {
+    return -1;
   }
 }
+// export function formatBalance(balance: number, toUnit: string, withFormatting = false) {
+//   if (toUnit === undefined) {
+//     return balance + ' ' + loc.units[BitcoinUnit.BTC];
+//   }
+//   if (toUnit === BitcoinUnit.BTC) {
+//     const value = new BigNumber(balance).dividedBy(100000000).toFixed(8);
+//     return removeTrailingZeros(+value) + ' ' + loc.units[BitcoinUnit.BTC];
+//   } else if (toUnit === BitcoinUnit.SATS) {
+//     return (withFormatting ? new Intl.NumberFormat().format(balance).toString() : String(balance)) + ' ' + loc.units[BitcoinUnit.SATS];
+//   } else if (toUnit === BitcoinUnit.LOCAL_CURRENCY) {
+//     return satoshiToLocalCurrency(balance);
+//   }
+// }
 
 /**
  *

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import LottieView from "lottie-react-native"
 import Share from 'react-native-share';
 import QRCodeComponent from '../../components/QRCodeComponent';
 import {
@@ -33,15 +34,18 @@ import loc, { formatBalance } from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import Notifications from '../../blue_modules/notifications';
 import { TransactionPendingIconBig } from '../../components/TransactionPendingIconBig';
-import * as BlueElectrum from '../../blue_modules/BlueElectrum';
 import { SuccessView } from '../send/success';
 import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 import { fiatToBTC, satoshiToBTC } from '../../blue_modules/currency';
 
+import * as MARSConnection from "../../blue_modules/MARSConnection"
+import * as BlueElectrum from "../../blue_modules/BlueElectrum"
+
 const ReceiveDetails = () => {
   const { walletID, address } = useRoute().params;
+  console.log ('PARAMS RECEIVE DETAILS', walletID, address)
   const { wallets, saveToDisk, sleep, isElectrumDisabled, fetchAndSaveWalletTransactions } = useContext(BlueStorageContext);
   const wallet = wallets.find(w => w.getID() === walletID);
   const [customLabel, setCustomLabel] = useState();
@@ -117,6 +121,7 @@ const ReceiveDetails = () => {
         console.log('checking address', address2use, 'for balance...');
         const balance = await BlueElectrum.getBalanceByAddress(address2use);
         console.log('...got', balance);
+
 
         if (balance.unconfirmed > 0) {
           if (initialConfirmed === 0 && initialUnconfirmed === 0) {

@@ -5,6 +5,7 @@ import DefaultPreference from 'react-native-default-preference';
 import loc from '../loc';
 import WidgetCommunication from './WidgetCommunication';
 import presentAlert from '../components/Alert';
+import { Marscoin } from './constants';
 const bitcoin = require('bitcoinjs-lib');
 const ElectrumClient = require('electrum-client');
 const BigNumber = require('bignumber.js');
@@ -48,14 +49,19 @@ async function _getRealm() {
 }
 
 const storageKey = 'ELECTRUM_PEERS';
-const defaultPeer = { host: 'electrum1.bluewallet.io', ssl: '443' };
+// const defaultPeer = { host: 'electrum1.bluewallet.io', ssl: '443' };
+// const hardcodedPeers = [
+//   { host: 'mainnet.foundationdevices.com', ssl: '50002' },
+//   { host: 'bitcoin.lukechilds.co', ssl: '50002' },
+//   { host: 'electrum.jochen-hoenicke.de', ssl: '50006' },
+//   { host: 'electrum1.bluewallet.io', ssl: '443' },
+//   { host: 'electrum.acinq.co', ssl: '50002' },
+//   { host: 'electrum.bitaroo.net', ssl: '50002' },
+// ];
+const defaultPeer = { host: "164.90.138.207", ssl: "50002" };
 const hardcodedPeers = [
-  { host: 'mainnet.foundationdevices.com', ssl: '50002' },
-  { host: 'bitcoin.lukechilds.co', ssl: '50002' },
-  { host: 'electrum.jochen-hoenicke.de', ssl: '50006' },
-  { host: 'electrum1.bluewallet.io', ssl: '443' },
-  { host: 'electrum.acinq.co', ssl: '50002' },
-  { host: 'electrum.bitaroo.net', ssl: '50002' },
+  { host: "164.90.138.207", tcp: "50001" },
+  { host: "164.90.138.207", ssl: "50002" },
 ];
 
 /** @type {ElectrumClient} */
@@ -331,10 +337,15 @@ async function getRandomDynamicPeer() {
  */
 module.exports.getBalanceByAddress = async function (address) {
   if (!mainClient) throw new Error('Electrum client is not connected');
-  const script = bitcoin.address.toOutputScript(address);
+  console.log('getBalanceByAddress STARTED!!!!')
+  console.log('getBalanceByAddress bitcoin.address!!!!', bitcoin.address)
+  //const script = bitcoin.address.toOutputScript(address);
+  const script = bitcoin.address.toOutputScript(address, Marscoin.mainnet);
+  console.log('getBalanceByAddress script!!!!', script)
   const hash = bitcoin.crypto.sha256(script);
   const reversedHash = Buffer.from(hash).reverse();
   const balance = await mainClient.blockchainScripthash_getBalance(reversedHash.toString('hex'));
+  // console.log('getBalanceByAddress balance!!!!', balance)
   balance.addr = address;
   return balance;
 };

@@ -106,9 +106,12 @@ export class LegacyWallet extends AbstractWallet {
    */
   async fetchBalance(): Promise<void> {
     try {
+      console.log('fetchBalance STARTED!!!')
       const address = this.getAddress();
+      console.log('fetchBalance address!!!', address)
       if (!address) throw new Error('LegacyWallet: Invalid address');
       const balance = await BlueElectrum.getBalanceByAddress(address);
+      console.log('fetchBalance balance!!!', balance)
       this.balance = Number(balance.confirmed);
       this.unconfirmed_balance = Number(balance.unconfirmed);
       this._lastBalanceFetch = +new Date();

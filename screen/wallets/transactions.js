@@ -37,7 +37,7 @@ import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
 
 const fs = require('../../blue_modules/fs');
-const BlueElectrum = require('../../blue_modules/BlueElectrum');
+const BlueElectrum = require('../../blue_modules/BlueElectrum'); 
 
 const buttonFontSize =
   PixelRatio.roundToNearestPixel(Dimensions.get('window').width / 26) > 22
