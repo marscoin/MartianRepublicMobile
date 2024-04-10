@@ -60,6 +60,7 @@ const hardcodedPeers = [
 
 /** @type {ElectrumClient} */
 let mainClient;
+console.log('MAIN CLIENT', mainClient)
 let mainConnected = false;
 let wasConnectedAtLeastOnce = false;
 let serverName = false;

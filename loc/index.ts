@@ -339,6 +339,10 @@ export function formatBalanceWithoutSuffix(balance = 0, toUnit: string, withForm
     } else if (toUnit === BitcoinUnit.LOCAL_CURRENCY) {
       return satoshiToLocalCurrency(balance);
     }
+    // if (toUnit === BitcoinUnit.MARS) {
+    //   const value = new BigNumber(balance).dividedBy(100000000).toFixed(8);
+    //   return removeTrailingZeros(value) + " " + "MARS";
+    // }
   }
   return balance.toString();
 }

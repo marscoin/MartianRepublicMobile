@@ -268,7 +268,7 @@ const CitizenScreen = () => {
             fontFamily: 'Orbitron-Regular',
             fontWeight:"500",
             letterSpacing: 1.1, 
-            marginRight: 30,
+            marginRight: 50,
         },
     });
 
@@ -451,10 +451,10 @@ const CitizenScreen = () => {
 
             {state.filterCitizen &&
                 <View style={styles.citizensContainer}>
-                    {state.citizens && state.citizens.data && state.citizens.data.map((citizen, index) => (
+                    {state.citizens  && state.citizens.map((citizen, index) => (
                         <View key={index} style={styles.citizenItem}>
                             <Image
-                                source={state.imageLoadErrors[citizen.id] ? require('../../img/genericprofile.png') : { uri: citizen.profile_image }}
+                                source={state.imageLoadErrors[citizen.id] ? require('../../img/genericprofile.png') : !citizen.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: citizen.user.citizen.avatar_link }}
                                 style={styles.citizenImage} 
                                 onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
                             />

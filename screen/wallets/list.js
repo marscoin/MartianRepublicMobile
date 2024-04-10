@@ -46,7 +46,7 @@ const WalletsList = () => {
     isElectrumDisabled,
     setReloadTransactionsMenuActionFunction,
   } = useContext(BlueStorageContext);
-  console.log('WALLETS', wallets)
+  //console.log('WALLETS', wallets)
   const { width } = useWindowDimensions();
   const { colors, scanImage } = useTheme();
   const { navigate, setOptions } = useNavigation();

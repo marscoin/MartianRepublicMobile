@@ -153,8 +153,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   getPreferredBalanceUnit() {
     for (const value of Object.values(BitcoinUnit)) {
       if (value === this.preferredBalanceUnit) {
-        return this.preferredBalanceUnit;
         console.log('this.preferredBalanceUnit', this.preferredBalanceUnit)
+        return this.preferredBalanceUnit;
+        // console.log('this.preferredBalanceUnit', this.preferredBalanceUnit)
       }
     }
 

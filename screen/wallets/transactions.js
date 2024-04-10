@@ -68,6 +68,8 @@ const WalletTransactions = ({ navigation }) => {
   const [lnNodeInfo, setLnNodeInfo] = useState({ canReceive: 0, canSend: 0 });
   const walletActionButtonsRef = useRef();
 
+  //console.log(wallet.type)
+
   const stylesHook = StyleSheet.create({
     listHeaderText: {
       color: colors.foregroundColor,
@@ -196,10 +198,11 @@ const WalletTransactions = ({ navigation }) => {
     if (isElectrumDisabled) return setIsLoading(false);
     if (isLoading) return;
     setIsLoading(true);
+    // console.log('!!!!!!!!!!!REFRESH')
     let noErr = true;
     let smthChanged = false;
     try {
-      refreshLnNodeInfo();
+      //refreshLnNodeInfo();
       // await BlueElectrum.ping();
       await BlueElectrum.waitTillConnected();
       if (wallet.allowBIP47() && wallet.isBIP47Enabled()) {
