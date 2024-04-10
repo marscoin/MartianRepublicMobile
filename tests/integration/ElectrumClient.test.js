@@ -2,8 +2,8 @@ import * as bitcoin from 'bitcoinjs-lib';
 import assert from 'assert';
 import ElectrumClient from 'electrum-client';
 
-// const net = require('net');
-// const tls = require('tls');
+const net = require('net');
+const tls = require('tls');
 
 jest.setTimeout(150 * 1000);
 
@@ -19,7 +19,7 @@ const hardcodedPeers = [
 describe('ElectrumClient', () => {
   it('can connect and query', async () => {
     for (const peer of hardcodedPeers) {
-      const mainClient = new ElectrumClient(global.net, global.tls, peer.ssl || peer.tcp, peer.host, peer.ssl ? 'tls' : 'tcp');
+      const mainClient = new ElectrumClient(net, tls, peer.ssl || peer.tcp, peer.host, peer.ssl ? 'tls' : 'tcp');
 
       try {
         await mainClient.connect();

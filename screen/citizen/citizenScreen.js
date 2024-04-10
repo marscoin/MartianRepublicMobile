@@ -470,7 +470,7 @@ const CitizenScreen = () => {
 
             {state.filterPublic &&
                 <View style={styles.citizensContainer}>
-                    {state.generalPublic && state.generalPublic.data && state.generalPublic.data.map((person, index) => (
+                    {state.generalPublic &&  state.generalPublic.map((person, index) => (
                         <View key={index} style={styles.citizenItem}>
                             <Image    
                                 source={state.imageLoadErrors[person.id] ? require('../../img/genericprofile.png') : { uri: person.profile_image }}

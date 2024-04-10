@@ -201,7 +201,12 @@ const WalletsRoot = () => {
   const theme = useTheme();
 
   return (
-    <WalletsStack.Navigator screenOptions={{ headerShadowVisible: false }}>
+    <WalletsStack.Navigator screenOptions={{ 
+        headerShadowVisible: false, 
+        headerStyle: {
+          backgroundColor: 'black', 
+        }
+    }}>
       <WalletsStack.Screen name="WalletsList" component={WalletsList} options={WalletsList.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={WalletTransactions.navigationOptions(theme)} />
       <WalletsStack.Screen name="LdkOpenChannel" component={LdkOpenChannel} options={LdkOpenChannel.navigationOptions(theme)} />
