@@ -12,6 +12,7 @@ import ToolTipMenu from './TooltipMenu';
 import { BluePrivateBalance } from '../BlueComponents';
 import { FiatUnit } from '../models/fiatUnit';
 import WalletAddresses from '../screen/wallets/addresses';
+import { removeTrailingZeros } from '../loc';
 
 interface TransactionsNavigationHeaderProps {
   wallet: AbstractWallet;
@@ -136,7 +137,9 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
   const balance = useMemo(() => {
     const hideBalance = wallet.hideBalance;
     const balanceUnit = wallet.getPreferredBalanceUnit();
-    const balanceFormatted = formatBalance(wallet.getBalance(), balanceUnit, true);
+    const prebalance = Number((wallet.getBalance()))/100000000
+    const balanceFormatted = !wallet.hideBalance && (removeTrailingZeros(prebalance) + ' ' + wallet.preferredBalanceUnit);
+    // const balanceFormatted = formatBalance(wallet.getBalance(), balanceUnit, true);
     return !hideBalance && balanceFormatted?.toString();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.hideBalance, wallet.getPreferredBalanceUnit()]);

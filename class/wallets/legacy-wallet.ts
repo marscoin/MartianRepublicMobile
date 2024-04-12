@@ -11,6 +11,7 @@ import { CreateTransactionResult, CreateTransactionUtxo, Transaction, Utxo } fro
 import { ECPairAPI, ECPairFactory, Signer } from 'ecpair';
 
 import ecc from '../../blue_modules/noble_ecc';
+import { MarsElectrumWallet } from '../../screen/wallets/mars-wallet';
 const ECPair: ECPairAPI = ECPairFactory(ecc);
 //bitcoin.initEccLib(ecc);
 
@@ -357,6 +358,7 @@ export class LegacyWallet extends AbstractWallet {
     this._txs_by_internal_index = [];
 
     const hd = new HDSegwitBech32Wallet();
+    //const hd = new MarsElectrumWallet
     return hd.getTransactions.apply(this);
   }
 
