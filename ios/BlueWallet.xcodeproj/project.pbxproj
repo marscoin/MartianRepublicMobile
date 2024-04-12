@@ -837,7 +837,7 @@
 				4B36CFF6FE55027DCA5CB6E1 /* Upload Bugsnag dSYM */,
 				1D93562AB5DF61839917DB14 /* [CP] Embed Pods Frameworks */,
 				4D8F1D9E38ABBC60EA8546DF /* [CP] Copy Pods Resources */,
-				41F9FD2D2BC57CC300D3416A /* ShellScript */,
+				41F9FD2D2BC57CC300D3416A /* Run Script */,
 			);
 			buildRules = (
 			);
@@ -1218,7 +1218,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		41F9FD2D2BC57CC300D3416A /* ShellScript */ = {
+		41F9FD2D2BC57CC300D3416A /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1227,13 +1227,14 @@
 			);
 			inputPaths = (
 			);
+			name = "Run Script";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nexport NODE_BINARY=/Users/novalis78/.nvm/versions/node/v16.16.0/bin/node\n../node_modules/react-native/scripts/react-native-xcode.sh\n";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nexport NODE_BINARY=/opt/homebrew/bin/node\n../node_modules/react-native/scripts/react-native-xcode.sh\n";
 		};
 		4B36CFF6FE55027DCA5CB6E1 /* Upload Bugsnag dSYM */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1649,13 +1650,11 @@
 				CODE_SIGN_ENTITLEMENTS = BlueWallet/BlueWallet.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = DT653ML2L2;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = DT653ML2L2;
 				ENABLE_BITCODE = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "i386 arm64";
@@ -1689,8 +1688,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.martianrepublic;
 				PRODUCT_NAME = BlueWallet;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "match Development io.bluewallet.bluewallet";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "match AppStore io.bluewallet.bluewallet catalyst";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "MARS Profile";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -1712,13 +1710,11 @@
 				CODE_SIGN_ENTITLEMENTS = BlueWallet/BlueWalletRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = DT653ML2L2;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = A7W54YZ4WU;
 				ENABLE_BITCODE = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "i386 arm64";
@@ -1748,7 +1744,6 @@
 				PRODUCT_NAME = BlueWallet;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "MARS Profile";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "match AppStore io.bluewallet.bluewallet catalyst";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -1772,13 +1767,13 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = "$(inherited)";
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1703112830;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = A7W54YZ4WU;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = DT653ML2L2;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = Stickers/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.1;
@@ -1791,10 +1786,10 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = org.martianrepublic.Stickers;
+				PRODUCT_BUNDLE_IDENTIFIER = org.martianrepublic.stickers;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "match AppStore io.bluewallet.bluewallet.Stickers";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = MRStickers;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -1867,8 +1862,8 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = A7W54YZ4WU;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = A7W54YZ4WU;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = DT653ML2L2;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = DT653ML2L2;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = Widgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.1;
@@ -1889,8 +1884,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.martianrepublic.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "match Development io.bluewallet.bluewallet.MarketWidget";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "match Development io.bluewallet.bluewallet.MarketWidget macos";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = MRWidgets;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = MRWidgets;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
@@ -2096,11 +2091,11 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=watchos*]" = A7W54YZ4WU;
+				"DEVELOPMENT_TEAM[sdk=watchos*]" = DT653ML2L2;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = "BlueWalletWatch Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -2117,10 +2112,10 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = org.martianrepublic.watch.extension;
+				PRODUCT_BUNDLE_IDENTIFIER = org.martianrepublic.watch.ext;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=watchos*]" = "match Development io.bluewallet.bluewallet.watch.extension";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=watchos*]" = MRWatchExt;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -2146,7 +2141,7 @@
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
@@ -2195,11 +2190,11 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=watchos*]" = A7W54YZ4WU;
+				"DEVELOPMENT_TEAM[sdk=watchos*]" = DT653ML2L2;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				IBSC_MODULE = BlueWalletWatch_Extension;
 				INFOPLIST_FILE = BlueWalletWatch/Info.plist;
@@ -2215,7 +2210,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.martianrepublic.watch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=watchos*]" = "match Development io.bluewallet.bluewallet.watch";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=watchos*]" = MRWatch;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -2243,7 +2238,7 @@
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";

@@ -5,6 +5,7 @@
  * @format
  */
 const path = require('path');
+const extraNodeModules = require('node-libs-browser');
 const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 module.exports = {
@@ -15,6 +16,9 @@ module.exports = {
       // This prevents "react-native run-windows" from hitting: EBUSY: resource busy or locked, open msbuild.ProjectImports.zip
       /.*\.ProjectImports\.zip/,
     ]),
+    extraNodeModules: {
+      stream: extraNodeModules.stream,
+    }
   },
   transformer: {
     getTransformOptions: async () => ({

@@ -11,6 +11,7 @@ import { BlueStorageContext } from '../blue_modules/storage-context';
 import ToolTipMenu from './TooltipMenu';
 import { BluePrivateBalance } from '../BlueComponents';
 import { FiatUnit } from '../models/fiatUnit';
+import WalletAddresses from '../screen/wallets/addresses';
 
 interface TransactionsNavigationHeaderProps {
   wallet: AbstractWallet;
@@ -165,6 +166,9 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
       <Text testID="WalletLabel" numberOfLines={1} style={styles.walletLabel}>
         {wallet.getLabel()}
       </Text>
+      <Text testID="WalletLabel" numberOfLines={1} style={styles.address}>
+        {wallet.getAddress()}
+      </Text>
       <ToolTipMenu
         onPress={changeWalletBalanceUnit}
         ref={menuRef}
@@ -287,14 +291,25 @@ const styles = StyleSheet.create({
   walletLabel: {
     backgroundColor: 'transparent',
     fontSize: 19,
-    color: '#fff',
+    color: 'black',
+    fontFamily: 'Orbitron-Black',
+    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+  },
+  address: {
+    backgroundColor: 'transparent',
+    fontSize: 14,
+    color: 'black',
+    fontFamily: 'Orbitron-Regular',
+    marginTop: 10,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   walletBalance: {
     backgroundColor: 'transparent',
     fontWeight: 'bold',
-    fontSize: 36,
-    color: '#fff',
+    fontFamily: 'Orbitron-Black',
+    fontSize: 34,
+    color: 'black',
+    marginTop: 5,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   manageFundsButton: {
@@ -311,6 +326,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 14,
     color: '#FFFFFF',
+    fontFamily: 'Orbitron-Black',
     padding: 12,
   },
 });

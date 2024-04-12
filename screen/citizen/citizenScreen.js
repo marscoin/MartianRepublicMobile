@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useContext , useRef, useReducer} from 'react';
-import { ScrollView, Platform,ActivityIndicator, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import { ScrollView, Platform,ActivityIndicator, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import navigationStyle from '../../components/navigationStyle';
 import loc from '../../loc';
+import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
@@ -16,6 +17,8 @@ import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '
 import axios from 'axios';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
 
 const CitizenScreen = () => {
     const navigation = useNavigation();
@@ -233,27 +236,30 @@ const CitizenScreen = () => {
         },
         citizensContainer: {
             flex: 1, 
+            width: windowWidth,
             borderWidth: 0.5,
             borderColor: '#FF7400',
             //backgroundColor: 'white'
           },
         citizenItem: {
-            height: 100,
+            //height: 100,
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'space-between',
             borderBottomWidth: 0.3,
             borderColor: '#FF7400',
             padding: 10,
+            width: windowWidth,
             //backgroundColor: 'white'
         },
         citizenImage: {
-            width: 70,
-            height: 70,
-            marginHorizontal: 10,
+            width: windowWidth * 0.19,
+            height: windowWidth * 0.19,
+            marginHorizontal: 5,
             borderRadius: 10
         },
         citizenAddress: {
-            fontSize: 18,
+            fontSize: 16,
             color: '#FFF',
             marginTop: 5,
         },
@@ -268,7 +274,23 @@ const CitizenScreen = () => {
             fontFamily: 'Orbitron-Regular',
             fontWeight:"500",
             letterSpacing: 1.1, 
-            marginRight: 50,
+            //marginRight: 50,
+        },
+        endorsTxt: {
+            fontSize: 8,
+            color:  '#FF7400',
+            fontFamily: 'Orbitron-Regular',
+            fontWeight:"500",
+            // marginBottom: 5
+        },
+        endorseButton: {
+            borderColor:  '#FF7400',
+            borderWidth:1,
+            borderRadius: 10,
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            alignItems: 'center',
+            justifyContent: 'center'
         },
     });
 
@@ -458,11 +480,21 @@ const CitizenScreen = () => {
                                 style={styles.citizenImage} 
                                 onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
                             />
-                            <View style={{ marginLeft: 10 }}>
-                                <Text style={styles.citizenName}>{citizen.user.fullname}</Text>
-                                <Text style={styles.citizenAddress}>Address: {citizen.address.slice(0,9)}</Text>
-                                <Text style={styles.citizenDate}>Citizen since: {new Date(citizen.mined).toLocaleDateString()}</Text>
+                            <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
+                                <Text numberOfLines={2} style={styles.citizenName}>{citizen.user.fullname}</Text>
+                                <Text numberOfLines={1} style={styles.citizenAddress}>Address: {citizen.address.slice(0,9)}</Text>
+                                <Text numberOfLines={1} style={styles.citizenDate}>Citizen since: {new Date(citizen.mined).toLocaleDateString()}</Text>
                             </View>
+                            {citizen.user.profile.endorse_cnt &&
+                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text numberOfLines={1} style={styles.endorsTxt}>ENDORSEMENTS</Text>
+                                <Text style={[styles.citizenName, {fontSize: 22, marginTop:5}]}>{citizen.user.profile.endorse_cnt}</Text>
+                            </View>}
+                            {!citizen.user.profile.endorse_cnt &&
+                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
+                                <Text numberOfLines={1} style={[styles.endorsTxt, {marginBottom: 8}]}>FOUNDER</Text>
+                                <Icon name="medal" type="material-community" color="#FF7400" />
+                            </View>}
                         </View>
                     ))}
                 </View>
@@ -471,17 +503,29 @@ const CitizenScreen = () => {
             {state.filterPublic &&
                 <View style={styles.citizensContainer}>
                     {state.generalPublic &&  state.generalPublic.map((person, index) => (
-                        <View key={index} style={styles.citizenItem}>
+                        <View key={index} style={[styles.citizenItem, {justifyContent:'flex-start'}]}>
                             <Image    
                                 source={state.imageLoadErrors[person.id] ? require('../../img/genericprofile.png') : { uri: person.profile_image }}
                                 style={styles.citizenImage} 
                                 onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: person.id } })}
                             />
-                            <View style={{ marginLeft: 10 }}>
-                                <Text style={styles.citizenName}>{person.user.fullname}</Text>
-                                <Text style={styles.citizenAddress}>Address: {person.address.slice(0,9)}</Text>
-                                <Text style={styles.citizenDate}>Joined: {new Date(person.created_at).toLocaleDateString()}</Text>
+                            <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
+                                <Text numberOfLines={2} style={styles.citizenName}>{person.user.fullname}</Text>
+                                <Text numberOfLines={1} style={styles.citizenAddress}>Address: {person.address.slice(0,9)}</Text>
+                                <Text numberOfLines={1} style={styles.citizenDate}>Joined: {new Date(person.created_at).toLocaleDateString()}</Text>
                             </View>
+                            {person.user.profile.citizen===0 &&
+                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                <View style ={styles.endorseButton}>
+                                    <Text style={styles.endorsTxt}>ENDORSE</Text>
+                                </View>
+                            
+                                <Text style={[styles.citizenName, {fontSize: 20, marginTop: 10}]}>{person.user.profile.endorse_cnt}</Text>
+                            </View>}
+                            {person.user.profile.citizen===1 &&
+                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                <Icon name="check-circle" type="material-community" color="#FF7400" />
+                            </View>}
                         </View>
                     ))}
                 </View>
