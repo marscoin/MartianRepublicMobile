@@ -14,10 +14,14 @@ const BigNumber = require("bignumber.js");
 const torrific = require("./torrific");
 const Realm = require("realm");
 
+const net = require('net');
+const tls = require('tls');
+
 const ELECTRUM_HOST = "electrum_host";
 const ELECTRUM_TCP_PORT = "electrum_tcp_port";
 const ELECTRUM_SSL_PORT = "electrum_ssl_port";
 const ELECTRUM_SERVER_HISTORY = "electrum_server_history";
+
 
 let _realm;
 async function _getRealm() {
@@ -99,13 +103,16 @@ async function connectMain() {
 
   try {
     console.log("begin connection:", JSON.stringify(usingPeer));
-    mainClient = new ElectrumClient(
-      usingPeer.host.endsWith(".onion") && isTorCapable ? torrific : global.net,
-      global.tls,
-      usingPeer.ssl || usingPeer.tcp,
-      usingPeer.host,
-      usingPeer.ssl ? "tls" : "tcp"
-    );
+    // mainClient = new ElectrumClient(
+    //   net, tls,
+    //   usingPeer.host.endsWith(".onion") && isTorCapable ? torrific : global.net,
+    //   global.tls,
+    //   usingPeer.ssl || usingPeer.tcp,
+    //   usingPeer.host,
+    //   usingPeer.ssl ? "tls" : "tcp"
+    // );
+    mainClient = new ElectrumClient(net, tls, usingPeer.ssl || usingPeer.tcp, usingPeer.host, usingPeer.ssl ? 'tls' : 'tcp');
+
 
     mainClient.onError = function (e) {
       console.log("electrum marsClient.onError():", e.message);
@@ -284,6 +291,7 @@ module.exports.ping = async function () {
 
 module.exports.getTransactionsFullByAddress = async function (address) {
   const txs = await this.getTransactionsByAddress(address);
+  //console.log('getTransactionsByAddress TXS =', txs);
   const ret = [];
   for (const tx of txs) {
     const full = await mainClient.blockchainTransaction_get(tx.tx_hash, true);
@@ -899,6 +907,7 @@ module.exports.calculateBlockTime = function (height) {
  */
 module.exports.testConnection = async function (host, tcpPort, sslPort) {
   const client = new ElectrumClient(
+    net, tls,
     host.endsWith(".onion") && isTorCapable ? torrific : global.net,
     global.tls,
     sslPort || tcpPort,

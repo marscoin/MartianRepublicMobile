@@ -285,7 +285,14 @@ const AddWalletRoot = () => {
   const theme = useTheme();
 
   return (
-    <AddWalletStack.Navigator screenOptions={{ headerShadowVisible: false }}>
+    <AddWalletStack.Navigator 
+        screenOptions={{ 
+          headerShadowVisible: false,  
+          headerStyle:{
+            backgroundColor:'black'
+           } 
+        }}
+    >
       <AddWalletStack.Screen
         name="AddWallet"
         component={AddWallet}
@@ -298,11 +305,16 @@ const AddWalletRoot = () => {
           }
         })(theme)}
       />
-      <AddWalletStack.Screen name="ImportWallet" component={ImportWallet} options={ImportWallet.navigationOptions(theme)} />
+      <AddWalletStack.Screen 
+          name="ImportWallet" 
+          component={ImportWallet} 
+          options={ImportWallet.navigationOptions(theme)} />
       <AddWalletStack.Screen
         name="ImportWalletDiscovery"
         component={ImportWalletDiscovery}
-        options={ImportWalletDiscovery.navigationOptions(theme)}
+        options={
+          ImportWalletDiscovery.navigationOptions(theme)
+         }
         
       />
       <AddWalletStack.Screen
@@ -599,7 +611,9 @@ const WalletExportStackRoot = () => {
   return (
     <WalletExportStack.Navigator
       id="WalletExportRoot"
-      screenOptions={{ headerShadowVisible: false, statusBarStyle: 'light' }}
+      screenOptions={{ headerShadowVisible: false, statusBarStyle: 'light', headerStyle:{
+        backgroundColor:'black'
+       }  }}
       initialRouteName="WalletExport"
     >
       <WalletExportStack.Screen name="WalletExport" component={WalletExport} options={WalletExport.navigationOptions(theme)} />

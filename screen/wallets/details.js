@@ -60,18 +60,21 @@ const styles = StyleSheet.create({
   textLabel1: {
     fontWeight: '500',
     fontSize: 14,
+    fontFamily: 'Orbitron-Regular', 
     marginVertical: 12,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   textLabel2: {
     fontWeight: '500',
     fontSize: 14,
+    fontFamily: 'Orbitron-Regular', 
     marginVertical: 16,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   textValue: {
     fontWeight: '500',
     fontSize: 14,
+    fontFamily: 'Orbitron-Regular', 
   },
   input: {
     flexDirection: 'row',
@@ -87,6 +90,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     minHeight: 33,
     color: '#81868e',
+    fontFamily: 'Orbitron-Regular', 
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   hardware: {
@@ -99,6 +103,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
+    letterSpacing: 1.5,
+    fontFamily: 'Orbitron-Black', 
   },
   row: {
     flexDirection: 'row',
@@ -116,6 +122,7 @@ const styles = StyleSheet.create({
   saveText: {
     fontSize: 15,
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular', 
   },
 });
 

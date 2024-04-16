@@ -158,7 +158,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         // console.log('this.preferredBalanceUnit', this.preferredBalanceUnit)
       }
     }
-
     return BitcoinUnit.MARS;
   }
 
@@ -310,7 +309,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   async _fetchBalance() {
-    // console.log('==== [MARS] _fetchBalance() ====');
+    console.log('==== [MARS] _fetchBalance() ====');
     // probing future addressess in hierarchy whether they have any transactions, in case
     // our 'next free addr' pointers are lagging behind
     // for that we are gona batch fetch history for all addresses between last used and last used + gap_limit
@@ -809,6 +808,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
     // next, batch fetching each txid we got
     const txdatas = await MARSConnection.multiGetTransactionByTxid(
+      //console.log('=)))))))))))', multiGetTransactionByTxid),
       Object.keys(txs)
     );
 
@@ -977,8 +977,8 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       }
     }
 
-    // console.log(JSON.stringify(this._txs_by_external_index));
-    // console.log(JSON.stringify(this._txs_by_internal_index));
+    console.log(JSON.stringify(this._txs_by_external_index));
+    console.log(JSON.stringify(this._txs_by_internal_index));
 
     this._lastTxFetch = +new Date();
   }
@@ -986,16 +986,30 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   getTransactions() {
     console.log("==== [MARS] getTransactions ====");
     let txs = [];
+    //console.log("==== [MARS] getTransactions", this._address);
+    // console.log("Initial external transactions index:", JSON.stringify(this._txs_by_external_index));
+    // console.log("Initial internal transactions index:", JSON.stringify(this._txs_by_internal_index));
+
+    for (const [address, addressTxs] of Object.entries(this._txs_by_external_index)) {
+      //console.log(`Transactions for external address ${address}:`, JSON.stringify(addressTxs));
+      txs = txs.concat(addressTxs);
+    }
+    for (const [address, addressTxs] of Object.entries(this._txs_by_internal_index)) {
+      //console.log(`Transactions for internal address ${address}:`, JSON.stringify(addressTxs));
+      txs = txs.concat(addressTxs);
+    }
 
     for (const addressTxs of Object.values(this._txs_by_external_index)) {
       txs = txs.concat(addressTxs);
+      //console.log('txs_by_external_index',this._txs_by_external_index)
     }
     for (const addressTxs of Object.values(this._txs_by_internal_index)) {
       txs = txs.concat(addressTxs);
+     // console.log('txs_by_internal_index')
     }
-
+    //console.log('!!!!!!  txs.length', txs.length)
     if (txs.length === 0) return []; // guard clause; so we wont spend time calculating addresses
-
+    if (txs.length === 0) console.log('!!!!!!  txs.length === 0')
     // its faster to pre-build hashmap of owned addresses than to query `this.weOwnAddress()`, which in turn
     // iterates over all addresses in hierarchy
     const ownedAddressesHashmap = {};

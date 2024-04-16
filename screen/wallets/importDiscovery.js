@@ -141,19 +141,19 @@ const ImportWalletDiscovery = () => {
         {loading && (
           <>
             <BlueSpacing10 />
-            <ActivityIndicator testID="Loading" />
+            <ActivityIndicator size={'large'} testID="Loading" />
             <BlueSpacing10 />
             <BlueFormLabel>{progress}</BlueFormLabel>
             <BlueSpacing10 />
           </>
         )}
-        {bip39 && (
+        {/* {bip39 && (
           <BlueButtonLink
             title={loc.wallets.import_discovery_derivation}
             testID="CustomDerivationPathButton"
             onPress={handleCustomDerivation}
           />
-        )}
+        )} */}
         <BlueSpacing10 />
         <View style={styles.buttonContainer}>
           <Button

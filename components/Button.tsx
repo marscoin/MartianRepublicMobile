@@ -76,7 +76,8 @@ const styles = StyleSheet.create({
   text: {
     marginHorizontal: 8,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontFamily: 'Orbitron-Black',
   },
 });
 

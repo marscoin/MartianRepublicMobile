@@ -9,6 +9,7 @@ import coinSelect, { CoinSelectOutput, CoinSelectReturnInput, CoinSelectTarget, 
 import coinSelectSplit from 'coinselect/split';
 import { CreateTransactionResult, CreateTransactionUtxo, Transaction, Utxo } from './types';
 import { ECPairAPI, ECPairFactory, Signer } from 'ecpair';
+import { Marscoin } from '../../blue_modules/constants';
 
 import ecc from '../../blue_modules/noble_ecc';
 import { MarsElectrumWallet } from '../../screen/wallets/mars-wallet';
@@ -109,10 +110,10 @@ export class LegacyWallet extends AbstractWallet {
     try {
       console.log('fetchBalance STARTED!!!')
       const address = this.getAddress();
-      console.log('fetchBalance address!!!', address)
+      //console.log('fetchBalance address!!!', address)
       if (!address) throw new Error('LegacyWallet: Invalid address');
       const balance = await BlueElectrum.getBalanceByAddress(address);
-      console.log('fetchBalance balance!!!', balance)
+      //console.log('fetchBalance balance!!!', balance)
       this.balance = Number(balance.confirmed);
       this.unconfirmed_balance = Number(balance.unconfirmed);
       this._lastBalanceFetch = +new Date();
@@ -353,12 +354,13 @@ export class LegacyWallet extends AbstractWallet {
   }
 
   getTransactions(): Transaction[] {
+
     // a hacky code reuse from electrum HD wallet:
     this._txs_by_external_index = this._txs_by_external_index || [];
     this._txs_by_internal_index = [];
 
-    const hd = new HDSegwitBech32Wallet();
-    //const hd = new MarsElectrumWallet
+    //const hd = new HDSegwitBech32Wallet();
+    const hd = new MarsElectrumWallet
     return hd.getTransactions.apply(this);
   }
 
@@ -532,6 +534,7 @@ export class LegacyWallet extends AbstractWallet {
         bitcoin.payments.p2pkh({
           output: scriptPubKey2,
           network: bitcoin.networks.bitcoin,
+          //network: Marscoin.mainnet,
         }).address ?? false
       );
     } catch (_) {

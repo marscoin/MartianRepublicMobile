@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
   I18nManager,
+  Button,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -35,6 +36,11 @@ import presentAlert from '../../components/Alert';
 import PropTypes from 'prop-types';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
+import { getTransactionsByAddress } from '../../blue_modules/MARSConnection';
+import { MarsElectrumWallet } from './mars-wallet';
+
+const MARSConnection = require('../../blue_modules/MARSConnection')
+
 
 const fs = require('../../blue_modules/fs');
 const BlueElectrum = require('../../blue_modules/BlueElectrum'); 
@@ -59,6 +65,7 @@ const WalletTransactions = ({ navigation }) => {
   const wallet = wallets.find(w => w.getID() === walletID);
   const [itemPriceUnit, setItemPriceUnit] = useState(wallet.getPreferredBalanceUnit());
   const [dataSource, setDataSource] = useState(wallet.getTransactions(15));
+  //const [dataSource, setDataSource] = useState(getTransactionsByAddress(wallet._address));
   const [isRefreshing, setIsRefreshing] = useState(false); // a simple flag to know that wallet was being updated once
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [limit, setLimit] = useState(15);
@@ -68,11 +75,14 @@ const WalletTransactions = ({ navigation }) => {
   const [lnNodeInfo, setLnNodeInfo] = useState({ canReceive: 0, canSend: 0 });
   const walletActionButtonsRef = useRef();
 
-  //console.log(wallet.type)
+  // console.log('wallet type transactions', wallet.type)
+  // console.log('wallet address transactions', wallet._address)
+  //console.log('wallet address transactions!!!!!!', dataSource)
 
   const stylesHook = StyleSheet.create({
     listHeaderText: {
       color: colors.foregroundColor,
+      
     },
     browserButton2: {
       backgroundColor: colors.lightButton,
@@ -94,6 +104,7 @@ const WalletTransactions = ({ navigation }) => {
    */
   const getTransactionsSliced = (lmt = Infinity) => {
     let txs = wallet.getTransactions();
+    console.log('getTransactionsSliced8888888888', txs)
     for (const tx of txs) {
       tx.sort_ts = +new Date(tx.received);
     }
@@ -136,7 +147,8 @@ const WalletTransactions = ({ navigation }) => {
     setLimit(15);
     setPageSize(20);
     setTimeElapsed(0);
-    setItemPriceUnit(wallet.getPreferredBalanceUnit());
+    // setItemPriceUnit(wallet.getPreferredBalanceUnit());
+    setItemPriceUnit('MARS');
     setIsLoading(false);
     setSelectedWalletID(wallet.getID());
     setDataSource([...getTransactionsSliced(limit)]);
@@ -144,9 +156,9 @@ const WalletTransactions = ({ navigation }) => {
       headerStyle: {
         backgroundColor: WalletGradient.headerColorFor(wallet.type),
         borderBottomWidth: 0,
-        elevation: 0,
+        //elevation: 0,
         // shadowRadius: 0,
-        shadowOffset: { height: 0, width: 0 },
+        //shadowOffset: { height: 0, width: 0 },
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,9 +193,12 @@ const WalletTransactions = ({ navigation }) => {
     if (w && w.chain === Chain.OFFCHAIN) {
       return true;
     }
-
     return false;
   };
+
+  const getCoinName = () => {
+        return "Marscoin"
+  }
 
   const refreshLnNodeInfo = () => {
     if (wallet.type === LightningLdkWallet.type) {
@@ -191,19 +206,79 @@ const WalletTransactions = ({ navigation }) => {
     }
   };
 
-  /**
+   /**
    * Forcefully fetches TXs and balance for wallet
    */
+  //  const refreshTransactions = async () => {
+  //   console.log('REFREEEEEESHHHHH!!!!!')
+  //   if (isElectrumDisabled) return setIsLoading(false)
+  //   console.log('isElectrumDisabled', isElectrumDisabled)
+  //   if (isLoading) return
+  //   setIsLoading(true)
+  //   let noErr = true
+  //   let smthChanged = false
+  //   try {
+  //     // await BlueElectrum.ping();
+  //     await BlueElectrum.waitTillConnected()
+  //     /** @type {MarsElectrumWallet} */
+  //     const balanceStart = +new Date()
+  //     console.log('balanceStart', balanceStart)
+  //     const oldBalance = wallet.getBalance()
+  //     console.log('old balance', oldBalance)
+  //     await wallet.fetchBalance()
+  //     if (oldBalance !== wallet.getBalance()) smthChanged = true
+  //     const balanceEnd = +new Date()
+  //     console.log(
+  //       wallet.getLabel(),
+  //       "fetch balance took",
+  //       (balanceEnd - balanceStart) / 1000,
+  //       "sec"
+  //     )
+  //     console.log('REFREEEEEESHHHHH2222222!!!!!')
+  //     const start = +new Date()
+  //     const oldTxLen = wallet.getTransactions().length
+  //     await wallet.fetchTransactions()
+  //     if (wallet.fetchPendingTransactions) {
+  //       await wallet.fetchPendingTransactions()
+  //     }
+  //     if (wallet.fetchUserInvoices) {
+  //       await wallet.fetchUserInvoices()
+  //     }
+  //     if (oldTxLen !== wallet.getTransactions().length) smthChanged = true
+  //     const end = +new Date()
+  //     console.log(
+  //       wallet.getLabel(),
+  //       "fetch tx took",
+  //       (end - start) / 1000,
+  //       "sec"
+  //     )
+  //   } catch (err) {
+  //     noErr = false
+  //     alert(err.message)
+  //     setIsLoading(false)
+  //     setTimeElapsed((prev) => prev + 1)
+  //   }
+  //   if (noErr && smthChanged) {
+  //     console.log("saving to disk")
+  //     await saveToDisk() // caching
+  //     //    setDataSource([...getTransactionsSliced(limit)]);
+  //   }
+  //   setIsLoading(false)
+  //   setTimeElapsed((prev) => prev + 1)
+  // }
   const refreshTransactions = async () => {
+    console.log('!!!!!!!!!!!REFRESH')
+    // wallet.fetchTransactions()
+    console.log('isElectrumDisabled', isElectrumDisabled)
     if (isElectrumDisabled) return setIsLoading(false);
     if (isLoading) return;
     setIsLoading(true);
-    // console.log('!!!!!!!!!!!REFRESH')
     let noErr = true;
     let smthChanged = false;
     try {
       //refreshLnNodeInfo();
       // await BlueElectrum.ping();
+      //await MARSConnection.waitTillConnected();
       await BlueElectrum.waitTillConnected();
       if (wallet.allowBIP47() && wallet.isBIP47Enabled()) {
         const pcStart = +new Date();
@@ -212,13 +287,17 @@ const WalletTransactions = ({ navigation }) => {
         console.log(wallet.getLabel(), 'fetch payment codes took', (pcEnd - pcStart) / 1000, 'sec');
       }
       const balanceStart = +new Date();
+      console.log('!!!!!balanceStart', balanceStart)
       const oldBalance = wallet.getBalance();
+      console.log('!!!!!oldBalance', oldBalance)
       await wallet.fetchBalance();
       if (oldBalance !== wallet.getBalance()) smthChanged = true;
       const balanceEnd = +new Date();
       console.log(wallet.getLabel(), 'fetch balance took', (balanceEnd - balanceStart) / 1000, 'sec');
       const start = +new Date();
+      console.log('!!!!!start', start)
       const oldTxLen = wallet.getTransactions().length;
+      console.log('!!!!!oldTxLen', oldTxLen)
       let immatureTxsConfs = ''; // a silly way to keep track if anything changed in immature transactions
       for (const tx of wallet.getTransactions()) {
         if (tx.confirmations < 7) immatureTxsConfs += tx.txid + ':' + tx.confirmations + ';';
@@ -534,7 +613,8 @@ const WalletTransactions = ({ navigation }) => {
         wallet={wallet}
         onWalletUnitChange={passedWallet =>
           InteractionManager.runAfterInteractions(async () => {
-            setItemPriceUnit(passedWallet.getPreferredBalanceUnit());
+            setItemPriceUnit('MARS');
+            //setItemPriceUnit(passedWallet.getPreferredBalanceUnit());
             saveToDisk();
           })
         }

@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
   useColorScheme,
+  TouchableOpacity
 } from 'react-native';
 import {
   BitcoinButton,
@@ -513,10 +514,8 @@ const WalletsAdd: React.FC = () => {
                 disabled={
                   !selectedWalletType || (selectedWalletType === ButtonSelected.OFFCHAIN && (walletBaseURI ?? '').trim().length === 0)
                 }
-                //onPress={createWallet}
                 onPress={createMarsWallet}
               />
-
               <BlueButtonLink
                 testID="ImportWallet"
                 style={styles.import}

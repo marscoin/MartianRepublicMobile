@@ -103,7 +103,7 @@ export const TransactionListItem = React.memo(({ item, itemPriceUnit = BitcoinUn
       color,
       fontSize: 14,
       fontFamily: 'Orbitron-Regular',
-      fontWeight: '600',
+      fontWeight: '500',
       textAlign: 'right',
       width: 96,
     };

@@ -172,7 +172,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
       <Text testID="WalletLabel" numberOfLines={1} style={styles.address}>
         {wallet.getAddress()}
       </Text>
-      <ToolTipMenu
+      {/* <ToolTipMenu
         onPress={changeWalletBalanceUnit}
         ref={menuRef}
         title={`${loc.wallets.balance} (${
@@ -212,7 +212,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
                 },
               ]
         }
-      >
+      > */}
         <View style={styles.walletBalance}>
           {wallet.hideBalance ? (
             <BluePrivateBalance />
@@ -229,7 +229,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
             </Text>
           )}
         </View>
-      </ToolTipMenu>
+      {/* </ToolTipMenu> */}
       {wallet.type === LightningCustodianWallet.type && allowOnchainAddress && (
         <ToolTipMenu
           isMenuPrimaryAction

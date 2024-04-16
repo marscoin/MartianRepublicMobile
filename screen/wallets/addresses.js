@@ -137,6 +137,16 @@ const WalletAddresses = () => {
     }, []),
   );
 
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     Privacy.enableBlur();
+
+  //     getAddresses();
+
+  //     // eslint-disable-next-line react-hooks/exhaustive-deps
+  //   }, []),
+  // );
+
   const data =
     search.length > 0 ? filteredAddresses.filter(item => item.address.toLowerCase().includes(search.toLowerCase())) : filteredAddresses;
 

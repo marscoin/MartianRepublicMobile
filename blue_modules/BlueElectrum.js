@@ -9,6 +9,7 @@ import { Marscoin } from './constants';
 const bitcoin = require('bitcoinjs-lib');
 const ElectrumClient = require('electrum-client');
 const BigNumber = require('bignumber.js');
+const reverse = require('buffer-reverse');
 
 const net = require('net');
 const tls = require('tls');
@@ -49,24 +50,24 @@ async function _getRealm() {
 }
 
 const storageKey = 'ELECTRUM_PEERS';
-// const defaultPeer = { host: 'electrum1.bluewallet.io', ssl: '443' };
-// const hardcodedPeers = [
-//   { host: 'mainnet.foundationdevices.com', ssl: '50002' },
-//   { host: 'bitcoin.lukechilds.co', ssl: '50002' },
-//   { host: 'electrum.jochen-hoenicke.de', ssl: '50006' },
-//   { host: 'electrum1.bluewallet.io', ssl: '443' },
-//   { host: 'electrum.acinq.co', ssl: '50002' },
-//   { host: 'electrum.bitaroo.net', ssl: '50002' },
-// ];
-const defaultPeer = { host: "164.90.138.207", ssl: "50002" };
+const defaultPeer = { host: 'electrum1.bluewallet.io', ssl: '443' };
 const hardcodedPeers = [
-  { host: "164.90.138.207", tcp: "50001" },
-  { host: "164.90.138.207", ssl: "50002" },
+  { host: 'mainnet.foundationdevices.com', ssl: '50002' },
+  { host: 'bitcoin.lukechilds.co', ssl: '50002' },
+  { host: 'electrum.jochen-hoenicke.de', ssl: '50006' },
+  { host: 'electrum1.bluewallet.io', ssl: '443' },
+  { host: 'electrum.acinq.co', ssl: '50002' },
+  { host: 'electrum.bitaroo.net', ssl: '50002' },
 ];
+// const defaultPeer = { host: "164.90.138.207", ssl: "50002" };
+// const hardcodedPeers = [
+//   { host: "164.90.138.207", tcp: "50001" },
+//   { host: "164.90.138.207", ssl: "50002" },
+// ];
 
 /** @type {ElectrumClient} */
 let mainClient;
-console.log('MAIN CLIENT', mainClient)
+//console.log('MAIN CLIENT', mainClient)
 let mainConnected = false;
 let wasConnectedAtLeastOnce = false;
 let serverName = false;
@@ -148,7 +149,7 @@ async function connectMain() {
     };
     const ver = await mainClient.initElectrum({ client: 'bluewallet', version: '1.4' });
     if (ver && ver[0]) {
-      console.log('connected to ', ver);
+      console.log('BlueElectrum is connected to ', ver);
       serverName = ver[0];
       mainConnected = true;
       wasConnectedAtLeastOnce = true;
@@ -338,10 +339,10 @@ async function getRandomDynamicPeer() {
 module.exports.getBalanceByAddress = async function (address) {
   if (!mainClient) throw new Error('Electrum client is not connected');
   console.log('getBalanceByAddress STARTED!!!!')
-  console.log('getBalanceByAddress bitcoin.address!!!!', bitcoin.address)
+  //console.log('getBalanceByAddress bitcoin.address!!!!', bitcoin.address)
   //const script = bitcoin.address.toOutputScript(address);
   const script = bitcoin.address.toOutputScript(address, Marscoin.mainnet);
-  console.log('getBalanceByAddress script!!!!', script)
+  //console.log('getBalanceByAddress script!!!!', script)
   const hash = bitcoin.crypto.sha256(script);
   const reversedHash = Buffer.from(hash).reverse();
   const balance = await mainClient.blockchainScripthash_getBalance(reversedHash.toString('hex'));
@@ -372,6 +373,7 @@ module.exports.getSecondsSinceLastRequest = function () {
 module.exports.getTransactionsByAddress = async function (address) {
   if (!mainClient) throw new Error('Electrum client is not connected');
   const script = bitcoin.address.toOutputScript(address);
+  //const script = bitcoin.address.toOutputScript(address, Marscoin.mainnet);
   const hash = bitcoin.crypto.sha256(script);
   const reversedHash = Buffer.from(hash).reverse();
   const history = await mainClient.blockchainScripthash_getHistory(reversedHash.toString('hex'));
@@ -407,6 +409,7 @@ module.exports.ping = async function () {
 
 module.exports.getTransactionsFullByAddress = async function (address) {
   const txs = await this.getTransactionsByAddress(address);
+  console.log('CCCCCCCC');
   const ret = [];
   for (const tx of txs) {
     let full;

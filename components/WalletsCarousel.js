@@ -195,6 +195,8 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
   // function removeTrailingZeros(value) {
   //   return value.replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1");
   // }
+
+  // console.log('CURRENCY', item.preferredBalanceUnit)
   const prebalance = Number((item.getBalance()))/100000000
   const balance = !item.hideBalance && (removeTrailingZeros(prebalance) + ' ' + item.preferredBalanceUnit);
   //const balance = !item.hideBalance && formatBalance(item.getBalance(), item.preferredBalanceUnit, true);

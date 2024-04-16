@@ -66,7 +66,7 @@ export class AbstractWallet {
     this._utxo = [];
     this._lastTxFetch = 0;
     this._lastBalanceFetch = 0;
-    this.preferredBalanceUnit = BitcoinUnit.BTC;
+    this.preferredBalanceUnit = BitcoinUnit.MARS;
     this.chain = Chain.ONCHAIN;
     this.hideBalance = false;
     this.userHasSavedExport = false;
@@ -140,7 +140,7 @@ export class AbstractWallet {
         return this.preferredBalanceUnit;
       }
     }
-    return BitcoinUnit.BTC;
+    return BitcoinUnit.MARS;
   }
 
   async allowOnchainAddress(): Promise<boolean> {

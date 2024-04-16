@@ -27,6 +27,9 @@ import { randomBytes } from './class/rng';
 import presentAlert from './components/Alert';
 import { initCurrencyDaemon } from './blue_modules/currency';
 import DefaultPreference from 'react-native-default-preference';
+import { MarsElectrumWallet } from './screen/wallets/mars-wallet';
+
+
 
 const encryption = require('./blue_modules/encryption');
 const Realm = require('realm');
@@ -35,7 +38,9 @@ let usedBucketNum = false;
 let savingInProgress = 0; // its both a flag and a counter of attempts to write to disk
 const prompt = require('./helpers/prompt');
 const BlueElectrum = require('./blue_modules/BlueElectrum');
+const MARSConnection=require('./blue_modules/MARSConnection')
 BlueElectrum.connectMain();
+//MARSConnection.connectMain();
 
 class AppStorage {
   static FLAG_ENCRYPTED = 'data_encrypted';
@@ -343,6 +348,9 @@ class AppStorage {
           case SegwitP2SHWallet.type:
             unserializedWallet = SegwitP2SHWallet.fromJson(key);
             break;
+          case MarsElectrumWallet.type:
+              unserializedWallet = MarsElectrumWallet.fromJson(key);
+          break;  
           case WatchOnlyWallet.type:
             unserializedWallet = WatchOnlyWallet.fromJson(key);
             unserializedWallet.init();

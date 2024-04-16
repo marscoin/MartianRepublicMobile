@@ -36,8 +36,8 @@ export const BlueDefaultTheme = {
     failedColor: '#ff0000',
     shadowColor: '#white',
     inverseForegroundColor: 'black',
-    hdborderColor: 'red',
-    hdbackgroundColor: 'red',
+    hdborderColor: '#FF7400',
+    hdbackgroundColor: '#FF7400',
     lnborderColor: 'white',///
     //lnborderColor: '#FFB600',
     lnbackgroundColor: '#FFFAEF',////lightning text and border
@@ -45,7 +45,7 @@ export const BlueDefaultTheme = {
     lightButton: '#2F2D2B', ////add wallet area in flatList
     ballReceive: '#d2f8d6',///
     ballOutgoing: '#f8d2d2',///
-    lightBorder: 'red',
+    lightBorder: 'white',
     ballOutgoingExpired: '#EEF0F4',///
     modal: 'black',
     formBorder: 'white',///orange frame of Qr iand input

@@ -154,6 +154,8 @@ const WalletsList = () => {
     refreshAllWalletTransactions(false, showUpdateStatusIndicator).finally(() => setIsLoading(false));
   };
 
+  
+
   useEffect(() => {
     refreshTransactions(false, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -420,11 +422,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 16,
+    fontFamily: 'Orbitron-Black',
   },
   listHeaderText: {
     fontWeight: 'bold',
     fontSize: 24,
     marginVertical: 16,
+    fontFamily: 'Orbitron-Black',
   },
   footerRoot: {
     top: 80,
@@ -435,12 +439,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#9aa0aa',
     textAlign: 'center',
+    fontFamily: 'Orbitron-Regular',
   },
   footerStart: {
     fontSize: 18,
     color: '#9aa0aa',
     textAlign: 'center',
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular',
+    marginTop: 10
   },
   transaction: {
     marginHorizontal: 0,
