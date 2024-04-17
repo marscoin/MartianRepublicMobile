@@ -609,12 +609,24 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     console.log(
       "==== [MARS] GetWifByIndex() ==== index: " + index + " " + internal
     );
-    if (!this.secret) return false;
-    const seed = this._getSeed();
-    const root = HDNode.fromSeed(seed, Marscoin.mainnet);
-    const path = `m/44'/2'/0'/${internal ? 1 : 0}/${index}`;
-    const child = root.derivePath(path);
-    return child.toWIF();
+    try {
+      const seed = this._getSeed(); // Make sure this returns a Buffer
+      const network = Marscoin.mainnet; // Using Marscoin network definitions
+      const root = bip32.fromSeed(seed, network); // Use the Marscoin network configuration
+      const path = `m/44'/${network.bip44}'/0'/${internal ? 1 : 0}/${index}`;
+      const child = root.derivePath(path);
+      return child.toWIF();
+  } catch (error) {
+      console.error('Error deriving WIF:', error);
+      return false;
+  }
+    // if (!this.secret) return false;
+    // const seed = this._getSeed();
+    // //const root = HDNode.fromSeed(seed, Marscoin.mainnet);
+    // const root = bitcoin.bip32.fromSeed(seed, Marscoin.mainnet);
+    // const path = `m/44'/2'/0'/${internal ? 1 : 0}/${index}`;
+    // const child = root.derivePath(path);
+    // return child.toWIF();
   }
 
   _getWifForAddress(address) {

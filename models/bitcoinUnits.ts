@@ -2,6 +2,7 @@ export const BitcoinUnit = {
   BTC: 'BTC',
   SATS: 'sats',
   MARS: 'MARS',
+  ZUBRINS: 'zubrins',
   LOCAL_CURRENCY: 'local_currency',
   MAX: 'MAX',
 } as const;

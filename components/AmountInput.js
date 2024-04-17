@@ -286,7 +286,8 @@ class AmountInput extends Component {
                   </Pressable>
                 )}
                 {unit !== BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX && (
-                  <Text style={[styles.cryptoCurrency, stylesHook.cryptoCurrency]}>{' ' + loc.units[unit]}</Text>
+                  // <Text style={[styles.cryptoCurrency, stylesHook.cryptoCurrency]}>{' ' + loc.units[unit]}</Text>
+                  <Text style={[styles.cryptoCurrency, stylesHook.cryptoCurrency]}>{' MARS'}</Text>
                 )}
               </View>
               <View style={styles.secondaryRoot}>
@@ -372,11 +373,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginHorizontal: 4,
     fontWeight: 'bold',
+    fontFamily: 'Orbitron-Black',
     alignSelf: 'center',
     justifyContent: 'center',
   },
   input: {
     fontWeight: 'bold',
+    fontFamily: 'Orbitron-Black',
   },
   cryptoCurrency: {
     fontSize: 15,
@@ -384,6 +387,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     alignSelf: 'center',
     justifyContent: 'center',
+    fontFamily: 'Orbitron-Black',
   },
   secondaryRoot: {
     alignItems: 'center',
@@ -393,6 +397,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#9BA0A9',
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular',
   },
   changeAmountUnit: {
     alignSelf: 'center',

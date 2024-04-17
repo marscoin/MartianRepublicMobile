@@ -47,8 +47,6 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
       color: props.disabled ? colors.buttonDisabledTextColor : colors.foregroundColor,
       fontSize: 15,
       fontWeight: '500',
-      //fontFamily: 'Orbitron-Regular', 
-      //letterSpacing: 1.1,
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
     },
     subtitle: {
@@ -56,7 +54,6 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
       color: colors.alternativeTextColor,
       fontWeight: '400',
-      //fontFamily: 'Orbitron-Regular',
       fontSize: 14,
     },
     containerStyle: {

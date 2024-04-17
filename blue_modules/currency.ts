@@ -180,6 +180,13 @@ function satoshiToBTC(satoshi: number): string {
 function btcToSatoshi(btc: BigNumber.Value): number {
   return new BigNumber(btc).multipliedBy(100000000).toNumber();
 }
+function fiatToMARS(fiatFloat: number) {
+  let b = new BigNumber(fiatFloat);
+  b = b
+    .dividedBy(exchangeRates["MARS_" + preferredFiatCurrency.endPointKey])
+    .toFixed(8);
+  return b;
+}
 
 function fiatToBTC(fiatFloat: number): string {
   const exchangeRateKey = BTC_PREFIX + preferredFiatCurrency.endPointKey;
@@ -214,6 +221,7 @@ export {
   initCurrencyDaemon,
   satoshiToLocalCurrency,
   fiatToBTC,
+  fiatToMARS,
   satoshiToBTC,
   BTCToLocalCurrency,
   setPreferredCurrency,
