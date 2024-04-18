@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    transform: [{ rotate: '225deg' }],
+    // transform: [{ rotate: '225deg' }],
     justifyContent: 'center',
   },
 });
@@ -20,14 +20,15 @@ const TransactionOutgoingIcon = props => {
   const { colors } = useTheme();
   const stylesBlueIconHooks = StyleSheet.create({
     ballOutgoing: {
-      backgroundColor: colors.ballOutgoing,
+      //backgroundColor: colors.ballOutgoing,
     },
   });
 
   return (
     <View style={styles.boxIncoming}>
       <View style={[styles.ballOutgoing, stylesBlueIconHooks.ballOutgoing]}>
-        <Icon name="arrow-down" size={16} type="font-awesome" color={colors.outgoingForegroundColor} />
+        {/* <Icon name="arrow-down" size={16} type="font-awesome" color={colors.outgoingForegroundColor} /> */}
+        <Icon name="arrow-right-bold-hexagon-outline" size={33} type="material-community" color={colors.outgoingForegroundColor} />
       </View>
     </View>
   );

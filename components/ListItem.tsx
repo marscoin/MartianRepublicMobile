@@ -81,7 +81,7 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
       {props.leftAvatar && props.leftAvatar}
       <RNElementsListItem.Content>
         <RNElementsListItem.Title style={stylesHook.title} numberOfLines={0} accessible={props.switch === undefined}>
-          {props.title}
+          {props.title} 
         </RNElementsListItem.Title>
         {props.subtitle && (
           <RNElementsListItem.Subtitle

@@ -29,8 +29,6 @@ import { initCurrencyDaemon } from './blue_modules/currency';
 import DefaultPreference from 'react-native-default-preference';
 import { MarsElectrumWallet } from './screen/wallets/mars-wallet';
 
-
-
 const encryption = require('./blue_modules/encryption');
 const Realm = require('realm');
 const createHash = require('create-hash');

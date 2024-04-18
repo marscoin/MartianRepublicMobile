@@ -64,10 +64,10 @@ export const TransactionListItem = React.memo(({ item, itemPriceUnit = BitcoinUn
       const invoiceExpiration = item.timestamp + item.expire_time;
 
       if (invoiceExpiration > now) {
-        return formatBalanceWithoutSuffix(item.value && item.value, itemPriceUnit, true).toString();
+        return formatBalanceWithoutSuffix(item.value && item.value, itemPriceUnit, true).toString() +'MMMMM';
       } else if (invoiceExpiration < now) {
         if (item.ispaid) {
-          return formatBalanceWithoutSuffix(item.value && item.value, itemPriceUnit, true).toString();
+          return formatBalanceWithoutSuffix(item.value && item.value, itemPriceUnit, true).toString() +'MMMMM';
         } else {
           return loc.lnd.expired;
         }
@@ -332,7 +332,7 @@ export const TransactionListItem = React.memo(({ item, itemPriceUnit = BitcoinUn
           Component={View}
           subtitleProps={subtitleProps}
           chevron={false}
-          rightTitle={rowTitle}
+          rightTitle={rowTitle}////value of transaction
           rightTitleStyle={rowTitleStyle}
           containerStyle={containerStyle}
         />

@@ -39,6 +39,7 @@ export const LITECOIN = {
   },
 };
 
+
 export const Marscoin = {
   mainnet: {
     messagePrefix: "\x19Marscoin Signed Message:\n",

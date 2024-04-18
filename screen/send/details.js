@@ -452,33 +452,34 @@ const SendDetails = () => {
     const requestedSatPerByte = feeRate;
     for (const [index, transaction] of addresses.entries()) {
       let error;
+      console.log('!!!!transaction.amount', transaction.amount)
       if (!transaction.amount || transaction.amount < 0 || parseFloat(transaction.amount) === 0) {
         error = loc.send.details_amount_field_is_not_valid;
-        console.log('validation error');
+        console.log('validation error 1', error);
       } else if (parseFloat(transaction.amountSats) <= 500) {
         error = loc.send.details_amount_field_is_less_than_minimum_amount_sat;
-        console.log('validation error');
+        console.log('validation error 2', error);
       } else if (!requestedSatPerByte || parseFloat(requestedSatPerByte) < 1) {
         error = loc.send.details_fee_field_is_not_valid;
-        console.log('validation error');
+        console.log('validation error 3');
       } else if (!transaction.address) {
         error = loc.send.details_address_field_is_not_valid;
-        console.log('validation error');
+        console.log('validation error 4');
       } else if (balance - transaction.amountSats < 0) {
         // first sanity check is that sending amount is not bigger than available balance
         error = frozenBalance > 0 ? loc.send.details_total_exceeds_balance_frozen : loc.send.details_total_exceeds_balance;
-        console.log('validation error');
+        console.log('validation error 5', error);
       } else if (transaction.address) {
         const address = transaction.address.trim().toLowerCase();
         if (address.startsWith('lnb') || address.startsWith('lightning:lnb')) {
           error = loc.send.provided_address_is_invoice;
-          console.log('validation error');
+          console.log('validation error 6');
         }
       }
 
       if (!error) {
         if (!wallet.isAddressValid(transaction.address)) {
-          console.log('validation error');
+          console.log('validation error 7');
           error = loc.send.details_address_field_is_not_valid;
         }
       }

@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useTheme } from '../themes';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faArrowRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 
 const styles = StyleSheet.create({
   boxIncoming: {
@@ -11,7 +13,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    transform: [{ rotate: '-45deg' }],
+    // transform: [{ rotate: '-45deg' }],
     justifyContent: 'center',
   },
 });
@@ -20,15 +22,16 @@ const TransactionIncomingIcon = props => {
   const { colors } = useTheme();
   const stylesHooks = StyleSheet.create({
     ballIncoming: {
-      backgroundColor: colors.ballReceive,
+      //backgroundColor: colors.ballReceive,
     },
   });
 
   return (
     <View style={styles.boxIncoming}>
       <View style={[styles.ballIncoming, stylesHooks.ballIncoming]}>
-        {/* <Icon name="arrow-down" size={16} type="font-awesome" color={colors.incomingForegroundColor} /> */}
-        <Icon name="arrow-right-from-arc" size={16} type="font-awesome" color={colors.incomingForegroundColor} />
+        <Icon name="arrow-left-bold-hexagon-outline" size={33} type="material-community" color={colors.incomingForegroundColor} />
+        {/* <FontAwesomeIcon icon={faArrowRightFromBracket} size={22} color="white" /> */}
+        
       </View>
     </View>
   );

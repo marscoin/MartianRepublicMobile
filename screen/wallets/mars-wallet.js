@@ -12,6 +12,12 @@ const BIP32Factory = require('bip32').BIP32Factory;
 // Create a bip32 instance using the factory
 const bip32Instance = BIP32Factory(ecc);
 
+/*
+   * Converts zpub to xpub
+   *
+   * @param {String} zpub
+   * @returns {String} xpub
+   */
 
 // import { checkReporting } from "../../blue_modules/balanceAnalytics";
 // import checkReporting
@@ -83,7 +89,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   getAddress() {
-    console.log('==== [MARS] getAddress ====');
+    // console.log('==== [MARS] getAddress ====');
     return this._address;
   }
 
@@ -153,7 +159,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   getPreferredBalanceUnit() {
     for (const value of Object.values(BitcoinUnit)) {
       if (value === this.preferredBalanceUnit) {
-        console.log('this.preferredBalanceUnit', this.preferredBalanceUnit)
+        //console.log('this.preferredBalanceUnit', this.preferredBalanceUnit)
         return this.preferredBalanceUnit;
         // console.log('this.preferredBalanceUnit', this.preferredBalanceUnit)
       }
@@ -191,9 +197,11 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     console.log("==== [MARS] GetXPub()");
     // Cache
     if (this._xpub) {
+      console.log("this._xpub", this._xpub);
       return this._xpub; // cache hit
     }
     const seed = this._getSeed();
+    console.log("seed", seed);
     console.log('SEEEEEEED!!!',seed)
     const root = bitcoin.bip32.fromSeed(seed, Marscoin.mainnet);
 
@@ -237,13 +245,15 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
     if (node === 0 && !this._node0) {
       const xpub = this.getXpub();
-      console.log('HDNode!!!',HDNode)
+      // console.log('HDNode!!!',HDNode)
       const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
       this._node0 = hdNode.derive(node);
     }
 
     if (node === 1 && !this._node1) {
+      console.log('Hnode === 1')
       const xpub = this.getXpub();
+      console.log('this.xpub!!!',xpub)
       const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
       this._node1 = hdNode.derive(node);
     }
@@ -612,7 +622,8 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     try {
       const seed = this._getSeed(); // Make sure this returns a Buffer
       const network = Marscoin.mainnet; // Using Marscoin network definitions
-      const root = bip32.fromSeed(seed, network); // Use the Marscoin network configuration
+      const root = bitcoin.bip32.fromSeed(seed, Marscoin.mainnet);
+      //const root = bip32.fromSeed(seed, network); // Use the Marscoin network configuration
       const path = `m/44'/${network.bip44}'/0'/${internal ? 1 : 0}/${index}`;
       const child = root.derivePath(path);
       return child.toWIF();
@@ -996,7 +1007,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   getTransactions() {
-    console.log("==== [MARS] getTransactions ====");
+    // console.log("==== [MARS] getTransactions ====");
     let txs = [];
     //console.log("==== [MARS] getTransactions", this._address);
     // console.log("Initial external transactions index:", JSON.stringify(this._txs_by_external_index));
@@ -1131,20 +1142,39 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
   _getNodePubkeyByIndex(node, index) {
     console.log("==== [MARS] GetNodePubKeyByIndex()");
+    const xpub = this.constructor._zpubToXpub(this.getXpub());
     index = index * 1; // cast to int
-
+    console.log("this wallet", this.constructor);
+    console.log("node =", node);
     // if (node === 0 && !this._node0) {
     if (node === 0) {
-      const xpub = this.constructor._zpubToXpub(this.getXpub());
-      const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet);
+      //const xpub = this.constructor._zpubToXpub(this.getXpub());
+      console.log("XPUB =", xpub);
+      //const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet)
+      const hdNode = bip32.fromBase58(xpub);
+      console.log("Node:", hdNode);
+      //const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet);
       this._node0 = hdNode.derive(node);
     }
 
     // if (node === 1 && !this._node1) {
     if (node === 1) {
-      const xpub = this.constructor._zpubToXpub(this.getXpub());
-      const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet);
-      this._node1 = hdNode.derive(node);
+      //const xpub = this.constructor._zpubToXpub(this.getXpub());
+      console.log("this wallet xpub ", xpub);
+      // const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet)
+      try {
+        //const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
+        const hdNode = bip32.fromBase58(xpub);
+        const derivedNode = hdNode.derive(node).derive(index);
+        const publicKey = derivedNode.publicKey;
+
+        console.log("Public Key: ", publicKey.toString('hex'));
+        return publicKey;
+    } catch (error) {
+        console.error("Error deriving public key:", error);
+        return null;
+    }
+      //this._node1 = hdNode.derive(node);
     }
 
     if (node === 0) {
@@ -1159,6 +1189,40 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       return temp;
     }
   }
+
+  getPublicKeyFromXpub(xpubString, index = 0) {
+    try {
+      const network = Marscoin.mainnet;
+      const node = bip32Instance.fromBase58(xpubString, network);
+      const child = node.derive(index);
+   
+      return child.publicKey.toString('hex');
+    } catch (error) {
+      console.error("Failed to derive public key:", error.message);
+      return null;
+    }
+  }
+
+//   _getNodePubkeyByIndex(node, index) {
+//     console.log("==== [MARS] GetNodePubKeyByIndex()");
+//     const xpub = this.constructor._zpubToXpub(this.getXpub());
+//     console.log("Using xpub: ", xpub);
+//     //console.log("Public Key:", getPublicKeyFromXpub(xpub)); 
+
+//     try {
+//         const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
+//         console.log("Using hdNode: ", hdNode);
+//         const derivedNode = hdNode.derive(node).derive(index);
+//         const publicKey = derivedNode.publicKey;
+//         console.log("Derived Public Key: ", publicKey.toString('hex'));
+//         return publicKey;
+//     } catch (error) {
+//         console.error("Error deriving public key:", error);
+//         return null;
+//     }
+// }
+
+
 
   // Not happy w/ having to fetch txhex after, need to add it while parsing tx
   async createTransaction(
@@ -1220,7 +1284,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
           this._getWifForAddress(input.address),
           Marscoin.mainnet
         );
-
         console.log("Found keypair: " + JSON.stringify(keyPair));
         keypairs[c] = keyPair;
       }
@@ -1309,6 +1372,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     console.log("==== [MARS] _addPsbtInput ====");
     console.log(input);
     const pubkey = this._getPubkeyByAddress(input.address);
+    console.log('pubkey',pubkey);
     const path = this._getDerivationPathByAddress(input.address);
 
     const p2wpkh = bitcoin.payments.p2pkh({

@@ -1018,7 +1018,7 @@ const semVerToInt = function (semver) {
 
 function txhexToElectrumTransaction(txhex) {
   const tx = bitcoin.Transaction.fromHex(txhex);
-
+  console.log('!!!! BLUE ELECTRUM txhexToElectrumTransaction')
   const ret = {
     txid: tx.getId(),
     hash: tx.getId(),

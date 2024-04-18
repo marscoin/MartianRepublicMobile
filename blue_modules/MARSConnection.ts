@@ -971,7 +971,7 @@ const splitIntoChunks = function (arr, chunkSize) {
 
 function txhexToElectrumTransaction(txhex) {
   const tx = bitcoin.Transaction.fromHex(txhex);
-
+console.log('!!!! txhexToElectrumTransaction')
   const ret = {
     txid: tx.getId(),
     hash: tx.getId(),

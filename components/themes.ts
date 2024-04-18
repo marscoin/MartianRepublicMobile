@@ -29,10 +29,11 @@ export const BlueDefaultTheme = {
     alternativeTextColor2: 'white',
     buttonBlueBackgroundColor: '#FF7400',///
     incomingBackgroundColor: '#d2f8d6',///
-    incomingForegroundColor: '#37c0a1',//
+    incomingForegroundColor: '#2DD881',//incoming transactions
     outgoingBackgroundColor: '#f8d2d2',//
-    outgoingForegroundColor: '#d0021b',////
-    successColor: '#37c0a1',
+    outgoingForegroundColor: '#FF7400',////outgoing transactions
+    //successColor: '#2DD881',///green
+    successColor: 'white',
     failedColor: '#ff0000',
     shadowColor: '#white',
     inverseForegroundColor: 'black',
@@ -42,18 +43,18 @@ export const BlueDefaultTheme = {
     //lnborderColor: '#FFB600',
     lnbackgroundColor: '#FFFAEF',////lightning text and border
     background: 'black',
-    lightButton: '#2F2D2B', ////add wallet area in flatList
+    lightButton: '#2F2D2B', ////add wallet gray area in flatList
     ballReceive: '#d2f8d6',///
     ballOutgoing: '#f8d2d2',///
-    lightBorder: 'white',
+    lightBorder: 'white',////line between transactions
     ballOutgoingExpired: '#EEF0F4',///
     modal: 'black',
     formBorder: 'white',///orange frame of Qr iand input
     modalButton: '#FF7400',
     darkGray: 'red',///
     scanLabel: '#9AA0AA',///
-    feeText: '#81868e',
-    feeLabel: '#d2f8d6',
+    feeText: 'white',
+    feeLabel: 'white',
     feeValue: '#37c0a1',
     feeActive: '#d2f8d6',
     labelText: 'white',
