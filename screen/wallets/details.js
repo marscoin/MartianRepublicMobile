@@ -168,7 +168,7 @@ const WalletDetails = () => {
       color: colors.feeText,
     },
     textValue: {
-      color: colors.outputValue,
+      color: '#FF7400'
     },
     input: {
       borderColor: colors.formBorder,
@@ -695,12 +695,12 @@ const WalletDetails = () => {
                     <SecondButton onPress={navigateToXPub} testID="XPub" title={loc.wallets.details_show_xpub} />
                   </>
                 )}
-                {wallet.allowSignVerifyMessage() && (
+                {/* {wallet.allowSignVerifyMessage() && (
                   <>
                     <BlueSpacing20 />
                     <SecondButton onPress={navigateToSignVerify} testID="SignVerify" title={loc.addresses.sign_title} />
                   </>
-                )}
+                )} */}
                 {wallet.type === LightningLdkWallet.type && (
                   <>
                     <BlueSpacing20 />

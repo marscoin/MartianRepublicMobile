@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
-import React, { useContext, useLayoutEffect, useState } from 'react';
-import { FlatList, NativeSyntheticEvent, StyleSheet, View } from 'react-native';
+import React, { useContext, useLayoutEffect, useState, useEffect } from 'react';
+import { FlatList, NativeSyntheticEvent, StyleSheet, View , Text} from 'react-native';
 import { BlueCard, BlueSpacing10, BlueText } from '../../BlueComponents';
 import {
   CurrencyRate,
@@ -25,7 +25,6 @@ const Currency = () => {
   const [currencyRate, setCurrencyRate] = useState<CurrencyRate>({ LastUpdated: null, Rate: null });
   const { colors } = useTheme();
   const { setOptions } = useNavigation<any>();
-
   const [search, setSearch] = useState('');
   const data = Object.values(FiatUnit).filter(item => item.endPointKey.toLowerCase().includes(search.toLowerCase()));
 
@@ -34,7 +33,45 @@ const Currency = () => {
       flex: 1,
       backgroundColor: colors.background,
     },
+    infoText: {
+      color:'white', 
+      textAlign: 'center',
+      fontSize: 16,
+      fontWeight:"400",
+      fontFamily: 'Orbitron-Regular',
+      letterSpacing: 1.1, 
+    },
   });
+
+  const [price, setPrice] = useState(null);
+  const [date, setDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchMarscoinPrice = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('https://price.marscoin.org/json/');
+      const json = await response.json();
+      if (json && json.data && json.data[154] && json.data[154].quote && json.data[154].quote.USD) {
+        const formattedPrice = Number(json.data[154].quote.USD.price.toFixed(4));
+        setPrice(formattedPrice.toString());
+        setDate(json.data[154].quote.USD.last_updated);
+      } else {
+        setError("Failed to retrieve valid data");
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchMarscoinPrice();
+  }, []);
+  useEffect(() => {
+    console.log('MARS Price', price, date);
+  }, [price]);
 
   const fetchCurrency = async () => {
     let preferredCurrency;
@@ -52,11 +89,6 @@ const Currency = () => {
   };
 
   useLayoutEffect(() => {
-    setOptions({
-      headerSearchBarOptions: {
-        onChangeText: (event: NativeSyntheticEvent<{ text: string }>) => setSearch(event.nativeEvent.text),
-      },
-    });
     fetchCurrency();
   }, [setOptions]);
 
@@ -64,54 +96,28 @@ const Currency = () => {
     <ListItem
       disabled={isSavingNewPreferredCurrency || selectedCurrency.endPointKey === item.endPointKey}
       title={`${item.endPointKey} (${item.symbol})`}
-      containerStyle={StyleSheet.flatten([styles.flex, { minHeight: 60 }])}
+      //containerStyle={StyleSheet.flatten([styles.flex, { minHeight: 60 }])}
       checkmark={selectedCurrency.endPointKey === item.endPointKey}
-      onPress={async () => {
-        setIsSavingNewPreferredCurrency(true);
-        try {
-          await getFiatRate(item.endPointKey);
-          await setPreferredCurrency(item);
-          await initCurrencyDaemon(true);
-          await fetchCurrency();
-          setSelectedCurrency(item);
-          setPreferredFiatCurrency();
-        } catch (error: any) {
-          console.log(error);
-          presentAlert({
-            message: error.message ? `${loc.settings.currency_fetch_error}: ${error.message}}` : loc.settings.currency_fetch_error,
-          });
-        } finally {
-          setIsSavingNewPreferredCurrency(false);
-        }
-      }}
     />
   );
 
   return (
     <View style={styles.flex}>
-      <FlatList
-        contentInsetAdjustmentBehavior="automatic"
-        automaticallyAdjustContentInsets
-        keyExtractor={(_item, index) => `${index}`}
-        data={data}
-        initialNumToRender={30}
-        extraData={data}
-        renderItem={renderItem}
-      />
-      <BlueCard>
-        <BlueText>
-          {loc.settings.currency_source} {selectedCurrency?.source ?? FiatUnitSource.CoinDesk}
-        </BlueText>
-        <BlueSpacing10 />
-        <BlueText>
-          {loc.settings.rate}: {currencyRate.Rate ?? loc._.never}
-        </BlueText>
-        <BlueSpacing10 />
-        <BlueText>
-          {/* @ts-ignore TODO: fix typescript error later */}
-          {loc.settings.last_updated}: {dayjs(currencyRate.LastUpdated).calendar() ?? loc._.never}
-        </BlueText>
-      </BlueCard>
+      <View>
+        <FlatList
+          keyExtractor={(_item, index) => `${index}`}
+          data={data}
+          renderItem={renderItem}
+        />
+      </View>
+       <View style ={{flex:1, marginHorizontal: 20, marginTop: 20}}>
+         <Text style={styles.infoText}>Price is obtained from marscoin.org</Text>
+         <BlueSpacing10 />
+         <Text style={[styles.infoText, {color:'#FF7400'}]}> Rate: ${price?? loc._.never}</Text>
+         <BlueSpacing10 />
+         <Text style={styles.infoText}> Last Updated: {dayjs(date).calendar() ?? loc._.never} </Text>
+      </View>
+      
     </View>
   );
 };

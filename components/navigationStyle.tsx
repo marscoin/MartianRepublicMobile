@@ -69,7 +69,9 @@ const navigationStyle = (
       let options: NativeStackNavigationOptions = {
         headerShadowVisible: false,
         headerTitleStyle: {
-          fontWeight: '600',
+          fontWeight: '800',
+          fontFamily: 'Orbitron-Black',
+          fontSize: 20,
           color: theme.colors.foregroundColor,
         },
         headerRight,

@@ -48,6 +48,8 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
       fontSize: 15,
       fontWeight: '500',
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+      fontFamily: 'Orbitron-Regular',
+      letterSpacing: 1.1
     },
     subtitle: {
       flexWrap: 'wrap',
@@ -55,6 +57,7 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
       color: colors.alternativeTextColor,
       fontWeight: '400',
       fontSize: 14,
+      fontFamily: 'Orbitron-Regular',
     },
     containerStyle: {
       backgroundColor: colors.background,

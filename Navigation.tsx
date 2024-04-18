@@ -205,7 +205,12 @@ const WalletsRoot = () => {
         headerShadowVisible: false, 
         headerStyle: {
           backgroundColor: 'black', 
-        }
+        },
+        headerTitleStyle: {
+          color: 'white', 
+          fontFamily: 'Orbitron-Black',
+          fontSize: 18, 
+        },
     }}>
       <WalletsStack.Screen name="WalletsList" component={WalletsList} options={WalletsList.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={WalletTransactions.navigationOptions(theme)} />
@@ -220,7 +225,7 @@ const WalletsRoot = () => {
       <WalletsStack.Screen name="RBFCancel" component={RBFCancel} options={RBFCancel.navigationOptions(theme)} />
       <WalletsStack.Screen name="Settings" component={Settings} options={Settings.navigationOptions(theme)} />
       <WalletsStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} />
-      <WalletsStack.Screen name="Currency" component={Currency} options={navigationStyle({ title: loc.settings.currency })(theme)} />
+      <WalletsStack.Screen name="Currency" component={Currency} options={navigationStyle({ title: loc.settings.currency },)(theme)} />
       <WalletsStack.Screen name="About" component={About} options={About.navigationOptions(theme)} />
       <WalletsStack.Screen name="ReleaseNotes" component={ReleaseNotes} options={ReleaseNotes.navigationOptions(theme)} />
       <WalletsStack.Screen name="Selftest" component={Selftest} options={Selftest.navigationOptions(theme)} />

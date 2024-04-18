@@ -26,6 +26,8 @@ import { useTheme } from './themes';
 import { BitcoinUnit } from '../models/bitcoinUnits';
 import { removeTrailingZeros } from '../loc';
 
+
+
 const nStyles = StyleSheet.create({
   container: {
     borderRadius: 10,
@@ -109,6 +111,7 @@ const iStyles = StyleSheet.create({
     borderRadius: 12,
     minHeight: 164,
     elevation: 5,
+    height: 180 /////height of wallet item
   },
   image: {
     width: 150,
@@ -136,7 +139,7 @@ const iStyles = StyleSheet.create({
   balance: {
     backgroundColor: 'transparent',
     fontFamily: 'Orbitron-Black',
-    fontSize: 36,
+    fontSize: 34,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   latestTx: {
@@ -196,10 +199,38 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
   //   return value.replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1");
   // }
 
-  // console.log('CURRENCY', item.preferredBalanceUnit)
+  const styles = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 34,
+    },
+    text: {
+      fontSize: 30,
+      fontWeight: '500',
+      fontFamily: 'Orbitron-Black', 
+    },
+    line: {
+      position: 'absolute',
+      top: 4, // Adjust top as needed
+      left: 2,
+      right: 2,
+      height: 3,
+      backgroundColor: 'black',
+    },
+  });
+  const MarscoinSymbol = () => (
+    <View style={styles.container}>
+      <Text style={styles.text}>M</Text>
+      <View style={styles.line} />
+    </View>
+  );
+  
   const prebalance = Number((item.getBalance()))/100000000
-  const balance = !item.hideBalance && (removeTrailingZeros(prebalance) + ' ' + item.preferredBalanceUnit);
+  const balance = !item.hideBalance && (removeTrailingZeros(prebalance) );
+  //const balance = !item.hideBalance && (removeTrailingZeros(prebalance) + ' ' + item.preferredBalanceUnit);
   //const balance = !item.hideBalance && formatBalance(item.getBalance(), item.preferredBalanceUnit, true);
+
 
   return (
     <Animated.View
@@ -240,10 +271,13 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
             <Text
               numberOfLines={1}
               key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
-              adjustsFontSizeToFit
+              //adjustsFontSizeToFit
               style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
             >
+              <MarscoinSymbol />
+              {' '}
               {balance}
+              
             </Text>
           )}
           <Text style={iStyles.br} />

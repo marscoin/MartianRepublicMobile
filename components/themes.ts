@@ -29,9 +29,9 @@ export const BlueDefaultTheme = {
     alternativeTextColor2: 'white',
     buttonBlueBackgroundColor: '#FF7400',///
     incomingBackgroundColor: '#d2f8d6',///
-    incomingForegroundColor: '#2DD881',//incoming transactions
+    incomingForegroundColor: '#72A66D',//incoming transactions   #72A66D
     outgoingBackgroundColor: '#f8d2d2',//
-    outgoingForegroundColor: '#FF7400',////outgoing transactions
+    outgoingForegroundColor: '#FF9339',////outgoing transactions
     //successColor: '#2DD881',///green
     successColor: 'white',
     failedColor: '#ff0000',

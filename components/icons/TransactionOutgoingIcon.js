@@ -28,7 +28,7 @@ const TransactionOutgoingIcon = props => {
     <View style={styles.boxIncoming}>
       <View style={[styles.ballOutgoing, stylesBlueIconHooks.ballOutgoing]}>
         {/* <Icon name="arrow-down" size={16} type="font-awesome" color={colors.outgoingForegroundColor} /> */}
-        <Icon name="arrow-right-bold-hexagon-outline" size={33} type="material-community" color={colors.outgoingForegroundColor} />
+        <Icon name="arrow-left-bold-hexagon-outline" size={33} type="material-community" color={colors.outgoingForegroundColor} />
       </View>
     </View>
   );
