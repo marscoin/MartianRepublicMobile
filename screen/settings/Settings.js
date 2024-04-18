@@ -23,12 +23,12 @@ const Settings = () => {
   return (
     <ScrollView style={styles.root} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>
       {Platform.OS === 'android' ? <BlueHeaderDefaultSub leftText={loc.settings.header} /> : <></>}
-      <ListItem title={loc.settings.general} onPress={() => navigate('GeneralSettings')} testID="GeneralSettings" chevron />
-      <ListItem title={loc.settings.currency} onPress={() => navigate('Currency')} testID="Currency" chevron />
+      <ListItem title={'General'} onPress={() => navigate('GeneralSettings')} testID="GeneralSettings" chevron />
+      <ListItem title={"Currency"} onPress={() => navigate('Currency')} testID="Currency" chevron />
       {/* <ListItem title={loc.settings.language} onPress={() => navigate('Language')} testID="Language" chevron /> */}
-      <ListItem title={loc.settings.encrypt_title} onPress={() => navigate('EncryptStorage')} testID="SecurityButton" chevron />
-      <ListItem title={loc.settings.network} onPress={() => navigate('NetworkSettings')} testID="NetworkSettings" chevron />
-      <ListItem title={loc.settings.tools} onPress={() => navigate('Tools')} testID="Tools" chevron />
+      <ListItem title={'Security'} onPress={() => navigate('EncryptStorage')} testID="SecurityButton" chevron />
+      <ListItem title={'Network'} onPress={() => navigate('NetworkSettings')} testID="NetworkSettings" chevron />
+      <ListItem title={"Tools"} onPress={() => navigate('Tools')} testID="Tools" chevron />
       {/* <ListItem title={loc.settings.about} onPress={() => navigate('About')} testID="AboutButton" chevron /> */}
     </ScrollView>
   );

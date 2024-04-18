@@ -150,7 +150,9 @@ const WalletsImport = () => {
     <SafeArea style={styles.root}>
       <BlueSpacing20 />
       <TouchableWithoutFeedback accessibilityRole="button" onPress={speedBackdoorTap} testID="SpeedBackdoor">
-        <BlueFormLabel>{loc.wallets.import_explanation}</BlueFormLabel>
+        <BlueFormLabel>
+          Please enter your seed phrase, public key or WIF of your Marscoin Wallet.
+        </BlueFormLabel>
       </TouchableWithoutFeedback>
       <BlueSpacing20 />
       <BlueFormMultiInput

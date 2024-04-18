@@ -123,7 +123,7 @@ const BottomTabNavigator = () => {
       />
       <Tab.Screen
         name="Send"
-        component={SendDetailsRoot}
+        component={ScanQRCodeRoot}
         options={{
           tabBarLabel: '',
            title: "Send", 

@@ -28,9 +28,13 @@ const PleaseBackup: React.FC = () => {
     },
     wortText: {
       color: colors.labelText,
+      fontFamily: 'Orbitron-Regular',
+      letterSpacing: 1.1
     },
     pleaseText: {
       color: colors.foregroundColor,
+      fontFamily: 'Orbitron-Regular',
+      letterSpacing: 1.1
     },
   });
 

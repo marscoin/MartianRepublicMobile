@@ -31,7 +31,8 @@ import { removeTrailingZeros } from '../loc';
 const nStyles = StyleSheet.create({
   container: {
     borderRadius: 10,
-    minHeight: Platform.OS === 'ios' ? 164 : 181,
+    //minHeight: Platform.OS === 'ios' ? 164 : 181,
+    height: 180,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
@@ -49,7 +50,7 @@ const nStyles = StyleSheet.create({
   },
   button: {
     marginTop: 12,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF7400',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 8,
@@ -89,6 +90,7 @@ const NewWalletPanel = ({ onPress }) => {
           isLargeScreen ? {} : { width: itemWidth },
         ]}
       >
+        {/* /////ADD A WALLET///// */}
         <Text style={[nStyles.addAWAllet, { color: colors.foregroundColor }]}>{loc.wallets.list_create_a_wallet}</Text>
         <Text style={[nStyles.addLine, { color: colors.alternativeTextColor }]}>{loc.wallets.list_create_a_wallet_text}</Text>
         <View style={nStyles.button}>
@@ -207,15 +209,15 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
     },
     text: {
       fontSize: 30,
-      fontWeight: '500',
+      fontWeight: '900',
       fontFamily: 'Orbitron-Black', 
     },
     line: {
       position: 'absolute',
-      top: 4, // Adjust top as needed
+      top: 3, // Adjust top as needed
       left: 2,
       right: 2,
-      height: 3,
+      height: 4,
       backgroundColor: 'black',
     },
   });

@@ -94,7 +94,7 @@ export const BitcoinButton = props => {
             <Image style={{ width: 34, height: 34, marginRight: 8 }} source={require('./img/addWallet/bitcoin.png')} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.newBlue, fontWeight: 'bold', fontSize: 18, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }}>
+            <Text style={{ color: colors.newBlue, fontWeight: 'bold', fontFamily: 'Orbitron-Black',fontSize: 18, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }}>
               {loc.wallets.add_bitcoin}
             </Text>
             <Text
