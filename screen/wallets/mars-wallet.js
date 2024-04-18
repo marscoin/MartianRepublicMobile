@@ -12,13 +12,6 @@ const BIP32Factory = require('bip32').BIP32Factory;
 // Create a bip32 instance using the factory
 const bip32Instance = BIP32Factory(ecc);
 
-/*
-   * Converts zpub to xpub
-   *
-   * @param {String} zpub
-   * @returns {String} xpub
-   */
-
 // import { checkReporting } from "../../blue_modules/balanceAnalytics";
 // import checkReporting
 
@@ -83,6 +76,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   async generate() {
+    console.log("GENERATING MARS WALLET NOW!!!");
     const buf = await randomBytes(16);
     this.secret = bip39.entropyToMnemonic(buf.toString("hex"));
     console.log('secret: ', this.secret);
@@ -1142,24 +1136,28 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
   _getNodePubkeyByIndex(node, index) {
     console.log("==== [MARS] GetNodePubKeyByIndex()");
-    const xpub = this.constructor._zpubToXpub(this.getXpub());
+    //const xpub = this.constructor._zpubToXpub(this.getXpub());
     index = index * 1; // cast to int
     console.log("this wallet", this.constructor);
+    console.log("this wallet xpub", this.xpub);
     console.log("node =", node);
     // if (node === 0 && !this._node0) {
     if (node === 0) {
       //const xpub = this.constructor._zpubToXpub(this.getXpub());
+      const xpub = this.getXpub();
       console.log("XPUB =", xpub);
-      //const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet)
-      const hdNode = bip32.fromBase58(xpub);
-      console.log("Node:", hdNode);
+      const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
+      //console.log("XPUB =", xpub);
+      //const hdNode = bip32Instance.fromBase58(this.xpub, Marscoin.mainnet);
+      //const hdNode = bip32.fromBase58(xpub);
       //const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet);
+      console.log("Node:", hdNode);
       this._node0 = hdNode.derive(node);
     }
 
     // if (node === 1 && !this._node1) {
     if (node === 1) {
-      //const xpub = this.constructor._zpubToXpub(this.getXpub());
+      const xpub = this.constructor._zpubToXpub(this.getXpub());
       console.log("this wallet xpub ", xpub);
       // const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet)
       try {
@@ -1202,27 +1200,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       return null;
     }
   }
-
-//   _getNodePubkeyByIndex(node, index) {
-//     console.log("==== [MARS] GetNodePubKeyByIndex()");
-//     const xpub = this.constructor._zpubToXpub(this.getXpub());
-//     console.log("Using xpub: ", xpub);
-//     //console.log("Public Key:", getPublicKeyFromXpub(xpub)); 
-
-//     try {
-//         const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
-//         console.log("Using hdNode: ", hdNode);
-//         const derivedNode = hdNode.derive(node).derive(index);
-//         const publicKey = derivedNode.publicKey;
-//         console.log("Derived Public Key: ", publicKey.toString('hex'));
-//         return publicKey;
-//     } catch (error) {
-//         console.error("Error deriving public key:", error);
-//         return null;
-//     }
-// }
-
-
 
   // Not happy w/ having to fetch txhex after, need to add it while parsing tx
   async createTransaction(
@@ -1359,10 +1336,16 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       tx = psbt.finalizeAllInputs().extractTransaction();
     }
     console.log("=== RETURNING FROM CREATETX() ===\n\n\n");
+    console.log("tx !!!!!!", tx);
+    console.log("inputs !!!!!",  inputs);
+    console.log(" outputs !!!!!", outputs);
+    console.log("fee", fee);
+    console.log("psbt", psbt);
     return { tx, inputs, outputs, fee, psbt };
   }
 
   async getTxHex(adr) {
+    console.log("ykrdcykdt!!!!!!trdutjv");
     const resp = await MARSConnection.getTxHex(adr);
     console.log(resp);
     return resp;

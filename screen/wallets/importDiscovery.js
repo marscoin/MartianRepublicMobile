@@ -91,7 +91,7 @@ const ImportWalletDiscovery = () => {
       })
       .catch(e => {
         console.warn('import error', e);
-        presentAlert({ title: 'Import error', message: e.message });
+        //presentAlert({ title: 'Import error', message: e.message });
       })
       .finally(() => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -125,22 +125,27 @@ const ImportWalletDiscovery = () => {
 
   return (
     <SafeArea style={[styles.root, stylesHook.root]}>
-      <BlueSpacing20 />
-      <BlueFormLabel>{loc.wallets.import_discovery_subtitle}</BlueFormLabel>
-      <BlueSpacing20 />
+      {/* <BlueSpacing20 /> */}
+      <View>
+        <BlueFormLabel>{loc.wallets.import_discovery_subtitle}</BlueFormLabel>
+        <BlueSpacing20 />
+      </View>
 
       {!loading && wallets.length === 0 ? (
         <View style={styles.noWallets}>
+          <ActivityIndicator size={'large'} testID="Loading" />
           <BlueFormLabel>{loc.wallets.import_discovery_no_wallets}</BlueFormLabel>
         </View>
       ) : (
-        <FlatList contentContainerStyle={styles.flatListContainer} data={wallets} keyExtractor={keyExtractor} renderItem={renderItem} />
+        <View>
+          <FlatList contentContainerStyle={styles.flatListContainer} data={wallets} keyExtractor={keyExtractor} renderItem={renderItem} />
+        </View>
       )}
 
       <View style={[styles.center, stylesHook.center]}>
         {loading && (
           <>
-            <BlueSpacing10 />
+            {/* <BlueSpacing10 /> */}
             <ActivityIndicator size={'large'} testID="Loading" />
             <BlueSpacing10 />
             <BlueFormLabel>{progress}</BlueFormLabel>
@@ -174,9 +179,11 @@ const styles = StyleSheet.create({
   },
   flatListContainer: {
     marginHorizontal: 16,
+    marginTop: 30,
   },
   center: {
     marginHorizontal: 16,
+    marginTop: 30,
     alignItems: 'center',
   },
   buttonContainer: {

@@ -459,16 +459,19 @@ const SendDetails = () => {
       } else if (parseFloat(transaction.amountSats) <= 500) {
         error = loc.send.details_amount_field_is_less_than_minimum_amount_sat;
         console.log('validation error 2', error);
+        presentAlert({ title: 'ERROR', message: 'The specified amount is too small. Please enter greater amount.' });
       } else if (!requestedSatPerByte || parseFloat(requestedSatPerByte) < 1) {
         error = loc.send.details_fee_field_is_not_valid;
         console.log('validation error 3');
       } else if (!transaction.address) {
         error = loc.send.details_address_field_is_not_valid;
-        console.log('validation error 4');
+        console.log('validation error 4', error);
+        //presentAlert({ title: 'ERROR', message: 'Address is invalid!' });
       } else if (balance - transaction.amountSats < 0) {
         // first sanity check is that sending amount is not bigger than available balance
         error = frozenBalance > 0 ? loc.send.details_total_exceeds_balance_frozen : loc.send.details_total_exceeds_balance;
         console.log('validation error 5', error);
+        presentAlert({ title: 'ERROR', message: 'The sending amount exceeds the available balance!' });
       } else if (transaction.address) {
         const address = transaction.address.trim().toLowerCase();
         if (address.startsWith('lnb') || address.startsWith('lightning:lnb')) {
@@ -480,6 +483,7 @@ const SendDetails = () => {
       if (!error) {
         if (!wallet.isAddressValid(transaction.address)) {
           console.log('validation error 7');
+          presentAlert({ title: 'ERROR', message: 'Address is invalid!' });
           error = loc.send.details_address_field_is_not_valid;
         }
       }
@@ -487,7 +491,7 @@ const SendDetails = () => {
       if (error) {
         scrollView.current.scrollToIndex({ index });
         setIsLoading(false);
-        presentAlert({ title: loc.errors.error, message: error.message });
+        //presentAlert({ title: loc.errors.error, message: error.message });
         triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
         return;
       }
@@ -524,7 +528,7 @@ const SendDetails = () => {
         }
       }
     }
-
+    console.log('HERE!!!!!!!!')
     const { tx, outputs, psbt, fee } = wallet.createTransaction(
       lutxo,
       targets,
@@ -532,6 +536,12 @@ const SendDetails = () => {
       change,
       isTransactionReplaceable ? HDSegwitBech32Wallet.defaultRBFSequence : HDSegwitBech32Wallet.finalRBFSequence,
     );
+
+    
+    console.log("(OLD SEND) THE TX BEING BUILT:", tx)
+    console.log("(OLD SEND) THE TX BEING BUILT:", outputs)
+    console.log("(OLD SEND) THE TX BEING BUILT:",  psbt)
+    console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
 
     if (tx && routeParams.launchedBy && psbt) {
       console.warn('navigating back to ', routeParams.launchedBy);
