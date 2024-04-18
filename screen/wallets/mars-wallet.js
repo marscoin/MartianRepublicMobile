@@ -1147,7 +1147,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       const xpub = this.getXpub();
       console.log("XPUB =", xpub);
       const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
-      //console.log("XPUB =", xpub);
       //const hdNode = bip32Instance.fromBase58(this.xpub, Marscoin.mainnet);
       //const hdNode = bip32.fromBase58(xpub);
       //const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet);
@@ -1157,22 +1156,13 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
     // if (node === 1 && !this._node1) {
     if (node === 1) {
-      const xpub = this.constructor._zpubToXpub(this.getXpub());
-      console.log("this wallet xpub ", xpub);
+      //const xpub = this.constructor._zpubToXpu
+      const xpub = this.getXpub();
+      console.log("XPUB =", xpub);
+      const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
       // const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet)
-      try {
-        //const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
-        const hdNode = bip32.fromBase58(xpub);
-        const derivedNode = hdNode.derive(node).derive(index);
-        const publicKey = derivedNode.publicKey;
-
-        console.log("Public Key: ", publicKey.toString('hex'));
-        return publicKey;
-    } catch (error) {
-        console.error("Error deriving public key:", error);
-        return null;
-    }
-      //this._node1 = hdNode.derive(node);
+      
+      this._node1 = hdNode.derive(node);
     }
 
     if (node === 0) {

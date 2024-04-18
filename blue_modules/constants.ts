@@ -43,7 +43,7 @@ export const LITECOIN = {
 export const Marscoin = {
   mainnet: {
     messagePrefix: "\x19Marscoin Signed Message:\n",
-    bech32: "m",
+    bech32: "M",
     bip44: 2,
     bip32: {
       public: 0x043587cf,
