@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { View, ActivityIndicator, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
+import { View, ActivityIndicator, Text, TouchableOpacity, StyleSheet, Image, BackHandler } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -28,6 +28,8 @@ const buttonStatus = Object.freeze({
 const TransactionsStatus = () => {
   const { setSelectedWalletID, wallets, txMetadata, fetchAndSaveWalletTransactions } = useContext(BlueStorageContext);
   const { hash, walletID } = useRoute().params;
+  console.log('PARAMS hash', hash)
+  console.log('PARAMS walletID', walletID)
   const { navigate, setOptions, goBack } = useNavigation();
   const { colors } = useTheme();
   const wallet = useRef(wallets.find(w => w.getID() === walletID));
@@ -47,7 +49,7 @@ const TransactionsStatus = () => {
       color: colors.alternativeTextColor2,
     },
     iconRoot: {
-      backgroundColor: colors.success,
+      //backgroundColor: colors.success,
     },
     detailsText: {
       color: colors.buttonTextColor,
@@ -91,9 +93,13 @@ const TransactionsStatus = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hash, wallet.current]);
 
+
   useEffect(() => {
     wallet.current = wallets.find(w => w.getID() === walletID);
   }, [walletID, wallets]);
+  useEffect(() => {
+    console.log('PARAMS tx', tx)
+  }, [tx]);
 
   // re-fetching tx status periodically
   useEffect(() => {
@@ -361,16 +367,20 @@ const TransactionsStatus = () => {
       <HandoffComponent
         title={loc.transactions.details_title}
         type={HandoffComponent.activityTypes.ViewInBlockExplorer}
-        url={`https://mempool.space/tx/${tx.hash}`}
+        //url={`https://mempool.space/tx/${tx.hash}`}
+        url={`https://explore1.marscoin.org/${tx.hash}`}
       />
 
       <View style={styles.container}>
+      
         <BlueCard>
+          <Text style={[styles.valueUnit, stylesHook.valueUnit, {textAlign: 'center',marginBottom: 30}]}>Transaction Details</Text>
           <View style={styles.center}>
+            
             <Text style={[styles.value, stylesHook.value]}>
-              {formatBalanceWithoutSuffix(tx.value, wallet.current.preferredBalanceUnit, true)}{' '}
-              {wallet.current.preferredBalanceUnit !== BitcoinUnit.LOCAL_CURRENCY && (
-                <Text style={[styles.valueUnit, stylesHook.valueUnit]}>{loc.units[wallet.current.preferredBalanceUnit]}</Text>
+              {formatBalanceWithoutSuffix(tx.value, tx.walletPreferredBalanceUnit, true)}{' '}
+              {tx.walletPreferredBalanceUnit !== BitcoinUnit.LOCAL_CURRENCY && (
+                <Text style={[styles.valueUnit, stylesHook.valueUnit]}>{'MARS'}</Text>
               )}
             </Text>
           </View>
@@ -379,7 +389,8 @@ const TransactionsStatus = () => {
 
           <View style={[styles.iconRoot, stylesHook.iconRoot]}>
             <View>
-              <Icon name="check" size={50} type="font-awesome" color={colors.successCheck} />
+              {/* <Icon name="check" size={50} type="font-awesome" color={colors.successCheck} /> */}
+              <Image style={styles.iconStyle} source={require('../../img/marscoin.png')} accessible={false} />
             </View>
             <View style={[styles.iconWrap, styles.margin]}>
               {(() => {
@@ -392,13 +403,13 @@ const TransactionsStatus = () => {
                 } else if (tx.value < 0) {
                   return (
                     <View style={styles.icon}>
-                      <TransactionOutgoingIcon />
+                       <Icon name="arrow-left-bold-hexagon-outline" size={44} type="material-community" color={colors.outgoingForegroundColor} />
                     </View>
                   );
                 } else {
                   return (
                     <View style={styles.icon}>
-                      <TransactionIncomingIcon />
+                      <Icon name="arrow-right-bold-hexagon-outline" size={44} type="material-community" color={colors.incomingForegroundColor} />
                     </View>
                   );
                 }
@@ -452,10 +463,12 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 36,
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular', 
   },
   valueUnit: {
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular', 
   },
   memo: {
     alignItems: 'center',
@@ -464,6 +477,7 @@ const styles = StyleSheet.create({
   memoText: {
     color: '#9aa0aa',
     fontSize: 14,
+    fontFamily: 'Orbitron-Regular', 
   },
   iconRoot: {
     width: 120,
@@ -474,11 +488,13 @@ const styles = StyleSheet.create({
     marginTop: 43,
     marginBottom: 53,
   },
+  iconStyle: {
+    width: 150,
+    height: 150,
+    alignSelf: 'center',
+  },
   iconWrap: {
-    minWidth: 30,
-    minHeight: 30,
     alignItems: 'center',
-    justifyContent: 'center',
     alignSelf: 'flex-end',
     borderRadius: 15,
   },
@@ -486,7 +502,10 @@ const styles = StyleSheet.create({
     marginBottom: -40,
   },
   icon: {
-    width: 25,
+    //width: 25,
+    position: 'absolute',
+    top: -50,
+    left: -25
   },
   fee: {
     marginTop: 15,
@@ -498,6 +517,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: '#00c49f',
     alignSelf: 'center',
+    fontFamily: 'Orbitron-Regular', 
   },
   confirmations: {
     alignSelf: 'center',
@@ -507,6 +527,8 @@ const styles = StyleSheet.create({
   confirmationsText: {
     color: '#9aa0aa',
     fontSize: 13,
+    fontFamily: 'Orbitron-Regular', 
+    letterSpacing: 1.2
   },
   eta: {
     alignSelf: 'center',
@@ -525,6 +547,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
+    fontFamily: 'Orbitron-Regular', 
   },
   details: {
     alignItems: 'center',
@@ -536,6 +559,7 @@ const styles = StyleSheet.create({
   detailsText: {
     fontSize: 15,
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular', 
   },
 });
 

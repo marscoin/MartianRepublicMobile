@@ -117,7 +117,8 @@ const TransactionsDetails = () => {
   };
 
   const handleOnOpenTransactionOnBlockExporerTapped = () => {
-    const url = `https://mempool.space/tx/${tx.hash}`;
+    const url = `https://explore1.marscoin.org/${tx.hash}`;
+    
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
@@ -140,7 +141,7 @@ const TransactionsDetails = () => {
 
   const handleCopyPress = stringToCopy => {
     Clipboard.setString(
-      stringToCopy !== TransactionsDetails.actionKeys.CopyToClipboard ? stringToCopy : `https://mempool.space/tx/${tx.hash}`,
+      stringToCopy !== TransactionsDetails.actionKeys.CopyToClipboard ? stringToCopy : `https://explore1.marscoin.org/${tx.hash}`,
     );
   };
 
@@ -215,7 +216,8 @@ const TransactionsDetails = () => {
       <HandoffComponent
         title={loc.transactions.details_title}
         type={HandoffComponent.activityTypes.ViewInBlockExplorer}
-        url={`https://mempool.space/tx/${tx.hash}`}
+        // url={`https://mempool.space/tx/${tx.hash}`}
+        url={`https://explore1.marscoin.org/${tx.hash}`}
       />
       <BlueCard>
         <View>
