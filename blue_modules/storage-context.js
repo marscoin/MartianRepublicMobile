@@ -107,33 +107,64 @@ export const BlueStorageProvider = ({ children }) => {
     saveToDisk();
   };
 
-  const refreshAllWalletTransactions = async (lastSnappedTo, showUpdateStatusIndicator = true) => {
+  // const refreshAllWalletTransactions = async (lastSnappedTo, showUpdateStatusIndicator = true) => {
+  //   let noErr = true;
+  //   try {
+  //     await BlueElectrum.waitTillConnected();
+  //     if (showUpdateStatusIndicator) {
+  //       setWalletTransactionUpdateStatus(WalletTransactionsStatus.ALL);
+  //     }
+  //     const paymentCodesStart = Date.now();
+  //     await fetchSenderPaymentCodes(lastSnappedTo);
+  //     const paymentCodesEnd = Date.now();
+  //     console.log('fetch payment codes took', (paymentCodesEnd - paymentCodesStart) / 1000, 'sec');
+  //     const balanceStart = +new Date();
+  //     await fetchWalletBalances(lastSnappedTo);
+  //     const balanceEnd = +new Date();
+  //     console.log('fetch balance took', (balanceEnd - balanceStart) / 1000, 'sec');
+  //     const start = +new Date();
+  //     await fetchWalletTransactions(lastSnappedTo);
+  //     const end = +new Date();
+  //     console.log('fetch tx took', (end - start) / 1000, 'sec');
+  //   } catch (err) {
+  //     noErr = false;
+  //     console.warn('THIS STUPID ERR', err);
+  //   } finally {
+  //     setWalletTransactionUpdateStatus(WalletTransactionsStatus.NONE);
+  //   }
+  //   if (noErr) await saveToDisk(); // caching
+  // };
+  const refreshAllWalletTransactions = async (
+    lastSnappedTo,
+    showUpdateStatusIndicator = true
+  ) => {
     let noErr = true;
     try {
-      await BlueElectrum.waitTillConnected();
       if (showUpdateStatusIndicator) {
         setWalletTransactionUpdateStatus(WalletTransactionsStatus.ALL);
       }
-      const paymentCodesStart = Date.now();
-      await fetchSenderPaymentCodes(lastSnappedTo);
-      const paymentCodesEnd = Date.now();
-      console.log('fetch payment codes took', (paymentCodesEnd - paymentCodesStart) / 1000, 'sec');
+      await BlueElectrum.waitTillConnected();
       const balanceStart = +new Date();
       await fetchWalletBalances(lastSnappedTo);
       const balanceEnd = +new Date();
-      console.log('fetch balance took', (balanceEnd - balanceStart) / 1000, 'sec');
+      console.log(
+        "fetch balance took",
+        (balanceEnd - balanceStart) / 1000,
+        "sec"
+      );
       const start = +new Date();
       await fetchWalletTransactions(lastSnappedTo);
       const end = +new Date();
-      console.log('fetch tx took', (end - start) / 1000, 'sec');
+      console.log("fetch tx took", (end - start) / 1000, "sec");
     } catch (err) {
       noErr = false;
-      console.warn(err);
+      console.warn('THIS STUPID ERR', err);
     } finally {
       setWalletTransactionUpdateStatus(WalletTransactionsStatus.NONE);
     }
     if (noErr) await saveToDisk(); // caching
   };
+
 
   const fetchAndSaveWalletTransactions = async walletID => {
     const index = wallets.findIndex(wallet => wallet.getID() === walletID);

@@ -49,6 +49,7 @@ import presentAlert from '../../components/Alert';
 const prompt = require('../../helpers/prompt');
 const fs = require('../../blue_modules/fs');
 const btcAddressRx = /^[a-zA-Z0-9]{26,35}$/;
+const currency = require("../../blue_modules/currency")
 
 const SendDetails = () => {
   const { wallets, setSelectedWalletID, sleep, txMetadata, saveToDisk } = useContext(BlueStorageContext);
@@ -137,7 +138,7 @@ const SendDetails = () => {
         const { address, amount, memo, payjoinUrl: pjUrl } = DeeplinkSchemaMatch.decodeBitcoinUri(routeParams.uri);
 
         setUnits(u => {
-          u[scrollIndex.current] = BitcoinUnit.BTC; // also resetting current unit to BTC
+          u[scrollIndex.current] = BitcoinUnit.MARS; // also resetting current unit to BTC
           return [...u];
         });
 
@@ -158,14 +159,14 @@ const SendDetails = () => {
         if (memo?.trim().length > 0) {
           setTransactionMemo(memo);
         }
-        setAmountUnit(BitcoinUnit.BTC);
+        setAmountUnit(BitcoinUnit.MARS);
         setPayjoinUrl(pjUrl);
       } catch (error) {
         console.log(error);
-        presentAlert({ title: loc.errors.error, message: loc.send.details_error_decode });
+        presentAlert({ title: loc.errors.error, message: '222222'+loc.send.details_error_decode });
       }
     } else if (routeParams.address) {
-      const { amount, amountSats, unit = BitcoinUnit.BTC } = routeParams;
+      const { amount, amountSats, unit = BitcoinUnit.MARS } = routeParams;
       setAddresses(addrs => {
         if (currentAddress) {
           currentAddress.address = routeParams.address;
@@ -192,7 +193,7 @@ const SendDetails = () => {
     // check if we have a suitable wallet
     const suitable = wallets.filter(w => w.chain === Chain.ONCHAIN && w.allowSend());
     if (suitable.length === 0) {
-      presentAlert({ title: loc.errors.error, message: loc.send.details_wallet_before_tx });
+      presentAlert({ title: loc.errors.error, message: '1111'+loc.send.details_wallet_before_tx });
       navigation.goBack();
       return;
     }
@@ -249,10 +250,21 @@ const SendDetails = () => {
       .catch(e => console.log('fetchUtxo error', e));
   }, [wallet]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const UnitFromCoinType = (coinType) => {
+    switch (coinType) {
+      case "BTC":
+        return BitcoinUnit.BTC
+      case "MARS":
+        return BitcoinUnit.MARS
+    }
+    return BitcoinUnit.BTC
+  }
+
   // recalc fees in effect so we don't block render
   useEffect(() => {
     if (!wallet) return; // wait for it
     const fees = networkTransactionFees;
+    console.log("FEES: ", fees)
     const change = getChangeAddressFast();
     const requestedSatPerByte = Number(feeRate);
     const lutxo = utxo || wallet.getUtxo();
@@ -357,7 +369,11 @@ const SendDetails = () => {
   };
 
   const getChangeAddressAsync = async () => {
-    if (changeAddress) return changeAddress; // cache
+    console.log("== [SendDetails] getChangeAddressAsync ==")
+    if (changeAddress) {
+      console.log("Found changeAddress in cache: " + changeAddress)
+      return changeAddress
+    } // cache
 
     let change;
     if (WatchOnlyWallet.type === wallet.type && !wallet.isHd()) {
@@ -370,6 +386,7 @@ const SendDetails = () => {
       } catch (_) {}
 
       if (!change) {
+        console.log("Could not find change")
         // either sleep expired or getChangeAddressAsync threw an exception
         if (wallet instanceof AbstractHDElectrumWallet) {
           change = wallet._getInternalAddressByIndex(wallet.getNextFreeChangeAddressIndex());
@@ -381,7 +398,8 @@ const SendDetails = () => {
     }
 
     if (change) setChangeAddress(change); // cache
-
+  
+    console.log("Setting change address to: " + change)
     return change;
   };
 
@@ -391,16 +409,23 @@ const SendDetails = () => {
    * @param data {String} Can be address or `bitcoin:xxxxxxx` uri scheme, or invalid garbage
    */
   const processAddressData = data => {
+    console.log("[PROCESS ADDRESS DATA] Data: ", data)
     const currentIndex = scrollIndex.current;
     setIsLoading(true);
     if (!data.replace) {
       // user probably scanned PSBT and got an object instead of string..?
       setIsLoading(false);
-      return presentAlert({ title: loc.errors.error, message: loc.send.details_address_field_is_not_valid });
+      return presentAlert({ title: loc.errors.error, message: "88888"+loc.send.details_address_field_is_not_valid });
     }
 
-    const dataWithoutSchema = data.replace('bitcoin:', '').replace('BITCOIN:', '');
+    const dataWithoutSchema = data
+      .replace('bitcoin:', '')
+      .replace('BITCOIN:', '')
+      .replace("marscoin:", "")
+
+    // Check if address without amount is valid  
     if (wallet.isAddressValid(dataWithoutSchema)) {
+      console.log("address valud")
       setAddresses(addrs => {
         addrs[scrollIndex.current].address = dataWithoutSchema;
         return [...addrs];
@@ -409,6 +434,7 @@ const SendDetails = () => {
       return;
     }
 
+    //Process address with ?amount=<>
     let address = '';
     let options;
     try {
@@ -420,12 +446,22 @@ const SendDetails = () => {
       data = data.replace(/(amount)=([^&]+)/g, '').replace(/(amount)=([^&]+)&/g, '');
       const decoded = DeeplinkSchemaMatch.bip21decode(data);
       decoded.options.amount = 0;
-      address = decoded.address;
+      //address = decoded.address;
+      address = decoded.address
+        .replace("bitcoin:", "")
+        .replace("BITCOIN:", "")
+        .replace("marscoin:", "")
       options = decoded.options;
     }
 
     console.log('options', options);
-    if (btcAddressRx.test(address) || address.startsWith('bc1') || address.startsWith('BC1')) {
+
+    const network =
+      typeof wallet.getNetwork === "undefined"
+        ? BitcoinUnit.BTC
+        : wallet.getNetwork()
+
+   
       setAddresses(addrs => {
         addrs[scrollIndex.current].address = address;
         addrs[scrollIndex.current].amount = options.amount;
@@ -437,11 +473,11 @@ const SendDetails = () => {
         return [...u];
       });
       setTransactionMemo(options.label || options.message);
-      setAmountUnit(BitcoinUnit.BTC);
+      setAmountUnit(BitcoinUnit.MARS);
       setPayjoinUrl(options.pj || '');
       // RN Bug: contentOffset gets reset to 0 when state changes. Remove code once this bug is resolved.
       setTimeout(() => scrollView.current.scrollToIndex({ index: currentIndex, animated: false }), 50);
-    }
+    
 
     setIsLoading(false);
   };
@@ -450,6 +486,9 @@ const SendDetails = () => {
     Keyboard.dismiss();
     setIsLoading(true);
     const requestedSatPerByte = feeRate;
+    console.log("[TX] feeRate: " + feeRate)
+    console.log("[TX] balance: " + balance)
+
     for (const [index, transaction] of addresses.entries()) {
       let error;
       console.log('!!!!transaction.amount', transaction.amount)
@@ -497,16 +536,18 @@ const SendDetails = () => {
       }
     }
 
-    try {
-      await createPsbtTransaction();
-    } catch (Err) {
-      setIsLoading(false);
-      presentAlert({ title: loc.errors.error, message: Err.message });
-      triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-    }
+    // try {
+    //   await createPsbtTransaction();
+    // } catch (Err) {
+    //   setIsLoading(false);
+    //   presentAlert({ title: loc.errors.error, message: Err.message });
+    //   triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
+    //}
+    createPsbtTransaction();
   };
 
   const createPsbtTransaction = async () => {
+    console.log("[createPsbtTx] Creating")
     const change = await getChangeAddressAsync();
     const requestedSatPerByte = Number(feeRate);
     const lutxo = utxo || wallet.getUtxo();
@@ -514,6 +555,13 @@ const SendDetails = () => {
 
     const targets = [];
     for (const transaction of addresses) {
+      console.log("=========== THE GREAT DEBUG ===========")
+      console.log("FEE RATE:", feeRate)
+      console.log("REQUESTED SAT P/Byte: ", requestedSatPerByte)
+      console.log("BITCOIN UNIT: ", BitcoinUnit.MAX)
+      console.log("AMOUNT SATS:", transaction?.amountSats)
+      console.log("AMOUNT (FIAT)", transaction?.amount)
+
       if (transaction.amount === BitcoinUnit.MAX) {
         // output with MAX
         targets.push({ address: transaction.address });
@@ -528,20 +576,22 @@ const SendDetails = () => {
         }
       }
     }
-    console.log('HERE!!!!!!!!')
-    const { tx, outputs, psbt, fee } = wallet.createTransaction(
+    // console.log("Wallet,", wallet)
+   
+    console.log("FINAL VALUES CREATE TX:", targets, requestedSatPerByte)
+
+    const { tx, outputs, psbt, fee } = await wallet.createTransaction(
       lutxo,
       targets,
       requestedSatPerByte,
       change,
       isTransactionReplaceable ? HDSegwitBech32Wallet.defaultRBFSequence : HDSegwitBech32Wallet.finalRBFSequence,
     );
-
-    
-    console.log("(OLD SEND) THE TX BEING BUILT:", tx)
-    console.log("(OLD SEND) THE TX BEING BUILT:", outputs)
-    console.log("(OLD SEND) THE TX BEING BUILT:",  psbt)
-    console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
+    console.log('TXXXXXXX',tx)
+    // console.log("(OLD SEND) THE TX BEING BUILT:", tx)
+    // console.log("(OLD SEND) THE TX BEING BUILT:", outputs)
+    // console.log("(OLD SEND) THE TX BEING BUILT:",  psbt)
+    // console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
 
     if (tx && routeParams.launchedBy && psbt) {
       console.warn('navigating back to ', routeParams.launchedBy);
@@ -577,6 +627,7 @@ const SendDetails = () => {
       txhex: tx.toHex(),
       memo: transactionMemo,
     };
+    
     await saveToDisk();
 
     let recipients = outputs.filter(({ address }) => address !== change);
@@ -591,6 +642,7 @@ const SendDetails = () => {
       fee: new BigNumber(fee).dividedBy(100000000).toNumber(),
       memo: transactionMemo,
       walletID: wallet.getID(),
+      //walletID: '39ed01657256b3ef7995ebd312fb9b5edd4a86949769d91d4d845ea509314205',
       tx: tx.toHex(),
       recipients,
       satoshiPerByte: requestedSatPerByte,
@@ -754,7 +806,7 @@ const SendDetails = () => {
         walletID: wallet.getID(),
       });
     } catch (error) {
-      presentAlert({ title: loc.send.problem_with_psbt, message: error.message });
+      presentAlert({ title: loc.send.problem_with_psbt, message: '5555'+error.message });
     }
     setIsLoading(false);
     setOptionsVisible(false);
@@ -835,7 +887,7 @@ const SendDetails = () => {
       psbt = bitcoin.Psbt.fromBase64(scannedData);
       tx = wallet.cosignPsbt(psbt).tx;
     } catch (e) {
-      presentAlert({ title: loc.errors.error, message: e.message });
+      presentAlert({ title: loc.errors.error, message: '44444'+e.message });
       return;
     } finally {
       setIsLoading(false);
@@ -1333,6 +1385,14 @@ const SendDetails = () => {
           isLoading={isLoading}
           amount={item.amount ? item.amount.toString() : null}
           onAmountUnitChange={unit => {
+            console.log(
+              "UNIT AND AMOUNT: ",
+              unit,
+              " - ",
+              currency.btcToSatoshi(item.amount),
+              "AMOUNT ITEM:",
+              item.amount
+            )
             setAddresses(addrs => {
               const addr = addrs[index];
 
@@ -1343,9 +1403,15 @@ const SendDetails = () => {
                 case BitcoinUnit.BTC:
                   addr.amountSats = btcToSatoshi(addr.amount);
                   break;
+                case BitcoinUnit.MARS:
+                  addr.amountSats = currency.btcToSatoshi(item.amount)
+                  break
                 case BitcoinUnit.LOCAL_CURRENCY:
                   // also accounting for cached fiat->sat conversion to avoid rounding error
-                  addr.amountSats = AmountInput.getCachedSatoshis(addr.amount) || btcToSatoshi(fiatToBTC(addr.amount));
+                  //addr.amountSats = AmountInput.getCachedSatoshis(addr.amount) || btcToSatoshi(fiatToBTC(addr.amount));
+                  addr.amountSats = currency.btcToSatoshi(
+                    currency.fiatToMARS(addr.amount)
+                  )
                   break;
               }
 
@@ -1364,8 +1430,14 @@ const SendDetails = () => {
                 case BitcoinUnit.BTC:
                   item.amountSats = btcToSatoshi(item.amount);
                   break;
+                case BitcoinUnit.MARS:
+                  item.amountSats = currency.btcToSatoshi(item.amount)
+                break
                 case BitcoinUnit.LOCAL_CURRENCY:
-                  item.amountSats = btcToSatoshi(fiatToBTC(item.amount));
+                  //item.amountSats = btcToSatoshi(fiatToBTC(item.amount));
+                  item.amountSats = currency.btcToSatoshi(
+                    currency.fiatToMARS(item.amount)
+                  )
                   break;
                 case BitcoinUnit.SATS:
                 default:
@@ -1376,6 +1448,11 @@ const SendDetails = () => {
               return [...addrs];
             });
           }}
+          chain={
+            typeof wallet.getNetwork === "undefined"
+              ? BitcoinUnit.BTC
+              : wallet.getNetwork()
+          }
           unit={units[index] || amountUnit}
           editable={isEditable}
           disabled={!isEditable}
@@ -1393,7 +1470,8 @@ const SendDetails = () => {
         <AddressInput
           onChangeText={text => {
             text = text.trim();
-            const { address, amount, memo, payjoinUrl: pjUrl } = DeeplinkSchemaMatch.decodeBitcoinUri(text);
+            const { address, amount, memo, payjoinUrl: pjUrl } = 
+              DeeplinkSchemaMatch.decodeBitcoinUri(text);
             setAddresses(addrs => {
               item.address = address || text;
               item.amount = amount || item.amount;
@@ -1430,6 +1508,7 @@ const SendDetails = () => {
       <View style={[styles.root, stylesHook.root]} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
         <View>
           <KeyboardAvoidingView enabled={!Platform.isPad} behavior="position">
+            {/* /////////Currency and address//////// */}
             <FlatList
               keyboardShouldPersistTaps="always"
               scrollEnabled={addresses.length > 1}
@@ -1446,6 +1525,7 @@ const SendDetails = () => {
               scrollIndicatorInsets={styles.scrollViewIndicator}
               contentContainerStyle={styles.scrollViewContent}
             />
+            {/* ///////Note to Self/////// */}
             <View style={[styles.memo, stylesHook.memo]}>
               <TextInput
                 onChangeText={setTransactionMemo}

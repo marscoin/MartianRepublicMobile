@@ -1335,7 +1335,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   async getTxHex(adr) {
-    console.log("ykrdcykdt!!!!!!trdutjv");
     const resp = await MARSConnection.getTxHex(adr);
     console.log(resp);
     return resp;
