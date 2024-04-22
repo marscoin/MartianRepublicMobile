@@ -13,6 +13,11 @@ import { BluePrivateBalance } from '../BlueComponents';
 import { FiatUnit } from '../models/fiatUnit';
 import WalletAddresses from '../screen/wallets/addresses';
 import { removeTrailingZeros } from '../loc';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  EXCHANGE_RATES_STORAGE_KEY,
+} from '../blue_modules/currency';
+
 
 interface TransactionsNavigationHeaderProps {
   wallet: AbstractWallet;
@@ -31,10 +36,11 @@ interface TransactionsNavigationHeaderProps {
 }
 const stylesM = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent:'center',
-    height: 30,
+    //flexDirection: 'row',
+    //alignItems: 'center',
+    //justifyContent:'center',
+    height: 36,
+    //backgroundColor: 'green'
   },
   text: {
     fontSize: 36,
@@ -68,10 +74,33 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
   onManageFundsPressed,
 }) => {
   const [wallet, setWallet] = useState(initialWallet);
+  const [marsRate, setMarsRate] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [allowOnchainAddress, setAllowOnchainAddress] = useState(false);
 
   const { preferredFiatCurrency, saveToDisk } = useContext(BlueStorageContext);
   const menuRef = useRef(null);
+
+  const fetchMarscoinRate = async () => {
+    try {
+      setLoading(true);
+      const ratesString = await AsyncStorage.getItem(EXCHANGE_RATES_STORAGE_KEY);
+      const rates = ratesString ? JSON.parse(ratesString) : {};
+      const marsRate = rates['MARS_USD']; // Make sure 'MARS_USD' is the key under which the rate is stored.
+      setMarsRate(marsRate);
+    } catch (error) {
+      console.error('Failed to load Marscoin rate', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMarscoinRate();
+  }, []);
+  // useEffect(() => {
+  //   console.log('Updated Marscoin rate', marsRate);
+  // }, [marsRate]);
 
   const verifyIfWalletAllowsOnchainAddress = useCallback(() => {
     if (wallet.type === LightningCustodianWallet.type) {
@@ -119,28 +148,28 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
     saveToDisk();
   };
 
-  const updateWalletWithNewUnit = (w: AbstractWallet, newPreferredUnit: BitcoinUnit) => {
-    w.preferredBalanceUnit = newPreferredUnit;
-    return w;
-  };
+  // const updateWalletWithNewUnit = (w: AbstractWallet, newPreferredUnit: BitcoinUnit) => {
+  //   w.preferredBalanceUnit = newPreferredUnit;
+  //   return w;
+  // };
 
-  const changeWalletBalanceUnit = () => {
-    // @ts-ignore: Ugh
-    menuRef.current?.dismissMenu();
-    let newWalletPreferredUnit = wallet.getPreferredBalanceUnit();
+  // const changeWalletBalanceUnit = () => {
+  //   // @ts-ignore: Ugh
+  //   menuRef.current?.dismissMenu();
+  //   let newWalletPreferredUnit = wallet.getPreferredBalanceUnit();
 
-    if (newWalletPreferredUnit === BitcoinUnit.BTC) {
-      newWalletPreferredUnit = BitcoinUnit.SATS;
-    } else if (newWalletPreferredUnit === BitcoinUnit.SATS) {
-      newWalletPreferredUnit = BitcoinUnit.LOCAL_CURRENCY;
-    } else {
-      newWalletPreferredUnit = BitcoinUnit.BTC;
-    }
+  //   if (newWalletPreferredUnit === BitcoinUnit.BTC) {
+  //     newWalletPreferredUnit = BitcoinUnit.SATS;
+  //   } else if (newWalletPreferredUnit === BitcoinUnit.SATS) {
+  //     newWalletPreferredUnit = BitcoinUnit.LOCAL_CURRENCY;
+  //   } else {
+  //     newWalletPreferredUnit = BitcoinUnit.BTC;
+  //   }
 
-    const updatedWallet = updateWalletWithNewUnit(wallet, newWalletPreferredUnit);
-    setWallet(updatedWallet);
-    onWalletUnitChange?.(updatedWallet);
-  };
+  //   const updatedWallet = updateWalletWithNewUnit(wallet, newWalletPreferredUnit);
+  //   setWallet(updatedWallet);
+  //   onWalletUnitChange?.(updatedWallet);
+  // };
 
   const handleManageFundsPressed = () => {
     onManageFundsPressed?.(actionKeys.Refill);
@@ -175,7 +204,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
     const balance = wallet.getBalance();
     const balanceZub = wallet.getBalance().toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ';
     const balanceMARS = removeTrailingZeros(balance / 100000000);
-    const balanceUSD = (balance / 100000000 * 0.0763).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    const balanceUSD = (balance / 100000000 * marsRate).toLocaleString(undefined, { maximumFractionDigits: 2 });
     if (balanceMode === 'balance') 
       return (
         <View style={styles.balanceCont}>
@@ -189,7 +218,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
               {' '}
               {balanceMARS}
             </Text>
-            </View>
+        </View>
       );
     if (balanceMode === 'balanceZub') 
       return (
@@ -214,14 +243,29 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
         </View>
       )
     
-    return `$ ${balanceUSD}`;
+    if (balanceUSD) {
+        // return `$ ${balanceUSD}`;
+        return (
+          <View style={styles.balanceCont}>
+              <Text
+                testID="WalletBalance"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={styles.walletBalance}
+              >
+                {`$ ${balanceUSD}`}
+              </Text>
+          </View>
+        );
+    } else {
+        return "Rate unavailable";
+    }
   };
 
   return (
     <LinearGradient
       colors={WalletGradient.gradientsFor(wallet.type)}
       style={styles.lineaderGradient}
-      // @ts-ignore: Ugh
       {...WalletGradient.linearGradientProps(wallet.type)}
     >
       <Image
@@ -334,11 +378,12 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: 'black',
     marginTop: 5,
-    marginBottom: 3,
+    //marginBottom: 3,
   },
   balanceCont:{
     height: 45,
-    //justifyContent: 'center',
+    //backgroundColor: 'red', 
+    alignItems: 'flex-start'
   },
   manageFundsButton: {
     marginTop: 14,
