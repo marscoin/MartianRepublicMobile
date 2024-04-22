@@ -507,7 +507,15 @@ const ReorderWalletsStackRoot = () => {
   const theme = useTheme();
 
   return (
-    <ReorderWalletsStack.Navigator id="ReorderWalletsRoot" screenOptions={{ headerShadowVisible: false }}>
+    <ReorderWalletsStack.Navigator 
+        id="ReorderWalletsRoot" 
+        screenOptions={{ 
+          headerShadowVisible: false,  
+          headerStyle: {
+            backgroundColor: 'black', 
+          }
+        }}
+    >
       <ReorderWalletsStack.Screen
         name="ReorderWalletsScreen"
         component={ReorderWallets}

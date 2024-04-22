@@ -37,8 +37,8 @@ const stylesM = StyleSheet.create({
     height: 30,
   },
   text: {
-    fontSize: 30,
-    fontWeight: '900',
+    fontSize: 36,
+    fontWeight: '700',
     fontFamily: 'Orbitron-Black', 
   },
   line: {
@@ -161,26 +161,61 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
     }
   };
 
-  const balanceZub = useMemo(() => {
-    const hideBalance = wallet.hideBalance;
-    const balanceUnit = 'zubrin';
-    const balanceZ = Number((wallet.getBalance()))
-    
-    return !hideBalance && balanceZ.toString()+' zubrins' ;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet.hideBalance, wallet.getPreferredBalanceUnit()]);
-  
-  const balance = useMemo(() => {
-    const hideBalance = wallet.hideBalance;
-    const balanceUnit = wallet.getPreferredBalanceUnit();
-    const balanceZub = Number((wallet.getBalance()))
-    const prebalance = balanceZub/100000000 
-    const balanceFormatted = !wallet.hideBalance && (removeTrailingZeros(prebalance));
-    // const balanceFormatted = formatBalance(wallet.getBalance(), balanceUnit, true);
-    return !hideBalance && balanceFormatted?.toString();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet.hideBalance, wallet.getPreferredBalanceUnit()]);
+  const [balanceMode, setBalanceMode] = useState('balance');
 
+  const toggleBalanceDisplay = () => {
+    setBalanceMode(prevMode => {
+      if (prevMode === 'balance') return 'balanceZub';
+      if (prevMode === 'balanceZub') return 'balanceUSD';
+      return 'balance';
+    });
+  };
+
+  const getDisplayBalance = () => {
+    const balance = wallet.getBalance();
+    const balanceZub = wallet.getBalance().toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ';
+    const balanceMARS = removeTrailingZeros(balance / 100000000);
+    const balanceUSD = (balance / 100000000 * 0.0763).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (balanceMode === 'balance') 
+      return (
+        <View style={styles.balanceCont}>
+            <Text
+              testID="WalletBalance"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={styles.walletBalance}
+            >
+              <MarscoinSymbol />
+              {' '}
+              {balanceMARS}
+            </Text>
+            </View>
+      );
+    if (balanceMode === 'balanceZub') 
+      return (
+        <View style={[styles.balanceCont, {flexDirection:'row'}]}>
+          <Text
+              testID="WalletBalance"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[styles.walletBalance, {fontSize: 30}]}
+            >
+              {balanceZub}
+          </Text>
+          <Text
+              testID="WalletBalance"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[styles.walletBalance, {fontSize: 20, alignSelf:'flex-end', marginBottom: 5}]}
+            >
+              zubrin
+          </Text>
+        
+        </View>
+      )
+    
+    return `$ ${balanceUSD}`;
+  };
 
   return (
     <LinearGradient
@@ -210,79 +245,13 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
       <Text testID="WalletLabel" numberOfLines={1} style={styles.address}>
         {wallet.getAddress()}
       </Text>
-      {/* <ToolTipMenu
-        onPress={changeWalletBalanceUnit}
-        ref={menuRef}
-        title={`${loc.wallets.balance} (${
-          wallet.getPreferredBalanceUnit() === BitcoinUnit.LOCAL_CURRENCY
-            ? preferredFiatCurrency?.endPointKey ?? FiatUnit.USD
-            : wallet.getPreferredBalanceUnit()
-        })`}
-        onPressMenuItem={onPressMenuItem}
-        actions={
-          wallet.hideBalance
-            ? [
-                {
-                  id: 'walletBalanceVisibility',
-                  text: loc.transactions.details_balance_show,
-                  icon: {
-                    iconType: 'SYSTEM',
-                    iconValue: 'eye',
-                  },
-                },
-              ]
-            : [
-                {
-                  id: 'walletBalanceVisibility',
-                  text: loc.transactions.details_balance_hide,
-                  icon: {
-                    iconType: 'SYSTEM',
-                    iconValue: 'eye.slash',
-                  },
-                },
-                {
-                  id: 'copyToClipboard',
-                  text: loc.transactions.details_copy,
-                  icon: {
-                    iconType: 'SYSTEM',
-                    iconValue: 'doc.on.doc',
-                  },
-                },
-              ]
-        }
-      > */}
       
-        <View style={styles.walletBalance}>
-          {wallet.hideBalance ? (
-            <BluePrivateBalance />
-          ) : (
-            <>
-            <Text
-              testID="WalletBalance"
-              // @ts-ignore: Ugh
-              key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              style={styles.walletBalance}
-            >
-              <MarscoinSymbol />
-              {' '}
-              {balance}
-            </Text>
-            {/* <Text
-            testID="WalletBalance"
-            // @ts-ignore: Ugh
-            key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            style={styles.walletBalance}
-          >
-            {balanceZub}
-          </Text> */}
-          </>
-          )}
-        </View>
-      {/* </ToolTipMenu> */}
+    <TouchableOpacity onPress={toggleBalanceDisplay}>
+        <Text style={styles.walletBalance}>
+          {getDisplayBalance()}
+        </Text>
+      </TouchableOpacity>
+      
       {wallet.type === LightningCustodianWallet.type && allowOnchainAddress && (
         <ToolTipMenu
           isMenuPrimaryAction
@@ -360,15 +329,16 @@ const styles = StyleSheet.create({
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   walletBalance: {
-    backgroundColor: 'transparent',
     fontWeight: 'bold',
-    //alignItems: 'center',
-    justifyContent:'center',
     fontFamily: 'Orbitron-Black',
-    fontSize: 33,
+    fontSize: 36,
     color: 'black',
     marginTop: 5,
-    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+    marginBottom: 3,
+  },
+  balanceCont:{
+    height: 45,
+    //justifyContent: 'center',
   },
   manageFundsButton: {
     marginTop: 14,
