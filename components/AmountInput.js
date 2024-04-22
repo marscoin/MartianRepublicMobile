@@ -1,9 +1,9 @@
-import React, { Component } from 'react';
+import React, { Component} from 'react';
 import PropTypes from 'prop-types';
 import BigNumber from 'bignumber.js';
 import { Badge, Icon, Text } from 'react-native-elements';
 import { Image, LayoutAnimation, Pressable, StyleSheet, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-
+import { useState } from 'react';
 import confirm from '../helpers/confirm';
 import { BitcoinUnit } from '../models/bitcoinUnits';
 import loc, { formatBalanceWithoutSuffix, formatBalancePlain, removeTrailingZeros } from '../loc';
@@ -43,6 +43,7 @@ class AmountInput extends Component {
     onBlur: PropTypes.func,
     onFocus: PropTypes.func,
   };
+  
 
   /**
    * cache of conversions  fiat amount => satoshi
@@ -72,7 +73,6 @@ class AmountInput extends Component {
         isRateOutdated().then(isRateOutdatedValue => this.setState({ isRateOutdated: isRateOutdatedValue }));
       });
   }
-
   /**
    * here we must recalculate old amont value (which was denominated in `previousUnit`) to new denomination `newUnit`
    * and fill this value in input box, so user can switch between, for example, 0.001 BTC <=> 100000 sats
@@ -85,14 +85,14 @@ class AmountInput extends Component {
     const log = `${amount}(${previousUnit}) ->`;
     let sats = 0;
     switch (previousUnit) {
-      case BitcoinUnit.BTC:
-        sats = new BigNumber(amount).multipliedBy(100000000).toString();
+      case BitcoinUnit.MARS:
+        zubrins = new BigNumber(amount).multipliedBy(100000000).toString();
         break;
-      case BitcoinUnit.SATS:
-        sats = amount;
+      case BitcoinUnit.ZUBRINS:
+        zubrins = amount;
         break;
       case BitcoinUnit.LOCAL_CURRENCY:
-        sats = new BigNumber(fiatToBTC(amount)).multipliedBy(100000000).toString();
+        zubrins = new BigNumber(fiatToBTC(amount)).multipliedBy(100000000).toString();
         break;
     }
     if (previousUnit === BitcoinUnit.LOCAL_CURRENCY && AmountInput.conversionCache[amount + previousUnit]) {
@@ -131,14 +131,7 @@ class AmountInput extends Component {
   };
 
   maxLength = () => {
-    switch (this.props.unit) {
-      case BitcoinUnit.BTC:
         return 11;
-      case BitcoinUnit.SATS:
-        return 15;
-      default:
-        return 15;
-    }
   };
 
   textInput = React.createRef();
@@ -186,6 +179,7 @@ class AmountInput extends Component {
     }
     this.props.onChangeText(text);
   };
+  
 
   resetAmount = async () => {
     if (await confirm(loc.send.reset_amount, loc.send.reset_amount_confirm)) {
@@ -256,27 +250,28 @@ class AmountInput extends Component {
             {!disabled && <View style={[styles.center, stylesHook.center]} />}
             <View style={styles.flex}>
               <View style={styles.container}>
-                {unit === BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX && (
+                {/* {unit === BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX && (
                   <Text style={[styles.localCurrency, stylesHook.localCurrency]}>{getCurrencySymbol() + ' '}</Text>
-                )}
+                )} */}
                 {amount !== BitcoinUnit.MAX ? (
                   <TextInput
                     {...this.props}
-                    testID="BitcoinAmountInput"
+                    testID="MarsAmountInput"
                     keyboardType="numeric"
                     adjustsFontSizeToFit
                     onChangeText={this.handleChangeText}
-                    onBlur={() => {
-                      if (this.props.onBlur) this.props.onBlur();
-                    }}
-                    onFocus={() => {
-                      if (this.props.onFocus) this.props.onFocus();
-                    }}
+                    // onBlur={() => {
+                    //   if (this.props.onBlur) this.props.onBlur();
+                    // }}
+                    // onFocus={() => {
+                    //   if (this.props.onFocus) this.props.onFocus();
+                    // }}
                     placeholder="0"
-                    maxLength={this.maxLength()}
+                    maxLength={12}
                     ref={textInput => (this.textInput = textInput)}
                     editable={!this.props.isLoading && !disabled}
-                    value={amount === BitcoinUnit.MAX ? loc.units.MAX : parseFloat(amount) >= 0 ? String(amount) : undefined}
+                    //value={amount === BitcoinUnit.MAX ? loc.units.MAX : parseFloat(amount) >= 0 ? String(amount) : undefined}
+                    value={amount}
                     placeholderTextColor={disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2}
                     style={[styles.input, stylesHook.input]}
                   />
@@ -285,8 +280,13 @@ class AmountInput extends Component {
                     <Text style={[styles.input, stylesHook.input]}>{BitcoinUnit.MAX}</Text>
                   </Pressable>
                 )}
-                {unit !== BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX && (
-                  <Text style={[styles.cryptoCurrency, stylesHook.cryptoCurrency]}>{' ' + loc.units[unit]}</Text>
+                { amount !== BitcoinUnit.MAX && (
+                  // <Text style={[styles.cryptoCurrency, stylesHook.cryptoCurrency]}>
+                    <View style={styles.container1}>
+                      <Text style={styles.text}>M</Text>
+                      <View style={styles.line}/>
+                    </View>
+                  //  </Text>
                 )}
               </View>
               <View style={styles.secondaryRoot}>
@@ -363,10 +363,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: 'row',
-    alignContent: 'space-between',
+    height: 60,
+    //alignContent: 'space-between',
     justifyContent: 'center',
     paddingTop: 16,
-    paddingBottom: 2,
+    //paddingBottom: 2,
+    //backgroundColor:'red'
   },
   localCurrency: {
     fontSize: 18,
@@ -379,12 +381,13 @@ const styles = StyleSheet.create({
   input: {
     fontWeight: 'bold',
     fontFamily: 'Orbitron-Black',
+    //fontSize: 40,
   },
   cryptoCurrency: {
     fontSize: 15,
-    marginHorizontal: 4,
+    marginHorizontal: 8,
     fontWeight: '600',
-    alignSelf: 'center',
+    alignSelf: 'flex-end',
     justifyContent: 'center',
     fontFamily: 'Orbitron-Black',
   },
@@ -403,10 +406,49 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     paddingVertical: 16,
   },
+  container1: {
+    //flexDirection: 'row',
+    //alignItems: 'center',
+    //justifyContent:'center',
+    height: 44,
+    //backgroundColor: 'green',
+    //marginBottom: 1,
+    marginLeft: 8
+  },
+  text: {
+    fontSize: 36,
+
+
+    color: 'white',
+    //marginHorizontal: 8,
+    fontWeight: '600',
+    alignSelf: 'flex-end',
+    //justifyContent: 'center',
+    fontFamily: 'Orbitron-Black',
+  },
+  line: {
+    position: 'absolute',
+    top: 3, // Adjust top as needed
+    left: 2,
+    right: 2,
+    height: 3,
+    backgroundColor: 'white',
+  },
 });
+
+
 
 const AmountInputWithStyle = props => {
   const { colors } = useTheme();
+  // const [amount, setAmount] = useState('');
+  // handleChangeText = text => {
+  //   text = text.replace(/[^0-9.]/g, '');  // Only allow numbers and decimal point
+  //   if (text.startsWith('.')) {
+  //     text = '0' + text;  // Pad a zero before solitary decimal point
+  //   }
+  //   setAmount(text);
+  //   onChangeText(text);
+  // };
 
   return <AmountInput {...props} colors={colors} />;
 };

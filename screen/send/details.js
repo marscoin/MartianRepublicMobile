@@ -1410,13 +1410,12 @@ const SendDetails = () => {
               "UNIT AND AMOUNT: ",
               unit,
               " - ",
-              currency.btcToSatoshi(item.amount),
+              (item.amount),
               "AMOUNT ITEM:",
               item.amount
             )
             setAddresses(addrs => {
               const addr = addrs[index];
-
               switch (unit) {
                 case BitcoinUnit.SATS:
                   addr.amountSats = parseInt(addr.amount, 10);
@@ -1469,24 +1468,20 @@ const SendDetails = () => {
               return [...addrs];
             });
           }}
-          chain={
-            typeof wallet.getNetwork === "undefined"
-              ? BitcoinUnit.BTC
-              : wallet.getNetwork()
-          }
+          chain={ wallet.getNetwork()}
           unit={units[index] || amountUnit}
           editable={isEditable}
           disabled={!isEditable}
           inputAccessoryViewID={InputAccessoryAllFunds.InputAccessoryViewID}
         />
 
-        {frozenBalance > 0 && (
+        {/* {frozenBalance > 0 && (
           <TouchableOpacity accessibilityRole="button" style={styles.frozenContainer} onPress={handleCoinControl}>
             <BlueText>
               {loc.formatString(loc.send.details_frozen, { amount: formatBalanceWithoutSuffix(frozenBalance, BitcoinUnit.BTC, true) })}
             </BlueText>
           </TouchableOpacity>
-        )}
+        )} */}
 
         <AddressInput
           onChangeText={text => {
