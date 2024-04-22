@@ -59,6 +59,36 @@ const TransactionsStatus = () => {
     },
   });
 
+  const stylesM = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent:'center',
+      height: 36,
+      //backgroundColor:'green'
+    },
+    text: {
+      fontSize: 30,
+      fontWeight: '900',
+      fontFamily: 'Orbitron-Black', 
+      color:'white'
+    },
+    line: {
+      position: 'absolute',
+      top: 3, // Adjust top as needed
+      left: 2,
+      right: 2,
+      height: 4,
+      backgroundColor: 'white',
+    },
+  });
+  const MarscoinSymbol = () => (
+    <View style={stylesM.container}>
+      <Text style={stylesM.text}>M</Text>
+      <View style={stylesM.line} />
+    </View>
+  );
+
   useEffect(() => {
     setIsCPFPPossible(buttonStatus.unknown);
     setIsRBFBumpFeePossible(buttonStatus.unknown);
@@ -368,7 +398,7 @@ const TransactionsStatus = () => {
         title={loc.transactions.details_title}
         type={HandoffComponent.activityTypes.ViewInBlockExplorer}
         //url={`https://mempool.space/tx/${tx.hash}`}
-        url={`https://explore1.marscoin.org/${tx.hash}`}
+        url={`https://explore1.marscoin.org/tx/${tx.hash}`}
       />
 
       <View style={styles.container}>
@@ -378,11 +408,25 @@ const TransactionsStatus = () => {
           <View style={styles.center}>
             
             <Text style={[styles.value, stylesHook.value]}>
+             <MarscoinSymbol />
+              {' '}
               {formatBalanceWithoutSuffix(tx.value, tx.walletPreferredBalanceUnit, true)}{' '}
-              {tx.walletPreferredBalanceUnit !== BitcoinUnit.LOCAL_CURRENCY && (
+              {/* {tx.walletPreferredBalanceUnit !== BitcoinUnit.LOCAL_CURRENCY && (
                 <Text style={[styles.valueUnit, stylesHook.valueUnit]}>{'MARS'}</Text>
-              )}
+              )} */}
             </Text>
+            {/* <Text
+              testID="WalletBalance"
+              // @ts-ignore: Ugh
+               // force component recreation on balance change. To fix right-to-left languages, like Farsi
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={styles.walletBalance}
+            >
+              <MarscoinSymbol />
+              {' '}
+              {formatBalanceWithoutSuffix(tx.value, tx.walletPreferredBalanceUnit, true)}
+            </Text> */}
           </View>
 
           {renderTXMetadata()}
@@ -464,11 +508,13 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '600',
     fontFamily: 'Orbitron-Regular', 
+    justifyContent:'center',
   },
   valueUnit: {
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Orbitron-Regular', 
+    justifyContent:'center',
   },
   memo: {
     alignItems: 'center',
@@ -560,6 +606,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     fontFamily: 'Orbitron-Regular', 
+  },
+  walletBalance: {
+    backgroundColor: 'transparent',
+    fontWeight: 'bold',
+    justifyContent:'center',
+    fontFamily: 'Orbitron-Black',
+    fontSize: 33,
+    color: 'white',
+    marginTop: 5,
   },
 });
 

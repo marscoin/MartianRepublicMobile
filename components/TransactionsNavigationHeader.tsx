@@ -29,6 +29,33 @@ interface TransactionsNavigationHeaderProps {
     RefillWithExternalWallet: 'qrcode';
   };
 }
+const stylesM = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:'center',
+    height: 30,
+  },
+  text: {
+    fontSize: 30,
+    fontWeight: '900',
+    fontFamily: 'Orbitron-Black', 
+  },
+  line: {
+    position: 'absolute',
+    top: 3, // Adjust top as needed
+    left: 2,
+    right: 2,
+    height: 4,
+    backgroundColor: 'black',
+  },
+});
+const MarscoinSymbol = () => (
+  <View style={stylesM.container}>
+    <Text style={stylesM.text}>M</Text>
+    <View style={stylesM.line} />
+  </View>
+);
 
 const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> = ({
   // @ts-ignore: Ugh
@@ -134,15 +161,26 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
     }
   };
 
+  const balanceZub = useMemo(() => {
+    const hideBalance = wallet.hideBalance;
+    const balanceUnit = 'zubrin';
+    const balanceZ = Number((wallet.getBalance()))
+    
+    return !hideBalance && balanceZ.toString()+' zubrins' ;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallet.hideBalance, wallet.getPreferredBalanceUnit()]);
+  
   const balance = useMemo(() => {
     const hideBalance = wallet.hideBalance;
     const balanceUnit = wallet.getPreferredBalanceUnit();
-    const prebalance = Number((wallet.getBalance()))/100000000
-    const balanceFormatted = !wallet.hideBalance && (removeTrailingZeros(prebalance) + ' ' + wallet.preferredBalanceUnit);
+    const balanceZub = Number((wallet.getBalance()))
+    const prebalance = balanceZub/100000000 
+    const balanceFormatted = !wallet.hideBalance && (removeTrailingZeros(prebalance));
     // const balanceFormatted = formatBalance(wallet.getBalance(), balanceUnit, true);
     return !hideBalance && balanceFormatted?.toString();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.hideBalance, wallet.getPreferredBalanceUnit()]);
+
 
   return (
     <LinearGradient
@@ -213,10 +251,12 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
               ]
         }
       > */}
+      
         <View style={styles.walletBalance}>
           {wallet.hideBalance ? (
             <BluePrivateBalance />
           ) : (
+            <>
             <Text
               testID="WalletBalance"
               // @ts-ignore: Ugh
@@ -225,8 +265,21 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
               adjustsFontSizeToFit
               style={styles.walletBalance}
             >
+              <MarscoinSymbol />
+              {' '}
               {balance}
             </Text>
+            {/* <Text
+            testID="WalletBalance"
+            // @ts-ignore: Ugh
+            key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={styles.walletBalance}
+          >
+            {balanceZub}
+          </Text> */}
+          </>
           )}
         </View>
       {/* </ToolTipMenu> */}
@@ -309,8 +362,10 @@ const styles = StyleSheet.create({
   walletBalance: {
     backgroundColor: 'transparent',
     fontWeight: 'bold',
+    //alignItems: 'center',
+    justifyContent:'center',
     fontFamily: 'Orbitron-Black',
-    fontSize: 34,
+    fontSize: 33,
     color: 'black',
     marginTop: 5,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
