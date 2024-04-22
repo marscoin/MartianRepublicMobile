@@ -56,7 +56,7 @@ export const BlueDefaultTheme = {
     feeText: 'white',
     feeLabel: 'white',
     feeValue: '#37c0a1',
-    feeActive: '#d2f8d6',
+    feeActive: '#FF7400',
     labelText: 'white',
     cta2: '#062453',///
     outputValue: '#13244D',

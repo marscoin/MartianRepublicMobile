@@ -19,6 +19,7 @@ import {
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EXCHANGE_RATES_STORAGE_KEY } from '../../blue_modules/currency';
 import RNFS from 'react-native-fs';
 import BigNumber from 'bignumber.js';
 import * as bitcoin from 'bitcoinjs-lib';
@@ -86,6 +87,25 @@ const SendDetails = () => {
   // if utxo is limited we use it to calculate available balance
   const balance = utxo ? utxo.reduce((prev, curr) => prev + curr.value, 0) : wallet?.getBalance();
   const allBalance = formatBalanceWithoutSuffix(balance, BitcoinUnit.BTC, true);
+
+  const [marsRate, setMarsRate] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const fetchMarscoinRate = async () => {
+    try {
+      setLoading(true);
+      const ratesString = await AsyncStorage.getItem(EXCHANGE_RATES_STORAGE_KEY);
+      const rates = ratesString ? JSON.parse(ratesString) : {};
+      const marsRate = rates['MARS_USD']; // Make sure 'MARS_USD' is the key under which the rate is stored.
+      setMarsRate(marsRate);
+    } catch (error) {
+      console.error('Failed to load Marscoin rate', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchMarscoinRate();
+  }, []);
 
   // if cutomFee is not set, we need to choose highest possible fee for wallet balance
   // if there are no funds for even Slow option, use 1 sat/vbyte fee
@@ -578,7 +598,7 @@ const SendDetails = () => {
     }
     // console.log("Wallet,", wallet)
    
-    console.log("FINAL VALUES CREATE TX:", targets, requestedSatPerByte)
+    //console.log("FINAL VALUES CREATE TX:", targets, requestedSatPerByte)
 
     const { tx, outputs, psbt, fee } = await wallet.createTransaction(
       lutxo,
@@ -587,11 +607,11 @@ const SendDetails = () => {
       change,
       isTransactionReplaceable ? HDSegwitBech32Wallet.defaultRBFSequence : HDSegwitBech32Wallet.finalRBFSequence,
     );
-    console.log('TXXXXXXX',tx)
+    //console.log('TXXXXXXX',tx)
     // console.log("(OLD SEND) THE TX BEING BUILT:", tx)
     // console.log("(OLD SEND) THE TX BEING BUILT:", outputs)
     // console.log("(OLD SEND) THE TX BEING BUILT:",  psbt)
-    // console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
+    console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
 
     if (tx && routeParams.launchedBy && psbt) {
       console.warn('navigating back to ', routeParams.launchedBy);
@@ -1217,8 +1237,9 @@ const SendDetails = () => {
                   </View>
                 </View>
                 <View style={styles.feeModalRow}>
-                  <Text style={disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue}>{fee && formatFee(fee)}</Text>
-                  <Text style={disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue}>
+                  {marsRate &&
+                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>{fee} zubrin / ${(fee*marsRate/ 100000000).toFixed(8)}</Text>}
+                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>
                     {rate} {loc.units.sat_vbyte}
                   </Text>
                 </View>
@@ -1553,7 +1574,8 @@ const SendDetails = () => {
               ) : (
                 <View style={[styles.feeRow, stylesHook.feeRow]}>
                   <Text style={stylesHook.feeValue}>
-                    {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' ' + loc.units.sat_vbyte}
+                    {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' ' + loc.units.sat_vbyte} */}
+                    {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' zubrin'}
                   </Text>
                 </View>
               )}

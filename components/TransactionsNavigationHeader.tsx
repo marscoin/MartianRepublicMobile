@@ -14,9 +14,7 @@ import { FiatUnit } from '../models/fiatUnit';
 import WalletAddresses from '../screen/wallets/addresses';
 import { removeTrailingZeros } from '../loc';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  EXCHANGE_RATES_STORAGE_KEY,
-} from '../blue_modules/currency';
+import {EXCHANGE_RATES_STORAGE_KEY} from '../blue_modules/currency';
 
 
 interface TransactionsNavigationHeaderProps {
