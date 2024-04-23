@@ -126,6 +126,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     minHeight: 33,
     color: '#81868e',
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2
   },
   scan: {
     height: 36,
@@ -139,6 +141,8 @@ const styles = StyleSheet.create({
   },
   scanText: {
     marginLeft: 4,
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2,
   },
 });
 

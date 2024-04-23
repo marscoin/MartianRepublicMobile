@@ -659,7 +659,7 @@ const SendDetails = () => {
     }
 
     navigation.navigate('Confirm', {
-      fee: new BigNumber(fee).dividedBy(100000000).toNumber(),
+      fee: new BigNumber(fee).dividedBy(100000000).toNumber(),////
       memo: transactionMemo,
       walletID: wallet.getID(),
       //walletID: '39ed01657256b3ef7995ebd312fb9b5edd4a86949769d91d4d845ea509314205',
@@ -668,6 +668,7 @@ const SendDetails = () => {
       satoshiPerByte: requestedSatPerByte,
       payjoinUrl,
       psbt,
+      marsRate: marsRate
     });
     setIsLoading(false);
   };
@@ -923,7 +924,7 @@ const SendDetails = () => {
     const recipients = psbt.txOutputs.filter(({ address }) => !changeAddresses.includes(address));
 
     navigation.navigate('CreateTransaction', {
-      fee: new BigNumber(psbt.getFee()).dividedBy(100000000).toNumber(),
+      fee: new BigNumber(psbt.getFee()).dividedBy(100000000).toNumber(),//
       feeSatoshi: psbt.getFee(),
       wallet,
       tx: tx.toHex(),
@@ -1165,6 +1166,8 @@ const SendDetails = () => {
     },
     feeLabel: {
       color: colors.feeText,
+      fontFamily: 'Orbitron-Regular',
+      letterSpacing: 1.2,
     },
     feeModalItemDisabled: {
       backgroundColor: colors.buttonDisabledBackgroundColor,
@@ -1177,6 +1180,9 @@ const SendDetails = () => {
     },
     feeValue: {
       color: colors.feeValue,
+      fontFamily: 'Orbitron-Regular',
+      letterSpacing: 1.2,
+      color:'#FF7400'
     },
   });
 
@@ -1472,6 +1478,7 @@ const SendDetails = () => {
           unit={units[index] || amountUnit}
           editable={isEditable}
           disabled={!isEditable}
+          // marsRate={marsRate}
           inputAccessoryViewID={InputAccessoryAllFunds.InputAccessoryViewID}
         />
 
@@ -1568,9 +1575,10 @@ const SendDetails = () => {
                 <ActivityIndicator />
               ) : (
                 <View style={[styles.feeRow, stylesHook.feeRow]}>
-                  <Text style={stylesHook.feeValue}>
+                  <Text style={[stylesHook.feeValue, {fontSize: 12}]}>
                     {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' ' + loc.units.sat_vbyte} */}
-                    {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' zubrin'}
+                    {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' zubrin'} */}
+                    {(feePrecalc.current).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' zubrin' }
                   </Text>
                 </View>
               )}
@@ -1668,6 +1676,8 @@ const styles = StyleSheet.create({
   feeModalLabel: {
     fontSize: 22,
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2
   },
   feeModalTime: {
     borderRadius: 5,
@@ -1682,9 +1692,11 @@ const styles = StyleSheet.create({
   feeModalCustomText: {
     fontSize: 15,
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2
   },
   createButton: {
-    marginVertical: 16,
+    marginVertical: 36,
     marginHorizontal: 16,
     alignContent: 'center',
     minHeight: 44,
@@ -1702,6 +1714,8 @@ const styles = StyleSheet.create({
     color: '#9aa0aa',
     fontSize: 14,
     marginRight: 8,
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2
   },
   selectWrap: {
     flexDirection: 'row',
@@ -1710,6 +1724,8 @@ const styles = StyleSheet.create({
   },
   selectLabel: {
     fontSize: 14,
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2
   },
   of: {
     alignSelf: 'flex-end',
@@ -1732,6 +1748,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     minHeight: 33,
     color: '#81868e',
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2
   },
   fee: {
     flexDirection: 'row',
@@ -1741,6 +1759,8 @@ const styles = StyleSheet.create({
   },
   feeLabel: {
     fontSize: 14,
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2
   },
   feeRow: {
     minWidth: 40,

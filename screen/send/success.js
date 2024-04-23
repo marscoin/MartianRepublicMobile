@@ -79,6 +79,33 @@ export const SuccessView = ({ amount, amountUnit, fee, invoiceDescription, shoul
     }
   }, [colors, shouldAnimate]);
 
+  const stylesM = StyleSheet.create({
+    container: {
+      height: 33,
+      //backgroundColor: 'green'
+    },
+    text: {
+      fontSize: 33,
+      fontWeight: '700',
+      fontFamily: 'Orbitron-Black', 
+      color:'white'
+    },
+    line: {
+      position: 'absolute',
+      top: 3, // Adjust top as needed
+      left: 2,
+      right: 2,
+      height: 4,
+      backgroundColor: 'white',
+    },
+  });
+  const MarscoinSymbol = () => (
+    <View style={stylesM.container}>
+      <Text style={stylesM.text}>M</Text>
+      <View style={stylesM.line} />
+    </View>
+  );
+
   return (
     <View style={styles.root}>
       {amount || fee > 0 ? (
@@ -87,13 +114,16 @@ export const SuccessView = ({ amount, amountUnit, fee, invoiceDescription, shoul
             {amount ? (
               <>
                 <Text style={[styles.amountValue, stylesHook.amountValue]}>{amount}</Text>
-                <Text style={[styles.amountUnit, stylesHook.amountUnit]}>{' ' + loc.units[amountUnit]}</Text>
+                <Text style={[styles.amountUnit, stylesHook.amountUnit]}>
+                  <MarscoinSymbol/>
+                </Text>
+                {/* <Text style={[styles.amountUnit, stylesHook.amountUnit]}>{' ' + loc.units[amountUnit]}</Text> */}
               </>
             ) : null}
           </View>
           {fee > 0 && (
             <Text style={styles.feeText}>
-              {loc.send.create_fee}: {new BigNumber(fee).toFixed()} {loc.units[BitcoinUnit.BTC]}
+              {loc.send.create_fee}: {new BigNumber(fee/100).toFixed()} 
             </Text>
           )}
           <Text numberOfLines={0} style={styles.feeText}>
@@ -165,6 +195,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     fontWeight: '600',
     alignSelf: 'flex-end',
+    fontFamily: 'Orbitron-Black',
   },
   feeText: {
     color: '#37c0a1',
@@ -173,6 +204,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     fontWeight: '500',
     alignSelf: 'center',
+    fontFamily: 'Orbitron-Black',
+    letterSpacing: 1.2
   },
   ready: {
     width: 120,

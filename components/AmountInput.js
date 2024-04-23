@@ -19,6 +19,8 @@ import {
   updateExchangeRate,
 } from '../blue_modules/currency';
 dayjs.extend(require('dayjs/plugin/localizedFormat'));
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {EXCHANGE_RATES_STORAGE_KEY} from '../blue_modules/currency';
 
 class AmountInput extends Component {
   static propTypes = {
@@ -42,9 +44,9 @@ class AmountInput extends Component {
     unit: PropTypes.string,
     onBlur: PropTypes.func,
     onFocus: PropTypes.func,
+    // marsRate: PropTypes.number,
   };
   
-
   /**
    * cache of conversions  fiat amount => satoshi
    * @type {{}}
@@ -61,10 +63,16 @@ class AmountInput extends Component {
 
   constructor() {
     super();
-    this.state = { mostRecentFetchedRate: Date(), isRateOutdated: false, isRateBeingUpdated: false };
+    this.state = { 
+      mostRecentFetchedRate: Date(), 
+      isRateOutdated: false, 
+      isRateBeingUpdated: false,
+      marsRate: null
+    };
   }
 
   componentDidMount() {
+    this.fetchMarsRate();
     mostRecentFetchedRate()
       .then(mostRecentFetchedRateValue => {
         this.setState({ mostRecentFetchedRate: mostRecentFetchedRateValue });
@@ -73,6 +81,18 @@ class AmountInput extends Component {
         isRateOutdated().then(isRateOutdatedValue => this.setState({ isRateOutdated: isRateOutdatedValue }));
       });
   }
+
+  // Fetch marsRate from AsyncStorage
+  fetchMarsRate = async () => {
+    try {
+      const ratesString = await AsyncStorage.getItem(EXCHANGE_RATES_STORAGE_KEY);
+      const rates = ratesString ? JSON.parse(ratesString) : {};
+      const marsRate = rates['MARS_USD']; // Ensure that you're using the correct key
+      this.setState({ marsRate });
+    } catch (error) {
+      console.error('Failed to fetch Marscoin rate:', error);
+    }
+  };
   /**
    * here we must recalculate old amont value (which was denominated in `previousUnit`) to new denomination `newUnit`
    * and fill this value in input box, so user can switch between, for example, 0.001 BTC <=> 100000 sats
@@ -140,44 +160,62 @@ class AmountInput extends Component {
     this.textInput.current.focus();
   };
 
+  // handleChangeText = text => {
+  //   text = text.trim();
+  //   if (this.props.unit !== BitcoinUnit.LOCAL_CURRENCY) {
+  //     text = text.replace(',', '.');
+  //     const split = text.split('.');
+  //     if (split.length >= 2) {
+  //       text = `${parseInt(split[0], 10)}.${split[1]}`;
+  //     } else {
+  //       text = `${parseInt(split[0], 10)}`;
+  //     }
+
+  //     text = this.props.unit === BitcoinUnit.BTC ? text.replace(/[^0-9.]/g, '') : text.replace(/[^0-9]/g, '');
+
+  //     if (text.startsWith('.')) {
+  //       text = '0.';
+  //     }
+  //   } else if (this.props.unit === BitcoinUnit.LOCAL_CURRENCY) {
+  //     text = text.replace(/,/gi, '.');
+  //     if (text.split('.').length > 2) {
+  //       // too many dots. stupid code to remove all but first dot:
+  //       let rez = '';
+  //       let first = true;
+  //       for (const part of text.split('.')) {
+  //         rez += part;
+  //         if (first) {
+  //           rez += '.';
+  //           first = false;
+  //         }
+  //       }
+  //       text = rez;
+  //     }
+  //     if (text.startsWith('0') && !(text.includes('.') || text.includes(','))) {
+  //       text = text.replace(/^(0+)/g, '');
+  //     }
+  //     text = text.replace(/[^\d.,-]/g, ''); // remove all but numbers, dots & commas
+  //     text = text.replace(/(\..*)\./g, '$1');
+  //   }
+  //   this.props.onChangeText(text);
+  // };
   handleChangeText = text => {
-    text = text.trim();
-    if (this.props.unit !== BitcoinUnit.LOCAL_CURRENCY) {
-      text = text.replace(',', '.');
-      const split = text.split('.');
-      if (split.length >= 2) {
-        text = `${parseInt(split[0], 10)}.${split[1]}`;
-      } else {
-        text = `${parseInt(split[0], 10)}`;
-      }
-
-      text = this.props.unit === BitcoinUnit.BTC ? text.replace(/[^0-9.]/g, '') : text.replace(/[^0-9]/g, '');
-
+    // Trim whitespace and replace commas with dots if necessary
+    text = text.trim().replace(/,/g, '.');
+  
+    // This regular expression allows digits and a single dot
+    const validPattern = /^\d*\.?\d*$/;
+  
+    // Check if the text matches the pattern for valid input
+    if (validPattern.test(text)) {
       if (text.startsWith('.')) {
-        text = '0.';
+        // Prefix the decimal point with a zero if there is no leading digit
+        text = '0' + text;
       }
-    } else if (this.props.unit === BitcoinUnit.LOCAL_CURRENCY) {
-      text = text.replace(/,/gi, '.');
-      if (text.split('.').length > 2) {
-        // too many dots. stupid code to remove all but first dot:
-        let rez = '';
-        let first = true;
-        for (const part of text.split('.')) {
-          rez += part;
-          if (first) {
-            rez += '.';
-            first = false;
-          }
-        }
-        text = rez;
-      }
-      if (text.startsWith('0') && !(text.includes('.') || text.includes(','))) {
-        text = text.replace(/^(0+)/g, '');
-      }
-      text = text.replace(/[^\d.,-]/g, ''); // remove all but numbers, dots & commas
-      text = text.replace(/(\..*)\./g, '$1');
+  
+      // Update state and call the passed onChangeText function with the new value
+      this.props.onChangeText(text);
     }
-    this.props.onChangeText(text);
   };
   
 
@@ -205,8 +243,10 @@ class AmountInput extends Component {
 
   render() {
     const { colors, disabled, unit } = this.props;
+    const { marsRate } = this.state
     const amount = this.props.amount || 0;
-    let secondaryDisplayCurrency = formatBalanceWithoutSuffix(amount, BitcoinUnit.LOCAL_CURRENCY, false);
+    //let secondaryDisplayCurrency = formatBalanceWithoutSuffix(amount, BitcoinUnit.LOCAL_CURRENCY, false);
+    let secondaryDisplayCurrency = `$ ${(amount*marsRate).toFixed(6)}`
 
     // if main display is sat or btc - secondary display is fiat
     // if main display is fiat - secondary dislay is btc
@@ -281,24 +321,24 @@ class AmountInput extends Component {
                   </Pressable>
                 )}
                 { amount !== BitcoinUnit.MAX && (
-                  // <Text style={[styles.cryptoCurrency, stylesHook.cryptoCurrency]}>
                     <View style={styles.container1}>
                       <Text style={styles.text}>M</Text>
                       <View style={styles.line}/>
                     </View>
-                  //  </Text>
                 )}
               </View>
-              <View style={styles.secondaryRoot}>
-                <Text style={styles.secondaryText}>
-                  {unit === BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX
-                    ? removeTrailingZeros(secondaryDisplayCurrency)
-                    : secondaryDisplayCurrency}
-                  {unit === BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX ? ` ${loc.units[BitcoinUnit.BTC]}` : null}
-                </Text>
-              </View>
+              {marsRate &&
+                <View style={styles.secondaryRoot}>
+                  <Text style={styles.secondaryText}>
+                    {unit === BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX
+                      ? removeTrailingZeros(secondaryDisplayCurrency)
+                      : secondaryDisplayCurrency}
+                    {unit === BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX ? ` ${loc.units[BitcoinUnit.BTC]}` : null}
+                  </Text>
+                </View>
+              }
             </View>
-            {!disabled && amount !== BitcoinUnit.MAX && (
+            {/* {!disabled && amount !== BitcoinUnit.MAX && (
               <TouchableOpacity
                 accessibilityRole="button"
                 accessibilityLabel={loc._.change_input_currency}
@@ -308,9 +348,9 @@ class AmountInput extends Component {
               >
                 <Image source={require('../img/round-compare-arrows-24-px.png')} />
               </TouchableOpacity>
-            )}
+            )} */}
           </View>
-          {this.state.isRateOutdated && (
+          {/* {this.state.isRateOutdated && (
             <View style={styles.outdatedRateContainer}>
               <Badge status="warning" />
               <View style={styles.spacing8} />
@@ -328,7 +368,7 @@ class AmountInput extends Component {
                 <Icon name="sync" type="font-awesome-5" size={16} color={colors.buttonAlternativeTextColor} />
               </TouchableOpacity>
             </View>
-          )}
+          )} */}
         </>
       </TouchableWithoutFeedback>
     );
@@ -396,9 +436,11 @@ const styles = StyleSheet.create({
     marginBottom: 22,
   },
   secondaryText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#9BA0A9',
     fontWeight: '600',
+    fontFamily: 'Orbitron-Regular',
+    marginTop: 7
   },
   changeAmountUnit: {
     alignSelf: 'center',
@@ -407,28 +449,20 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   container1: {
-    //flexDirection: 'row',
-    //alignItems: 'center',
-    //justifyContent:'center',
     height: 44,
     //backgroundColor: 'green',
-    //marginBottom: 1,
     marginLeft: 8
   },
   text: {
     fontSize: 36,
-
-
     color: 'white',
-    //marginHorizontal: 8,
     fontWeight: '600',
     alignSelf: 'flex-end',
-    //justifyContent: 'center',
     fontFamily: 'Orbitron-Black',
   },
   line: {
     position: 'absolute',
-    top: 3, // Adjust top as needed
+    top: 3, 
     left: 2,
     right: 2,
     height: 3,

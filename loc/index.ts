@@ -394,7 +394,7 @@ export function formatBalance(
       valueInSatoshi = new BigNumber(balance).times(BTC_TO_SATOSHI);
     }
     const value = valueInSatoshi.dividedBy(MARS_TO_SATOSHI).toFixed(8);
-    return removeTrailingZeros(value) + " zubrin";
+    return removeTrailingZeros(value) + " MARS";
   } else {
     return -1;
   }

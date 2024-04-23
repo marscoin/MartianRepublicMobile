@@ -18,6 +18,8 @@ import Button from '../../components/Button';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 import SafeArea from '../../components/SafeArea';
 import { satoshiToBTC, satoshiToLocalCurrency } from '../../blue_modules/currency';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {EXCHANGE_RATES_STORAGE_KEY} from '../blue_modules/currency';
 const BlueElectrum = require('../../blue_modules/BlueElectrum');
 const Bignumber = require('bignumber.js');
 const bitcoin = require('bitcoinjs-lib');
@@ -34,6 +36,36 @@ const Confirm = () => {
   const feeSatoshi = new Bignumber(fee).multipliedBy(100000000).toNumber();
   const { navigate, setOptions } = useNavigation();
   const { colors } = useTheme();
+
+  console.log('PARAMS', params)
+
+  const stylesM = StyleSheet.create({
+    container: {
+      height: 33,
+      //backgroundColor: 'green'
+    },
+    text: {
+      fontSize: 33,
+      fontWeight: '700',
+      fontFamily: 'Orbitron-Black', 
+      color:'white'
+    },
+    line: {
+      position: 'absolute',
+      top: 3, // Adjust top as needed
+      left: 2,
+      right: 2,
+      height: 4,
+      backgroundColor: 'white',
+    },
+  });
+  const MarscoinSymbol = () => (
+    <View style={stylesM.container}>
+      <Text style={stylesM.text}>M</Text>
+      <View style={stylesM.line} />
+    </View>
+  );
+  
   const stylesHook = StyleSheet.create({
     transactionDetailsTitle: {
       color: colors.foregroundColor,
@@ -182,14 +214,17 @@ const Confirm = () => {
       <>
         <View style={styles.valueWrap}>
           <Text testID="TransactionValue" style={[styles.valueValue, stylesHook.valueValue]}>
-            {satoshiToBTC(item.value)}
+            {(item.value)/100000000}{' '}
           </Text>
-          <Text style={[styles.valueUnit, stylesHook.valueValue]}>{' ' + loc.units[BitcoinUnit.BTC]}</Text>
+          <Text style={[styles.valueUnit, stylesHook.valueValue]}>
+            <MarscoinSymbol/>
+          </Text>
+          {/* <Text style={[styles.valueUnit, stylesHook.valueValue]}>{' MARS'}</Text> */}
         </View>
-        <Text style={[styles.transactionAmountFiat, stylesHook.transactionAmountFiat]}>{satoshiToLocalCurrency(item.value)}</Text>
+        <Text style={[styles.transactionAmountFiat, stylesHook.transactionAmountFiat]}>$ {(item.value * params.marsRate /100000000).toFixed(8)}</Text>
         <BlueCard>
           <Text style={[styles.transactionDetailsTitle, stylesHook.transactionDetailsTitle]}>{loc.send.create_to}</Text>
-          <Text testID="TransactionAddress" style={[styles.transactionDetailsSubtitle, stylesHook.transactionDetailsSubtitle]}>
+          <Text textAlign='center' testID="TransactionAddress" style={[styles.transactionDetailsSubtitle, stylesHook.transactionDetailsSubtitle]}>
             {item.address}
           </Text>
         </BlueCard>
@@ -233,7 +268,7 @@ const Confirm = () => {
       <View style={styles.cardBottom}>
         <BlueCard>
           <Text style={styles.cardText} testID="TransactionFee">
-            {loc.send.create_fee}: {formatBalance(feeSatoshi, BitcoinUnit.BTC)} ({satoshiToLocalCurrency(feeSatoshi)})
+            {loc.send.create_fee}: {(feeSatoshi/100).toLocaleString(undefined, { maximumFractionDigits: 2 })} zubrin (${(feeSatoshi*params.marsRate/1000000000).toFixed(6)})
           </Text>
           {isLoading ? <ActivityIndicator /> : <Button disabled={isElectrumDisabled} onPress={send} title={loc.send.confirm_sendNow} />}
         </BlueCard>
@@ -249,17 +284,23 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 17,
     marginBottom: 2,
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2
   },
   transactionDetailsSubtitle: {
-    fontWeight: '500',
+    fontWeight: '400',
     fontSize: 15,
     marginBottom: 20,
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2,
+    alignSelf: 'center'
   },
   transactionAmountFiat: {
     fontWeight: '500',
     fontSize: 15,
     marginVertical: 8,
     textAlign: 'center',
+    fontFamily: 'Orbitron-Black',
   },
   valueWrap: {
     flexDirection: 'row',
@@ -268,6 +309,7 @@ const styles = StyleSheet.create({
   valueValue: {
     fontSize: 36,
     fontWeight: '700',
+    fontFamily: 'Orbitron-Black',
   },
   valueUnit: {
     fontSize: 16,
@@ -275,6 +317,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     fontWeight: '600',
     alignSelf: 'flex-end',
+    fontFamily: 'Orbitron-Black',
   },
   valueOf: {
     alignSelf: 'flex-end',
@@ -313,6 +356,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     fontWeight: '500',
     alignSelf: 'center',
+    fontFamily: 'Orbitron-Black',
   },
   txDetails: {
     alignItems: 'center',
@@ -324,6 +368,7 @@ const styles = StyleSheet.create({
   txText: {
     fontSize: 15,
     fontWeight: '600',
+    fontFamily: 'Orbitron-Black',
   },
   payjoinWrapper: {
     flexDirection: 'row',
@@ -337,6 +382,7 @@ const styles = StyleSheet.create({
     color: '#81868e',
     fontSize: 15,
     fontWeight: 'bold',
+    fontFamily: 'Orbitron-Black',
   },
 });
 

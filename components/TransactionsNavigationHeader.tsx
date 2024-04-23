@@ -34,9 +34,6 @@ interface TransactionsNavigationHeaderProps {
 }
 const stylesM = StyleSheet.create({
   container: {
-    //flexDirection: 'row',
-    //alignItems: 'center',
-    //justifyContent:'center',
     height: 36,
     //backgroundColor: 'green'
   },
