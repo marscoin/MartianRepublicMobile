@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Image, View, TouchableOpacity, Platform, StyleSheet, TextInput, Alert } from 'react-native';
 import { CameraScreen } from 'react-native-camera-kit';
 import { Icon } from 'react-native-elements';
+//import { useNavigation, useRoute } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { decodeUR, extractSingleWorkload, BlueURDecoder } from '../../blue_modules/ur';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
@@ -109,6 +110,7 @@ const ScanQRCode = () => {
       color: colors.foregroundColor,
     },
   });
+
 
   useEffect(() => {
     isCameraAuthorizationStatusGranted().then(setCameraStatusGranted);
@@ -402,6 +404,33 @@ const ScanQRCode = () => {
 };
 
 export default ScanQRCode;
+
+
+// const importQrTransactionOnBarScanned =  (ret, wallet, transactionMemo)  => {
+//   const navigation = useNavigation();
+//   navigation.getParent().pop();
+//   if (!ret.data) ret = { data: ret };
+//   if (ret.data.toUpperCase().startsWith('UR')) {
+//     presentAlert({ title: loc.errors.error, message: 'BC-UR not decoded. This should never happen' });
+//   } else if (ret.data.indexOf('+') === -1 && ret.data.indexOf('=') === -1 && ret.data.indexOf('=') === -1) {
+//     // this looks like NOT base64, so maybe its transaction's hex
+//     // we dont support it in this flow
+//   } else {
+//     // psbt base64?
+
+//     // we construct PSBT object and pass to next screen
+//     // so user can do smth with it:
+//     const psbt = bitcoin.Psbt.fromBase64(ret.data);
+//     navigation.navigate('PsbtWithHardwareWallet', {
+//       memo: transactionMemo,
+//       fromWallet: wallet,
+//       psbt,
+//     });
+//     setIsLoading(false);
+//     setOptionsVisible(false);
+//   }
+// };
+
 ScanQRCode.initialParams = {
   isLoading: false,
   cameraStatusGranted: undefined,
@@ -414,4 +443,5 @@ ScanQRCode.initialParams = {
   showFileImportButton: true,
   backdoorVisible: false,
   animatedQRCodeData: {},
+  //onBarScanned: (data) => importQrTransactionOnBarScanned(data, navigation, wallet, transactionMemo)
 };

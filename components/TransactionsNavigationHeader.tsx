@@ -206,7 +206,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
             <Text
               testID="WalletBalance"
               numberOfLines={1}
-              adjustsFontSizeToFit
+              //adjustsFontSizeToFit
               style={styles.walletBalance}
             >
               <MarscoinSymbol />
@@ -377,7 +377,6 @@ const styles = StyleSheet.create({
   },
   balanceCont:{
     height: 45,
-    //backgroundColor: 'red', 
     alignItems: 'flex-start'
   },
   manageFundsButton: {

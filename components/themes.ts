@@ -62,8 +62,8 @@ export const BlueDefaultTheme = {
     outputValue: '#13244D',
     elevated: 'black',
     mainColor: '#FF7400',
-    success: '#ccddf9',
-    successCheck: '#0f5cc0',
+    success: 'white',
+    successCheck: '#FF7400',
     msSuccessBG: '#37c0a1',
     msSuccessCheck: 'black',
     newBlue: 'white',///btc border and text

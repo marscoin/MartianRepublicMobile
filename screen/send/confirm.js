@@ -268,7 +268,7 @@ const Confirm = () => {
       <View style={styles.cardBottom}>
         <BlueCard>
           <Text style={styles.cardText} testID="TransactionFee">
-            {loc.send.create_fee}: {(feeSatoshi/100).toLocaleString(undefined, { maximumFractionDigits: 2 })} zubrin (${(feeSatoshi*params.marsRate/1000000000).toFixed(6)})
+            {loc.send.create_fee}: {(feeSatoshi).toLocaleString(undefined, { maximumFractionDigits: 2 })} zubrin (${(feeSatoshi*params.marsRate/1000000000).toFixed(6)})
           </Text>
           {isLoading ? <ActivityIndicator /> : <Button disabled={isElectrumDisabled} onPress={send} title={loc.send.confirm_sendNow} />}
         </BlueCard>

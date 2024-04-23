@@ -1191,14 +1191,15 @@ const SendDetails = () => {
     const options = [
       {
         label: loc.send.fee_fast,
-        time: loc.send.fee_10m,
+        time: '2m',
         fee: feePrecalc.fastestFee,
         rate: nf.fastestFee,
         active: Number(feeRate) === nf.fastestFee,
       },
       {
         label: loc.send.fee_medium,
-        time: loc.send.fee_3h,
+       // time: loc.send.fee_3h,
+        time: '15m',
         fee: feePrecalc.mediumFee,
         rate: nf.mediumFee,
         active: Number(feeRate) === nf.mediumFee,
@@ -1206,7 +1207,7 @@ const SendDetails = () => {
       },
       {
         label: loc.send.fee_slow,
-        time: loc.send.fee_1d,
+        time: '45m',
         fee: feePrecalc.slowFee,
         rate: nf.slowFee,
         active: Number(feeRate) === nf.slowFee,
@@ -1244,7 +1245,7 @@ const SendDetails = () => {
                 </View>
                 <View style={styles.feeModalRow}>
                   {marsRate &&
-                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>{fee} zubrin / ${(fee*marsRate/ 100000000).toFixed(8)}</Text>}
+                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>{fee*100} zubrin / ${(fee*marsRate/ 1000000).toFixed(8)}</Text>}
                   <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>
                     {rate} {loc.units.sat_vbyte}
                   </Text>
@@ -1578,7 +1579,7 @@ const SendDetails = () => {
                   <Text style={[stylesHook.feeValue, {fontSize: 12}]}>
                     {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' ' + loc.units.sat_vbyte} */}
                     {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' zubrin'} */}
-                    {(feePrecalc.current).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' zubrin' }
+                    {(feePrecalc.current*100).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' zubrin' }
                   </Text>
                 </View>
               )}

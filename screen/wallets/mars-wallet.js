@@ -495,6 +495,8 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     return this.next_free_address_index;
   }
 
+  // ggetPassport() {}
+
   getUtxo(respectFrozen = false) {
     console.log("==== [MARS] getUtxo ===");
     let ret = [];

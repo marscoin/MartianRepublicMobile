@@ -113,7 +113,7 @@ export const SuccessView = ({ amount, amountUnit, fee, invoiceDescription, shoul
           <View style={styles.view}>
             {amount ? (
               <>
-                <Text style={[styles.amountValue, stylesHook.amountValue]}>{amount}</Text>
+                <Text style={[styles.amountValue, stylesHook.amountValue]}>{amount} </Text>
                 <Text style={[styles.amountUnit, stylesHook.amountUnit]}>
                   <MarscoinSymbol/>
                 </Text>
@@ -123,7 +123,7 @@ export const SuccessView = ({ amount, amountUnit, fee, invoiceDescription, shoul
           </View>
           {fee > 0 && (
             <Text style={styles.feeText}>
-              {loc.send.create_fee}: {new BigNumber(fee/100).toFixed()} 
+              {loc.send.create_fee}: {new BigNumber(fee).toFixed()} 
             </Text>
           )}
           <Text numberOfLines={0} style={styles.feeText}>
@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
   amountValue: {
     fontSize: 36,
     fontWeight: '600',
+    fontFamily: 'Orbitron-Black',
   },
   amountUnit: {
     fontSize: 16,
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron-Black',
   },
   feeText: {
-    color: '#37c0a1',
+    color: '#FF7400',
     fontSize: 14,
     marginHorizontal: 4,
     paddingVertical: 6,
