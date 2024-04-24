@@ -94,6 +94,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import CitizenScreen from './screen/citizen/citizenScreen';
+import AreYouCitizenScreen from './screen/citizen/areYouCitizen';
 import JoinGeneralPublicApplicationScreen from './screen/citizen/joinGeneralPublicApplication';
 
 
@@ -183,11 +184,32 @@ const BottomTabNavigator = () => {
   );
 };
 
+const AppStack = createNativeStackNavigator();
+const AppNavigator = () => {
+  return (
+    <AppStack.Navigator initialRouteName="AreYouCitizenScreen">
+      <AppStack.Screen
+        name="AreYouCitizenScreen"
+        component={AreYouCitizenScreen}
+        options={{ headerShown: false }}
+      />
+      {/* Once the onboarding is completed, you navigate to the MainApp */}
+      <AppStack.Screen
+        name="MainApp"
+        component={BottomTabNavigator}
+        options={{ headerShown: false }}
+      />
+      {/* ... perhaps other screens you want outside the tabs ... */}
+    </AppStack.Navigator>
+  );
+};
+
 const CitizenStack = createNativeStackNavigator();
 
 const CitizenRoot = () => {
   return (
-    <CitizenStack.Navigator screenOptions={{ headerShown: false }}>
+    <CitizenStack.Navigator screenOptions={{ headerShown: false }} >
+      {/* <CitizenStack.Screen name="AreYouCitizenScreen" component={AreYouCitizenScreen} options={{ headerShown: false }}   /> */}
       <CitizenStack.Screen name="CitizenScreen" component={CitizenScreen} options={{headerShown: false}}  />
       <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen}  options={{headerShown: false}} />
       
@@ -735,7 +757,8 @@ const StatusBarLightOptions: NativeStackNavigationOptions = { statusBarStyle: 'l
 const Navigation = () => {
   return (
     <RootStack.Navigator initialRouteName="UnlockWithScreenRoot" screenOptions={{ headerShadowVisible: false, statusBarStyle: 'auto' }}>
-      <RootStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
+      <RootStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} />
+      {/* <RootStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} /> */}
       {/* stacks */}
       <RootStack.Screen name="WalletsRoot" component={WalletsRoot} options={{ headerShown: false, statusBarTranslucent: false }} />
       <RootStack.Screen name="AddWalletRoot" component={AddWalletRoot} options={NavigationFormModalOptions} />

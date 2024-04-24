@@ -82,8 +82,6 @@ const CitizenScreen = () => {
             height:80,
             flexDirection:'row',
             marginHorizontal: 16,
-            backgroundColor:'red',
-            backgroundColor: colors.elevated,
             justifyContent:'center',
             alignItems:'center'
         },
