@@ -21,6 +21,7 @@ import ReleaseNotes from './screen/settings/releasenotes';
 import Tools from './screen/settings/tools';
 
 import AddWallet from './screen/wallets/add';
+import WalletsCivicAdd from './screen/citizen/addCivicWallet';
 import WalletsAddMultisig from './screen/wallets/addMultisig';
 import WalletsAddMultisigHelp, { WalletAddMultisigHelpNavigationOptions } from './screen/wallets/addMultisigHelp';
 import WalletsAddMultisigStep2 from './screen/wallets/addMultisigStep2';
@@ -97,6 +98,7 @@ import CitizenScreen from './screen/citizen/citizenScreen';
 import AreYouCitizenScreen from './screen/citizen/areYouCitizen';
 import ImportCivicWalletScreen from './screen/citizen/importCivicWalletScreen';
 import ImportCivicWalletDiscovery from './screen/citizen/importCivicDiscovery';
+import PleaseBackupCivic from './screen/citizen/pleaseBackupCivic';
 import JoinGeneralPublicApplicationScreen from './screen/citizen/joinGeneralPublicApplication';
 
 const WalletsStack = createNativeStackNavigator();
@@ -220,12 +222,36 @@ const AppNavigator = () => {
          }
         
       />
-       <AppStack.Screen 
+      <AppStack.Screen 
         name="PleaseBackup"
         component={PleaseBackup}
         options={ImportCustomDerivationPath.navigationOptions(theme)}
       />
-      <AppStack.Screen  name="ImportSpeed" component={ImportSpeed} options={ImportSpeed.navigationOptions(theme)} />
+       <AppStack.Screen 
+        name="WalletsCivicAdd"
+        component={WalletsCivicAdd}
+        //options={ImportCustomDerivationPath.navigationOptions(theme)}
+        options={navigationStyle({
+          closeButton: false,
+          headerBackVisible: true,
+          title: 'Create wallet',
+          headerStyle:{
+            backgroundColor:'black'
+          }
+        })(theme)}
+      />
+      <AppStack.Screen  
+        name="PleaseBackupCivic" 
+        component={PleaseBackupCivic} 
+        options={navigationStyle({
+          closeButton: false,
+          headerBackVisible: false,
+          title: 'Please Backup',
+          headerStyle:{
+            backgroundColor:'black'
+          }
+        })(theme)}
+      />
       {/* <AppStack.Screen 
         name="PleaseBackup"
         component={PleaseBackup}
@@ -237,7 +263,7 @@ const AppNavigator = () => {
             backgroundColor:'black'
           }
         })(theme)}
-      /> */}
+      /> */} 
       {/* Once the onboarding is completed, you navigate to the MainApp */}
       <AppStack.Screen
         name="MainApp"

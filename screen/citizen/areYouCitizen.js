@@ -126,7 +126,7 @@ const AreYouCitizenScreen = () => {
                 <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                     <TouchableOpacity 
                         style={[styles.joinButton]}
-                        //onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                        onPress={() => navigation.navigate('WalletsCivicAdd')}
                     >
                         <Text style={styles.noWalletText}>NO</Text>
                     </TouchableOpacity>

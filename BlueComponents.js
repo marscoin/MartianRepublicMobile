@@ -121,7 +121,8 @@ export const MarscoinButton = props => {
     <TouchableOpacity accessibilityRole="button" testID={props.testID} onPress={props.onPress}>
       <View
         style={{
-          borderColor: (props.active && colors.newBlue) || colors.buttonDisabledBackgroundColor,
+          //borderColor: (props.active && colors.newBlue) || colors.buttonDisabledBackgroundColor,
+          borderColor: '#FF7400',
           borderWidth: 1.5,
           borderRadius: 8,
           backgroundColor: colors.buttonDisabledBackgroundColor,

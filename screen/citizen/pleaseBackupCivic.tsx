@@ -10,7 +10,7 @@ import { useTheme } from '../../components/themes';
 import usePrivacy from '../../hooks/usePrivacy';
 import loc from '../../loc';
 
-const PleaseBackup: React.FC = () => {
+const PleaseBackupCivic: React.FC = () => {
   const { wallets } = useContext(BlueStorageContext);
   const [isLoading, setIsLoading] = useState(true);
   const { walletID } = useRoute().params as { walletID: string };
@@ -147,4 +147,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PleaseBackup;
+export default PleaseBackupCivic;
