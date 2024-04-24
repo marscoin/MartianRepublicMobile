@@ -98,6 +98,8 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         this.next_free_address_index + c
       );
       this.external_addresses_cache[this.next_free_address_index + c] = address; // updating cache just for any case
+      this._address=this.external_addresses_cache[0] ///taking 0 index as main address
+      console.log('this.external_addresses_cache[0]', this._address)
       let txs = [];
       try {
         txs = await MARSConnection.getTransactionsByAddress(address);
@@ -119,7 +121,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       ); // we didnt check this one, maybe its free
       this.next_free_address_index += c; // now points to this one
     }
-    this._address = freeAddress;
+    //this._address = freeAddress;
     return freeAddress;
   }
 
@@ -741,7 +743,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     const fetchedUtxo = await MARSConnection.multiGetUtxoByAddress(addressess);
     this._utxo = [];
     for (const arr of Object.values(fetchedUtxo)) {
-      console.log(arr);
+      //console.log(arr);
       this._utxo = this._utxo.concat(arr);
     }
 
@@ -996,8 +998,8 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       }
     }
 
-    console.log(JSON.stringify(this._txs_by_external_index));
-    console.log(JSON.stringify(this._txs_by_internal_index));
+    //console.log(JSON.stringify(this._txs_by_external_index));
+    //console.log(JSON.stringify(this._txs_by_internal_index));
 
     this._lastTxFetch = +new Date();
   }
@@ -1338,7 +1340,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
   async getTxHex(adr) {
     const resp = await MARSConnection.getTxHex(adr);
-    console.log(resp);
+    //console.log(resp);
     return resp;
   }
 

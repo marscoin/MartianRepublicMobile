@@ -225,6 +225,26 @@ export const BlueStorageProvider = ({ children }) => {
     await w.fetchBalance();
     setWallets([...BlueApp.getWallets()]);
   };
+  const addAndSaveCivicWallet = async w => {
+    if (wallets.some(i => i.getID() === w.getID())) {
+      triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
+      presentAlert({ message: 'This wallet has been previously imported.' });
+      return;
+    }
+    const emptyWalletLabel = new LegacyWallet().getLabel();
+    triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
+    w.setLabel('CIVIC WALLET');
+    w.getAddressAsync()
+    w.setUserHasSavedExport(true);
+    addWallet(w);
+    await saveToDisk();
+    A(A.ENUM.CREATED_WALLET);
+    presentAlert({ message: w.type === WatchOnlyWallet.type ? loc.wallets.import_success_watchonly : loc.wallets.import_success });
+    Notifications.majorTomToGroundControl(w.getAllExternalAddresses(), [], []);
+    // start balance fetching at the background
+    await w.fetchBalance();
+    setWallets([...BlueApp.getWallets()]);
+  };
 
   const setSharedCosigner = cosigner => {
     setCurrentSharedCosigner(cosigner);
@@ -270,6 +290,7 @@ export const BlueStorageProvider = ({ children }) => {
         deleteWallet,
         currentSharedCosigner,
         setSharedCosigner,
+        addAndSaveCivicWallet,
         addAndSaveWallet,
         setItem,
         getItem,

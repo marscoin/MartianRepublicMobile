@@ -1,37 +1,17 @@
-import React, { useEffect, useState, useContext , useRef, useLayoutEffect,  useReducer} from 'react';
+import React, { useRef} from 'react';
 import { ScrollView, Platform,ActivityIndicator, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import navigationStyle from '../../components/navigationStyle';
-import loc from '../../loc';
-import { Icon } from 'react-native-elements';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
-import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
-import Button from '../../components/Button';
-import SafeArea from '../../components/SafeArea';
-import usePrivacy from '../../hooks/usePrivacy';
 import LinearGradient from 'react-native-linear-gradient';
-import WalletGradient from '../../class/wallet-gradient';
 import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
-import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
-import axios from 'axios';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useIsFocused } from '@react-navigation/native';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 const AreYouCitizenScreen = () => {
-    const navigation = useNavigation();
-    const isFocused = useIsFocused();
-
-    //////hiding tabs//////
-    useLayoutEffect(() => {
-        navigation.setOptions({
-          tabBarStyle: isFocused ? { display: 'none' } : {},
-        });
-      }, [isFocused, navigation]);
-    
+    const navigation = useNavigation();  
     const { colors } = useTheme();
     const route = useRoute();
     const imageLoadError = useRef({});
@@ -137,7 +117,7 @@ const AreYouCitizenScreen = () => {
                 <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                     <TouchableOpacity 
                         style={[styles.joinButton]}
-                        onPress={() => navigation.navigate('MainApp')}
+                        onPress={() => navigation.navigate('ImportCivicWalletScreen')}
                     >
                         <Text style={styles.noWalletText}>YES</Text>
                     </TouchableOpacity>

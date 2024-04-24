@@ -95,8 +95,9 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 
 import CitizenScreen from './screen/citizen/citizenScreen';
 import AreYouCitizenScreen from './screen/citizen/areYouCitizen';
+import ImportCivicWalletScreen from './screen/citizen/importCivicWalletScreen';
+import ImportCivicWalletDiscovery from './screen/citizen/importCivicDiscovery';
 import JoinGeneralPublicApplicationScreen from './screen/citizen/joinGeneralPublicApplication';
-
 
 const WalletsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -104,7 +105,7 @@ const Tab = createBottomTabNavigator();
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator 
-      initialRouteName="Citizen"
+      initialRouteName="Wallet"
       screenOptions={{
         tabBarActiveTintColor: '#FF7400',
         tabBarInactiveTintColor: 'white', 
@@ -184,22 +185,65 @@ const BottomTabNavigator = () => {
   );
 };
 
-const AppStack = createNativeStackNavigator();
+const AppStack = createNativeStackNavigator(); ////MAIN ONBOARDING STACK WITHOUT TABS
 const AppNavigator = () => {
+  const theme = useTheme();
   return (
-    <AppStack.Navigator initialRouteName="AreYouCitizenScreen">
+    <AppStack.Navigator 
+      initialRouteName="AreYouCitizenScreen"
+      screenOptions={{ 
+        headerShadowVisible: false,  
+        headerStyle:{
+          backgroundColor:'black'
+         } 
+      }}
+    >
       <AppStack.Screen
         name="AreYouCitizenScreen"
         component={AreYouCitizenScreen}
         options={{ headerShown: false }}
       />
+      <AppStack.Screen
+        name="ImportCivicWalletScreen"
+        component={ImportCivicWalletScreen}
+        options={{ headerShown: false }}
+      />
+      <AppStack.Screen 
+          name="ImportWallet" 
+          component={ImportWallet} 
+          options={ImportWallet.navigationOptions(theme)} />
+       <AppStack.Screen 
+        name="ImportCivicWalletDiscovery"
+        component={ImportCivicWalletDiscovery}
+        options={
+          ImportWalletDiscovery.navigationOptions(theme)
+         }
+        
+      />
+       <AppStack.Screen 
+        name="PleaseBackup"
+        component={PleaseBackup}
+        options={ImportCustomDerivationPath.navigationOptions(theme)}
+      />
+      <AppStack.Screen  name="ImportSpeed" component={ImportSpeed} options={ImportSpeed.navigationOptions(theme)} />
+      {/* <AppStack.Screen 
+        name="PleaseBackup"
+        component={PleaseBackup}
+        options={navigationStyle({
+          gestureEnabled: false,
+          headerBackVisible: false,
+          title: loc.pleasebackup.title,
+          headerStyle:{
+            backgroundColor:'black'
+          }
+        })(theme)}
+      /> */}
       {/* Once the onboarding is completed, you navigate to the MainApp */}
       <AppStack.Screen
         name="MainApp"
         component={BottomTabNavigator}
         options={{ headerShown: false }}
       />
-      {/* ... perhaps other screens you want outside the tabs ... */}
     </AppStack.Navigator>
   );
 };

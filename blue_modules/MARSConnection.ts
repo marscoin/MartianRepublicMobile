@@ -531,7 +531,7 @@ module.exports.multiGetHistoryByAddress = async function (
     }
   }
 
-  console.log(JSON.stringify(ret));
+  //console.log(JSON.stringify(ret));
 
   return ret;
 };
@@ -683,8 +683,8 @@ module.exports.getTxHex = async function (txid, batchsize, verbose = true) {
       tx = txhexToElectrumTransaction(tx);
     }
   } catch (e) {
-    console.log(e);
-    console.log("OH NO :(");
+    //console.log(e);
+    //console.log("OH NO :(");
     // fallback. pretty sure we are connected to EPS.  we try getting transactions one-by-one. this way we wont
     // fail and only non-tracked by EPS transactions will be omitted
 
