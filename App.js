@@ -1,17 +1,6 @@
 import 'react-native-gesture-handler'; // should be on top
-import React, { useContext, useEffect, useRef } from 'react';
-import {
-  AppState,
-  NativeModules,
-  NativeEventEmitter,
-  Linking,
-  Platform,
-  StyleSheet,
-  UIManager,
-  useColorScheme,
-  View,
-  LogBox,
-} from 'react-native';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import {AppState, NativeModules, NativeEventEmitter, Linking, Platform, StyleSheet, UIManager, useColorScheme,View,LogBox,} from 'react-native';
 import { NavigationContainer, CommonActions } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { navigationRef } from './NavigationService';
@@ -61,6 +50,17 @@ const App = () => {
     refreshAllWalletTransactions,
     setSharedCosigner,
   } = useContext(BlueStorageContext);
+
+  // const [initialRoute, setInitialRoute] = useState(''); // Default route
+
+  // useEffect(() => {
+  //   if (walletsInitialized) {
+  //     const hasCivicWallet = wallets.some(wallet => wallet.civic === true);
+  //     console.log('!!!!!hasCivicWallet!!!!!', hasCivicWallet)
+  //     setInitialRoute(hasCivicWallet ? 'MainApp' : 'AppNavigator');
+  //   }
+  // }, [walletsInitialized, wallets]);
+
   const appState = useRef(AppState.currentState);
   const clipboardContent = useRef();
   const colorScheme = useColorScheme();
@@ -304,9 +304,7 @@ const App = () => {
           <DeviceQuickActions />
         </NavigationContainer>
       </View>
-      {/* <WatchConnectivity /> */}
       <Biometric />
-      {/* <WidgetCommunication /> */}
     </SafeAreaProvider>
   );
 };
