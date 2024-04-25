@@ -30,7 +30,7 @@ const AreYouCitizenScreen = () => {
             resizeMode:'cover'
         },
         center: {
-            marginTop: 20,
+            marginTop: 40,
             height:80,
             flexDirection:'row',
             marginHorizontal: 16,
@@ -62,7 +62,7 @@ const AreYouCitizenScreen = () => {
             fontFamily: 'Orbitron-SemiBold',
             letterSpacing: 1.5, 
             marginHorizontal: 30,
-            marginVertical: 50,
+            marginVertical: 60,
             letterSpacing: 3
         },
         iconStyle: {

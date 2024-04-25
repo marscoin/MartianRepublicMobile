@@ -234,6 +234,7 @@ export const BlueStorageProvider = ({ children }) => {
     const emptyWalletLabel = new LegacyWallet().getLabel();
     triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
     w.setLabel('CIVIC WALLET');
+    w.setCivic()
     w.getAddressAsync()
     w.setUserHasSavedExport(true);
     addWallet(w);

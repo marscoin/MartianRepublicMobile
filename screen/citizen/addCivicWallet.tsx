@@ -290,6 +290,7 @@ const WalletsCivicAdd: React.FC = () => {
     wallet = new MarsElectrumWallet()
         await wallet.generate()
         wallet.setLabel('CIVIC WALLET')
+        wallet.setCivic()
         await wallet.getAddressAsync();
         addWallet(wallet);
         await saveToDisk();
@@ -298,7 +299,6 @@ const WalletsCivicAdd: React.FC = () => {
         navigate('PleaseBackupCivic', {
           walletID: wallet.getID(),
         });
-      
   }
 
 
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: 'column',
     marginHorizontal: 20,
-    marginTop: 16,
+    marginTop: 26,
     borderWidth: 0,
     minHeight: 100,
   },
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   infoText: {
-    marginHorizontal: 60,
+    marginHorizontal: 66,
     marginBottom: 5,
     textAlign: 'center',
     fontSize: 18,

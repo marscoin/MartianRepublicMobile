@@ -54,6 +54,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     this._address_to_wif_cache = {};
 
     this.preferredBalanceUnit = BitcoinUnit.MARS;
+    this.civic = false;
   }
 
   timeToRefreshBalance() {
@@ -177,6 +178,10 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     this.secret = this.secret
       .replace(/[^a-zA-Z0-9]/g, " ")
       .replace(/\s+/g, " ");
+    return this;
+  }
+  setCivic() {
+    this.civic = true;
     return this;
   }
 
