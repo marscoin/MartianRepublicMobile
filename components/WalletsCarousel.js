@@ -26,8 +26,6 @@ import { useTheme } from './themes';
 import { BitcoinUnit } from '../models/bitcoinUnits';
 import { removeTrailingZeros } from '../loc';
 
-
-
 const nStyles = StyleSheet.create({
   container: {
     borderRadius: 10,
@@ -258,7 +256,12 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
           }, 50);
         }}
       >
-        <LinearGradient shadowColor={colors.shadowColor} colors={WalletGradient.gradientsFor(item.type)} style={iStyles.grad}>
+        <LinearGradient 
+            shadowColor={colors.shadowColor} 
+            colors = {item.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
+            style={iStyles.grad}
+            
+        >
           <Image source={image} style={iStyles.image} />
           <Text style={iStyles.br} />
           <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>

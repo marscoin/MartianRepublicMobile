@@ -716,9 +716,9 @@ const WalletDetails = () => {
                 <TouchableOpacity accessibilityRole="button" onPress={handleDeleteButtonTapped} testID="DeleteButton">
                   <Text textBreakStrategy="simple" style={styles.delete}>{`${loc.wallets.details_delete}${'  '}`}</Text>
                 </TouchableOpacity>}
-                <TouchableOpacity accessibilityRole="button" onPress={handleDeleteButtonTapped} testID="DeleteButton">
+                {/* <TouchableOpacity accessibilityRole="button" onPress={handleDeleteButtonTapped} testID="DeleteButton">
                   <Text textBreakStrategy="simple" style={styles.delete}>{`${loc.wallets.details_delete}${'  '}`}</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 <BlueSpacing20 />
                 <BlueSpacing20 />
               </View>

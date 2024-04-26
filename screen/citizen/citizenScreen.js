@@ -36,6 +36,7 @@ const CitizenScreen = () => {
         applicants: [],
         lastPageApplicants: 1,
         imageLoadErrors: {},
+        isCitizen: false
       };
     //console.log('wallets', wallets)
     const route = useRoute();
@@ -51,6 +52,8 @@ const CitizenScreen = () => {
                 return { ...state, filterCitizen: false, filterPublic: false, filterApplicants: true };
             case 'SET_CITIZENS':
                 return { ...state, citizens: action.payload };
+            case 'SET_IS_CITIZEN':
+                return { ...state, isCitizen: true };    
             case 'SET_GENERAL_PUBLIC':
                 return { ...state, generalPublic: action.payload };
             case 'SET_APPLICANTS':
@@ -292,36 +295,6 @@ const CitizenScreen = () => {
         },
     });
 
-    // const renderWalletItem = ({ item }) => (
-    //     <TouchableOpacity
-    //     onPress={() => {
-    //         // Handle wallet selection if needed
-    //     }}
-    //     accessibilityRole="button"
-    //     >
-    //     <View style={styles.itemRoot}>
-    //         <LinearGradient colors={WalletGradient.gradientsFor(item.type)} style={styles.gradient}>
-    //             <Image
-    //             source={(() => {
-    //                 switch (item.type) {
-    //                 case LightningLdkWallet.type:
-    //                 case LightningCustodianWallet.type:
-    //                     return I18nManager.isRTL ? require('../../img/lnd-shape-rtl.png') : require('../../img/lnd-shape.png');
-    //                 case MultisigHDWallet.type:
-    //                     return I18nManager.isRTL ? require('../../img/vault-shape-rtl.png') : require('../../img/vault-shape.png');
-    //                 default:
-    //                     return I18nManager.isRTL ? require('../../img/btc-shape-rtl.png') : require('../../img/btc-shape.png');
-    //                 }
-    //             })()}
-    //             style={styles.image}
-    //             />
-    //             <Text style={styles.label}>{item.getLabel()}</Text>
-    //             <Text style={styles.balance}>{item.getBalance()} BTC</Text>
-    //         </LinearGradient>
-    //     </View>
-    //     </TouchableOpacity>
-    // );
-
     const fetchGeneralPublic = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/public?page=${publicPageRef.current}`)
@@ -357,17 +330,27 @@ const CitizenScreen = () => {
     }
 
     useEffect(() => {
+        // Check if any civic wallet matches a citizen's address
+        const checkIfCitizen = () => {
+            const isCitizen = wallets.some(wallet =>
+                wallet.civic && state.citizens.some(citizen => citizen.address === wallet.address)
+            );
+            console.log('IS CITIZEN', isCitizen)
+            if (isCitizen) {
+                dispatch({ type: 'SET_IS_CITIZEN', payload: true });
+            }
+        };
+
+        if (wallets.length > 0 && state.citizens.length > 0) {
+            checkIfCitizen();
+        }
+    }, [wallets, state.citizens]);
+
+    useEffect(() => {
         fetchGeneralPublic()
         fetchApplicants()
         fetchCitizerns()
     }, []);
-
-    // useEffect(() => {
-    //     console.log('APPLICANTS usestate', state.applicants)
-    // }, [state.applicants]);
-    // useEffect(() => {
-    //     console.log('APPLICANTS usestate lastPageApplicants', state.lastPageApplicants)
-    // }, [state.lastPageApplicants]);
 
     const handleEndApplicantsReached = async () => {
         console.log('handleEndApplicantsReached')
@@ -398,16 +381,9 @@ const CitizenScreen = () => {
             </View>
             <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
             
-            {/* <View style={{marginVertical: 5}}>
-                <FlatList
-                    data={wallets}
-                    renderItem={renderWalletItem}
-                    keyExtractor={(item) => item.getID()}
-                    horizontal={true}
-                />
-            </View> */}
 
             {/* ///////////JOIN MARS BLOCK///////// */}
+            {!state.isCitizen &&
             <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
                 <View style={styles.noWallet}>
                     <Text style={[styles.noWalletText, {marginBottom: 15}]}>SUBMIT YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
@@ -421,6 +397,14 @@ const CitizenScreen = () => {
                     </LinearGradient>
                 </View>  
             </View>
+            }
+            {state.isCitizen &&
+            <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
+                <View style={styles.noWallet}>
+                    <Text style={[styles.noWalletText, { fontSize: 34, letterSpacing: 4, fontWeight:'800'}]}>WELCOME CITIZEN</Text>
+                </View>  
+            </View>
+            }
 
             <Image style={styles.imageLG} source={require('../../img/sunrise.png')} />
 

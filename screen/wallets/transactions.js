@@ -736,18 +736,19 @@ WalletTransactions.navigationOptions = navigationStyle({}, (options, { theme, na
           })
         }
       >
-        <Icon name="more-horiz" type="material" size={22} color="#FFFFFF" />
+        <Icon name="more-horiz" type="material" size={22} color="black" />
       </TouchableOpacity>
     ),
     title: '',
     headerStyle: {
       backgroundColor: WalletGradient.headerColorFor(route.params.walletType),
+      //backgroundColor: wallet.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white'],
       borderBottomWidth: 0,
       elevation: 0,
       // shadowRadius: 0,
       shadowOffset: { height: 0, width: 0 },
     },
-    headerTintColor: '#FFFFFF',
+    headerTintColor: 'black',
     headerBackTitleVisible: false,
   };
 });

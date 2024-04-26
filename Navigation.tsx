@@ -1,7 +1,7 @@
 import { DrawerNavigationOptions, createDrawerNavigator } from '@react-navigation/drawer';
 import { NativeStackNavigationOptions, createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useContext, useMemo, useState, useEffect } from 'react';
-import { Dimensions, I18nManager, Platform, useWindowDimensions, View } from 'react-native';
+import { Dimensions, I18nManager, Platform, useWindowDimensions, View, ActivityIndicator } from 'react-native';
 
 import PlausibleDeniability from './screen/PlausibleDeniability';
 import Selftest from './screen/selftest';
@@ -294,7 +294,7 @@ const WalletsRoot = () => {
         },
     }}>
       <WalletsStack.Screen name="WalletsList" component={WalletsList} options={WalletsList.navigationOptions(theme)} />
-      <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={WalletTransactions.navigationOptions(theme)} />
+      <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={{headerShown: false}} />
       <WalletsStack.Screen name="LdkOpenChannel" component={LdkOpenChannel} options={LdkOpenChannel.navigationOptions(theme)} />
       <WalletsStack.Screen name="LdkInfo" component={LdkInfo} options={LdkInfo.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletDetails" component={WalletDetails} options={WalletDetails.navigationOptions(theme)} />
@@ -729,29 +729,39 @@ const InitStack = createNativeStackNavigator();
 const InitRoot = () => {
   const { wallets, walletsInitialized } = useContext(BlueStorageContext);
   const [initialRoute, setInitialRoute] = useState(''); // Default route
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    setLoading(true)
     if (walletsInitialized) {
       const hasCivicWallet = wallets.some(wallet => wallet.civic === true);
-      console.log('!!!!!hasCivicWallet!!!!!', hasCivicWallet)
       setInitialRoute(hasCivicWallet ? 'BottomTabs' : 'AppNavigator');
-      console.log('!!!!!initialRoute!!!!!', initialRoute)
+      setLoading(false); // Set loading to false after the check
     }
   }, [walletsInitialized, wallets]);
-  
-  return (
-      <InitStack.Navigator initialRouteName="UnlockWithScreenRoot" screenOptions={{ animationTypeForReplace: 'push' }}>
-        {!walletsInitialized ? (
-          <InitStack.Screen name="UnlockWithScreenRoot" component={UnlockWithScreenRoot} options={{ headerShown: false }} />
-        ) : initialRoute === 'BottomTabs' ? (
-          <InitStack.Screen name="BottomTabs" component={Navigation} options={{ headerShown: false }} />
-          // <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
-        ) : (
-          <InitStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} />
-        )}
-      </InitStack.Navigator>
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'black' }}>
+        <ActivityIndicator size="large" color="white" />
+      </View>
     );
+  }
+
+  return (
+    <InitStack.Navigator initialRouteName="UnlockWithScreenRoot" screenOptions={{ animationTypeForReplace: 'push' }}>
+      {!walletsInitialized ? (
+        <InitStack.Screen name="UnlockWithScreenRoot" component={UnlockWithScreenRoot} options={{ headerShown: false }} />
+      ) : initialRoute === 'BottomTabs' ? (
+        <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
+      ) : (
+        <InitStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} />
+      )}
+    </InitStack.Navigator>
+  );
 };
+
+
 
 
 export type ViewEditMultisigCosignersStackParamsList = {

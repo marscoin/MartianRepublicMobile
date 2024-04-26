@@ -9,16 +9,18 @@ import Biometric from '../class/biometrics';
 import loc, { formatBalance } from '../loc';
 import { BlueStorageContext } from '../blue_modules/storage-context';
 import ToolTipMenu from './TooltipMenu';
-import { BluePrivateBalance } from '../BlueComponents';
+import { BluePrivateBalance, BlueSpacing40 } from '../BlueComponents';
 import { FiatUnit } from '../models/fiatUnit';
 import WalletAddresses from '../screen/wallets/addresses';
 import { removeTrailingZeros } from '../loc';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {EXCHANGE_RATES_STORAGE_KEY} from '../blue_modules/currency';
+import { MarsElectrumWallet } from '../screen/wallets/mars-wallet';
+import { Icon } from 'react-native-elements';
 
 
 interface TransactionsNavigationHeaderProps {
-  wallet: AbstractWallet;
+  wallet: MarsElectrumWallet;
   onWalletUnitChange?: (wallet: any) => void;
   navigation: {
     navigate: (route: string, params?: any) => void;
@@ -143,29 +145,6 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
     saveToDisk();
   };
 
-  // const updateWalletWithNewUnit = (w: AbstractWallet, newPreferredUnit: BitcoinUnit) => {
-  //   w.preferredBalanceUnit = newPreferredUnit;
-  //   return w;
-  // };
-
-  // const changeWalletBalanceUnit = () => {
-  //   // @ts-ignore: Ugh
-  //   menuRef.current?.dismissMenu();
-  //   let newWalletPreferredUnit = wallet.getPreferredBalanceUnit();
-
-  //   if (newWalletPreferredUnit === BitcoinUnit.BTC) {
-  //     newWalletPreferredUnit = BitcoinUnit.SATS;
-  //   } else if (newWalletPreferredUnit === BitcoinUnit.SATS) {
-  //     newWalletPreferredUnit = BitcoinUnit.LOCAL_CURRENCY;
-  //   } else {
-  //     newWalletPreferredUnit = BitcoinUnit.BTC;
-  //   }
-
-  //   const updatedWallet = updateWalletWithNewUnit(wallet, newWalletPreferredUnit);
-  //   setWallet(updatedWallet);
-  //   onWalletUnitChange?.(updatedWallet);
-  // };
-
   const handleManageFundsPressed = () => {
     onManageFundsPressed?.(actionKeys.Refill);
   };
@@ -259,10 +238,38 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
 
   return (
     <LinearGradient
-      colors={WalletGradient.gradientsFor(wallet.type)}
+      //colors={WalletGradient.gradientsFor(wallet.type)}
+      colors = {wallet.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
       style={styles.lineaderGradient}
-      {...WalletGradient.linearGradientProps(wallet.type)}
+      // {...WalletGradient.linearGradientProps(wallet.type)}
     >
+      <BlueSpacing40/>
+      {/* ////HEADER///// */}
+      <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom: 10}}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          testID="WalletDetails"
+          onPress={() =>
+            navigation.goBack()
+          }
+        >
+          <Icon size={44} name="chevron-left" type="ionicons" color="black" />
+        </TouchableOpacity>
+      
+        <TouchableOpacity
+          accessibilityRole="button"
+          testID="WalletDetails"
+          //disabled={route.params.isLoading === true}
+          style={{justifyContent: 'center', alignItems: 'flex-end',}}
+          onPress={() =>
+            navigation.navigate('WalletDetails', {
+              walletID: wallet.getID(),
+            })
+          }
+        >
+          <Icon name="more-horiz" type="material" size={24} color="black" />
+        </TouchableOpacity>
+      </View>
       <Image
         source={(() => {
           switch (wallet.type) {

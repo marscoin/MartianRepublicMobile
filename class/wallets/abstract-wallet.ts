@@ -51,6 +51,7 @@ export class AbstractWallet {
   _utxoMetadata: Record<string, UtxoMetadata>;
   use_with_hardware_wallet: boolean;
   masterFingerprint: number | false;
+  civic: boolean;
 
   constructor() {
     const Constructor = this.constructor as unknown as WalletStatics;
@@ -74,6 +75,7 @@ export class AbstractWallet {
     this._utxoMetadata = {};
     this.use_with_hardware_wallet = false;
     this.masterFingerprint = false;
+    this.civic = false;
   }
 
   /**
