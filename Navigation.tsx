@@ -220,12 +220,12 @@ const AppNavigator = () => {
         options={
           ImportWalletDiscovery.navigationOptions(theme)
          }
-        
       />
       <AppStack.Screen 
-        name="PleaseBackup"
-        component={PleaseBackup}
-        options={ImportCustomDerivationPath.navigationOptions(theme)}
+        name="ScanQRCode" 
+        component={ScanQRCode} 
+        initialParams={ScanQRCode.initialParams} 
+        options={{ headerShown: false }}
       />
        <AppStack.Screen 
         name="WalletsCivicAdd"
@@ -252,24 +252,13 @@ const AppNavigator = () => {
           }
         })(theme)}
       />
-      {/* <AppStack.Screen 
-        name="PleaseBackup"
-        component={PleaseBackup}
-        options={navigationStyle({
-          gestureEnabled: false,
-          headerBackVisible: false,
-          title: loc.pleasebackup.title,
-          headerStyle:{
-            backgroundColor:'black'
-          }
-        })(theme)}
-      /> */} 
+     
       {/* Once the onboarding is completed, you navigate to the MainApp */}
-      <AppStack.Screen
+      {/* <AppStack.Screen
         name="MainApp"
         component={BottomTabNavigator}
         options={{ headerShown: false }}
-      />
+      /> */}
     </AppStack.Navigator>
   );
 };
@@ -380,7 +369,6 @@ const WalletsRoot = () => {
 const AddWalletStack = createNativeStackNavigator();
 const AddWalletRoot = () => {
   const theme = useTheme();
-
   return (
     <AddWalletStack.Navigator 
         screenOptions={{ 
@@ -746,17 +734,18 @@ const InitRoot = () => {
     if (walletsInitialized) {
       const hasCivicWallet = wallets.some(wallet => wallet.civic === true);
       console.log('!!!!!hasCivicWallet!!!!!', hasCivicWallet)
-      setInitialRoute(hasCivicWallet ? 'MainApp' : 'AppNavigator');
+      setInitialRoute(hasCivicWallet ? 'BottomTabs' : 'AppNavigator');
       console.log('!!!!!initialRoute!!!!!', initialRoute)
     }
   }, [walletsInitialized, wallets]);
+  
   return (
-   
       <InitStack.Navigator initialRouteName="UnlockWithScreenRoot" screenOptions={{ animationTypeForReplace: 'push' }}>
         {!walletsInitialized ? (
           <InitStack.Screen name="UnlockWithScreenRoot" component={UnlockWithScreenRoot} options={{ headerShown: false }} />
-        ) : initialRoute === 'MainApp' ? (
-          <InitStack.Screen name="MainApp" component={BottomTabNavigator} options={{ headerShown: false }} />
+        ) : initialRoute === 'BottomTabs' ? (
+          <InitStack.Screen name="BottomTabs" component={Navigation} options={{ headerShown: false }} />
+          // <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
         ) : (
           <InitStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} />
         )}
@@ -837,8 +826,8 @@ const StatusBarLightOptions: NativeStackNavigationOptions = { statusBarStyle: 'l
 const Navigation = () => {
   return (
     <RootStack.Navigator initialRouteName="UnlockWithScreenRoot" screenOptions={{ headerShadowVisible: false, statusBarStyle: 'auto' }}>
-      <RootStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} />
-      {/* <RootStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} /> */}
+      {/* <RootStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} /> */}
+      <RootStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
       {/* stacks */}
       <RootStack.Screen name="WalletsRoot" component={WalletsRoot} options={{ headerShown: false, statusBarTranslucent: false }} />
       <RootStack.Screen name="AddWalletRoot" component={AddWalletRoot} options={NavigationFormModalOptions} />

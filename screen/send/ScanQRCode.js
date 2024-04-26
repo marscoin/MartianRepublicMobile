@@ -336,7 +336,7 @@ const ScanQRCode = () => {
       >
         <Icon name="image" type="font-awesome" color="#ffffff" />
       </TouchableOpacity>
-      {showFileImportButton && (
+      {/* {showFileImportButton && (
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel={loc._.pick_file}
@@ -345,7 +345,7 @@ const ScanQRCode = () => {
         >
           <Icon name="file-import" type="font-awesome-5" color="#ffffff" />
         </TouchableOpacity>
-      )}
+      )} */}
       {urTotal > 0 && (
         <View style={[styles.progressWrapper, stylesHook.progressWrapper]} testID="UrProgressBar">
           <BlueText>{loc.wallets.please_continue_scanning}</BlueText>

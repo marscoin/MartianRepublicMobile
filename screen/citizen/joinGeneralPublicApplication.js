@@ -118,7 +118,18 @@ const JoinGeneralPublicApplicationScreen = () => {
         </View>
         <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC </Text>
 
-        <View style={{flexDirection:'row', justifyContent:'space-between', marginTop: 50,}}>
+        <View style={{flexDirection:'row', justifyContent:'center', marginTop: 150,}}>
+          <Text style={{fontFamily: fonts.regular.fontFamily, marginHorizontal: 20, color: 'white', fontSize: 18, fontWeight: '700', textAlign:'center'}}>APPLICATION WILL BE AVAILABLE IN THE NEXT VERSION OF THE APP!</Text>
+        </View>
+        <View style={{flex:1}}>
+            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                <TouchableOpacity style={styles.joinButton} onPress={() => navigation.goBack()}>
+                    <Text style={styles.buttonText}>GO BACK</Text>
+                </TouchableOpacity>  
+            </LinearGradient>
+        </View> 
+
+        {/* <View style={{flexDirection:'row', justifyContent:'space-between', marginTop: 50,}}>
           <Text style={{fontFamily: fonts.regular.fontFamily, marginLeft: 20,color: 'white', fontSize: 20,}}>APPLICATION</Text>
           <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>1/3</Text>
         </View>
@@ -190,7 +201,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                     <Text style={styles.buttonText}>NEXT STEP</Text>
                 </TouchableOpacity>  
             </LinearGradient>
-        </View> 
+        </View>  */}
       </ScrollView>  
     </SafeAreaView>
   );

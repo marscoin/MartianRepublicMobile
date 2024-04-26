@@ -48,7 +48,7 @@ const ImportCivicWalletDiscovery = () => {
     if (importing.current) return;
     importing.current = true;
     addAndSaveCivicWallet(wallet);
-    navigation.navigate('MainApp')
+    navigation.navigate('BottomTabs')
   };
 
   useEffect(() => {

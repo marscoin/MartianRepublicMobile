@@ -532,6 +532,8 @@ const WalletDetails = () => {
                   );
                 }
               })()}
+              {!wallet.civic &&
+              <>
               <Text style={[styles.textLabel2, stylesHook.textLabel2]}>{loc.wallets.add_wallet_name.toLowerCase()}</Text>
               <KeyboardAvoidingView enabled={!Platform.isPad} behavior={Platform.OS === 'ios' ? 'position' : null}>
                 <View style={[styles.input, stylesHook.input]}>
@@ -548,6 +550,7 @@ const WalletDetails = () => {
                   />
                 </View>
               </KeyboardAvoidingView>
+              </>}
               <BlueSpacing20 />
               <Text style={[styles.textLabel1, stylesHook.textLabel1]}>{loc.wallets.details_type.toLowerCase()}</Text>
               <Text style={[styles.textValue, stylesHook.textValue]}>{wallet.typeReadable}</Text>
@@ -709,6 +712,10 @@ const WalletDetails = () => {
                 )}
                 <BlueSpacing20 />
                 <BlueSpacing20 />
+                {!wallet.civic &&
+                <TouchableOpacity accessibilityRole="button" onPress={handleDeleteButtonTapped} testID="DeleteButton">
+                  <Text textBreakStrategy="simple" style={styles.delete}>{`${loc.wallets.details_delete}${'  '}`}</Text>
+                </TouchableOpacity>}
                 <TouchableOpacity accessibilityRole="button" onPress={handleDeleteButtonTapped} testID="DeleteButton">
                   <Text textBreakStrategy="simple" style={styles.delete}>{`${loc.wallets.details_delete}${'  '}`}</Text>
                 </TouchableOpacity>

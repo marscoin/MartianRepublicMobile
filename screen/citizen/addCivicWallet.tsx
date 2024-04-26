@@ -226,144 +226,27 @@ const WalletsCivicAdd: React.FC = () => {
     dispatch({ type: 'SET_ENTROPY_BUTTON_TEXT', payload: value });
   };
 
-  const createWallet = async () => {
-    setIsLoading(true);
-
-    if (selectedWalletType === ButtonSelected.OFFCHAIN) {
-      createLightningWallet();
-    } else if (selectedWalletType === ButtonSelected.ONCHAIN) {
-      let w: HDSegwitBech32Wallet | SegwitP2SHWallet | HDSegwitP2SHWallet;
-      if (selectedIndex === 2) {
-        // zero index radio - HD segwit
-        w = new HDSegwitP2SHWallet();
-        w.setLabel(label || loc.wallets.details_title);
-      } else if (selectedIndex === 1) {
-        // btc was selected
-        // index 1 radio - segwit single address
-        w = new SegwitP2SHWallet();
-        w.setLabel(label || loc.wallets.details_title);
-      } else {
-        // btc was selected
-        // index 2 radio - hd bip84
-        w = new HDSegwitBech32Wallet();
-        w.setLabel(label || loc.wallets.details_title);
-      }
-      if (selectedWalletType === ButtonSelected.ONCHAIN) {
-        if (entropy) {
-          try {
-            // @ts-ignore: Return later to update
-            await w.generateFromEntropy(entropy);
-          } catch (e: any) {
-            console.log(e.toString());
-            presentAlert({ message: e.toString() });
-            goBack();
-            return;
-          }
-        } else {
-          await w.generate();
-        }
-        addWallet(w);
-        await saveToDisk();
-        A(A.ENUM.CREATED_WALLET);
-        triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
-        if (w.type === HDSegwitP2SHWallet.type || w.type === HDSegwitBech32Wallet.type) {
-          // @ts-ignore: Return later to update
-          navigate('PleaseBackup', {
-            walletID: w.getID(),
-          });
-        } else {
-          goBack();
-        }
-      }
-    } else if (selectedWalletType === ButtonSelected.VAULT) {
-      setIsLoading(false);
-      // @ts-ignore: Return later to update
-      navigate('WalletsAddMultisig', { walletLabel: label.trim().length > 0 ? label : loc.multisig.default_label });
-    } else if (selectedWalletType === ButtonSelected.LDK) {
-      setIsLoading(false);
-      createLightningLdkWallet();
-    }
-  };
-
   const createMarsWallet= async () => {
     let wallet
     wallet = new MarsElectrumWallet()
         await wallet.generate()
         wallet.setLabel('CIVIC WALLET')
-        wallet.setCivic()
         await wallet.getAddressAsync();
         addWallet(wallet);
         await saveToDisk();
         A(A.ENUM.CREATED_WALLET);
         triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
-        navigate('PleaseBackupCivic', {
+        navigate('PleaseBackupCivic' ,{
           walletID: wallet.getID(),
         });
+        // navigate('MainApp', {
+        //   screen: 'PleaseBackup',
+        //   params: {
+        //     walletID: wallet.getID(),
+        //   },
+        //}
+      //);
   }
-
-
-  const createLightningLdkWallet = async () => {
-    const foundLdk = wallets.find((w: AbstractWallet) => w.type === LightningLdkWallet.type);
-    if (foundLdk) {
-      return presentAlert({ message: 'LDK wallet already exists' });
-    }
-    setIsLoading(true);
-    const wallet = new LightningLdkWallet();
-    wallet.setLabel(label || loc.wallets.details_title);
-
-    await wallet.generate();
-    await wallet.init();
-    setIsLoading(false);
-    addWallet(wallet);
-    await saveToDisk();
-
-    A(A.ENUM.CREATED_WALLET);
-    triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
-    // @ts-ignore: Return later to update
-    navigate('PleaseBackupLdk', {
-      walletID: wallet.getID(),
-    });
-  };
-
-  const createLightningWallet = async () => {
-    const wallet = new LightningCustodianWallet();
-    wallet.setLabel(label || loc.wallets.details_title);
-
-    try {
-      const lndhub = walletBaseURI?.trim();
-      if (lndhub) {
-        const isValidNodeAddress = await LightningCustodianWallet.isValidNodeAddress(lndhub);
-        if (isValidNodeAddress) {
-          wallet.setBaseURI(lndhub);
-          await wallet.init();
-        } else {
-          throw new Error('The provided node address is not valid LNDHub node.');
-        }
-      }
-      await wallet.createAccount();
-      await wallet.authorize();
-    } catch (Err: any) {
-      setIsLoading(false);
-      console.warn('lnd create failure', Err);
-      if (Err.message) {
-        return presentAlert({ message: Err.message });
-      } else {
-        return presentAlert({ message: loc.wallets.add_lndhub_error });
-      }
-      // giving app, not adding anything
-    }
-    A(A.ENUM.CREATED_LIGHTNING_WALLET);
-    await wallet.generate();
-    addWallet(wallet);
-    await saveToDisk();
-
-    A(A.ENUM.CREATED_WALLET);
-    triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
-    // @ts-ignore: Return later to update
-    navigate('PleaseBackupLNDHub', {
-      walletID: wallet.getID(),
-    });
-  };
 
   const navigateToEntropy = () => {
     // @ts-ignore: Return later to update
@@ -407,13 +290,13 @@ const WalletsCivicAdd: React.FC = () => {
         
         <View style ={{marginVertical: 30}}>
           <Text style={styles.infoText}>
-            We will create new Marscoin Wallet for you.
+            We will create a new Marscoin Wallet for you.
           </Text>
           <Text style={styles.infoText}>
-            It will be your proof of citizrnship!
+            It will be your proof of citizernship!
           </Text>
-          <Text style={styles.infoText}>
-            Make sure to save access to this wallet in a safe place!
+          <Text style={styles.infoTextAlert}>
+            It is extremely important to save the passphrase of this wallet!
           </Text>
         </View>
                   
@@ -482,9 +365,9 @@ const WalletsCivicAdd: React.FC = () => {
               );
             }
           })()}
-          {isAdvancedOptionsEnabled.data === true && selectedWalletType === ButtonSelected.ONCHAIN && !isLoading && (
+          {/* {isAdvancedOptionsEnabled.data === true && selectedWalletType === ButtonSelected.ONCHAIN && !isLoading && (
             <BlueButtonLink style={styles.import} title={entropyButtonText} onPress={navigateToEntropy} />
-          )}
+          )} */}
           <BlueSpacing20 />
           {!isLoading ? (
             <>
@@ -497,12 +380,6 @@ const WalletsCivicAdd: React.FC = () => {
                 }
                 onPress={createMarsWallet}
               />
-              {/* <BlueButtonLink
-                testID="ImportWallet"
-                style={styles.import}
-                title={loc.wallets.add_import_wallet}
-                onPress={navigateToImportWallet}
-              /> */}
               <BlueSpacing40 />
               <BlueSpacing40 />
             </>
@@ -542,7 +419,6 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 'auto',
-    //borderColor: 'red'
   },
   advanced: {
     marginHorizontal: 20,
@@ -559,6 +435,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron-SemiBold',
     letterSpacing: 1.5, 
     color:'white'
+  },
+  infoTextAlert: {
+    marginHorizontal: 66,
+    marginTop: 15,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight:'800',
+    fontFamily: 'Orbitron-SemiBold',
+    letterSpacing: 1.5, 
+    color:'#FF7400'
   },
   lndUri: {
     flexDirection: 'row',
@@ -583,7 +469,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     zIndex: -1,
-    resizeMode: 'stretch'
+    resizeMode: 'cover'
 },
 });
 

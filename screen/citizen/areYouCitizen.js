@@ -19,18 +19,20 @@ const AreYouCitizenScreen = () => {
     const styles = StyleSheet.create({
         root: {
             flex:1,
+            //backgroundColor:'red',
         },
         imageLG: {
             position: 'absolute', // changed from 'relative' to 'absolute'
-            top: 0,
+            bottom: 0,
             left: 0,
+            right: 0,
             width: '100%',
-            height: '100%',
+            height: '60%',
             zIndex: -1,
-            resizeMode:'cover'
+            resizeMode:'stretch'
         },
         center: {
-            marginTop: 40,
+            marginTop: 20,
             height:80,
             flexDirection:'row',
             marginHorizontal: 16,
@@ -101,36 +103,36 @@ const AreYouCitizenScreen = () => {
 
     
   return (
-    <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
-    {/* ////margin -80 sticks screen to the tabbar///// */}
-        <Image style={styles.imageLG} source={require('../../img/mars1.png')} />
+    <SafeAreaView style={{flex: 1}}> 
         <View style={styles.root}>    
+        <Image style={styles.imageLG} source={require('../../img/mars1.png')} />
             <View style={styles.center}>
                 <Text style={styles.welcomeText}>Welcome to  </Text>
                 <Image style={styles.iconStyle} source={require('../../img/icon.png')} accessible={false} />
             </View>
             <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
+            
+            <View style={{ flex: 1,}}>
+                <Text style={styles.largeText}>ARE YOU ALREADY A MCR CITIZEN?</Text>
+                <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'center' }}>
+                    <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                        <TouchableOpacity 
+                            style={[styles.joinButton]}
+                            onPress={() => navigation.navigate('ImportCivicWalletScreen')}
+                        >
+                            <Text style={styles.noWalletText}>YES</Text>
+                        </TouchableOpacity>
+                    </LinearGradient>
 
-            <Text style={styles.largeText}>ARE YOU ALREADY A MCR CITIZEN?</Text>
-
-            <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'center'}}>
-                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                    <TouchableOpacity 
-                        style={[styles.joinButton]}
-                        onPress={() => navigation.navigate('ImportCivicWalletScreen')}
-                    >
-                        <Text style={styles.noWalletText}>YES</Text>
-                    </TouchableOpacity>
-                </LinearGradient>
-
-                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                    <TouchableOpacity 
-                        style={[styles.joinButton]}
-                        onPress={() => navigation.navigate('WalletsCivicAdd')}
-                    >
-                        <Text style={styles.noWalletText}>NO</Text>
-                    </TouchableOpacity>
-                </LinearGradient>
+                    <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                        <TouchableOpacity 
+                            style={[styles.joinButton]}
+                            onPress={() => navigation.navigate('WalletsCivicAdd')}
+                        >
+                            <Text style={styles.noWalletText}>NO</Text>
+                        </TouchableOpacity>
+                    </LinearGradient>
+                </View>
             </View>
 
             

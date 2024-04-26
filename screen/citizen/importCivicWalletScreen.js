@@ -69,6 +69,7 @@ const ImportCivicWalletScreen = () => {
         smallText: {
             color: colors.foregroundColor,
             fontWeight: '400',
+            fontSize: 16,
             fontFamily: 'Orbitron-Regular', 
             marginHorizontal: 60,
             textAlign:'center',
@@ -129,14 +130,14 @@ const ImportCivicWalletScreen = () => {
     const importScan = () => {
         console.log('Import scan pressed')
         requestCameraAuthorization().then(() =>
-          navigation.navigate('ScanQRCodeRoot', {
-            screen: 'ScanQRCode',
-            params: {
+          navigation.navigate( 
+            'ScanQRCode',
+           {
               launchedBy: route.name,
               onBarScanned,
               showFileImportButton: true,
             },
-          }),
+          ),
         );
     };
       
@@ -180,7 +181,7 @@ const ImportCivicWalletScreen = () => {
               />
               <BlueSpacing20 />
               {/* //////SCAN BUTTON////// */}
-              <BlueButtonLink title={loc.wallets.import_scan_qr} onPress={importScan} testID="ScanImport" />
+              <BlueButtonLink title={'Scan or import civic private key'} onPress={importScan} testID="ScanImport" />
             </>
           </View>
         </>
@@ -221,7 +222,7 @@ const ImportCivicWalletScreen = () => {
             <BlueSpacing20 />
             <TouchableWithoutFeedback accessibilityRole="button" onPress={speedBackdoorTap} testID="SpeedBackdoor">
                 <Text style ={styles.smallText}>
-                     Please enter seed phrase, public key or WIF of your Civic Marscoin Wallet.
+                     Please enter secret seed phrase of your Civic Marscoin Wallet.
                 </Text>
             </TouchableWithoutFeedback>
             <BlueSpacing20 />

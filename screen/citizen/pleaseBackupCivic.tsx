@@ -41,6 +41,9 @@ const PleaseBackupCivic: React.FC = () => {
   const handleBackButton = useCallback(() => {
     // @ts-ignore: Ignore
     //navigation.getParent()?.pop();
+    console.log('I WROTE IT DOWN PRESSED')
+    wallet.setCivic()
+    //console.log(wallet)
     navigation.navigate('MainApp')
     return true;
   }, [navigation]);
@@ -83,11 +86,18 @@ const PleaseBackupCivic: React.FC = () => {
       ) : (
         <ScrollView contentContainerStyle={styles.flex} testID="PleaseBackupScrollView">
           <View style={styles.please}>
-            <Text style={[styles.pleaseText, stylesHook.pleaseText]}>{loc.pleasebackup.text}</Text>
+            <Text style={[styles.pleaseText, stylesHook.pleaseText]}>
+              Please take a moment to write down this secret phrase on a piece of paper.
+              It is your backup for CIVIC WALLET. 
+            </Text>
+            <Text style={[styles.infoText]}>
+              CIVIC WALLET is your proof if citizenship and the only way to access your MCR account! 
+            </Text>
           </View>
           <View style={styles.list}>
             <View style={styles.secret}>{renderSecret()}</View>
           </View>
+          
           <View style={styles.bottom}>
             <Button testID="PleasebackupOk" onPress={handleBackButton} title={loc.pleasebackup.ok} />
           </View>
@@ -122,22 +132,32 @@ const styles = StyleSheet.create({
   },
   please: {
     flexGrow: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   list: {
-    flexGrow: 8,
+    flexGrow: 2,
     paddingHorizontal: 16,
   },
   bottom: {
     flexGrow: 2,
     alignItems: 'center',
-    justifyContent: 'center',
+
   },
   pleaseText: {
     marginVertical: 16,
     fontSize: 16,
     fontWeight: '500',
+    textAlign:'center',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+  },
+  infoText: {
+    marginHorizontal: 20,
+    fontSize: 16,
+    fontWeight:'500',
+    fontFamily: 'Orbitron-SemiBold',
+    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+    color: 'red', 
+    textAlign:'center'
   },
   secret: {
     flexWrap: 'wrap',

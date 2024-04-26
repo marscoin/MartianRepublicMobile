@@ -40,8 +40,8 @@ const PleaseBackup: React.FC = () => {
 
   const handleBackButton = useCallback(() => {
     // @ts-ignore: Ignore
-    //navigation.getParent()?.pop();
-    navigation.navigate('MainApp')
+    navigation.getParent()?.pop();
+    //navigation.navigate('MainApp')
     return true;
   }, [navigation]);
 
@@ -138,6 +138,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+    textAlign:'center',
   },
   secret: {
     flexWrap: 'wrap',
