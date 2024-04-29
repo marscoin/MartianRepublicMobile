@@ -162,7 +162,7 @@
     "input_clear": "Netejar",
     "input_done": "Fet",
     "input_paste": "Enganxar",
-    "input_total": "Total:",
+    "input_total": "",
     "permission_camera_message": "Necessitem el vostre permís per usar la vostra càmera.",
     "psbt_sign": "Signar una transacció",
     "open_settings": "Obre configuració",

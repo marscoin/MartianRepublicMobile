@@ -319,7 +319,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
       <View style={styles.lineaderGradient}>
       <Image style={styles.imageGold} source={require('../img/gold3.jpeg')} />
 
-          <Image
+          {/* <Image
             source={(() => {
               switch (wallet.type) {
                 case LightningLdkWallet.type:
@@ -332,7 +332,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
               }
             })()}
             style={styles.chainIconCivic}
-          />
+          /> */}
   
           <Text testID="WalletLabel" numberOfLines={1} style={styles.walletLabel}>
             {wallet.getLabel()}
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   balanceCont:{
     height: 45,
     alignItems: 'flex-start',
-    maxWidth: '60%',
+    //maxWidth: '80%',
   },
   manageFundsButton: {
     marginTop: 14,
@@ -477,7 +477,6 @@ const styles = StyleSheet.create({
     resizeMode:'stretch',
     padding: 12,
     minHeight: 164,
-    elevation: 5,
     height: 150 
 },
 });

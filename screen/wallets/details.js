@@ -203,7 +203,7 @@ const WalletDetails = (navigation) => {
     }
     saveToDisk()
       .then(() => {
-        presentAlert({ message: loc.wallets.details_wallet_updated });
+        presentAlert({ title: '', message: loc.wallets.details_wallet_updated });
         goBack();
       })
       .catch(error => {
@@ -367,7 +367,7 @@ const WalletDetails = (navigation) => {
       })
         .catch(error => {
           console.log(error);
-          presentAlert({ message: error.message });
+          //presentAlert({ message: error.message });
         })
         .finally(() => {
           RNFS.unlink(filePath);
@@ -604,7 +604,7 @@ const WalletDetails = (navigation) => {
                   {loc.transactions.list_title.toLowerCase()}
                 </Text>
                 <View style={styles.hardware}>
-                  <BlueText onPress={() => setBackdoorBip47Pressed(prevState => prevState + 1)}>{loc.wallets.details_display}</BlueText>
+                  <BlueText onPress={() => setBackdoorBip47Pressed(prevState => prevState + 1)}>{'Display transactions'}</BlueText>
                   <Switch value={hideTransactionsInWalletsList} onValueChange={setHideTransactionsInWalletsList} />
                 </View>
               </>

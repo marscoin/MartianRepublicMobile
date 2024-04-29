@@ -309,7 +309,7 @@ const CitizenScreen = () => {
     const fetchCitizens = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/citizen?page=${citizenPageRef.current}`)
-            //console.log('CITIZENS', response.data)
+            console.log('CITIZENS', response.data)
             dispatch({ type: 'SET_CITIZENS', payload: response.data });
         } catch (error) {
             console.error(`Error fetching citizens:`, error);   
@@ -455,24 +455,26 @@ const CitizenScreen = () => {
 
             {state.filterCitizen &&
                 <View style={styles.citizensContainer}>
-                    {state.citizens  && state.citizens.map((citizen, index) => (
+                    {state.citizens && state.citizens.filter(citizen => citizen.user.citizen).map((citizen, index) => (
                         <View key={index} style={styles.citizenItem}>
+                          
                             <Image
                                 source={state.imageLoadErrors[citizen.id] ? require('../../img/genericprofile.png') : !citizen.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: citizen.user.citizen.avatar_link }}
                                 style={styles.citizenImage} 
                                 onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
                             />
+                          
                             <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
                                 <Text numberOfLines={2} style={styles.citizenName}>{citizen.user.fullname}</Text>
                                 <Text numberOfLines={1} style={styles.citizenAddress}>Address: {citizen.address.slice(0,9)}</Text>
                                 <Text numberOfLines={1} style={styles.citizenDate}>Citizen since: {new Date(citizen.mined).toLocaleDateString()}</Text>
                             </View>
-                            {citizen.user.profile.endorse_cnt &&
+                            {citizen.user.profile.endorse_cnt && 
                             <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
                                 <Text numberOfLines={1} style={styles.endorsTxt}>ENDORSEMENTS</Text>
                                 <Text style={[styles.citizenName, {fontSize: 22, marginTop:5}]}>{citizen.user.profile.endorse_cnt}</Text>
                             </View>}
-                            {!citizen.user.profile.endorse_cnt &&
+                            {!citizen.user.profile.endorse_cnt && 
                             <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
                                 <Text numberOfLines={1} style={[styles.endorsTxt, {marginBottom: 8}]}>FOUNDER</Text>
                                 <Icon name="medal" type="material-community" color="#FF7400" />

@@ -109,7 +109,7 @@ const AreYouCitizenScreen = () => {
             <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
             
             <View style={{ flex: 1}}>
-                <Text style={styles.largeText}>ARE YOU ALREADY A MCR CITIZEN?</Text>
+                <Text style={styles.largeText}>HAVE YOU PREVIOUSLY SET UP A CIVIC WALLET?</Text>
                 <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'center' }}>
                     <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                         <TouchableOpacity 

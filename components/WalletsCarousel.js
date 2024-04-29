@@ -216,7 +216,6 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
       padding: 12,
       borderRadius: 12,
       minHeight: 164,
-      elevation: 5,
       height: 180 
   },
   });

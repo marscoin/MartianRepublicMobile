@@ -183,7 +183,7 @@ const SendDetails = () => {
         setPayjoinUrl(pjUrl);
       } catch (error) {
         console.log(error);
-        presentAlert({ title: loc.errors.error, message: '222222'+loc.send.details_error_decode });
+        presentAlert({ title: loc.errors.error, message: loc.send.details_error_decode });
       }
     } else if (routeParams.address) {
       const { amount, amountSats, unit = BitcoinUnit.MARS } = routeParams;
@@ -213,7 +213,7 @@ const SendDetails = () => {
     // check if we have a suitable wallet
     const suitable = wallets.filter(w => w.chain === Chain.ONCHAIN && w.allowSend());
     if (suitable.length === 0) {
-      presentAlert({ title: loc.errors.error, message: '1111'+loc.send.details_wallet_before_tx });
+      presentAlert({ title: loc.errors.error, message: loc.send.details_wallet_before_tx });
       navigation.goBack();
       return;
     }
@@ -435,7 +435,7 @@ const SendDetails = () => {
     if (!data.replace) {
       // user probably scanned PSBT and got an object instead of string..?
       setIsLoading(false);
-      return presentAlert({ title: loc.errors.error, message: "88888"+loc.send.details_address_field_is_not_valid });
+      return presentAlert({ title: loc.errors.error, message: loc.send.details_address_field_is_not_valid });
     }
 
     const dataWithoutSchema = data
@@ -489,7 +489,7 @@ const SendDetails = () => {
         return [...addrs];
       });
       setUnits(u => {
-        u[scrollIndex.current] = BitcoinUnit.BTC; // also resetting current unit to BTC
+        u[scrollIndex.current] = BitcoinUnit.MARS; // also resetting current unit to BTC
         return [...u];
       });
       setTransactionMemo(options.label || options.message);
@@ -827,7 +827,7 @@ const SendDetails = () => {
         walletID: wallet.getID(),
       });
     } catch (error) {
-      presentAlert({ title: loc.send.problem_with_psbt, message: '5555'+error.message });
+      presentAlert({ title: loc.send.problem_with_psbt, message: error.message });
     }
     setIsLoading(false);
     setOptionsVisible(false);
@@ -908,7 +908,7 @@ const SendDetails = () => {
       psbt = bitcoin.Psbt.fromBase64(scannedData);
       tx = wallet.cosignPsbt(psbt).tx;
     } catch (e) {
-      presentAlert({ title: loc.errors.error, message: '44444'+e.message });
+      presentAlert({ title: loc.errors.error, message: e.message });
       return;
     } finally {
       setIsLoading(false);
@@ -1065,8 +1065,6 @@ const SendDetails = () => {
     setIsTransactionReplaceable(value);
   };
 
-  //
-
   // because of https://github.com/facebook/react-native/issues/21718 we use
   // onScroll for android and onMomentumScrollEnd for iOS
   const handleRecipientsScrollEnds = e => {
@@ -1102,7 +1100,7 @@ const SendDetails = () => {
               return [...addrs];
             });
             setUnits(u => {
-              u[scrollIndex.current] = BitcoinUnit.BTC;
+              u[scrollIndex.current] = BitcoinUnit.MARS;
               return [...u];
             });
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

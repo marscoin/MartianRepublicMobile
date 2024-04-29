@@ -213,7 +213,7 @@ export const BlueStorageProvider = ({ children }) => {
   const addAndSaveWallet = async w => {
     if (wallets.some(i => i.getID() === w.getID())) {
       triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-      presentAlert({ message: 'This wallet has been previously imported.' });
+      presentAlert({ title:'', message: 'This wallet has been previously imported.' });
       return;
     }
     const emptyWalletLabel = new LegacyWallet().getLabel();
@@ -223,7 +223,7 @@ export const BlueStorageProvider = ({ children }) => {
     addWallet(w);
     await saveToDisk();
     A(A.ENUM.CREATED_WALLET);
-    presentAlert({ message: w.type === WatchOnlyWallet.type ? loc.wallets.import_success_watchonly : loc.wallets.import_success });
+    presentAlert({title:'', message: w.type === WatchOnlyWallet.type ? loc.wallets.import_success_watchonly : loc.wallets.import_success });
     Notifications.majorTomToGroundControl(w.getAllExternalAddresses(), [], []);
     // start balance fetching at the background
     await w.fetchBalance();
@@ -232,7 +232,7 @@ export const BlueStorageProvider = ({ children }) => {
   const addAndSaveCivicWallet = async w => {
     if (wallets.some(i => i.getID() === w.getID())) {
       triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-      presentAlert({ message: 'This wallet has been previously imported.' });
+      presentAlert({title:'', message: 'This wallet has been previously imported.' });
       return;
     }
     const emptyWalletLabel = new LegacyWallet().getLabel();
@@ -244,7 +244,7 @@ export const BlueStorageProvider = ({ children }) => {
     addWallet(w);
     await saveToDisk();
     A(A.ENUM.CREATED_WALLET);
-    presentAlert({ message: w.type === WatchOnlyWallet.type ? loc.wallets.import_success_watchonly : loc.wallets.import_success });
+    presentAlert({ title:'',message: w.type === WatchOnlyWallet.type ? loc.wallets.import_success_watchonly : loc.wallets.import_success });
     Notifications.majorTomToGroundControl(w.getAllExternalAddresses(), [], []);
     // start balance fetching at the background
     await w.fetchBalance();
