@@ -18,7 +18,6 @@ import {EXCHANGE_RATES_STORAGE_KEY} from '../blue_modules/currency';
 import { MarsElectrumWallet } from '../screen/wallets/mars-wallet';
 import { Icon } from 'react-native-elements';
 
-
 interface TransactionsNavigationHeaderProps {
   wallet: MarsElectrumWallet;
   onWalletUnitChange?: (wallet: any) => void;
@@ -238,14 +237,13 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
 
   return (
     <LinearGradient
-      //colors={WalletGradient.gradientsFor(wallet.type)}
-      colors = {wallet.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
+      colors={WalletGradient.gradientsFor(wallet.type)}
+      //colors = {wallet.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
       style={styles.lineaderGradient}
-      // {...WalletGradient.linearGradientProps(wallet.type)}
+      {...WalletGradient.linearGradientProps(wallet.type)}
     >
-      <BlueSpacing40/>
       {/* ////HEADER///// */}
-      <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom: 10}}>
+      {/* <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom: 10}}>
         <TouchableOpacity
           accessibilityRole="button"
           testID="WalletDetails"
@@ -269,7 +267,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
         >
           <Icon name="more-horiz" type="material" size={24} color="black" />
         </TouchableOpacity>
-      </View>
+      </View> */}
       <Image
         source={(() => {
           switch (wallet.type) {

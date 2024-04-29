@@ -24,7 +24,7 @@ export default class WalletGradient {
   static hdLegacyP2PKHWallet: string[] = ['#FD7478', '#E73B40']; //pink
   static hdLegacyBreadWallet: string[] = ['#fe6381', '#f99c42']; //pink
   static multisigHdWallet: string[] = ['#1ce6eb', '#296fc5', '#3500A2']; //darkblue
-  static defaultGradients: string[] = ['white']; //MARS
+  static defaultGradients: string[] = ['#FFB67D','#FF8A3E', '#FF7400']; //MARS
   static lightningCustodianWallet: string[] = ['#F1AA07', '#FD7E37']; // Corrected property with missing colors
   static aezeedWallet: string[] = ['#8584FF', '#5351FB'];
   static ldkWallet: string[] = ['#8584FF', '#5351FB'];

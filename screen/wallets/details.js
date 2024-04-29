@@ -32,7 +32,7 @@ import {
   LightningLdkWallet,
 } from '../../class';
 import loc, { formatBalanceWithoutSuffix } from '../../loc';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, navigation, useNavigation } from '@react-navigation/native';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const WalletDetails = () => {
+const WalletDetails = (navigation) => {
   const { saveToDisk, wallets, deleteWallet, setSelectedWalletID, txMetadata } = useContext(BlueStorageContext);
   const { walletID } = useRoute().params;
   const [isLoading, setIsLoading] = useState(false);
@@ -305,6 +305,7 @@ const WalletDetails = () => {
         walletID,
       },
     });
+
   const navigateToSignVerify = () =>
     navigate('SignVerifyRoot', {
       screen: 'SignVerify',

@@ -107,7 +107,7 @@ const iStyles = StyleSheet.create({
   root: { paddingRight: 20 },
   rootLargeDevice: { marginVertical: 20 },
   grad: {
-    padding: 15,
+    padding: 12,
     borderRadius: 12,
     minHeight: 164,
     elevation: 5,
@@ -182,7 +182,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
       image = I18nManager.isRTL ? require('../img/vault-shape-rtl.png') : require('../img/vault-shape.png');
       break;
     default:
-      image = I18nManager.isRTL ? require('../img/marscoin_transparent2.png') : require('../img/marscoin_transparent2.png');
+      image = item.civic ? require('../img/passport.png') : require('../img/marscoin_transparent2.png');
   }
 
   const latestTransactionText =
@@ -228,15 +228,15 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
   
   const prebalance = Number((item.getBalance()))/100000000
   const balance = !item.hideBalance && (removeTrailingZeros(prebalance) );
-  //const balance = !item.hideBalance && (removeTrailingZeros(prebalance) + ' ' + item.preferredBalanceUnit);
-  //const balance = !item.hideBalance && formatBalance(item.getBalance(), item.preferredBalanceUnit, true);
-
-
+  
+  const walletStyle = item.civic ? { borderWidth: 0, borderColor: 'red', borderStyle:'solid', borderRadius:15 } : {};
+  
   return (
     <Animated.View
       style={[
         isLargeScreen ? iStyles.rootLargeDevice : customStyle ?? { ...iStyles.root, width: itemWidth },
         { opacity, transform: [{ scale: scaleValue }] },
+       
       ]}
       shadowOpacity={25 / 100}
       shadowOffset={{ width: 0, height: 3 }}
@@ -255,44 +255,47 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
             onPress(item); // Replace 'onPress' with your navigation function
           }, 50);
         }}
+        style = {walletStyle}
       >
         <LinearGradient 
             shadowColor={colors.shadowColor} 
-            colors = {item.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
+            //colors = {item.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
+            colors={WalletGradient.gradientsFor(item.type)} 
             style={iStyles.grad}
-            
         >
-          <Image source={image} style={iStyles.image} />
-          <Text style={iStyles.br} />
-          <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
-            {item.getLabel()}
-          </Text>
-          <Text numberOfLines={1} style={[iStyles.address, { color: colors.inverseForegroundColor }]}>
-            {item.getAddress()}
-          </Text>
-          {item.hideBalance ? (
-            <BluePrivateBalance />
-          ) : (
-            <Text
-              numberOfLines={1}
-              key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
-              //adjustsFontSizeToFit
-              style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
-            >
-              <MarscoinSymbol />
-              {' '}
-              {balance}
-              
+          {/* <View style={{borderWidth:1, borderRadius: 10, borderColor:'black', padding: 5, alignSelf:'center'}}> */}
+            <Image source={image} style={iStyles.image} />
+            <Text style={iStyles.br} />
+            <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
+              {item.getLabel()}
             </Text>
-          )}
-          <Text style={iStyles.br} />
-          <Text numberOfLines={1} style={[iStyles.latestTx, { color: colors.inverseForegroundColor }]}>
-            {loc.wallets.list_latest_transaction}
-          </Text>
+            <Text numberOfLines={1} style={[iStyles.address, { color: colors.inverseForegroundColor }]}>
+              {item.getAddress()}
+            </Text>
+            {item.hideBalance ? (
+              <BluePrivateBalance />
+            ) : (
+              <Text
+                numberOfLines={1}
+                key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
+                //adjustsFontSizeToFit
+                style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
+              >
+                <MarscoinSymbol />
+                {' '}
+                {balance}
+                
+              </Text>
+            )}
+            <Text style={iStyles.br} />
+            <Text numberOfLines={1} style={[iStyles.latestTx, { color: colors.inverseForegroundColor }]}>
+              {loc.wallets.list_latest_transaction}
+            </Text>
 
-          <Text numberOfLines={1} style={[iStyles.latestTxTime, { color: colors.inverseForegroundColor }]}>
-            {latestTransactionText}
-          </Text>
+            <Text numberOfLines={1} style={[iStyles.latestTxTime, { color: colors.inverseForegroundColor }]}>
+              {latestTransactionText}
+            </Text>
+            {/* </View> */}
         </LinearGradient>
       </Pressable>
     </Animated.View>
@@ -322,6 +325,7 @@ const cStyles = StyleSheet.create({
 const ListHeaderComponent = () => <View style={cStyles.separatorStyle} />;
 
 const WalletsCarousel = forwardRef((props, ref) => {
+  //console.log ('ON PRESS CAROUESL', props.onPress)
   const { preferredFiatCurrency, language } = useContext(BlueStorageContext);
   const { horizontal, data, handleLongPress, onPress, selectedWallet } = props;
   const renderItem = useCallback(
@@ -333,6 +337,7 @@ const WalletsCarousel = forwardRef((props, ref) => {
           index={index}
           handleLongPress={handleLongPress}
           onPress={onPress}
+          //style ={item.civic ? borderW: 'red' }
         />
       ) : (
         <NewWalletPanel onPress={onPress} />

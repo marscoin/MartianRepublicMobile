@@ -48,7 +48,8 @@ const ImportWalletDiscovery = () => {
     if (importing.current) return;
     importing.current = true;
     addAndSaveWallet(wallet);
-    navigation.getParent().pop();
+    navigation.navigate('WalletsList')
+    //navigation.getParent().pop();
   };
 
   useEffect(() => {

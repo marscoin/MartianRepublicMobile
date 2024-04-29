@@ -172,7 +172,6 @@ const BottomTabNavigator = () => {
            } 
          }}
       />
-       
       <Tab.Screen
         name="Wallet"
         component={WalletsRoot}
@@ -276,8 +275,6 @@ const CitizenRoot = () => {
   );
 };
 
-
-
 const WalletsRoot = () => {
   const theme = useTheme();
 
@@ -294,7 +291,7 @@ const WalletsRoot = () => {
         },
     }}>
       <WalletsStack.Screen name="WalletsList" component={WalletsList} options={WalletsList.navigationOptions(theme)} />
-      <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={{headerShown: false}} />
+      <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={WalletTransactions.navigationOptions(theme)}  />
       <WalletsStack.Screen name="LdkOpenChannel" component={LdkOpenChannel} options={LdkOpenChannel.navigationOptions(theme)} />
       <WalletsStack.Screen name="LdkInfo" component={LdkInfo} options={LdkInfo.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletDetails" component={WalletDetails} options={WalletDetails.navigationOptions(theme)} />
@@ -314,6 +311,7 @@ const WalletsRoot = () => {
       <WalletsStack.Screen name="DefaultView" component={DefaultView} options={DefaultView.navigationOptions(theme)} />
       <WalletsStack.Screen name="Language" component={Language} options={navigationStyle({ title: loc.settings.language })(theme)} />
       <WalletsStack.Screen name="EncryptStorage" component={EncryptStorage} options={EncryptStorage.navigationOptions(theme)} />
+
       <WalletsStack.Screen
         name="GeneralSettings"
         component={GeneralSettings}
@@ -361,7 +359,133 @@ const WalletsRoot = () => {
           gestureEnabled: false,
         }}
       />
-      <WalletsStack.Screen name="WalletAddresses" component={WalletAddresses} options={WalletAddresses.navigationOptions(theme)} />
+      <WalletsStack.Screen
+        name="ReorderWallets"
+        component={ReorderWalletsStackRoot}
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+          presentation: 'modal',
+        }}
+      />
+     
+      <WalletsStack.Screen name="WalletAddresses" component={WalletAddresses} options={WalletAddresses.navigationOptions(theme)} /> 
+      {/* ******* STACKS ******* */}
+      <WalletsStack.Screen name="AddWalletRoot" component={AddWalletRoot} options={NavigationFormModalOptions} />
+      <WalletsStack.Screen name="SendDetailsRoot" component={SendDetailsRoot} options={NavigationDefaultOptions} />
+      <WalletsStack.Screen name="LNDCreateInvoiceRoot" component={LNDCreateInvoiceRoot} options={NavigationDefaultOptions} />
+      <WalletsStack.Screen name="ScanLndInvoiceRoot" component={ScanLndInvoiceRoot} options={NavigationDefaultOptions} />
+      <WalletsStack.Screen name="AztecoRedeemRoot" component={AztecoRedeemRoot} options={NavigationDefaultOptions} />
+      {/* screens */}
+      <WalletsStack.Screen
+        name="WalletExportRoot"
+        component={WalletExportStackRoot}
+        options={{ ...NavigationDefaultOptions, ...StatusBarLightOptions }}
+      />
+      <WalletsStack.Screen
+        name="ExportMultisigCoordinationSetupRoot"
+        component={ExportMultisigCoordinationSetupRoot}
+        options={NavigationDefaultOptions}
+      />
+      <WalletsStack.Screen
+        name="ViewEditMultisigCosignersRoot"
+        component={ViewEditMultisigCosignersRoot}
+        options={{ ...NavigationDefaultOptions, ...StatusBarLightOptions }}
+      />
+      <WalletsStack.Screen
+        name="WalletXpubRoot"
+        component={WalletXpubStackRoot}
+        options={{ ...NavigationDefaultOptions, ...StatusBarLightOptions }}
+      />
+      <WalletsStack.Screen
+        name="SignVerifyRoot"
+        component={SignVerifyStackRoot}
+        options={{ ...NavigationDefaultOptions, ...StatusBarLightOptions }}
+      />
+     
+      <WalletsStack.Screen name="ReceiveDetailsRoot" component={ReceiveDetailsStackRoot} options={NavigationDefaultOptions} />
+      <WalletsStack.Screen name="LappBrowserRoot" component={LappBrowserStackRoot} options={NavigationDefaultOptions} />
+      <WalletsStack.Screen name="LDKOpenChannelRoot" component={LDKOpenChannelRoot} options={NavigationDefaultOptions} />
+
+      <WalletsStack.Screen
+        name="ScanQRCodeRoot"
+        component={ScanQRCodeRoot}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          statusBarHidden: true,
+        }}
+        initialParams={ScanQRCode.initialParams}
+      />
+
+<WalletsStack.Screen name="PaymentCodeRoot" component={PaymentCodeStackRoot} options={NavigationDefaultOptions} />
+
+      {/* //////ADDED FROM ADD STACK//////// */}
+      {/* <WalletsStack.Screen
+        name="AddWallet"
+        component={AddWallet}
+        options={navigationStyle({
+          closeButton: true,
+          headerBackVisible: false,
+          title: loc.wallets.add_title,
+          headerStyle:{
+            backgroundColor:'black'
+          }
+        })(theme)}
+      />
+      <WalletsStack.Screen 
+          name="ImportWallet" 
+          component={ImportWallet} 
+          options={ImportWallet.navigationOptions(theme)} />
+     <WalletsStack.Screen 
+      name="ImportWalletDiscovery"
+      component={ImportWalletDiscovery}
+      options={
+        ImportWalletDiscovery.navigationOptions(theme)
+       }
+      
+    />
+    <WalletsStack.Screen 
+      name="ImportCustomDerivationPath"
+      component={ImportCustomDerivationPath}
+      options={ImportCustomDerivationPath.navigationOptions(theme)}
+    />
+    <WalletsStack.Screen  name="ImportSpeed" component={ImportSpeed} options={ImportSpeed.navigationOptions(theme)} />
+    <WalletsStack.Screen 
+      name="PleaseBackup"
+      component={PleaseBackup}
+      options={navigationStyle({
+        gestureEnabled: false,
+        headerBackVisible: false,
+        title: loc.pleasebackup.title,
+        headerStyle:{
+          backgroundColor:'black'
+        }
+      })(theme)}
+    />
+    <WalletsStack.Screen 
+      name="PleaseBackupLNDHub"
+      component={PleaseBackupLNDHub}
+      options={PleaseBackupLNDHub.navigationOptions(theme)}
+    />
+    <WalletsStack.Screen  name="PleaseBackupLdk" component={PleaseBackupLdk} options={PleaseBackupLdk.navigationOptions(theme)} />
+    <WalletsStack.Screen  name="ProvideEntropy" component={ProvideEntropy} options={ProvideEntropy.navigationOptions(theme)} />
+    <WalletsStack.Screen 
+      name="WalletsAddMultisig"
+      component={WalletsAddMultisig}
+      options={WalletsAddMultisig.navigationOptions(theme)}
+      initialParams={WalletsAddMultisig.initialParams}
+    />
+    <WalletsStack.Screen 
+      name="WalletsAddMultisigStep2"
+      component={WalletsAddMultisigStep2}
+      options={WalletsAddMultisigStep2.navigationOptions(theme)}
+    />
+    <WalletsStack.Screen 
+      name="WalletsAddMultisigHelp"
+      component={WalletsAddMultisigHelp}
+      options={WalletAddMultisigHelpNavigationOptions}
+    /> */}
     </WalletsStack.Navigator>
   );
 };
@@ -650,7 +774,6 @@ const ReceiveDetailsStackRoot = () => {
               backgroundColor:'black'
             }
             })(theme)}
-        
       />
     </ReceiveDetailsStack.Navigator>
   );
@@ -747,9 +870,8 @@ const InitRoot = () => {
       </View>
     );
   }
-
   return (
-    <InitStack.Navigator initialRouteName="UnlockWithScreenRoot" screenOptions={{ animationTypeForReplace: 'push' }}>
+    <InitStack.Navigator initialRouteName="BottomTabs" screenOptions={{ animationTypeForReplace: 'push' }}>
       {!walletsInitialized ? (
         <InitStack.Screen name="UnlockWithScreenRoot" component={UnlockWithScreenRoot} options={{ headerShown: false }} />
       ) : initialRoute === 'BottomTabs' ? (
@@ -888,7 +1010,7 @@ const Navigation = () => {
       />
 
       <RootStack.Screen name="PaymentCodeRoot" component={PaymentCodeStackRoot} options={NavigationDefaultOptions} />
-      <InitStack.Screen
+      <RootStack.Screen
         name="ReorderWallets"
         component={ReorderWalletsStackRoot}
         options={{

@@ -7,9 +7,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const windowWidth = Dimensions.get('window').width;
-const windowHeight = Dimensions.get('window').height;
-
 const AreYouCitizenScreen = () => {
     const navigation = useNavigation();  
     const { colors } = useTheme();
@@ -101,7 +98,6 @@ const AreYouCitizenScreen = () => {
         },
     });
 
-    
   return (
     <SafeAreaView style={{flex: 1}}> 
         <View style={styles.root}>    
@@ -112,7 +108,7 @@ const AreYouCitizenScreen = () => {
             </View>
             <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
             
-            <View style={{ flex: 1,}}>
+            <View style={{ flex: 1}}>
                 <Text style={styles.largeText}>ARE YOU ALREADY A MCR CITIZEN?</Text>
                 <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'center' }}>
                     <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
