@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingTop: 20,
+    //paddingTop: 20,
   },
   container: {
     alignItems: 'center',

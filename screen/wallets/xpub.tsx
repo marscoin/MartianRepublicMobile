@@ -2,7 +2,7 @@ import { NavigationProp, RouteProp, useFocusEffect, useNavigation, useRoute } fr
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, InteractionManager, View } from 'react-native';
 import Share from 'react-native-share';
-import { BlueCopyTextToClipboard, BlueSpacing20, BlueText } from '../../BlueComponents';
+import { BlueCopyTextToClipboard, BlueSpacing20, BlueSpacing10, BlueText } from '../../BlueComponents';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { AbstractWallet } from '../../class';
 import Biometric from '../../class/biometrics';
@@ -45,7 +45,6 @@ const WalletXpub: React.FC = () => {
       const task = InteractionManager.runAfterInteractions(async () => {
         if (wallet) {
           const isBiometricsEnabled = await Biometric.isBiometricUseCapableAndEnabled();
-
           if (isBiometricsEnabled) {
             if (!(await Biometric.unlockWithBiometrics())) {
               return navigation.goBack();
@@ -55,7 +54,6 @@ const WalletXpub: React.FC = () => {
           if (xpub !== walletXpub) {
             navigation.setParams({ xpub: walletXpub });
           }
-
           setIsLoading(false);
         } else if (xpub) {
           setIsLoading(false);
@@ -99,7 +97,7 @@ const WalletXpub: React.FC = () => {
             )}
             <QRCodeComponent value={xpub} size={qrCodeSize} />
 
-            <BlueSpacing20 />
+            <BlueSpacing10 />
             <BlueCopyTextToClipboard text={xPubText} />
           </View>
           <HandoffComponent title={loc.wallets.xpub_title} type={HandoffComponent.activityTypes.Xpub} userInfo={{ xpub: xPubText }} />

@@ -1,20 +1,6 @@
 import React, { useRef, useCallback, useImperativeHandle, forwardRef, useContext } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Animated,
-  Image,
-  I18nManager,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-  Dimensions,
-  FlatList,
-  Pressable,
-} from 'react-native';
-
+import {Animated,Image,I18nManager,Platform,StyleSheet,Text, TouchableOpacity,useWindowDimensions,View,Dimensions,FlatList,Pressable} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import loc, { formatBalance, transactionTimeToReadable } from '../loc';
 import { LightningCustodianWallet, LightningLdkWallet, MultisigHDWallet } from '../class';
@@ -218,6 +204,21 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
       height: 4,
       backgroundColor: 'black',
     },
+    imageGold: {
+      position: 'absolute', // changed from 'relative' to 'absolute'
+      top: 0,
+      left: 0,
+      right: 0,
+      width: '108%',
+      // height: '100%',
+      zIndex: -1,
+      resizeMode:'stretch',
+      padding: 12,
+      borderRadius: 12,
+      minHeight: 164,
+      elevation: 5,
+      height: 180 
+  },
   });
   const MarscoinSymbol = () => (
     <View style={styles.container}>
@@ -236,34 +237,28 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
       style={[
         isLargeScreen ? iStyles.rootLargeDevice : customStyle ?? { ...iStyles.root, width: itemWidth },
         { opacity, transform: [{ scale: scaleValue }] },
-       
       ]}
       shadowOpacity={25 / 100}
       shadowOffset={{ width: 0, height: 3 }}
       shadowRadius={8}
     >
-      <Pressable
-        accessibilityRole="button"
-        testID={item.getLabel()}
-        onPressIn={onPressedIn}
-        onPressOut={onPressedOut}
-        onLongPress={handleLongPress}
-        onPress={() => {
-          console.log('type',item.type )
-          onPressedOut();
-          setTimeout(() => {
-            onPress(item); // Replace 'onPress' with your navigation function
-          }, 50);
-        }}
-        style = {walletStyle}
-      >
-        <LinearGradient 
-            shadowColor={colors.shadowColor} 
-            //colors = {item.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
-            colors={WalletGradient.gradientsFor(item.type)} 
-            style={iStyles.grad}
+      {item.civic && 
+        <>
+        <View style={iStyles.grad}>
+        <Image style={styles.imageGold} source={require('../img/gold3.jpeg')} />
+        
+        <Pressable
+          accessibilityRole="button"
+          testID={item.getLabel()}
+          onPressIn={onPressedIn}
+          onPressOut={onPressedOut}
+          onLongPress={handleLongPress}
+          onPress={() => {
+            console.log('type',item.type )
+            onPressedOut();
+            setTimeout(() => {onPress(item)}, 50);
+          }}
         >
-          {/* <View style={{borderWidth:1, borderRadius: 10, borderColor:'black', padding: 5, alignSelf:'center'}}> */}
             <Image source={image} style={iStyles.image} />
             <Text style={iStyles.br} />
             <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
@@ -278,13 +273,11 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
               <Text
                 numberOfLines={1}
                 key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
-                //adjustsFontSizeToFit
                 style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
               >
-                <MarscoinSymbol />
-                {' '}
-                {balance}
-                
+                  <MarscoinSymbol />
+                  {' '}
+                  {balance}  
               </Text>
             )}
             <Text style={iStyles.br} />
@@ -295,9 +288,64 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
             <Text numberOfLines={1} style={[iStyles.latestTxTime, { color: colors.inverseForegroundColor }]}>
               {latestTransactionText}
             </Text>
-            {/* </View> */}
-        </LinearGradient>
-      </Pressable>
+        </Pressable>
+        </View>
+        </>
+      } 
+       
+      {!item.civic && 
+        <>
+        <Pressable
+          accessibilityRole="button"
+          testID={item.getLabel()}
+          onPressIn={onPressedIn}
+          onPressOut={onPressedOut}
+          onLongPress={handleLongPress}
+          onPress={() => {
+            console.log('type',item.type )
+            onPressedOut();
+            setTimeout(() => {onPress(item)}, 50);
+          }}
+        >
+          <LinearGradient 
+              shadowColor={colors.shadowColor} 
+              //colors = {item.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
+              colors={WalletGradient.gradientsFor(item.type)} 
+              style={iStyles.grad}
+          >
+              <Image source={image} style={iStyles.image} />
+              <Text style={iStyles.br} />
+              <Text numberOfLines={1} style={[iStyles.label, { color: colors.inverseForegroundColor }]}>
+                {item.getLabel()}
+              </Text>
+              <Text numberOfLines={1} style={[iStyles.address, { color: colors.inverseForegroundColor }]}>
+                {item.getAddress()}
+              </Text>
+              {item.hideBalance ? (
+                <BluePrivateBalance />
+              ) : (
+                <Text
+                  numberOfLines={1}
+                  key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
+                  style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
+                >
+                  <MarscoinSymbol />
+                  {' '}
+                  {balance}    
+                </Text>
+              )}
+              <Text style={iStyles.br} />
+              <Text numberOfLines={1} style={[iStyles.latestTx, { color: colors.inverseForegroundColor }]}>
+                {loc.wallets.list_latest_transaction}
+              </Text>
+
+              <Text numberOfLines={1} style={[iStyles.latestTxTime, { color: colors.inverseForegroundColor }]}>
+                {latestTransactionText}
+              </Text>
+          </LinearGradient>
+        </Pressable>
+        </>
+      }    
     </Animated.View>
   );
 };
@@ -322,10 +370,9 @@ const cStyles = StyleSheet.create({
   },
 });
 
-const ListHeaderComponent = () => <View style={cStyles.separatorStyle} />;
+const ListHeaderComponent = () => <View style={cStyles.separatorStyle} />
 
 const WalletsCarousel = forwardRef((props, ref) => {
-  //console.log ('ON PRESS CAROUESL', props.onPress)
   const { preferredFiatCurrency, language } = useContext(BlueStorageContext);
   const { horizontal, data, handleLongPress, onPress, selectedWallet } = props;
   const renderItem = useCallback(
@@ -342,7 +389,6 @@ const WalletsCarousel = forwardRef((props, ref) => {
       ) : (
         <NewWalletPanel onPress={onPress} />
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [horizontal, selectedWallet, handleLongPress, onPress, preferredFiatCurrency, language],
   );
   const flatListRef = useRef();
@@ -409,7 +455,7 @@ const WalletsCarousel = forwardRef((props, ref) => {
           />
         ) : (
           <NewWalletPanel key={index} onPress={onPress} />
-        ),
+        )
       )}
     </View>
   );

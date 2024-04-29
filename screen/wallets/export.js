@@ -2,7 +2,7 @@ import React, { useState, useCallback, useContext, useRef, useEffect } from 'rea
 import { InteractionManager, ScrollView, ActivityIndicator, View, StyleSheet, AppState } from 'react-native';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 
-import { BlueSpacing20, BlueText, BlueCopyTextToClipboard, BlueCard } from '../../BlueComponents';
+import { BlueSpacing10, BlueSpacing20, BlueText, BlueCopyTextToClipboard, BlueCard } from '../../BlueComponents';
 import navigationStyle from '../../components/navigationStyle';
 import Biometric from '../../class/biometrics';
 import { LegacyWallet, LightningCustodianWallet, SegwitBech32Wallet, SegwitP2SHWallet, WatchOnlyWallet } from '../../class';
@@ -30,7 +30,6 @@ const WalletExport = () => {
       if (!isLoading && nextAppState === 'background') {
         goBack();
       }
-
       appState.current = nextAppState;
     });
 
@@ -97,21 +96,22 @@ const WalletExport = () => {
   };
 
   return (
-    <SafeArea style={[styles.root, stylesHook.root]} onLayout={onLayout}>
+    <SafeArea style={[styles.loading, stylesHook.root]} onLayout={onLayout}>
       <ScrollView contentContainerStyle={styles.scrollViewContent} testID="WalletExportScroll">
         <View>
           <BlueText style={[styles.type, stylesHook.type]}>{wallet.typeReadable}</BlueText>
         </View>
 
-        {[LegacyWallet.type, SegwitBech32Wallet.type, SegwitP2SHWallet.type].includes(wallet.type) && (
+        {/* {[LegacyWallet.type, SegwitBech32Wallet.type, SegwitP2SHWallet.type].includes(wallet.type) && (
           <BlueCard>
             <BlueText>{wallet.getAddress()}</BlueText>
           </BlueCard>
-        )}
+        )} */}
         <BlueSpacing20 />
         {secrets.map(s => (
           <React.Fragment key={s}>
             <QRCodeComponent isMenuAvailable={false} value={wallet.getSecret()} size={qrCodeSize} logoSize={70} />
+            <BlueSpacing10 />
             {wallet.type !== WatchOnlyWallet.type && (
               <BlueText style={[styles.warning, stylesHook.warning]}>{loc.wallets.warning_do_not_disclose}</BlueText>
             )}
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    flexGrow: 1,
+    //flexGrow: 1,
   },
   type: {
     fontSize: 17,

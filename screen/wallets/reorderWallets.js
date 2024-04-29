@@ -13,9 +13,10 @@ import { WalletCarouselItem } from '../../components/WalletsCarousel';
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    marginHorizontal: 20
   },
   padding16: {
-    padding: 16,
+    padding: 8,
   },
 });
 

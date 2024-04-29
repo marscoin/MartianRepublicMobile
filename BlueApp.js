@@ -476,6 +476,11 @@ class AppStorage {
     this.wallets = tempWallets;
   };
 
+  deleteAllWallets() {
+    this.wallets = []; // Clears the array
+    this.saveToDisk(); // Assuming you have a method to save changes to persistent storage
+}
+
   inflateWalletFromRealm(realm, walletToInflate) {
     const transactions = realm.objects('WalletTransactions');
     const transactionsForWallet = transactions.filtered(`walletid = "${walletToInflate.getID()}"`);

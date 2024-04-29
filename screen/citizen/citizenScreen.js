@@ -306,7 +306,7 @@ const CitizenScreen = () => {
         }
     }
 
-    const fetchCitizerns = async () => {
+    const fetchCitizens = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/citizen?page=${citizenPageRef.current}`)
             //console.log('CITIZENS', response.data)
@@ -333,7 +333,7 @@ const CitizenScreen = () => {
         // Check if any civic wallet matches a citizen's address
         const checkIfCitizen = () => {
             const isCitizen = wallets.some(wallet =>
-                wallet.civic && state.citizens.some(citizen => citizen.address === wallet.address)
+                wallet.civic && state.citizens.some(citizen => citizen.address === wallet._address)
             );
             console.log('IS CITIZEN', isCitizen)
             if (isCitizen) {
@@ -349,7 +349,7 @@ const CitizenScreen = () => {
     useEffect(() => {
         fetchGeneralPublic()
         fetchApplicants()
-        fetchCitizerns()
+        fetchCitizens()
     }, []);
 
     const handleEndApplicantsReached = async () => {

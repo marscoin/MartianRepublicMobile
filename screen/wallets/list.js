@@ -144,17 +144,35 @@ const verifyBalance = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // call refreshTransactions() only once, when screen mounts
 
+  // const handleClick = item => {
+  //   if (item?.getID) {
+  //     const walletID = item.getID();
+  //     navigate('WalletTransactions', {
+  //       walletID,
+  //       walletType: item.type,
+  //     });
+  //   } else {
+  //     {navigate('AddWalletRoot')} 
+  //   }
+  // };
   const handleClick = item => {
     if (item?.getID) {
-      const walletID = item.getID();
-      navigate('WalletTransactions', {
-        walletID,
-        walletType: item.type,
-      });
+        const walletID = item.getID();
+        if (item.civic) {
+            navigate('WalletTransactionsCivic', {
+                walletID,
+                walletType: item.type,
+            });
+        } else {
+            navigate('WalletTransactions', {
+                walletID,
+                walletType: item.type,
+            });
+        }
     } else {
-      {navigate('AddWalletRoot')} 
+        navigate('AddWalletRoot');
     }
-  };
+};
 
   const onSnapToItem = e => {
     if (!isFocused) return;

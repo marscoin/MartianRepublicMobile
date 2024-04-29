@@ -45,6 +45,7 @@ export const BlueStorageProvider = ({ children }) => {
     setIsHandOffUseEnabled(value);
     return BlueApp.setIsHandoffEnabled(value);
   };
+  
 
   const saveToDisk = async (force = false) => {
     if (BlueApp.getWallets().length === 0 && !force) {
@@ -204,6 +205,9 @@ export const BlueStorageProvider = ({ children }) => {
   const deleteWallet = wallet => {
     BlueApp.deleteWallet(wallet);
     setWallets([...BlueApp.getWallets()]);
+  };
+  const deleteAllWallets = wallet => {
+    setWallets([]);
   };
 
   const addAndSaveWallet = async w => {

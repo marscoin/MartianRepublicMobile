@@ -9,7 +9,7 @@ import Biometric from '../class/biometrics';
 import loc, { formatBalance } from '../loc';
 import { BlueStorageContext } from '../blue_modules/storage-context';
 import ToolTipMenu from './TooltipMenu';
-import { BluePrivateBalance, BlueSpacing40 } from '../BlueComponents';
+import { BluePrivateBalance, BlueSpacing10, BlueSpacing20 } from '../BlueComponents';
 import { FiatUnit } from '../models/fiatUnit';
 import WalletAddresses from '../screen/wallets/addresses';
 import { removeTrailingZeros } from '../loc';
@@ -234,114 +234,171 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
         return "Rate unavailable";
     }
   };
-
-  return (
+  const RegularHeaderLayout = () => (
     <LinearGradient
-      colors={WalletGradient.gradientsFor(wallet.type)}
-      //colors = {wallet.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
-      style={styles.lineaderGradient}
-      {...WalletGradient.linearGradientProps(wallet.type)}
-    >
-      {/* ////HEADER///// */}
-      {/* <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom: 10}}>
-        <TouchableOpacity
-          accessibilityRole="button"
-          testID="WalletDetails"
-          onPress={() =>
-            navigation.goBack()
-          }
-        >
-          <Icon size={44} name="chevron-left" type="ionicons" color="black" />
-        </TouchableOpacity>
-      
-        <TouchableOpacity
-          accessibilityRole="button"
-          testID="WalletDetails"
-          //disabled={route.params.isLoading === true}
-          style={{justifyContent: 'center', alignItems: 'flex-end',}}
-          onPress={() =>
-            navigation.navigate('WalletDetails', {
-              walletID: wallet.getID(),
-            })
-          }
-        >
-          <Icon name="more-horiz" type="material" size={24} color="black" />
-        </TouchableOpacity>
-      </View> */}
-      <Image
-        source={(() => {
-          switch (wallet.type) {
-            case LightningLdkWallet.type:
-            case LightningCustodianWallet.type:
-              return I18nManager.isRTL ? require('../img/lnd-shape-rtl.png') : require('../img/lnd-shape.png');
-            case MultisigHDWallet.type:
-              return I18nManager.isRTL ? require('../img/vault-shape-rtl.png') : require('../img/vault-shape.png');
-            default:
-              return I18nManager.isRTL ? require('../img/marscoin_transparent2.png') : require('../img/marscoin_transparent2.png');
-          }
-        })()}
-        style={styles.chainIcon}
-      />
+        colors={WalletGradient.gradientsFor(wallet.type)}
+        style={styles.lineaderGradient}
+        {...WalletGradient.linearGradientProps(wallet.type)}
+      >
+        <Image
+          source={(() => {
+            switch (wallet.type) {
+              case LightningLdkWallet.type:
+              case LightningCustodianWallet.type:
+                return I18nManager.isRTL ? require('../img/lnd-shape-rtl.png') : require('../img/lnd-shape.png');
+              case MultisigHDWallet.type:
+                return I18nManager.isRTL ? require('../img/vault-shape-rtl.png') : require('../img/vault-shape.png');
+              default:
+                return wallet.civic ? require('../img/passport.png') : require('../img/marscoin_transparent2.png');
+            }
+          })()}
+          style={styles.chainIcon}
+        />
 
-      <Text testID="WalletLabel" numberOfLines={1} style={styles.walletLabel}>
-        {wallet.getLabel()}
-      </Text>
-      <Text testID="WalletLabel" numberOfLines={1} style={styles.address}>
-        {wallet.getAddress()}
-      </Text>
-      
-    <TouchableOpacity onPress={toggleBalanceDisplay}>
-        <Text style={styles.walletBalance}>
-          {getDisplayBalance()}
+        <Text testID="WalletLabel" numberOfLines={1} style={styles.walletLabel}>
+          {wallet.getLabel()}
         </Text>
-      </TouchableOpacity>
+        <Text testID="WalletLabel" numberOfLines={1} style={styles.address}>
+          {wallet.getAddress()}
+        </Text>
       
-      {wallet.type === LightningCustodianWallet.type && allowOnchainAddress && (
-        <ToolTipMenu
-          isMenuPrimaryAction
-          isButton
-          onPressMenuItem={handleManageFundsPressed}
-          actions={[
-            {
-              id: actionKeys.Refill,
-              text: loc.lnd.refill,
-              icon: actionIcons.Refill,
-            },
-            {
-              id: actionKeys.RefillWithExternalWallet,
-              text: loc.lnd.refill_external,
-              icon: actionIcons.RefillWithExternalWallet,
-            },
-          ]}
-          buttonStyle={styles.manageFundsButton}
-        >
-          <Text style={styles.manageFundsButtonText}>{loc.lnd.title}</Text>
-        </ToolTipMenu>
-      )}
-
-      {wallet.allowBIP47() && wallet.isBIP47Enabled() && (
-        <TouchableOpacity accessibilityRole="button" onPress={handleOnPaymentCodeButtonPressed}>
-          <View style={styles.manageFundsButton}>
-            <Text style={styles.manageFundsButtonText}>{loc.bip47.payment_code}</Text>
-          </View>
+      <TouchableOpacity onPress={toggleBalanceDisplay}>
+          <Text style={styles.walletBalance}>
+            {getDisplayBalance()}
+          </Text>
         </TouchableOpacity>
-      )}
-      {wallet.type === LightningLdkWallet.type && (
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={loc.lnd.title} onPress={handleManageFundsPressed}>
-          <View style={styles.manageFundsButton}>
+        
+        {wallet.type === LightningCustodianWallet.type && allowOnchainAddress && (
+          <ToolTipMenu
+            isMenuPrimaryAction
+            isButton
+            onPressMenuItem={handleManageFundsPressed}
+            actions={[
+              {
+                id: actionKeys.Refill,
+                text: loc.lnd.refill,
+                icon: actionIcons.Refill,
+              },
+              {
+                id: actionKeys.RefillWithExternalWallet,
+                text: loc.lnd.refill_external,
+                icon: actionIcons.RefillWithExternalWallet,
+              },
+            ]}
+            buttonStyle={styles.manageFundsButton}
+          >
             <Text style={styles.manageFundsButtonText}>{loc.lnd.title}</Text>
-          </View>
-        </TouchableOpacity>
-      )}
-      {wallet.type === MultisigHDWallet.type && (
-        <TouchableOpacity accessibilityRole="button" onPress={handleManageFundsPressed}>
-          <View style={styles.manageFundsButton}>
-            <Text style={styles.manageFundsButtonText}>{loc.multisig.manage_keys}</Text>
-          </View>
-        </TouchableOpacity>
-      )}
-    </LinearGradient>
-  );
+          </ToolTipMenu>
+        )}
+
+        {wallet.allowBIP47() && wallet.isBIP47Enabled() && (
+          <TouchableOpacity accessibilityRole="button" onPress={handleOnPaymentCodeButtonPressed}>
+            <View style={styles.manageFundsButton}>
+              <Text style={styles.manageFundsButtonText}>{loc.bip47.payment_code}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        {wallet.type === LightningLdkWallet.type && (
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={loc.lnd.title} onPress={handleManageFundsPressed}>
+            <View style={styles.manageFundsButton}>
+              <Text style={styles.manageFundsButtonText}>{loc.lnd.title}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        {wallet.type === MultisigHDWallet.type && (
+          <TouchableOpacity accessibilityRole="button" onPress={handleManageFundsPressed}>
+            <View style={styles.manageFundsButton}>
+              <Text style={styles.manageFundsButtonText}>{loc.multisig.manage_keys}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </LinearGradient>
+    )
+
+    const CivicHeaderLayout = () => (
+      <View style={styles.lineaderGradient}>
+      <Image style={styles.imageGold} source={require('../img/gold3.jpeg')} />
+
+          <Image
+            source={(() => {
+              switch (wallet.type) {
+                case LightningLdkWallet.type:
+                case LightningCustodianWallet.type:
+                  return I18nManager.isRTL ? require('../img/lnd-shape-rtl.png') : require('../img/lnd-shape.png');
+                case MultisigHDWallet.type:
+                  return I18nManager.isRTL ? require('../img/vault-shape-rtl.png') : require('../img/vault-shape.png');
+                default:
+                  return wallet.civic ? require('../img/passport.png') : require('../img/marscoin_transparent2.png');
+              }
+            })()}
+            style={styles.chainIconCivic}
+          />
+  
+          <Text testID="WalletLabel" numberOfLines={1} style={styles.walletLabel}>
+            {wallet.getLabel()}
+          </Text>
+          <Text testID="WalletLabel" numberOfLines={1} style={styles.address}>
+            {wallet.getAddress()}
+          </Text>
+          <BlueSpacing20/>
+        <TouchableOpacity onPress={toggleBalanceDisplay}>
+            <Text style={styles.walletBalance}>
+              {getDisplayBalance()}
+            </Text>
+          </TouchableOpacity>
+          <BlueSpacing10/>
+          {wallet.type === LightningCustodianWallet.type && allowOnchainAddress && (
+            <ToolTipMenu
+              isMenuPrimaryAction
+              isButton
+              onPressMenuItem={handleManageFundsPressed}
+              actions={[
+                {
+                  id: actionKeys.Refill,
+                  text: loc.lnd.refill,
+                  icon: actionIcons.Refill,
+                },
+                {
+                  id: actionKeys.RefillWithExternalWallet,
+                  text: loc.lnd.refill_external,
+                  icon: actionIcons.RefillWithExternalWallet,
+                },
+              ]}
+              buttonStyle={styles.manageFundsButton}
+            >
+              <Text style={styles.manageFundsButtonText}>{loc.lnd.title}</Text>
+            </ToolTipMenu>
+          )}
+  
+          {wallet.allowBIP47() && wallet.isBIP47Enabled() && (
+            <TouchableOpacity accessibilityRole="button" onPress={handleOnPaymentCodeButtonPressed}>
+              <View style={styles.manageFundsButton}>
+                <Text style={styles.manageFundsButtonText}>{loc.bip47.payment_code}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          {wallet.type === LightningLdkWallet.type && (
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={loc.lnd.title} onPress={handleManageFundsPressed}>
+              <View style={styles.manageFundsButton}>
+                <Text style={styles.manageFundsButtonText}>{loc.lnd.title}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          {wallet.type === MultisigHDWallet.type && (
+            <TouchableOpacity accessibilityRole="button" onPress={handleManageFundsPressed}>
+              <View style={styles.manageFundsButton}>
+                <Text style={styles.manageFundsButtonText}>{loc.multisig.manage_keys}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+  </View>
+      )  
+
+
+    
+    return wallet.civic ? <CivicHeaderLayout /> : <RegularHeaderLayout />;
+    
+  
 };
 
 const styles = StyleSheet.create({
@@ -356,6 +413,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
+  },
+  chainIconCivic: {
+    width: 180,
+    height: 180,
+    position: 'absolute',
+    bottom: 10,
+    right: 20,
   },
   walletLabel: {
     backgroundColor: 'transparent',
@@ -374,6 +438,7 @@ const styles = StyleSheet.create({
   },
   walletBalance: {
     fontWeight: 'bold',
+    // maxWidth: '60%',
     fontFamily: 'Orbitron-Black',
     fontSize: 36,
     color: 'black',
@@ -382,7 +447,8 @@ const styles = StyleSheet.create({
   },
   balanceCont:{
     height: 45,
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    maxWidth: '60%',
   },
   manageFundsButton: {
     marginTop: 14,
@@ -401,6 +467,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron-Black',
     padding: 12,
   },
+  imageGold: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '108%',
+    zIndex: -1,
+    resizeMode:'stretch',
+    padding: 12,
+    minHeight: 164,
+    elevation: 5,
+    height: 150 
+},
 });
 
 export const actionKeys = {

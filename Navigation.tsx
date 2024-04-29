@@ -43,6 +43,7 @@ import ReorderWallets from './screen/wallets/reorderWallets';
 import SelectWallet from './screen/wallets/selectWallet';
 import SignVerify from './screen/wallets/signVerify';
 import WalletTransactions from './screen/wallets/transactions';
+import WalletTransactionsCivic from './screen/wallets/transactionsCivic';
 import ViewEditMultisigCosigners from './screen/wallets/viewEditMultisigCosigners';
 import WalletXpub from './screen/wallets/xpub';
 
@@ -127,7 +128,8 @@ const BottomTabNavigator = () => {
       />
       <Tab.Screen
         name="Send"
-        component={ScanQRCodeRoot}
+        //component={ScanQRCodeRoot}
+        component={SendDetailsRoot}
         options={{
           tabBarLabel: '',
            title: "Send", 
@@ -253,11 +255,11 @@ const AppNavigator = () => {
       />
      
       {/* Once the onboarding is completed, you navigate to the MainApp */}
-      {/* <AppStack.Screen
-        name="MainApp"
+      <AppStack.Screen
+        name="BottomTabs"
         component={BottomTabNavigator}
         options={{ headerShown: false }}
-      /> */}
+      />
     </AppStack.Navigator>
   );
 };
@@ -292,6 +294,7 @@ const WalletsRoot = () => {
     }}>
       <WalletsStack.Screen name="WalletsList" component={WalletsList} options={WalletsList.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={WalletTransactions.navigationOptions(theme)}  />
+      <WalletsStack.Screen name="WalletTransactionsCivic" component={WalletTransactionsCivic} options={WalletTransactionsCivic.navigationOptions(theme)}  />
       <WalletsStack.Screen name="LdkOpenChannel" component={LdkOpenChannel} options={LdkOpenChannel.navigationOptions(theme)} />
       <WalletsStack.Screen name="LdkInfo" component={LdkInfo} options={LdkInfo.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletDetails" component={WalletDetails} options={WalletDetails.navigationOptions(theme)} />

@@ -44,7 +44,7 @@ const PleaseBackupCivic: React.FC = () => {
     console.log('I WROTE IT DOWN PRESSED')
     wallet.setCivic()
     //console.log(wallet)
-    navigation.navigate('MainApp')
+    navigation.navigate('BottomTabs')
     return true;
   }, [navigation]);
 
