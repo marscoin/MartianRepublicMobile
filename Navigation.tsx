@@ -593,6 +593,7 @@ const SendDetailsRoot = () => {
         options={SendDetails.navigationOptions(theme)}
         initialParams={SendDetails.initialParams}
       />
+       <SendDetailsStack.Screen name="ScanQRCodeRoot" component={ScanQRCodeRoot} initialParams={ScanQRCode.initialParams} />
       <SendDetailsStack.Screen name="Confirm" component={Confirm} options={Confirm.navigationOptions(theme)} />
       <SendDetailsStack.Screen
         name="PsbtWithHardwareWallet"

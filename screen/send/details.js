@@ -56,6 +56,8 @@ const SendDetails = () => {
   const { wallets, setSelectedWalletID, sleep, txMetadata, saveToDisk } = useContext(BlueStorageContext);
   const navigation = useNavigation();
   const { name, params: routeParams } = useRoute();
+  console.log('PARAMS', name)
+  console.log('PARAMS', routeParams)
   const scrollView = useRef();
   const scrollIndex = useRef(0);
   const { colors } = useTheme();

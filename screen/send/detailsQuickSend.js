@@ -1,21 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, useLayoutEffect } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  FlatList,
-  I18nManager,
-  Keyboard,
-  KeyboardAvoidingView,
-  LayoutAnimation,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import {ActivityIndicator,Alert,Dimensions,FlatList,Keyboard,KeyboardAvoidingView,LayoutAnimation,Platform,StyleSheet,Text,TextInput,TouchableOpacity,TouchableWithoutFeedback,View} from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,8 +7,8 @@ import { EXCHANGE_RATES_STORAGE_KEY } from '../../blue_modules/currency';
 import RNFS from 'react-native-fs';
 import BigNumber from 'bignumber.js';
 import * as bitcoin from 'bitcoinjs-lib';
-
-import { BlueDismissKeyboardInputAccessory, BlueLoading, BlueText } from '../../BlueComponents';
+import LinearGradient from 'react-native-linear-gradient';
+import { BlueDismissKeyboardInputAccessory, BlueLoading, BlueSpacing40, BlueText } from '../../BlueComponents';
 import { navigationStyleTx } from '../../components/navigationStyle';
 import NetworkTransactionFees, { NetworkTransactionFee } from '../../models/networkTransactionFees';
 import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
@@ -45,25 +29,31 @@ import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import ListItem from '../../components/ListItem';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
-import { btcToSatoshi, fiatToBTC } from '../../blue_modules/currency';
+import { btcToSatoshi } from '../../blue_modules/currency';
 import presentAlert from '../../components/Alert';
+//import { useBlueContext } from "../blue_modules/storage-context"
 const prompt = require('../../helpers/prompt');
 const fs = require('../../blue_modules/fs');
 const btcAddressRx = /^[a-zA-Z0-9]{26,35}$/;
 const currency = require("../../blue_modules/currency")
 
 const  QuickSendDetails = () => {
-  const { wallets, setSelectedWalletID, sleep, txMetadata, saveToDisk } = useContext(BlueStorageContext);
+  const { wallets, setSelectedWalletID, sleep, txMetadata, saveToDisk, useBlueContext } = useContext(BlueStorageContext);
   const navigation = useNavigation();
   const { name, params: routeParams } = useRoute();
+
+  // const { walletID } = wallet.getId()
+  //console.log('walletIDS', walletID)
+  console.log('PARAMS', name)
+  console.log('PARAMS', routeParams)
+  //{"isEditable": true, "walletID": "054994bbc50cc9a7b894096b686daec6a367122d2879a665ddbf386ebae137eb"}
   const scrollView = useRef();
   const scrollIndex = useRef(0);
   const { colors } = useTheme();
-
-  // state
   const [width, setWidth] = useState(Dimensions.get('window').width);
   const [isLoading, setIsLoading] = useState(false);
   const [wallet, setWallet] = useState(null);
+  const [walletID, setWalletID] = useState(null);
   const [walletSelectionOrCoinsSelectedHidden, setWalletSelectionOrCoinsSelectedHidden] = useState(false);
   const [isAmountToolbarVisibleForAndroid, setIsAmountToolbarVisibleForAndroid] = useState(false);
   const [isFeeSelectionModalVisible, setIsFeeSelectionModalVisible] = useState(false);
@@ -106,6 +96,9 @@ const  QuickSendDetails = () => {
   useEffect(() => {
     fetchMarscoinRate();
   }, []);
+  useEffect(() => {
+    console.log('addresses', addresses)
+  }, [addresses]);
 
   // if cutomFee is not set, we need to choose highest possible fee for wallet balance
   // if there are no funds for even Slow option, use 1 sat/vbyte fee
@@ -127,7 +120,6 @@ const  QuickSendDetails = () => {
     if (wallet) {
       setHeaderRightOptions();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colors, wallet, isTransactionReplaceable, balance, addresses, isEditable, isLoading]);
 
   // keyboad effects
@@ -206,7 +198,6 @@ const  QuickSendDetails = () => {
     } else {
       setAddresses([{ address: '', key: String(Math.random()) }]); // key is for the FlatList
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeParams.uri, routeParams.address]);
 
   useEffect(() => {
@@ -219,6 +210,7 @@ const  QuickSendDetails = () => {
     }
     const newWallet = (routeParams.walletID && wallets.find(w => w.getID() === routeParams.walletID)) || suitable[0];
     setWallet(newWallet);
+    setWalletID(newWallet.getID());
     setFeeUnit(newWallet.getPreferredBalanceUnit());
     setAmountUnit(newWallet.preferredBalanceUnit); // default for whole screen
 
@@ -235,7 +227,6 @@ const  QuickSendDetails = () => {
       .catch(e => console.log('loading cached recommendedFees error', e));
 
     // load fresh fees from servers
-
     setNetworkTransactionFeesIsLoading(true);
     NetworkTransactionFees.recommendedFees()
       .then(async fees => {
@@ -269,16 +260,6 @@ const  QuickSendDetails = () => {
       })
       .catch(e => console.log('fetchUtxo error', e));
   }, [wallet]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const UnitFromCoinType = (coinType) => {
-    switch (coinType) {
-      case "BTC":
-        return BitcoinUnit.BTC
-      case "MARS":
-        return BitcoinUnit.MARS
-    }
-    return BitcoinUnit.BTC
-  }
 
   // recalc fees in effect so we don't block render
   useEffect(() => {
@@ -342,7 +323,6 @@ const  QuickSendDetails = () => {
       while (true) {
         try {
           const { fee } = wallet.coinselect(lutxo, targets, opt.fee, change);
-
           newFeePrecalc[opt.key] = fee;
           break;
         } catch (e) {
@@ -352,13 +332,11 @@ const  QuickSendDetails = () => {
             targets = targets.map((t, index) => (index > 0 ? { ...t, value: 546 } : { address: t.address }));
             continue;
           }
-
           newFeePrecalc[opt.key] = null;
           break;
         }
       }
     }
-
     setFeePrecalc(newFeePrecalc);
     setFrozenBlance(frozen);
   }, [wallet, networkTransactionFees, utxo, addresses, feeRate, dumb]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -373,7 +351,6 @@ const  QuickSendDetails = () => {
 
   const getChangeAddressFast = () => {
     if (changeAddress) return changeAddress; // cache
-
     let change;
     if (WatchOnlyWallet.type === wallet.type && !wallet.isHd()) {
       // plain watchonly - just get the address
@@ -384,7 +361,6 @@ const  QuickSendDetails = () => {
       // legacy wallets
       change = wallet.getAddress();
     }
-
     return change;
   };
 
@@ -441,11 +417,11 @@ const  QuickSendDetails = () => {
     const dataWithoutSchema = data
       .replace('bitcoin:', '')
       .replace('BITCOIN:', '')
-      .replace("marscoin:", "")
+      .replace("marscoin:", '')
 
     // Check if address without amount is valid  
     if (wallet.isAddressValid(dataWithoutSchema)) {
-      console.log("address valud")
+      console.log("address valid")
       setAddresses(addrs => {
         addrs[scrollIndex.current].address = dataWithoutSchema;
         return [...addrs];
@@ -460,11 +436,13 @@ const  QuickSendDetails = () => {
     try {
       if (!data.toLowerCase().startsWith('bitcoin:')) data = `bitcoin:${data}`;
       const decoded = DeeplinkSchemaMatch.bip21decode(data);
+      console.log("decoded!!!!!!! ", decoded)
       address = decoded.address;
       options = decoded.options;
     } catch (error) {
       data = data.replace(/(amount)=([^&]+)/g, '').replace(/(amount)=([^&]+)&/g, '');
       const decoded = DeeplinkSchemaMatch.bip21decode(data);
+      console.log("ERRRRRR!!!!!!! ")
       decoded.options.amount = 0;
       //address = decoded.address;
       address = decoded.address
@@ -480,25 +458,22 @@ const  QuickSendDetails = () => {
       typeof wallet.getNetwork === "undefined"
         ? BitcoinUnit.BTC
         : wallet.getNetwork()
-
-   
-      setAddresses(addrs => {
-        addrs[scrollIndex.current].address = address;
-        addrs[scrollIndex.current].amount = options.amount;
-        addrs[scrollIndex.current].amountSats = new BigNumber(options.amount).multipliedBy(100000000).toNumber();
-        return [...addrs];
-      });
-      setUnits(u => {
-        u[scrollIndex.current] = BitcoinUnit.MARS; // also resetting current unit to BTC
-        return [...u];
-      });
-      setTransactionMemo(options.label || options.message);
-      setAmountUnit(BitcoinUnit.MARS);
-      setPayjoinUrl(options.pj || '');
-      // RN Bug: contentOffset gets reset to 0 when state changes. Remove code once this bug is resolved.
-      setTimeout(() => scrollView.current.scrollToIndex({ index: currentIndex, animated: false }), 50);
-    
-
+      
+    setAddresses(addrs => {
+      addrs[scrollIndex.current].address = address;
+      addrs[scrollIndex.current].amount = options.amount;
+      addrs[scrollIndex.current].amountSats = new BigNumber(options.amount).multipliedBy(100000000).toNumber();
+      return [...addrs];
+    });
+    setUnits(u => {
+      u[scrollIndex.current] = BitcoinUnit.MARS; // also resetting current unit to BTC
+      return [...u];
+    });
+    setTransactionMemo(options.label || options.message);
+    setAmountUnit(BitcoinUnit.MARS);
+    setPayjoinUrl(options.pj || '');
+    // RN Bug: contentOffset gets reset to 0 when state changes. Remove code once this bug is resolved.
+    setTimeout(() => scrollView.current.scrollToIndex({ index: currentIndex, animated: false }), 50);
     setIsLoading(false);
   };
 
@@ -508,7 +483,6 @@ const  QuickSendDetails = () => {
     const requestedSatPerByte = feeRate;
     console.log("[TX] feeRate: " + feeRate)
     console.log("[TX] balance: " + balance)
-
     for (const [index, transaction] of addresses.entries()) {
       let error;
       console.log('!!!!transaction.amount', transaction.amount)
@@ -546,23 +520,13 @@ const  QuickSendDetails = () => {
           error = loc.send.details_address_field_is_not_valid;
         }
       }
-
       if (error) {
         scrollView.current.scrollToIndex({ index });
         setIsLoading(false);
-        //presentAlert({ title: loc.errors.error, message: error.message });
         triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
         return;
       }
     }
-
-    // try {
-    //   await createPsbtTransaction();
-    // } catch (Err) {
-    //   setIsLoading(false);
-    //   presentAlert({ title: loc.errors.error, message: Err.message });
-    //   triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-    //}
     createPsbtTransaction();
   };
 
@@ -572,16 +536,8 @@ const  QuickSendDetails = () => {
     const requestedSatPerByte = Number(feeRate);
     const lutxo = utxo || wallet.getUtxo();
     console.log({ requestedSatPerByte, lutxo: lutxo.length });
-
     const targets = [];
     for (const transaction of addresses) {
-      console.log("=========== THE GREAT DEBUG ===========")
-      console.log("FEE RATE:", feeRate)
-      console.log("REQUESTED SAT P/Byte: ", requestedSatPerByte)
-      console.log("BITCOIN UNIT: ", BitcoinUnit.MAX)
-      console.log("AMOUNT SATS:", transaction?.amountSats)
-      console.log("AMOUNT (FIAT)", transaction?.amount)
-
       if (transaction.amount === BitcoinUnit.MAX) {
         // output with MAX
         targets.push({ address: transaction.address });
@@ -596,10 +552,7 @@ const  QuickSendDetails = () => {
         }
       }
     }
-    // console.log("Wallet,", wallet)
-   
-    //console.log("FINAL VALUES CREATE TX:", targets, requestedSatPerByte)
-
+    
     const { tx, outputs, psbt, fee } = await wallet.createTransaction(
       lutxo,
       targets,
@@ -607,17 +560,13 @@ const  QuickSendDetails = () => {
       change,
       isTransactionReplaceable ? HDSegwitBech32Wallet.defaultRBFSequence : HDSegwitBech32Wallet.finalRBFSequence,
     );
-    //console.log('TXXXXXXX',tx)
-    // console.log("(OLD SEND) THE TX BEING BUILT:", tx)
-    // console.log("(OLD SEND) THE TX BEING BUILT:", outputs)
-    // console.log("(OLD SEND) THE TX BEING BUILT:",  psbt)
+    
     console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
 
     if (tx && routeParams.launchedBy && psbt) {
       console.warn('navigating back to ', routeParams.launchedBy);
       navigation.navigate(routeParams.launchedBy, { psbt });
     }
-
     if (wallet.type === WatchOnlyWallet.type) {
       // watch-only wallets with enabled HW wallet support have different flow. we have to show PSBT to user as QR code
       // so he can scan it and sign it. then we have to scan it back from user (via camera and QR code), and ask
@@ -659,10 +608,9 @@ const  QuickSendDetails = () => {
     }
 
     navigation.navigate('Confirm', {
-      fee: new BigNumber(fee).dividedBy(100000000).toNumber(),////
+      fee: new BigNumber(fee).dividedBy(100000000).toNumber(),
       memo: transactionMemo,
       walletID: wallet.getID(),
-      //walletID: '39ed01657256b3ef7995ebd312fb9b5edd4a86949769d91d4d845ea509314205',
       tx: tx.toHex(),
       recipients,
       satoshiPerByte: requestedSatPerByte,
@@ -680,14 +628,12 @@ const  QuickSendDetails = () => {
 
   /**
    * same as `importTransaction`, but opens camera instead.
-   *
    * @returns {Promise<void>}
    */
   const importQrTransaction = () => {
     if (wallet.type !== WatchOnlyWallet.type) {
       return presentAlert({ title: loc.errors.error, message: 'Importing transaction in non-watchonly wallet (this should never happen)' });
     }
-
     setOptionsVisible(false);
     requestCameraAuthorization().then(() => {
       navigation.navigate('ScanQRCodeRoot', {
@@ -701,18 +647,14 @@ const  QuickSendDetails = () => {
   };
 
   const importQrTransactionOnBarScanned = ret => {
-    navigation.getParent().pop();
+    //navigation.getParent().pop();
+    //navigation.goBack()
+    console.log('importQrTransactionOnBarScanned!!!!!!!!!!!!')
     if (!ret.data) ret = { data: ret };
     if (ret.data.toUpperCase().startsWith('UR')) {
       presentAlert({ title: loc.errors.error, message: 'BC-UR not decoded. This should never happen' });
     } else if (ret.data.indexOf('+') === -1 && ret.data.indexOf('=') === -1 && ret.data.indexOf('=') === -1) {
-      // this looks like NOT base64, so maybe its transaction's hex
-      // we dont support it in this flow
     } else {
-      // psbt base64?
-
-      // we construct PSBT object and pass to next screen
-      // so user can do smth with it:
       const psbt = bitcoin.Psbt.fromBase64(ret.data);
       navigation.navigate('PsbtWithHardwareWallet', {
         memo: transactionMemo,
@@ -729,14 +671,12 @@ const  QuickSendDetails = () => {
    * so he can scan it and sign it. then we have to scan it back from user (via camera and QR code), and ask
    * user whether he wants to broadcast it.
    * alternatively, user can export psbt file, sign it externally and then import it
-   *
    * @returns {Promise<void>}
    */
   const importTransaction = async () => {
     if (wallet.type !== WatchOnlyWallet.type) {
       return presentAlert({ title: loc.errors.error, message: 'Importing transaction in non-watchonly wallet (this should never happen)' });
     }
-
     try {
       const res = await DocumentPicker.pickSingle({
         type:
@@ -811,7 +751,6 @@ const  QuickSendDetails = () => {
       const base64 = base64arg || (await fs.openSignedTransaction());
       if (!base64) return;
       const psbt = bitcoin.Psbt.fromBase64(base64); // if it doesnt throw - all good, its valid
-
       if (wallet.howManySignaturesCanWeMake() > 0 && (await askCosignThisTransaction())) {
         hideOptions();
         setIsLoading(true);
@@ -820,7 +759,6 @@ const  QuickSendDetails = () => {
         setIsLoading(false);
         await sleep(100);
       }
-
       navigation.navigate('PsbtMultisig', {
         memo: transactionMemo,
         psbtBase64: psbt.toBase64(),
@@ -901,7 +839,6 @@ const  QuickSendDetails = () => {
     await new Promise(resolve => setTimeout(resolve, 100)); // sleep for animations
     const scannedData = await scanQrHelper(navigation.navigate, name);
     if (!scannedData) return setIsLoading(false);
-
     let tx;
     let psbt;
     try {
@@ -915,7 +852,6 @@ const  QuickSendDetails = () => {
     }
 
     if (!tx) return setIsLoading(false);
-
     // we need to remove change address from recipients, so that Confirm screen show more accurate info
     const changeAddresses = [];
     for (let c = 0; c < wallet.next_free_change_address_index + wallet.gap_limit; c++) {
@@ -941,7 +877,6 @@ const  QuickSendDetails = () => {
   };
 
   // Header Right Button
-
   const headerRightOnPress = id => {
     if (id ===  QuickSendDetails.actionKeys.AddRecipient) {
       handleAddRecipient();
@@ -1021,15 +956,12 @@ const  QuickSendDetails = () => {
         },
       ]);
     }
-
     actions.push({ id:  QuickSendDetails.actionKeys.CoinControl, text: loc.cc.header, icon:  QuickSendDetails.actionIcons.CoinControl });
-
     return actions;
   };
   const setHeaderRightOptions = () => {
     navigation.setOptions({
       headerRight: Platform.select({
-        // eslint-disable-next-line react/no-unstable-nested-components
         ios: () => (
           <ToolTipMenu
             disabled={isLoading}
@@ -1041,7 +973,6 @@ const  QuickSendDetails = () => {
             <Icon size={22} name="more-horiz" type="material" color={colors.foregroundColor} style={styles.advancedOptions} />
           </ToolTipMenu>
         ),
-        // eslint-disable-next-line react/no-unstable-nested-components
         default: () => (
           <TouchableOpacity
             accessibilityRole="button"
@@ -1114,8 +1045,6 @@ const  QuickSendDetails = () => {
     );
   };
 
-  const formatFee = fee => formatBalance(fee, feeUnit, true);
-
   const stylesHook = StyleSheet.create({
     loading: {
       backgroundColor: colors.background,
@@ -1152,10 +1081,11 @@ const  QuickSendDetails = () => {
       color: colors.buttonAlternativeTextColor,
     },
     selectLabel: {
-      color: colors.buttonTextColor,
+      fontSize: 18,
+      color: 'black',
     },
     of: {
-      color: colors.feeText,
+      color: 'black',
     },
     memo: {
       borderColor: colors.formBorder,
@@ -1196,7 +1126,6 @@ const  QuickSendDetails = () => {
       },
       {
         label: loc.send.fee_medium,
-       // time: loc.send.fee_3h,
         time: '15m',
         fee: feePrecalc.mediumFee,
         rate: nf.mediumFee,
@@ -1258,18 +1187,15 @@ const  QuickSendDetails = () => {
                 let error = loc.send.fee_satvbyte;
                 while (true) {
                   let fee;
-
                   try {
                     fee = await prompt(loc.send.create_fee, error, true, 'numeric');
                   } catch (_) {
                     return;
                   }
-
                   if (!/^\d+$/.test(fee)) {
                     error = loc.send.details_fee_field_is_not_valid;
                     continue;
                   }
-
                   if (fee < 1) fee = '1';
                   fee = Number(fee).toString(); // this will remove leading zeros if any
                   setCustomFee(fee);
@@ -1288,7 +1214,6 @@ const  QuickSendDetails = () => {
 
   const renderOptionsModal = () => {
     const isSendMaxUsed = addresses.some(element => element.amount === BitcoinUnit.MAX);
-
     return (
       <BottomModal deviceWidth={width + width / 2} isVisible={optionsVisible} onClose={hideOptions}>
         <KeyboardAvoidingView enabled={!Platform.isPad} behavior={Platform.OS === 'ios' ? 'position' : null}>
@@ -1379,16 +1304,12 @@ const  QuickSendDetails = () => {
 
     return (
       <View style={styles.select}>
-        {!isLoading && isEditable && (
-          <TouchableOpacity
-            accessibilityRole="button"
-            style={styles.selectTouch}
-            onPress={() => navigation.navigate('SelectWallet', { onWalletSelect, chainType: Chain.ONCHAIN })}
+        <LinearGradient 
+              shadowColor={colors.shadowColor} 
+              colors = {['#FFB67D','#FF8A3E', '#FF7400']}
+             
+              style={styles.select}
           >
-            <Text style={styles.selectText}>{loc.wallets.select_wallet.toLowerCase()}</Text>
-            <Icon name={I18nManager.isRTL ? 'angle-left' : 'angle-right'} size={18} type="font-awesome" color="#9aa0aa" />
-          </TouchableOpacity>
-        )}
         <View style={styles.selectWrap}>
           <TouchableOpacity
             accessibilityRole="button"
@@ -1399,6 +1320,7 @@ const  QuickSendDetails = () => {
             <Text style={[styles.selectLabel, stylesHook.selectLabel]}>{wallet.getLabel()}</Text>
           </TouchableOpacity>
         </View>
+        </LinearGradient>
       </View>
     );
   };
@@ -1477,17 +1399,8 @@ const  QuickSendDetails = () => {
           unit={units[index] || amountUnit}
           editable={isEditable}
           disabled={!isEditable}
-          // marsRate={marsRate}
           inputAccessoryViewID={InputAccessoryAllFunds.InputAccessoryViewID}
         />
-
-        {/* {frozenBalance > 0 && (
-          <TouchableOpacity accessibilityRole="button" style={styles.frozenContainer} onPress={handleCoinControl}>
-            <BlueText>
-              {loc.formatString(loc.send.details_frozen, { amount: formatBalanceWithoutSuffix(frozenBalance, BitcoinUnit.BTC, true) })}
-            </BlueText>
-          </TouchableOpacity>
-        )} */}
 
         <AddressInput
           onChangeText={text => {
@@ -1529,6 +1442,9 @@ const  QuickSendDetails = () => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={[styles.root, stylesHook.root]} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
         <View>
+          <BlueSpacing40/>
+        {renderWalletSelectionOrCoinsSelected()}
+        <BlueSpacing40/>
           <KeyboardAvoidingView enabled={!Platform.isPad} behavior="position">
             {/* /////////Currency and address//////// */}
             <FlatList
@@ -1547,20 +1463,6 @@ const  QuickSendDetails = () => {
               scrollIndicatorInsets={styles.scrollViewIndicator}
               contentContainerStyle={styles.scrollViewContent}
             />
-            {/* ///////Note to Self/////// */}
-            <View style={[styles.memo, stylesHook.memo]}>
-              <TextInput
-                onChangeText={setTransactionMemo}
-                placeholder={loc.send.details_note_placeholder}
-                placeholderTextColor="#81868e"
-                value={transactionMemo}
-                numberOfLines={1}
-                style={styles.memoText}
-                editable={!isLoading}
-                onSubmitEditing={Keyboard.dismiss}
-                inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
-              />
-            </View>
             <TouchableOpacity
               testID="chooseFee"
               accessibilityRole="button"
@@ -1569,14 +1471,11 @@ const  QuickSendDetails = () => {
               style={styles.fee}
             >
               <Text style={[styles.feeLabel, stylesHook.feeLabel]}>{loc.send.create_fee}</Text>
-
               {networkTransactionFeesIsLoading ? (
                 <ActivityIndicator />
               ) : (
                 <View style={[styles.feeRow, stylesHook.feeRow]}>
                   <Text style={[stylesHook.feeValue, {fontSize: 12}]}>
-                    {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' ' + loc.units.sat_vbyte} */}
-                    {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' zubrin'} */}
                     {(feePrecalc.current*100).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' zubrin' }
                   </Text>
                 </View>
@@ -1584,7 +1483,6 @@ const  QuickSendDetails = () => {
             </TouchableOpacity>
             {renderCreateButton()}
             {renderFeeSelectionModal()}
-            {renderOptionsModal()}
           </KeyboardAvoidingView>
         </View>
         <BlueDismissKeyboardInputAccessory />
@@ -1594,8 +1492,6 @@ const  QuickSendDetails = () => {
             <InputAccessoryAllFunds canUseAll={balance > 0} onUseAllPressed={onUseAllPressed} balance={allBalance} />
           ),
         })}
-
-        {renderWalletSelectionOrCoinsSelected()}
       </View>
     </TouchableWithoutFeedback>
   );
@@ -1701,30 +1597,38 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   select: {
-    marginBottom: 24,
+    width:200,
+    height: 100,
+    marginVerticat: 20,
     marginHorizontal: 24,
     alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    borderRadius:10,
+    backgroundColor:'yellow'
   },
   selectTouch: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   selectText: {
-    color: '#9aa0aa',
+    color: 'black',
     fontSize: 14,
     marginRight: 8,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'Orbitron-Black',
     letterSpacing: 1.2
   },
   selectWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 4,
+    // backgroundColor:'red'
   },
   selectLabel: {
     fontSize: 14,
-    fontFamily: 'Orbitron-Regular',
-    letterSpacing: 1.2
+    fontFamily: 'Orbitron-Black',
+    letterSpacing: 1.2,
+    color: 'black',
   },
   of: {
     alignSelf: 'flex-end',
