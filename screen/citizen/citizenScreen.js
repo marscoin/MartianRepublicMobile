@@ -1,15 +1,10 @@
-import React, { useEffect, useState, useContext , useRef, useReducer} from 'react';
+import React, { useEffect, useContext , useRef, useReducer} from 'react';
 import { ScrollView, Platform,ActivityIndicator, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import navigationStyle from '../../components/navigationStyle';
-import loc from '../../loc';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
-import Button from '../../components/Button';
-import SafeArea from '../../components/SafeArea';
-import usePrivacy from '../../hooks/usePrivacy';
 import LinearGradient from 'react-native-linear-gradient';
 import WalletGradient from '../../class/wallet-gradient';
 import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
@@ -61,7 +56,12 @@ const CitizenScreen = () => {
             case 'SET_IS_CITIZEN':
                 return { ...state, isCitizen: true };    
             case 'SET_GENERAL_PUBLIC':
-                return { ...state, generalPublic: action.payload };
+                return {
+                    ...state,
+                    generalPublic: {
+                        ...state.generalPublic, 
+                        data: [...(state.generalPublic.data || []), ...action.payload]}
+                };
             case 'SET_APPLICANTS':
                 return { ...state, 
                     applicants: {
@@ -71,8 +71,6 @@ const CitizenScreen = () => {
                 }
             case 'SET_LAST_PAGE_APPLICANTS':
                 return { ...state, lastPageApplicants: action.payload }; 
-            case 'SET_LAST_PAGE_CITIZENS':
-                return { ...state, lastPageCitizen: action.payload }; 
             case 'SET_IMAGE_LOAD_ERROR':
                 const newState = { ...state };
                 newState.imageLoadErrors[action.payload.id] = true; // Use a unique ID for each image
@@ -307,6 +305,15 @@ const CitizenScreen = () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/public?page=${publicPageRef.current}`)
             //console.log('GENERAL PUBLIC', response.data) 
+
+            // Check if new data is the same as the last fetched data
+            if (JSON.stringify(lastFetchedPublic.current) === JSON.stringify(response.data)) {
+                console.log("No new public data to fetch.");
+                return; // Stop the fetching process as data is repeated
+            }
+            // Update the last fetched data
+            lastFetchedCitizens.current = response.data;
+            // Dispatch new data to the reducer
             dispatch({ type: 'SET_GENERAL_PUBLIC', payload: response.data });
         } catch (error) {
             console.error(`Error fetching genersal public:`, error);   
@@ -317,14 +324,13 @@ const CitizenScreen = () => {
     const fetchCitizens = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/citizen?page=${citizenPageRef.current}`);
-            console.log('CITIZENS', response.data);
+            //console.log('CITIZENS', response.data);
     
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedCitizens.current) === JSON.stringify(response.data)) {
                 console.log("No new citizens data to fetch.");
                 return; // Stop the fetching process as data is repeated
             }
-    
             // Update the last fetched data
             lastFetchedCitizens.current = response.data;
     
@@ -369,17 +375,11 @@ const CitizenScreen = () => {
         fetchGeneralPublic()
         fetchApplicants()
         fetchCitizens()
-    }, []);
-
-    // useEffect(() => {
-    //     console.log("Citizens Data:", state.citizens.data[0]);
-    // }, [state]);
- 
+    }, []); 
 
     const handleEndApplicantsReached = async () => {
         console.log('handleEndApplicantsReached')
         console.log('applicantPageRef', applicantPageRef)
-
         if (applicantPageRef.current < state.lastPageApplicants) {
           applicantPageRef.current += 1; // Prepare to fetch the next page
           console.log('applicantPageRef', applicantPageRef)
@@ -392,8 +392,19 @@ const CitizenScreen = () => {
     const handleEndCitizensReached = async () => {
         console.log('handleEndCitizensReached')
         console.log('citizenPageRef', citizenPageRef)
-
         if (citizenPageRef.current < state.lastPageCitizenss) {
+          citizenPageRef.current += 1; // Prepare to fetch the next page
+          console.log('citizenPageRef', citizenPageRef)
+          await fetchCitizens(); // Fetch the next page of applicants
+        } else {
+          console.log("No more citizens to fetch.");
+        }
+    };
+
+    const handleEndPublicReached = async () => {
+        console.log('handleEndPublicReached')
+        console.log('publicPageRef', publicPageRef)
+        if (publicPageRef.current < state.lastPageCitizenss) {
           citizenPageRef.current += 1; // Prepare to fetch the next page
           console.log('citizenPageRef', citizenPageRef)
           await fetchCitizens(); // Fetch the next page of applicants
@@ -406,221 +417,199 @@ const CitizenScreen = () => {
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
     {/* ////margin -80 sticks screen to the tabbar///// */}
         <View style={styles.root}>
-        <ScrollView 
-            style={styles.root}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
-        >
-            
-            <View style={styles.center}>
-                <Text style={styles.welcomeText}>Welcome to  </Text>
-                <Image style={styles.iconStyle} source={require('../../img/icon.png')} accessible={false} />
-            </View>
-            <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
-            
-
-            {/* ///////////JOIN MARS BLOCK///////// */}
-            {!state.isCitizen &&
-            <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
-                <View style={styles.noWallet}>
-                    <Text style={[styles.noWalletText, {marginBottom: 15}]}>SUBMIT YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
-                    <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                        <TouchableOpacity 
-                            style={[styles.joinButton]}
-                            onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
-                        >
-                            <Text style={styles.noWalletText}>JOIN MARS!</Text>
-                        </TouchableOpacity>
-                    </LinearGradient>
-                </View>  
-            </View>
-            }
-            {state.isCitizen &&
-            <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
-                <View style={styles.noWallet}>
-                    <Text style={[styles.noWalletText, { fontSize: 34, letterSpacing: 4, fontWeight:'800'}]}>WELCOME CITIZEN</Text>
-                </View>  
-            </View>
-            }
-
-            <Image style={styles.imageLG} source={require('../../img/sunrise.png')} />
-
-            {/* ///////////FILTER BLOCK///////// */}
-            <View style={styles.filterBlock}>
-                <TouchableOpacity
-                    style={styles.filterButton}
-                    onPress={() => {
-                        dispatch({ type: 'SET_FILTER_CITIZEN' })
-                    }}
-                >
-                    <LinearGradient
-                        colors={state.filterCitizen ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // Change to grey gradient if inactive
-                        style={state.filterCitizen ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
-                    >
-                        <Text style={styles.filterButtonText}>CITIZENS</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.filterButton}
-                    onPress={() => {
-                        dispatch({ type: 'SET_FILTER_PUBLIC' })
-                    }}
-                >
-                    <LinearGradient
-                        colors={state.filterPublic ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
-                        style={state.filterPublic ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
-                    >
-                        <Text style={styles.filterButtonText}>PUBLIC</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.filterButton}
-                    onPress={() => {
-                        dispatch({ type: 'SET_FILTER_APPLICANTS' })
-                    }}
-                >
-                    <LinearGradient
-                        colors={state.filterApplicants ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
-                        style={state.filterApplicants ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
-                    >
-                        <Text style={styles.filterButtonText}>APPLICANTS</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
-
-            {/* {state.filterCitizen &&
-                <View style={styles.citizensContainer}>
-                    {state.citizens.data && state.citizens.data.filter(citizen => citizen.user.citizen).map((citizen, index) => (
-                        <View key={index} style={styles.citizenItem}>
-                            <Image
-                                source={state.imageLoadErrors[citizen.id] ? require('../../img/genericprofile.png') : !citizen.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: citizen.user.citizen.avatar_link }}
-                                style={styles.citizenImage} 
-                                onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
-                            />
-                            <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
-                                <Text numberOfLines={2} style={styles.citizenName}>{citizen.user.fullname}</Text>
-                                <Text numberOfLines={1} style={styles.citizenAddress}>Address: {citizen.address.slice(0,9)}</Text>
-                                <Text numberOfLines={1} style={styles.citizenDate}>Citizen since: {new Date(citizen.mined).toLocaleDateString()}</Text>
-                            </View>
-                            {citizen.user.profile.endorse_cnt && 
-                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                <Text numberOfLines={1} style={styles.endorsTxt}>ENDORSEMENTS</Text>
-                                <Text style={[styles.citizenName, {fontSize: 22, marginTop:5}]}>{citizen.user.profile.endorse_cnt}</Text>
-                            </View>}
-                            {!citizen.user.profile.endorse_cnt && 
-                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
-                                <Text numberOfLines={1} style={[styles.endorsTxt, {marginBottom: 8}]}>FOUNDER</Text>
-                                <Icon name="medal" type="material-community" color="#FF7400" />
-                            </View>}
-                        </View>
-                    ))}
+            <ScrollView 
+                style={styles.root}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 100 }}
+            >
+                <View style={styles.center}>
+                    <Text style={styles.welcomeText}>Welcome to  </Text>
+                    <Image style={styles.iconStyle} source={require('../../img/icon.png')} accessible={false} />
                 </View>
-            } */}
-            {state.filterCitizen &&
-                <View style={styles.citizensContainer}>
-                    {state.citizens.data && 
-                    <FlatList
-                        key={'citizens-list'}
-                        data={state.citizens.data}
-                        extradata={state.citizens.data}
-                        renderItem={({ item }) => (
-                            <View key={item.userid} style={styles.citizenItem}>
-                                <Image
-                                    source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : !item.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: item.user.citizen.avatar_link }}
+                <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
+                
+                {/* ///////////JOIN MARS BLOCK///////// */}
+                {!state.isCitizen &&
+                <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
+                    <View style={styles.noWallet}>
+                        <Text style={[styles.noWalletText, {marginBottom: 15}]}>SUBMIT YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
+                        <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                            <TouchableOpacity 
+                                style={[styles.joinButton]}
+                                onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                            >
+                                <Text style={styles.noWalletText}>JOIN MARS!</Text>
+                            </TouchableOpacity>
+                        </LinearGradient>
+                    </View>  
+                </View>
+                }
+                {state.isCitizen &&
+                <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
+                    <View style={styles.noWallet}>
+                        <Text style={[styles.noWalletText, { fontSize: 34, letterSpacing: 4, fontWeight:'800'}]}>WELCOME CITIZEN</Text>
+                    </View>  
+                </View>
+                }
+
+                <Image style={styles.imageLG} source={require('../../img/sunrise.png')} />
+
+                {/* ///////////FILTER BLOCK///////// */}
+                <View style={styles.filterBlock}>
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => {
+                            dispatch({ type: 'SET_FILTER_CITIZEN' })
+                        }}
+                    >
+                        <LinearGradient
+                            colors={state.filterCitizen ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // Change to grey gradient if inactive
+                            style={state.filterCitizen ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
+                        >
+                            <Text style={styles.filterButtonText}>CITIZENS</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => {
+                            dispatch({ type: 'SET_FILTER_PUBLIC' })
+                        }}
+                    >
+                        <LinearGradient
+                            colors={state.filterPublic ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
+                            style={state.filterPublic ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
+                        >
+                            <Text style={styles.filterButtonText}>PUBLIC</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => {
+                            dispatch({ type: 'SET_FILTER_APPLICANTS' })
+                        }}
+                    >
+                        <LinearGradient
+                            colors={state.filterApplicants ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
+                            style={state.filterApplicants ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
+                        >
+                            <Text style={styles.filterButtonText}>APPLICANTS</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
+
+                {state.filterCitizen &&
+                    <View style={styles.citizensContainer}>
+                        {state.citizens.data && 
+                        <FlatList
+                            key={'citizens-list'}
+                            data={state.citizens.data}
+                            extradata={state.citizens.data}
+                            renderItem={({ item }) => (
+                                <View key={item.userid} style={styles.citizenItem}>
+                                    <Image
+                                        source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : !item.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: item.user.citizen.avatar_link }}
+                                        style={styles.citizenImage} 
+                                        onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
+                                    />
+                                    <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
+                                        <Text numberOfLines={2} style={styles.citizenName}>{item.user.fullname}</Text>
+                                        <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
+                                        <Text numberOfLines={1} style={styles.citizenDate}>Citizen since: {new Date(item.mined).toLocaleDateString()}</Text>
+                                    </View>
+                                    {item.user.profile.endorse_cnt && 
+                                        <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                            <Text numberOfLines={1} style={styles.endorsTxt}>ENDORSEMENTS</Text>
+                                            <Text style={[styles.citizenName, {fontSize: 22, marginTop:5}]}>{item.user.profile.endorse_cnt}</Text>
+                                        </View>
+                                    }
+                                    {!item.user.profile.endorse_cnt && 
+                                        <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
+                                            <Text numberOfLines={1} style={[styles.endorsTxt, {marginBottom: 8}]}>FOUNDER</Text>
+                                            <Icon name="medal" type="material-community" color="#FF7400" />
+                                        </View>
+                                    }
+                                </View>
+                            )}
+                            keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                            onEndReached={handleEndCitizensReached}
+                            onEndReachedThreshold={0.5} 
+                            scrollEnabled={false}
+                        />
+                        }
+                    </View>
+                }
+
+                {state.filterPublic &&
+                    <View style={styles.citizensContainer}>
+                        {state.generalPublic.data &&  
+                        <FlatList
+                            key={'public-list'}
+                            data={state.generalPublic.data}
+                            extradata={state.generalPublic.data}
+                            renderItem={({ item }) => (
+                                <View  style={[styles.citizenItem, {justifyContent:'flex-start'}]}>
+                                <Image    
+                                    source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : { uri: item.profile_image }}
                                     style={styles.citizenImage} 
-                                    onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
+                                    onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: item.id } })}
                                 />
                                 <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
                                     <Text numberOfLines={2} style={styles.citizenName}>{item.user.fullname}</Text>
                                     <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
-                                    <Text numberOfLines={1} style={styles.citizenDate}>Citizen since: {new Date(item.mined).toLocaleDateString()}</Text>
+                                    <Text numberOfLines={1} style={styles.citizenDate}>Joined: {new Date(item.created_at).toLocaleDateString()}</Text>
                                 </View>
-                                {item.user.profile.endorse_cnt && 
-                                    <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                        <Text numberOfLines={1} style={styles.endorsTxt}>ENDORSEMENTS</Text>
-                                        <Text style={[styles.citizenName, {fontSize: 22, marginTop:5}]}>{item.user.profile.endorse_cnt}</Text>
+                                {item.user.profile.citizen===0 &&
+                                <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                    <View style ={styles.endorseButton}>
+                                        <Text style={styles.endorsTxt}>ENDORSE</Text>
                                     </View>
-                                }
-                                {!item.user.profile.endorse_cnt && 
-                                    <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
-                                        <Text numberOfLines={1} style={[styles.endorsTxt, {marginBottom: 8}]}>FOUNDER</Text>
-                                        <Icon name="medal" type="material-community" color="#FF7400" />
+                                
+                                    <Text style={[styles.citizenName, {fontSize: 20, marginTop: 10}]}>{item.user.profile.endorse_cnt}</Text>
+                                </View>}
+                                {item.user.profile.citizen===1 &&
+                                <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                    <Icon name="check-circle" type="material-community" color="#FF7400" />
+                                </View>}
+                            </View>
+                            )}
+                            keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                            onEndReached={handleEndPublicReached}
+                            onEndReachedThreshold={0.5} 
+                            scrollEnabled={false}
+                        />
+                        }
+                    </View>
+                } 
+
+                {state.filterApplicants &&
+                    <View style={styles.citizensContainer}>
+                        <FlatList
+                            key={'applicants-list'}
+                            data={state.applicants.data}
+                            extraData={state.applicants.data}
+                            renderItem={({ item }) => (
+                                <View key={item.userid} style={styles.citizenItem}>
+                                    <View style={{ marginLeft: 10 }}>
+                                        <Text style={styles.citizenName}>{item.fullname}</Text>
+                                        {item.address &&
+                                        <Text style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text> 
+                                        }
                                     </View>
-                                }
-                            </View>
-                        )}
-                        keyExtractor={(item) => item.userid.toString()} // Use userid as the key
-                        onEndReached={handleEndCitizensReached}
-                        onEndReachedThreshold={0.5} 
-                        scrollEnabled={false}
-                    />
-                    }
-                </View>
-            }
-
-            {state.filterPublic &&
-                <View style={styles.citizensContainer}>
-                    {state.generalPublic &&  state.generalPublic.map((person, index) => (
-                        <View key={index} style={[styles.citizenItem, {justifyContent:'flex-start'}]}>
-                            <Image    
-                                source={state.imageLoadErrors[person.id] ? require('../../img/genericprofile.png') : { uri: person.profile_image }}
-                                style={styles.citizenImage} 
-                                onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: person.id } })}
-                            />
-                            <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
-                                <Text numberOfLines={2} style={styles.citizenName}>{person.user.fullname}</Text>
-                                <Text numberOfLines={1} style={styles.citizenAddress}>Address: {person.address.slice(0,9)}</Text>
-                                <Text numberOfLines={1} style={styles.citizenDate}>Joined: {new Date(person.created_at).toLocaleDateString()}</Text>
-                            </View>
-                            {person.user.profile.citizen===0 &&
-                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                <View style ={styles.endorseButton}>
-                                    <Text style={styles.endorsTxt}>ENDORSE</Text>
                                 </View>
-                            
-                                <Text style={[styles.citizenName, {fontSize: 20, marginTop: 10}]}>{person.user.profile.endorse_cnt}</Text>
-                            </View>}
-                            {person.user.profile.citizen===1 &&
-                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                <Icon name="check-circle" type="material-community" color="#FF7400" />
-                            </View>}
-                        </View>
-                    ))}
-                </View>
-            }
-
-            {state.filterApplicants &&
-                <View style={styles.citizensContainer}>
-                    <FlatList
-                        key={'applicants-list'}
-                        data={state.applicants.data}
-                        extraData={state.applicants.data}
-                        renderItem={({ item }) => (
-                            <View key={item.userid} style={styles.citizenItem}>
-                                <View style={{ marginLeft: 10 }}>
-                                    <Text style={styles.citizenName}>{item.fullname}</Text>
-                                    {item.address &&
-                                     <Text style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text> 
-                                    }
-                                </View>
-                            </View>
-                        )}
-                        keyExtractor={(item) => item.userid.toString()} // Use userid as the key
-                        onEndReached={handleEndApplicantsReached}
-                        onEndReachedThreshold={0.5} 
-                        scrollEnabled={false}
-                    />
-                </View>
-            }
-           
-        </ScrollView>
+                            )}
+                            keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                            onEndReached={handleEndApplicantsReached}
+                            onEndReachedThreshold={0.5} 
+                            scrollEnabled={false}
+                        />
+                    </View>
+                }
+            </ScrollView>
         </View>
-   
     </SafeAreaView>
   );
 };
-
 
 export default CitizenScreen;
