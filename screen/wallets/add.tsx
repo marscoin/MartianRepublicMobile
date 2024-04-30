@@ -417,32 +417,13 @@ const WalletsAdd: React.FC = () => {
         </View>
         <BlueFormLabel>{loc.wallets.add_wallet_type}</BlueFormLabel>
         <View style={styles.buttons}>
-          {/* <BitcoinButton
-            testID="ActivateBitcoinButton"
-            active={selectedWalletType === ButtonSelected.ONCHAIN}
-            onPress={handleOnBitcoinButtonPressed}
-            style={styles.button}
-          /> */}
+         
           <MarscoinButton
             active={selectedWalletType === ButtonSelected.ONCHAIN}
             onPress={handleOnBitcoinButtonPressed}
             style={styles.button}
           />
-          {/* {backdoorPressed > 10 ? (
-            <LdkButton
-              active={selectedWalletType === ButtonSelected.LDK}
-              onPress={handleOnLdkButtonPressed}
-              style={styles.button}
-              subtext={LightningLdkWallet.getPackageVersion()}
-              text="LDK"
-            />
-          ) : null} */}
-          {/* <VaultButton
-            testID="ActivateVaultButton"
-            active={selectedWalletType === ButtonSelected.VAULT}
-            onPress={handleOnVaultButtonPressed}
-            style={styles.button}
-          /> */}
+      
         </View>
 
         <View style={styles.advanced}>
@@ -549,6 +530,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 8,
     color: '#81868e',
+    fontFamily: 'Orbitron-Regular', 
   },
   buttons: {
     flexDirection: 'column',
@@ -566,6 +548,7 @@ const styles = StyleSheet.create({
   },
   advancedText: {
     fontWeight: '500',
+    fontFamily: 'Orbitron-Regular', 
   },
   lndUri: {
     flexDirection: 'row',

@@ -408,6 +408,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 8,
     color: '#81868e',
+    fontFamily: 'Orbitron-Regular', 
   },
   buttons: {
     flexDirection: 'column',

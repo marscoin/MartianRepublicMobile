@@ -138,7 +138,7 @@ export const MarscoinButton = props => {
             <Image style={{ width: 34, height: 34, marginRight: 8 }} source={require('./img/addWallet/marscoin.png')} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.newBlue, fontWeight: 'bold', fontSize: 18, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }}>
+            <Text style={{ fontFamily: 'Orbitron-Regular', color: colors.newBlue, fontWeight: 'bold', fontSize: 18, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }}>
               Marscoin
             </Text>
             <Text
@@ -430,6 +430,7 @@ export const BlueFormMultiInput = props => {
         backgroundColor: colors.inputBackgroundColor,
         color: colors.foregroundColor,
         textAlignVertical: 'top',
+        fontFamily: 'Orbitron-Regular', 
       }}
       autoCorrect={false}
       autoCapitalize="none"
