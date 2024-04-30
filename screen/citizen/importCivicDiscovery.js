@@ -133,7 +133,6 @@ const ImportCivicWalletDiscovery = () => {
 
       {!loading && wallets.length === 0 ? (
         <View style={styles.noWallets}>
-          <ActivityIndicator size={'large'} testID="Loading" />
           <BlueFormLabel>{loc.wallets.import_discovery_no_wallets}</BlueFormLabel>
         </View>
       ) : (

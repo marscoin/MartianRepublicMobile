@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import {View,TouchableOpacity,Text,StyleSheet,SectionList,Platform,Image,Dimensions,useWindowDimensions,findNodeHandle,I18nManager,InteractionManager} from 'react-native';
+import {View,TouchableOpacity,Text,StyleSheet,SectionList, RefreshControl, Platform,Image,Dimensions,useWindowDimensions,findNodeHandle,I18nManager,InteractionManager, ActivityIndicator} from 'react-native';
 import { BlueHeaderDefaultMain } from '../../BlueComponents';
 import WalletsCarousel from '../../components/WalletsCarousel';
 import { Icon } from 'react-native-elements';
@@ -37,6 +37,7 @@ const {
   //console.log('WALLETS', wallets)
 const { width } = useWindowDimensions();
 const { colors, scanImage } = useTheme();
+const [refreshing, setRefreshing] = useState(false);
 const {  navigate, setOptions } = useNavigation();
 const isFocused = useIsFocused();
 const routeName = useRoute().name;
@@ -263,22 +264,47 @@ const verifyBalance = () => {
     }
   };
 
+  // const renderSectionFooter = section => {
+  //   switch (section.section.key) {
+  //     case WalletsListSections.TRANSACTIONS:
+  //       if (dataSource.length === 0 && !isLoading) {
+  //         return (
+  //           <View style={styles.footerRoot} testID="NoTransactionsMessage">
+  //             <Text style={styles.footerEmpty}>{loc.wallets.list_empty_txs1}</Text>
+  //             <Text style={styles.footerStart}>{loc.wallets.list_empty_txs2}</Text>
+  //           </View>
+  //         )
+  //       } else if (isLoading) {
+  //         return (
+  //           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 30 }}>
+  //             <ActivityIndicator size="large" color={'white'} />
+  //           </View>
+  //         );
+  //       } else {
+  //         return null; // This line is optional as 'undefined' is returned by default when there's no 'return'
+  //       }
+  //     default:
+  //       return null;
+  //   }
+  // };
   const renderSectionFooter = section => {
-    switch (section.section.key) {
-      case WalletsListSections.TRANSACTIONS:
-        if (dataSource.length === 0 && !isLoading) {
-          return (
-            <View style={styles.footerRoot} testID="NoTransactionsMessage">
-              <Text style={styles.footerEmpty}>{loc.wallets.list_empty_txs1}</Text>
-              <Text style={styles.footerStart}>{loc.wallets.list_empty_txs2}</Text>
-            </View>
-          );
-        } else {
-          return null;
-        }
-      default:
-        return null;
+    if (section.section.key === WalletsListSections.TRANSACTIONS) {
+      if (dataSource.length === 0 && !isLoading) {
+        return (
+          <View style={styles.footerRoot} testID="NoTransactionsMessage">
+            <Text style={styles.footerEmpty}>{loc.wallets.list_empty_txs1}</Text>
+            <Text style={styles.footerStart}>{loc.wallets.list_empty_txs2}</Text>
+          </View>
+        );
+      } else if (isLoading || refreshing) {  // Consider 'refreshing' during a pull-to-refresh
+        return (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 30 }}>
+            <ActivityIndicator size="large" color={'white'} />
+          </View>
+        );
+      }
     }
+    return null;
   };
 
   // const renderScanButton = () => {
@@ -372,7 +398,11 @@ const verifyBalance = () => {
   };
 
   const onRefresh = () => {
+    //setRefreshing(true);
+    setIsLoading(true);
     refreshTransactions(true, false);
+    //setRefreshing(false);
+    setIsLoading(false);
   };
   // Optimized for Mac option doesn't like RN Refresh component. Menu Elements now handles it for macOS
   const refreshProps = isDesktop || isElectrumDisabled ? {} : { refreshing: isLoading, onRefresh };
@@ -395,6 +425,13 @@ const verifyBalance = () => {
             { key: WalletsListSections.CAROUSEL, data: [WalletsListSections.CAROUSEL] },
             { key: WalletsListSections.TRANSACTIONS, data: dataSource },
           ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="white" // Customize color as needed
+            />
+          }
         />
       </View>
     </View>
@@ -435,7 +472,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron-Black',
   },
   footerRoot: {
-    top: 80,
+    top: 0,
     height: 160,
     marginBottom: 80,
   },
@@ -444,6 +481,7 @@ const styles = StyleSheet.create({
     color: '#9aa0aa',
     textAlign: 'center',
     fontFamily: 'Orbitron-Regular',
+    marginTop: 30
   },
   footerStart: {
     fontSize: 18,

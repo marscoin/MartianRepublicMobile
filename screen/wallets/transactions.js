@@ -459,7 +459,6 @@ const WalletTransactions = ({ navigation }) => {
     if (wallet.chain === Chain.OFFCHAIN) {
       return navigate('ScanLndInvoiceRoot', { screen: 'ScanLndInvoice', params: { walletID: wallet.getID() } });
     }
-
     if (wallet.type === WatchOnlyWallet.type && wallet.isHd() && !wallet.useWithHardwareWalletEnabled()) {
       return Alert.alert(
         loc.wallets.details_title,
@@ -474,13 +473,11 @@ const WalletTransactions = ({ navigation }) => {
             },
             style: 'default',
           },
-
           { text: loc._.cancel, onPress: () => {}, style: 'cancel' },
         ],
         { cancelable: false },
       );
     }
-
     navigateToSendScreen();
   };
 
@@ -599,7 +596,6 @@ const WalletTransactions = ({ navigation }) => {
       return () => {
         setReloadTransactionsMenuActionFunction(undefined);
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 
