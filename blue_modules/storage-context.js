@@ -220,6 +220,7 @@ export const BlueStorageProvider = ({ children }) => {
     triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
     if (w.getLabel() === emptyWalletLabel) w.setLabel(loc.wallets.import_imported + ' ' + w.typeReadable);
     w.setUserHasSavedExport(true);
+    w.getAddressAsync()
     addWallet(w);
     await saveToDisk();
     A(A.ENUM.CREATED_WALLET);
