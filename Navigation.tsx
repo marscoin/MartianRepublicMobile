@@ -62,6 +62,7 @@ import CoinControl from './screen/send/coinControl';
 import Confirm from './screen/send/confirm';
 import SendCreate from './screen/send/create';
 import SendDetails from './screen/send/details';
+import QuickSendDetails from './screen/send/detailsQuickSend';
 import IsItMyAddress from './screen/send/isItMyAddress';
 import PsbtMultisig from './screen/send/psbtMultisig';
 import PsbtMultisigQRCode from './screen/send/psbtMultisigQRCode';
@@ -578,9 +579,14 @@ const AddWalletRoot = () => {
 const SendDetailsStack = createNativeStackNavigator();
 const SendDetailsRoot = () => {
   const theme = useTheme();
-
   return (
     <SendDetailsStack.Navigator screenOptions={{headerShown:false, headerShadowVisible: false }}>
+      <SendDetailsStack.Screen
+        name="QuickSendDetails"
+        component={QuickSendDetails}
+        options={QuickSendDetails.navigationOptions(theme)}
+        initialParams={QuickSendDetails.initialParams}
+      />
       <SendDetailsStack.Screen
         name="SendDetails"
         component={SendDetails}
