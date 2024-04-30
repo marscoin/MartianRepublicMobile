@@ -1,21 +1,5 @@
 import React, { useEffect, useState, useCallback, useContext, useRef } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  FlatList,
-  InteractionManager,
-  PixelRatio,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  findNodeHandle,
-  TouchableOpacity,
-  View,
-  I18nManager,
-  Button,
-} from 'react-native';
+import {ActivityIndicator,Alert,Dimensions,FlatList,InteractionManager,PixelRatio,Platform,ScrollView,StyleSheet,Text,findNodeHandle,TouchableOpacity,View,I18nManager,RefreshControl} from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Chain } from '../../models/bitcoinUnits';
@@ -206,66 +190,7 @@ const WalletTransactions = ({ navigation }) => {
     }
   };
 
-   /**
-   * Forcefully fetches TXs and balance for wallet
-   */
-  //  const refreshTransactions = async () => {
-  //   console.log('REFREEEEEESHHHHH!!!!!')
-  //   if (isElectrumDisabled) return setIsLoading(false)
-  //   console.log('isElectrumDisabled', isElectrumDisabled)
-  //   if (isLoading) return
-  //   setIsLoading(true)
-  //   let noErr = true
-  //   let smthChanged = false
-  //   try {
-  //     // await BlueElectrum.ping();
-  //     await BlueElectrum.waitTillConnected()
-  //     /** @type {MarsElectrumWallet} */
-  //     const balanceStart = +new Date()
-  //     console.log('balanceStart', balanceStart)
-  //     const oldBalance = wallet.getBalance()
-  //     console.log('old balance', oldBalance)
-  //     await wallet.fetchBalance()
-  //     if (oldBalance !== wallet.getBalance()) smthChanged = true
-  //     const balanceEnd = +new Date()
-  //     console.log(
-  //       wallet.getLabel(),
-  //       "fetch balance took",
-  //       (balanceEnd - balanceStart) / 1000,
-  //       "sec"
-  //     )
-  //     console.log('REFREEEEEESHHHHH2222222!!!!!')
-  //     const start = +new Date()
-  //     const oldTxLen = wallet.getTransactions().length
-  //     await wallet.fetchTransactions()
-  //     if (wallet.fetchPendingTransactions) {
-  //       await wallet.fetchPendingTransactions()
-  //     }
-  //     if (wallet.fetchUserInvoices) {
-  //       await wallet.fetchUserInvoices()
-  //     }
-  //     if (oldTxLen !== wallet.getTransactions().length) smthChanged = true
-  //     const end = +new Date()
-  //     console.log(
-  //       wallet.getLabel(),
-  //       "fetch tx took",
-  //       (end - start) / 1000,
-  //       "sec"
-  //     )
-  //   } catch (err) {
-  //     noErr = false
-  //     alert(err.message)
-  //     setIsLoading(false)
-  //     setTimeElapsed((prev) => prev + 1)
-  //   }
-  //   if (noErr && smthChanged) {
-  //     console.log("saving to disk")
-  //     await saveToDisk() // caching
-  //     //    setDataSource([...getTransactionsSliced(limit)]);
-  //   }
-  //   setIsLoading(false)
-  //   setTimeElapsed((prev) => prev + 1)
-  // }
+  
   const refreshTransactions = async () => {
     console.log('!!!!!!!!!!!REFRESH')
     // wallet.fetchTransactions()
@@ -598,6 +523,19 @@ const WalletTransactions = ({ navigation }) => {
       };
     }, []),
   );
+  
+  const ListEmptyComponent = () => {
+    return (
+      <ScrollView style={styles.flex} contentContainerStyle={styles.scrollViewContent}>
+          <>
+            <Text numberOfLines={0} style={styles.emptyTxs}>
+              {(isLightning() && loc.wallets.list_empty_txs1_lightning) || loc.wallets.list_empty_txs1}
+            </Text>
+            {isLightning() && <Text style={styles.emptyTxsLightning}>{loc.wallets.list_empty_txs2_lightning}</Text>}
+          </>
+      </ScrollView>
+    );
+  };
 
   // Optimized for Mac option doesn't like RN Refresh component. Menu Elements now handles it for macOS
   const refreshProps = isDesktop || isElectrumDisabled ? {} : { refreshing: isLoading, onRefresh: refreshTransactions };
@@ -660,14 +598,15 @@ const WalletTransactions = ({ navigation }) => {
             setPageSize(prev => prev * 2);
           }}
           ListFooterComponent={renderListFooterComponent}
-          ListEmptyComponent={
-            <ScrollView style={styles.flex} contentContainerStyle={styles.scrollViewContent}>
-              <Text numberOfLines={0} style={styles.emptyTxs}>
-                {(isLightning() && loc.wallets.list_empty_txs1_lightning) || loc.wallets.list_empty_txs1}
-              </Text>
-              {isLightning() && <Text style={styles.emptyTxsLightning}>{loc.wallets.list_empty_txs2_lightning}</Text>}
-            </ScrollView>
-          }
+          // ListEmptyComponent={
+          //   <ScrollView style={styles.flex} contentContainerStyle={styles.scrollViewContent}>
+          //     <Text numberOfLines={0} style={styles.emptyTxs}>
+          //       {(isLightning() && loc.wallets.list_empty_txs1_lightning) || loc.wallets.list_empty_txs1}
+          //     </Text>
+          //     {isLightning() && <Text style={styles.emptyTxsLightning}>{loc.wallets.list_empty_txs2_lightning}</Text>}
+          //   </ScrollView>
+          // }
+          ListEmptyComponent={<ListEmptyComponent isLoading={isLoading} />}
           {...refreshProps}
           data={dataSource}
           extraData={[timeElapsed, dataSource, wallets]}
@@ -676,6 +615,13 @@ const WalletTransactions = ({ navigation }) => {
           initialNumToRender={10}
           removeClippedSubviews
           contentInset={{ top: 0, left: 0, bottom: 90, right: 0 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={refreshTransactions}
+              tintColor="white" // Customize color as needed
+            />
+          }
         />
       </View>
 

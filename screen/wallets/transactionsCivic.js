@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useContext, useRef } from 'react';
-import {ActivityIndicator,Alert,Dimensions,FlatList,InteractionManager,PixelRatio,Platform,ScrollView,StyleSheet,Text,findNodeHandle,TouchableOpacity,View,I18nManager} from 'react-native';
+import {ActivityIndicator,Alert,Dimensions,FlatList,InteractionManager,PixelRatio,Platform,ScrollView,StyleSheet,Text,findNodeHandle,TouchableOpacity,View,I18nManager, RefreshControl} from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Chain } from '../../models/bitcoinUnits';
@@ -597,6 +597,13 @@ const WalletTransactionsCivic = ({ navigation }) => {
           initialNumToRender={10}
           removeClippedSubviews
           contentInset={{ top: 0, left: 0, bottom: 90, right: 0 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={refreshTransactions}
+              tintColor="white" // Customize color as needed
+            />
+          }
         />
       </View>
 
