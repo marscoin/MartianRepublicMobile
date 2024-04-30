@@ -34,11 +34,12 @@ const CitizenScreen = () => {
         citizens: [],
         generalPublic: [],
         applicants: [],
-        lastPageApplicants: 1,
         imageLoadErrors: {},
         isCitizen: false
       };
     //console.log('wallets', wallets)
+    const lastFetchedCitizens = useRef([]);
+    const lastFetchedPublic = useRef([]);
     const route = useRoute();
     const imageLoadError = useRef({});
 
@@ -51,7 +52,12 @@ const CitizenScreen = () => {
             case 'SET_FILTER_APPLICANTS':
                 return { ...state, filterCitizen: false, filterPublic: false, filterApplicants: true };
             case 'SET_CITIZENS':
-                return { ...state, citizens: action.payload };
+                return {
+                    ...state,
+                    citizens: {
+                        ...state.citizens, 
+                        data: [...(state.citizens.data || []), ...action.payload]}
+                };
             case 'SET_IS_CITIZEN':
                 return { ...state, isCitizen: true };    
             case 'SET_GENERAL_PUBLIC':
@@ -65,6 +71,8 @@ const CitizenScreen = () => {
                 }
             case 'SET_LAST_PAGE_APPLICANTS':
                 return { ...state, lastPageApplicants: action.payload }; 
+            case 'SET_LAST_PAGE_CITIZENS':
+                return { ...state, lastPageCitizen: action.payload }; 
             case 'SET_IMAGE_LOAD_ERROR':
                 const newState = { ...state };
                 newState.imageLoadErrors[action.payload.id] = true; // Use a unique ID for each image
@@ -308,19 +316,30 @@ const CitizenScreen = () => {
 
     const fetchCitizens = async () => {
         try {
-            const response = await axios.get(`https://martianrepublic.org/api/feed/citizen?page=${citizenPageRef.current}`)
-            console.log('CITIZENS', response.data)
+            const response = await axios.get(`https://martianrepublic.org/api/feed/citizen?page=${citizenPageRef.current}`);
+            console.log('CITIZENS', response.data);
+    
+            // Check if new data is the same as the last fetched data
+            if (JSON.stringify(lastFetchedCitizens.current) === JSON.stringify(response.data)) {
+                console.log("No new citizens data to fetch.");
+                return; // Stop the fetching process as data is repeated
+            }
+    
+            // Update the last fetched data
+            lastFetchedCitizens.current = response.data;
+    
+            // Dispatch new data to the reducer
             dispatch({ type: 'SET_CITIZENS', payload: response.data });
+    
         } catch (error) {
             console.error(`Error fetching citizens:`, error);   
-        } finally {
         }
-    }
+    };
 
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`)
-            //console.log('APPLICANTS', response.data)
+            console.log('APPLICANTS', response.data)
             dispatch({ type: 'SET_APPLICANTS', payload: response.data });   
             dispatch({ type: 'SET_LAST_PAGE_APPLICANTS', payload: response.data.last_page });   
         } catch (error) {
@@ -352,6 +371,11 @@ const CitizenScreen = () => {
         fetchCitizens()
     }, []);
 
+    // useEffect(() => {
+    //     console.log("Citizens Data:", state.citizens.data[0]);
+    // }, [state]);
+ 
+
     const handleEndApplicantsReached = async () => {
         console.log('handleEndApplicantsReached')
         console.log('applicantPageRef', applicantPageRef)
@@ -362,6 +386,19 @@ const CitizenScreen = () => {
           await fetchApplicants(); // Fetch the next page of applicants
         } else {
           console.log("No more applicants to fetch.");
+        }
+    };
+
+    const handleEndCitizensReached = async () => {
+        console.log('handleEndCitizensReached')
+        console.log('citizenPageRef', citizenPageRef)
+
+        if (citizenPageRef.current < state.lastPageCitizenss) {
+          citizenPageRef.current += 1; // Prepare to fetch the next page
+          console.log('citizenPageRef', citizenPageRef)
+          await fetchCitizens(); // Fetch the next page of applicants
+        } else {
+          console.log("No more citizens to fetch.");
         }
     };
     
@@ -453,17 +490,15 @@ const CitizenScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {state.filterCitizen &&
+            {/* {state.filterCitizen &&
                 <View style={styles.citizensContainer}>
-                    {state.citizens && state.citizens.filter(citizen => citizen.user.citizen).map((citizen, index) => (
+                    {state.citizens.data && state.citizens.data.filter(citizen => citizen.user.citizen).map((citizen, index) => (
                         <View key={index} style={styles.citizenItem}>
-                          
                             <Image
                                 source={state.imageLoadErrors[citizen.id] ? require('../../img/genericprofile.png') : !citizen.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: citizen.user.citizen.avatar_link }}
                                 style={styles.citizenImage} 
                                 onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
                             />
-                          
                             <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
                                 <Text numberOfLines={2} style={styles.citizenName}>{citizen.user.fullname}</Text>
                                 <Text numberOfLines={1} style={styles.citizenAddress}>Address: {citizen.address.slice(0,9)}</Text>
@@ -481,6 +516,47 @@ const CitizenScreen = () => {
                             </View>}
                         </View>
                     ))}
+                </View>
+            } */}
+            {state.filterCitizen &&
+                <View style={styles.citizensContainer}>
+                    {state.citizens.data && 
+                    <FlatList
+                        key={'citizens-list'}
+                        data={state.citizens.data}
+                        extradata={state.citizens.data}
+                        renderItem={({ item }) => (
+                            <View key={item.userid} style={styles.citizenItem}>
+                                <Image
+                                    source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : !item.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: item.user.citizen.avatar_link }}
+                                    style={styles.citizenImage} 
+                                    onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
+                                />
+                                <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
+                                    <Text numberOfLines={2} style={styles.citizenName}>{item.user.fullname}</Text>
+                                    <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
+                                    <Text numberOfLines={1} style={styles.citizenDate}>Citizen since: {new Date(item.mined).toLocaleDateString()}</Text>
+                                </View>
+                                {item.user.profile.endorse_cnt && 
+                                    <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text numberOfLines={1} style={styles.endorsTxt}>ENDORSEMENTS</Text>
+                                        <Text style={[styles.citizenName, {fontSize: 22, marginTop:5}]}>{item.user.profile.endorse_cnt}</Text>
+                                    </View>
+                                }
+                                {!item.user.profile.endorse_cnt && 
+                                    <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
+                                        <Text numberOfLines={1} style={[styles.endorsTxt, {marginBottom: 8}]}>FOUNDER</Text>
+                                        <Icon name="medal" type="material-community" color="#FF7400" />
+                                    </View>
+                                }
+                            </View>
+                        )}
+                        keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                        onEndReached={handleEndCitizensReached}
+                        onEndReachedThreshold={0.5} 
+                        scrollEnabled={false}
+                    />
+                    }
                 </View>
             }
 
