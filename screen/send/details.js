@@ -517,6 +517,7 @@ const SendDetails = () => {
       if (!transaction.amount || transaction.amount < 0 || parseFloat(transaction.amount) === 0) {
         error = loc.send.details_amount_field_is_not_valid;
         console.log('validation error 1', error);
+        presentAlert({ title: 'ERROR', message: 'The amount is not valid.' });
       } else if (parseFloat(transaction.amountSats) <= 500) {
         error = loc.send.details_amount_field_is_less_than_minimum_amount_sat;
         console.log('validation error 2', error);

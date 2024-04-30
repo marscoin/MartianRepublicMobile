@@ -8,7 +8,7 @@ import RNFS from 'react-native-fs';
 import BigNumber from 'bignumber.js';
 import * as bitcoin from 'bitcoinjs-lib';
 import LinearGradient from 'react-native-linear-gradient';
-import { BlueDismissKeyboardInputAccessory, BlueLoading, BlueSpacing40, BlueText } from '../../BlueComponents';
+import { BlueDismissKeyboardInputAccessory, BlueLoading, BlueSpacing20,BlueSpacing40, BlueText } from '../../BlueComponents';
 import { navigationStyleTx } from '../../components/navigationStyle';
 import NetworkTransactionFees, { NetworkTransactionFee } from '../../models/networkTransactionFees';
 import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
@@ -31,6 +31,7 @@ import ListItem from '../../components/ListItem';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 import { btcToSatoshi } from '../../blue_modules/currency';
 import presentAlert from '../../components/Alert';
+
 //import { useBlueContext } from "../blue_modules/storage-context"
 const prompt = require('../../helpers/prompt');
 const fs = require('../../blue_modules/fs');
@@ -41,18 +42,14 @@ const  QuickSendDetails = () => {
   const { wallets, setSelectedWalletID, sleep, txMetadata, saveToDisk, useBlueContext } = useContext(BlueStorageContext);
   const navigation = useNavigation();
   const { name, params: routeParams } = useRoute();
+  const addressInputRef = useRef();
 
-  // const { walletID } = wallet.getId()
-  //console.log('walletIDS', walletID)
-  console.log('PARAMS', name)
-  console.log('PARAMS', routeParams)
-  //{"isEditable": true, "walletID": "054994bbc50cc9a7b894096b686daec6a367122d2879a665ddbf386ebae137eb"}
-  const scrollView = useRef();
+ const scrollView = useRef();
   const scrollIndex = useRef(0);
   const { colors } = useTheme();
   const [width, setWidth] = useState(Dimensions.get('window').width);
   const [isLoading, setIsLoading] = useState(false);
-  const [wallet, setWallet] = useState(null);
+  const [wallet, setWallet] = useState(wallets[0]);
   const [walletID, setWalletID] = useState(null);
   const [walletSelectionOrCoinsSelectedHidden, setWalletSelectionOrCoinsSelectedHidden] = useState(false);
   const [isAmountToolbarVisibleForAndroid, setIsAmountToolbarVisibleForAndroid] = useState(false);
@@ -96,9 +93,35 @@ const  QuickSendDetails = () => {
   useEffect(() => {
     fetchMarscoinRate();
   }, []);
-  useEffect(() => {
-    console.log('addresses', addresses)
-  }, [addresses]);
+  // useEffect(() => {
+  //   console.log('addresses', addresses)
+  // }, [addresses]);
+  const stylesM = StyleSheet.create({
+    container: {
+      height: 16,
+      //backgroundColor: 'green'
+    },
+    text: {
+      fontSize: 16,
+      fontWeight: '400',
+      fontFamily: 'Orbitron-Black', 
+      color:'#81868e'
+    },
+    line: {
+      position: 'absolute',
+      top: 2, // Adjust top as needed
+      left: 2,
+      right: 2,
+      height: 1.5,
+      backgroundColor: '#81868e',
+    },
+  });
+  const MarscoinSymbol = () => (
+    <View style={stylesM.container}>
+      <Text style={stylesM.text}>M</Text>
+      <View style={stylesM.line} />
+    </View>
+  );
 
   // if cutomFee is not set, we need to choose highest possible fee for wallet balance
   // if there are no funds for even Slow option, use 1 sat/vbyte fee
@@ -489,6 +512,7 @@ const  QuickSendDetails = () => {
       if (!transaction.amount || transaction.amount < 0 || parseFloat(transaction.amount) === 0) {
         error = loc.send.details_amount_field_is_not_valid;
         console.log('validation error 1', error);
+        presentAlert({ title: 'ERROR', message: 'The amount is not valid.' });
       } else if (parseFloat(transaction.amountSats) <= 500) {
         error = loc.send.details_amount_field_is_less_than_minimum_amount_sat;
         console.log('validation error 2', error);
@@ -1303,24 +1327,28 @@ const  QuickSendDetails = () => {
     }
 
     return (
-      <View style={styles.select}>
-        <LinearGradient 
-              shadowColor={colors.shadowColor} 
-              colors = {['#FFB67D','#FF8A3E', '#FF7400']}
-             
-              style={styles.select}
-          >
-        <View style={styles.selectWrap}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            style={styles.selectTouch}
-            onPress={() => navigation.navigate('SelectWallet', { onWalletSelect, chainType: Chain.ONCHAIN })}
-            disabled={!isEditable || isLoading}
-          >
-            <Text style={[styles.selectLabel, stylesHook.selectLabel]}>{wallet.getLabel()}</Text>
-          </TouchableOpacity>
-        </View>
-        </LinearGradient>
+      <View style={{justifyContent:'center', marginHorizontal: 20}}>
+        <Text style={{fontFamily: 'Orbitron-Black',color:'white', fontSize: 16, fontWeight:'500'}}>From: </Text>
+        <TouchableOpacity 
+          style={styles.select}
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('SelectWallet', { onWalletSelect, chainType: Chain.ONCHAIN })}
+              disabled={!isEditable || isLoading}
+        >  
+          <View style={styles.selectWrap}>
+            <View>
+              <Text style={{fontFamily: 'Orbitron-Black',color:'#FF7400', fontSize: 18, fontWeight:'600'}}>{wallet.getLabel()}</Text>
+              <Text style={{fontFamily: 'Orbitron-Black',color:'#81868e', fontSize: 14, fontWeight:'500', marginTop: 5}}>
+              <MarscoinSymbol/>
+                {' '}
+                {(wallet.getBalance()/100000000).toLocaleString()}
+                {' /$ '}
+                {(wallet.getBalance()/100000000*marsRate).toLocaleString()}
+              </Text>
+              </View>
+              <Icon name="chevron-right" size={20} type="font-awesome-5" color={'#81868e'} />
+          </View>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -1329,6 +1357,52 @@ const  QuickSendDetails = () => {
     const { item, index } = params;
     return (
       <View style={{ width }} testID={'Transaction' + index}>
+        <AddressInput
+          onChangeText={text => {
+            text = text.trim();
+            const { address, amount, memo, payjoinUrl: pjUrl } = 
+              DeeplinkSchemaMatch.decodeBitcoinUri(text);
+            setAddresses(addrs => {
+              item.address = address || text;
+              item.amount = amount || item.amount;
+              addrs[index] = item;
+              return [...addrs];
+            });
+            setTransactionMemo(memo || transactionMemo);
+            setIsLoading(false);
+            setPayjoinUrl(pjUrl);
+          }}
+          onBarScanned={processAddressData}
+          address={item.address}
+          isLoading={isLoading}
+          inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
+          launchedBy={name}
+          editable={isEditable}
+        />
+        {addresses.length > 1 && (
+          <Text style={[styles.of, stylesHook.of]}>{loc.formatString(loc._.of, { number: index + 1, total: addresses.length })}</Text>
+        )}
+        <TouchableOpacity
+              testID="chooseFee"
+              accessibilityRole="button"
+              onPress={() => setIsFeeSelectionModalVisible(true)}
+              disabled={isLoading}
+              style={styles.fee}
+            >
+              <Text style={[styles.feeLabel, stylesHook.feeLabel]}>{loc.send.create_fee}</Text>
+              {networkTransactionFeesIsLoading ? (
+                <ActivityIndicator />
+              ) : (
+                <View style={[styles.feeRow, stylesHook.feeRow]}>
+                  <Text style={[stylesHook.feeValue, {fontSize: 12}]}>
+                    {(feePrecalc.current*100).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' zubrin' }
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+         <BlueSpacing20/>
+
+        {item.address &&
         <AmountInput
           isLoading={isLoading}
           amount={item.amount ? item.amount.toString() : null}
@@ -1400,33 +1474,8 @@ const  QuickSendDetails = () => {
           editable={isEditable}
           disabled={!isEditable}
           inputAccessoryViewID={InputAccessoryAllFunds.InputAccessoryViewID}
-        />
-
-        <AddressInput
-          onChangeText={text => {
-            text = text.trim();
-            const { address, amount, memo, payjoinUrl: pjUrl } = 
-              DeeplinkSchemaMatch.decodeBitcoinUri(text);
-            setAddresses(addrs => {
-              item.address = address || text;
-              item.amount = amount || item.amount;
-              addrs[index] = item;
-              return [...addrs];
-            });
-            setTransactionMemo(memo || transactionMemo);
-            setIsLoading(false);
-            setPayjoinUrl(pjUrl);
-          }}
-          onBarScanned={processAddressData}
-          address={item.address}
-          isLoading={isLoading}
-          inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
-          launchedBy={name}
-          editable={isEditable}
-        />
-        {addresses.length > 1 && (
-          <Text style={[styles.of, stylesHook.of]}>{loc.formatString(loc._.of, { number: index + 1, total: addresses.length })}</Text>
-        )}
+          style ={{height: 100}}
+        />}
       </View>
     );
   };
@@ -1442,11 +1491,13 @@ const  QuickSendDetails = () => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={[styles.root, stylesHook.root]} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
         <View>
+        <Text style={{fontFamily: 'Orbitron-Black',color:'white', fontSize: 20, fontWeight:'600', marginHorizontal: 20, alignSelf: 'center'}}>QUICK SEND </Text>
           <BlueSpacing40/>
         {renderWalletSelectionOrCoinsSelected()}
-        <BlueSpacing40/>
+        <BlueSpacing20/>
           <KeyboardAvoidingView enabled={!Platform.isPad} behavior="position">
             {/* /////////Currency and address//////// */}
+            <Text style={{fontFamily: 'Orbitron-Black',color:'white', fontSize: 16, fontWeight:'500', marginHorizontal: 20}}>To: </Text>
             <FlatList
               keyboardShouldPersistTaps="always"
               scrollEnabled={addresses.length > 1}
@@ -1463,7 +1514,7 @@ const  QuickSendDetails = () => {
               scrollIndicatorInsets={styles.scrollViewIndicator}
               contentContainerStyle={styles.scrollViewContent}
             />
-            <TouchableOpacity
+            {/* <TouchableOpacity
               testID="chooseFee"
               accessibilityRole="button"
               onPress={() => setIsFeeSelectionModalVisible(true)}
@@ -1480,7 +1531,7 @@ const  QuickSendDetails = () => {
                   </Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             {renderCreateButton()}
             {renderFeeSelectionModal()}
           </KeyboardAvoidingView>
@@ -1597,38 +1648,42 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   select: {
-    width:200,
-    height: 100,
-    marginVerticat: 20,
+    width:'100%',
+    height: 70,
+    marginTop: 8,
     marginHorizontal: 24,
-    alignItems: 'center',
+    padding: 10,
     justifyContent: 'center',
     alignSelf: 'center',
-    borderRadius:10,
-    backgroundColor:'yellow'
+    borderRadius:4,
+    borderWidth: 1,
+    borderColor: 'white',
+    backgroundColor: '#2F2D2B',
   },
   selectTouch: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between'
   },
   selectText: {
     color: 'black',
     fontSize: 14,
     marginRight: 8,
     fontFamily: 'Orbitron-Black',
-    letterSpacing: 1.2
+    letterSpacing: 1.2,
+    color: '#81868e',
   },
   selectWrap: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginVertical: 4,
-    // backgroundColor:'red'
   },
   selectLabel: {
     fontSize: 14,
     fontFamily: 'Orbitron-Black',
-    letterSpacing: 1.2,
-    color: 'black',
+    //color: '#81868e',
+    color:'#FF7400'
   },
   of: {
     alignSelf: 'flex-end',
