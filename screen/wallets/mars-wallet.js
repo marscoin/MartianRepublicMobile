@@ -487,9 +487,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
     const { inputs, outputs, fee } = algo(utxos, targets, feeRate);
 
-    console.log("INPUTS:", inputs)
-    console.log("OUTPUTS:", outputs)
-    console.log("FEE", fee)
+    //console.log("INPUTS:", inputs)
+    //console.log("OUTPUTS:", outputs)
+    //console.log("FEE", fee)
 
     if (!inputs || !outputs) {
       throw new Error("Not enough balance");

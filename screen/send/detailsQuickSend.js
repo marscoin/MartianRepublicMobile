@@ -74,7 +74,9 @@ const  QuickSendDetails = () => {
   // if utxo is limited we use it to calculate available balance
   const balance = utxo ? utxo.reduce((prev, curr) => prev + curr.value, 0) : wallet?.getBalance();
   const allBalance = formatBalanceWithoutSuffix(balance, BitcoinUnit.BTC, true);
-
+  const [triggerScan, setTriggerScan] = useState(false);
+  const [scanInitiated, setScanInitiated] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false);
   const [marsRate, setMarsRate] = useState(null);
   const [loading, setLoading] = useState(true);
   const fetchMarscoinRate = async () => {
@@ -93,13 +95,10 @@ const  QuickSendDetails = () => {
   useEffect(() => {
     fetchMarscoinRate();
   }, []);
-  // useEffect(() => {
-  //   console.log('addresses', addresses)
-  // }, [addresses]);
+
   const stylesM = StyleSheet.create({
     container: {
       height: 16,
-      //backgroundColor: 'green'
     },
     text: {
       fontSize: 16,
@@ -122,6 +121,26 @@ const  QuickSendDetails = () => {
       <View style={stylesM.line} />
     </View>
   );
+  
+  /////AUTO SCAN///////
+  useEffect(() => {
+    // Trigger scan only if it has never been initiated
+    if (!scanInitiated) {
+      setTriggerScan(true); // Trigger the scan
+      setScanInitiated(true); // Set that the scan has been initiated
+    }
+    // Clean up to reset triggerScan on unmount or re-render
+    return () => setTriggerScan(false);
+  }, [scanInitiated]); // Dependency on scanInitiated to react to its changes
+
+
+  // useEffect(() => {
+  //  console.log('hasScanned', hasScanned)
+  // }, [hasScanned]);
+  useEffect(() => {
+    console.log('triggerScan', triggerScan)
+   }, [triggerScan]);
+
 
   // if cutomFee is not set, we need to choose highest possible fee for wallet balance
   // if there are no funds for even Slow option, use 1 sat/vbyte fee
@@ -282,7 +301,7 @@ const  QuickSendDetails = () => {
         setDumb(v => !v);
       })
       .catch(e => console.log('fetchUtxo error', e));
-  }, [wallet]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wallet]); 
 
   // recalc fees in effect so we don't block render
   useEffect(() => {
@@ -300,7 +319,6 @@ const  QuickSendDetails = () => {
         .filter(o => !lutxo.some(i => i.txid === o.txid && i.vout === o.vout))
         .reduce((prev, curr) => prev + curr.value, 0);
     }
-
     const options = [
       { key: 'current', fee: requestedSatPerByte },
       { key: 'slowFee', fee: fees.slowFee },
@@ -424,81 +442,37 @@ const  QuickSendDetails = () => {
 
   /**
    * TODO: refactor this mess, get rid of regexp, use https://github.com/bitcoinjs/bitcoinjs-lib/issues/890 etc etc
-   *
    * @param data {String} Can be address or `bitcoin:xxxxxxx` uri scheme, or invalid garbage
    */
   const processAddressData = data => {
-    console.log("[PROCESS ADDRESS DATA] Data: ", data)
-    const currentIndex = scrollIndex.current;
-    setIsLoading(true);
-    if (!data.replace) {
-      // user probably scanned PSBT and got an object instead of string..?
-      setIsLoading(false);
-      return presentAlert({ title: loc.errors.error, message: loc.send.details_address_field_is_not_valid });
-    }
-
-    const dataWithoutSchema = data
-      .replace('bitcoin:', '')
-      .replace('BITCOIN:', '')
-      .replace("marscoin:", '')
-
-    // Check if address without amount is valid  
-    if (wallet.isAddressValid(dataWithoutSchema)) {
-      console.log("address valid")
+    console.log("[PROCESS ADDRESS DATA] Data: ", data);
+  
+    // Normalize the input to ensure it's a string
+    const inputData = typeof data === 'object' && data.data ? data.data : data;
+    console.log("Normalized Input: ", inputData);
+  
+    // Remove the URI scheme and unnecessary quotation marks, then trim spaces
+    const cleanData = inputData.replace(/["“”]/g, '').trim().replace(/^(bitcoin|BITCOIN|marscoin):/, '');
+  
+    console.log("Clean Data: ", cleanData);
+  
+    // Check if the address is valid
+    if (wallet.isAddressValid(cleanData)) {
+      console.log("Address is valid");
       setAddresses(addrs => {
-        addrs[scrollIndex.current].address = dataWithoutSchema;
-        return [...addrs];
+        const newAddresses = [...addrs];
+        newAddresses[scrollIndex.current] = { ...newAddresses[scrollIndex.current], address: cleanData };
+        return newAddresses;
       });
-      setIsLoading(false);
-      return;
+    } else {
+      console.log("Invalid address");
+      // Handle invalid address, possibly with an alert or error message
+      presentAlert({ title: loc.errors.error, message: loc.send.details_address_field_is_not_valid });
     }
-
-    //Process address with ?amount=<>
-    let address = '';
-    let options;
-    try {
-      if (!data.toLowerCase().startsWith('bitcoin:')) data = `bitcoin:${data}`;
-      const decoded = DeeplinkSchemaMatch.bip21decode(data);
-      console.log("decoded!!!!!!! ", decoded)
-      address = decoded.address;
-      options = decoded.options;
-    } catch (error) {
-      data = data.replace(/(amount)=([^&]+)/g, '').replace(/(amount)=([^&]+)&/g, '');
-      const decoded = DeeplinkSchemaMatch.bip21decode(data);
-      console.log("ERRRRRR!!!!!!! ")
-      decoded.options.amount = 0;
-      //address = decoded.address;
-      address = decoded.address
-        .replace("bitcoin:", "")
-        .replace("BITCOIN:", "")
-        .replace("marscoin:", "")
-      options = decoded.options;
-    }
-
-    console.log('options', options);
-
-    const network =
-      typeof wallet.getNetwork === "undefined"
-        ? BitcoinUnit.BTC
-        : wallet.getNetwork()
-      
-    setAddresses(addrs => {
-      addrs[scrollIndex.current].address = address;
-      addrs[scrollIndex.current].amount = options.amount;
-      addrs[scrollIndex.current].amountSats = new BigNumber(options.amount).multipliedBy(100000000).toNumber();
-      return [...addrs];
-    });
-    setUnits(u => {
-      u[scrollIndex.current] = BitcoinUnit.MARS; // also resetting current unit to BTC
-      return [...u];
-    });
-    setTransactionMemo(options.label || options.message);
-    setAmountUnit(BitcoinUnit.MARS);
-    setPayjoinUrl(options.pj || '');
-    // RN Bug: contentOffset gets reset to 0 when state changes. Remove code once this bug is resolved.
-    setTimeout(() => scrollView.current.scrollToIndex({ index: currentIndex, animated: false }), 50);
     setIsLoading(false);
   };
+  
+  
 
   const createTransaction = async () => {
     Keyboard.dismiss();
@@ -630,7 +604,6 @@ const  QuickSendDetails = () => {
       // (ez can be the case for single-address wallet when doing self-payment for consolidation)
       recipients = outputs;
     }
-
     navigation.navigate('Confirm', {
       fee: new BigNumber(fee).dividedBy(100000000).toNumber(),
       memo: transactionMemo,
@@ -800,6 +773,7 @@ const  QuickSendDetails = () => {
   };
 
   const onBarScanned = ret => {
+    setScanInitiated(true)
     navigation.getParent().pop();
     if (!ret.data) ret = { data: ret };
     if (ret.data.toUpperCase().startsWith('UR')) {
@@ -1375,6 +1349,7 @@ const  QuickSendDetails = () => {
           onBarScanned={processAddressData}
           address={item.address}
           isLoading={isLoading}
+          triggerScan={triggerScan}
           inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
           launchedBy={name}
           editable={isEditable}

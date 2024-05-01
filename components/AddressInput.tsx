@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Image, Keyboard, Text, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import loc from '../loc';
 import { scanQrHelper } from '../helpers/scan-qr';
@@ -40,6 +40,7 @@ const AddressInput = ({
   onBarScanned,
   scanButtonTapped = () => {},
   launchedBy,
+  triggerScan,
   editable = true,
   inputAccessoryViewID,
   onBlur = () => {},
@@ -65,6 +66,16 @@ const AddressInput = ({
     onBlur();
     Keyboard.dismiss();
   };
+  useEffect(() => {
+    if (triggerScan) {
+      const performScan = async () => {
+        Keyboard.dismiss();
+        const data = await scanQrHelper(navigate, launchedBy);
+        onBarScanned({ data });
+      };
+      performScan();
+    }
+  }, [triggerScan, navigate, launchedBy, onBarScanned]);
 
   return (
     <View style={[styles.root, stylesHook.root]}>
