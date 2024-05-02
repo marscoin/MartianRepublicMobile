@@ -311,7 +311,7 @@ class AmountInput extends Component {
                     ref={textInput => (this.textInput = textInput)}
                     editable={!this.props.isLoading && !disabled}
                     //value={amount === BitcoinUnit.MAX ? loc.units.MAX : parseFloat(amount) >= 0 ? String(amount) : undefined}
-                    value={amount}
+                    value={amount.toString()}
                     placeholderTextColor={disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2}
                     style={[styles.input, stylesHook.input]}
                   />

@@ -28,8 +28,8 @@ const buttonStatus = Object.freeze({
 const TransactionsStatus = () => {
   const { setSelectedWalletID, wallets, txMetadata, fetchAndSaveWalletTransactions } = useContext(BlueStorageContext);
   const { hash, walletID } = useRoute().params;
-  console.log('PARAMS hash', hash)
-  console.log('PARAMS walletID', walletID)
+  // console.log('PARAMS hash', hash)
+  // console.log('PARAMS walletID', walletID)
   const { navigate, setOptions, goBack } = useNavigation();
   const { colors } = useTheme();
   const wallet = useRef(wallets.find(w => w.getID() === walletID));
