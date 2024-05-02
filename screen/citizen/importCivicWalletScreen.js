@@ -181,7 +181,7 @@ const ImportCivicWalletScreen = () => {
               />
               <BlueSpacing20 />
               {/* //////SCAN BUTTON////// */}
-              <BlueButtonLink title={'Scan or import civic private key'} onPress={importScan} testID="ScanImport" />
+              <BlueButtonLink title={'Scan civic private key'} onPress={importScan} testID="ScanImport" />
             </>
           </View>
         </>

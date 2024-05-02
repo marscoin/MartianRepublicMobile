@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, useLayoutEffect } from 'react';
 import {ActivityIndicator,Alert,Dimensions,FlatList,Keyboard,KeyboardAvoidingView,LayoutAnimation,Platform,StyleSheet,Text,TextInput,TouchableOpacity,TouchableWithoutFeedback,View} from 'react-native';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect, useIsFocused  } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EXCHANGE_RATES_STORAGE_KEY } from '../../blue_modules/currency';
@@ -41,6 +41,7 @@ const currency = require("../../blue_modules/currency")
 const  QuickSendDetails = () => {
   const { wallets, setSelectedWalletID, sleep, txMetadata, saveToDisk, useBlueContext } = useContext(BlueStorageContext);
   const navigation = useNavigation();
+  const route = useRoute();
   const { name, params: routeParams } = useRoute();
   const addressInputRef = useRef();
 
@@ -75,8 +76,11 @@ const  QuickSendDetails = () => {
   const balance = utxo ? utxo.reduce((prev, curr) => prev + curr.value, 0) : wallet?.getBalance();
   const allBalance = formatBalanceWithoutSuffix(balance, BitcoinUnit.BTC, true);
   const [triggerScan, setTriggerScan] = useState(false);
+  const [firstTriggerDone, setFirstTriggerDone] = useState(false);
   const [scanInitiated, setScanInitiated] = useState(false);
   const [hasScanned, setHasScanned] = useState(false);
+  const [tabPressed, setTabPressed] = useState(false);
+  const isFocused = useIsFocused();
   const [marsRate, setMarsRate] = useState(null);
   const [loading, setLoading] = useState(true);
   const fetchMarscoinRate = async () => {
@@ -128,18 +132,63 @@ const  QuickSendDetails = () => {
     if (!scanInitiated) {
       setTriggerScan(true); // Trigger the scan
       setScanInitiated(true); // Set that the scan has been initiated
-    }
+    } 
     // Clean up to reset triggerScan on unmount or re-render
     return () => setTriggerScan(false);
-  }, [scanInitiated]); // Dependency on scanInitiated to react to its changes
+  }, [isFocused]); 
 
+
+//   useEffect(() => {
+//     const unsubscribe = navigation.addListener('tabPress', e => {
+//         console.log('Tab press event fired');
+
+//         // Prevent default action
+//         e.preventDefault();
+
+//         // Check if the current screen is focused and if it is the "Send" tab
+//         if (isFocused && route.name === "Send") {
+//             console.log('Send tab is pressed and is focused');
+//             setTriggerScan(true);
+//         }
+//     });
+
+//     return unsubscribe;
+// }, [navigation, isFocused, route.name]);
+// useEffect(() => {
+//   console.log('LISTENER!!!!!');
+//   // const unsubscribe = navigation.addListener('tabPress', (e) => {
+//   //   console.log('Tab press detected!!');
+//   // });
+//   const unsubscribe = navigation
+//   .getParent('Send')
+//   .addListener('tabPress', (e) => {
+//     // Do something
+//   });
+
+//   return unsubscribe;
+// }, [navigation, isFocused]);
+useFocusEffect(
+  React.useCallback(() => {
+    const onTabPress = () => {
+      console.log('Tab press detected');
+      // Trigger whatever action you need here
+    };
+
+    const unsubscribe = navigation.addListener('tabPress', onTabPress);
+
+    return () => unsubscribe();
+  }, [navigation])
+);
 
   // useEffect(() => {
-  //  console.log('hasScanned', hasScanned)
-  // }, [hasScanned]);
+  //   if (!isFocused) {
+  //     setTriggerScan(false);
+  //   }
+  // }, [isFocused]);
+
   useEffect(() => {
-    console.log('triggerScan', triggerScan)
-   }, [triggerScan]);
+    console.log('isFocused', isFocused);
+  }, [isFocused]);
 
 
   // if cutomFee is not set, we need to choose highest possible fee for wallet balance
@@ -1377,7 +1426,7 @@ const  QuickSendDetails = () => {
             </TouchableOpacity>
          <BlueSpacing20/>
 
-        {item.address &&
+        {/* {item.address &&
         <AmountInput
           isLoading={isLoading}
           amount={item.amount ? item.amount.toString() : null}
@@ -1450,7 +1499,7 @@ const  QuickSendDetails = () => {
           disabled={!isEditable}
           inputAccessoryViewID={InputAccessoryAllFunds.InputAccessoryViewID}
           style ={{height: 100}}
-        />}
+        />} */}
       </View>
     );
   };
@@ -1723,4 +1772,4 @@ QuickSendDetails.navigationOptions = navigationStyleTx({}, options => ({
   statusBarStyle: 'light',
 }));
 
-QuickSendDetails.initialParams = { isEditable: true };
+QuickSendDetails.initialParams = { isEditable: true, triggerScan:true };

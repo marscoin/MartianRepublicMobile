@@ -50,6 +50,7 @@ const NewWalletPanel = ({ onPress }) => {
   const { width } = useWindowDimensions();
   const itemWidth = width * 0.82 > 375 ? 375 : width * 0.82;
   const isLargeScreen = Platform.OS === 'android' ? isTablet() : (width >= Dimensions.get('screen').width / 2 && isTablet()) || isDesktop;
+  console.log('!!!!!!!!isLargeScreen', isLargeScreen)
   const nStylesHooks = StyleSheet.create({
     container: isLargeScreen
       ? {
@@ -91,13 +92,14 @@ NewWalletPanel.propTypes = {
 
 const iStyles = StyleSheet.create({
   root: { paddingRight: 20 },
-  rootLargeDevice: { marginVertical: 20 },
+  rootLargeDevice: { marginVertical: 20 , width: 300, marginRight: 10},
   grad: {
     padding: 12,
     borderRadius: 12,
     minHeight: 164,
     elevation: 5,
     height: 180 /////height of wallet item
+
   },
   image: {
     width: 150,
@@ -149,6 +151,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
   const { width } = useWindowDimensions();
   const itemWidth = width * 0.82 > 375 ? 375 : width * 0.82;
   const isLargeScreen = Platform.OS === 'android' ? isTablet() : (width >= Dimensions.get('screen').width / 2 && isTablet()) || isDesktop;
+  console.log('!!!!!!!!isLargeScreen', isLargeScreen)
   const onPressedIn = () => {
     Animated.spring(scaleValue, { duration: 50, useNativeDriver: true, toValue: 0.9 }).start();
   };

@@ -239,7 +239,7 @@ const verifyBalance = () => {
   const renderSectionItem = item => {
     switch (item.section.key) {
       case WalletsListSections.CAROUSEL:
-        return isLargeScreen ? null : renderWalletsCarousel();
+        return  renderWalletsCarousel();
       case WalletsListSections.TRANSACTIONS:
         return renderTransactionListsRow(item);
       default:
@@ -250,7 +250,7 @@ const verifyBalance = () => {
   const renderSectionHeader = section => {
     switch (section.section.key) {
       case WalletsListSections.CAROUSEL:
-        return isLargeScreen ? null : (
+        return  (
           <BlueHeaderDefaultMain 
             navigation={navigation}
             leftText={loc.wallets.list_title} 
