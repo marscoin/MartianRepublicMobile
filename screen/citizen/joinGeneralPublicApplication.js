@@ -7,12 +7,8 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
-import SafeArea from '../../components/SafeArea';
-import usePrivacy from '../../hooks/usePrivacy';
 import LinearGradient from 'react-native-linear-gradient';
-import WalletGradient from '../../class/wallet-gradient';
-import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
-import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
+
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -69,6 +65,7 @@ const JoinGeneralPublicApplicationScreen = () => {
     },
     joinButton: {
         paddingVertical:10,
+        width: '90%',
         borderRadius: 20,
         marginHorizontal: 20,
         justifyContent:'center',
@@ -79,7 +76,8 @@ const JoinGeneralPublicApplicationScreen = () => {
         justifyContent:'center',
         borderRadius: 20,
         marginHorizontal: 40,
-        marginTop: 50
+        marginTop: 50,
+        height: 60
     },
     iconStyle: {
       width:80,
@@ -92,12 +90,12 @@ const JoinGeneralPublicApplicationScreen = () => {
       borderRadius: 8,
       elevation: 2.0,
       backgroundColor:colors.inputBackgroundColor,
-      //borderColor: colors.buttonBackgroundColor,
       borderColor: 'white',
       borderWidth: 0.7,
       paddingHorizontal: 5,
       paddingVertical: 5,
-      // ...Fonts.blackColor16Regular
+      fontFamily: 'Orbitron-Regular', 
+      letterSpacing: 1.1,
       fontSize: 14,
       color: 'white'
     },
@@ -141,7 +139,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                 value={firstName}
                 placeholder=""
                 placeholderTextColor="white"
-                onChangeText={(text) => setFirstName({ firstName: text })}
+                onChangeText={(text) => setFirstName(text)}
                 style={styles.textFieldWrapStyle}
                  //ref={workRef}
                 // onFocus={() => handleFocus(workRef)}
@@ -156,7 +154,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                 value={lastName}
                 placeholder=""
                 placeholderTextColor="white"
-                onChangeText={(text) => setLastName({ firstName: text })}
+                onChangeText={(text) => setLastName(text)}
                 style={styles.textFieldWrapStyle}
                  //ref={workRef}
                 // onFocus={() => handleFocus(workRef)}
@@ -171,7 +169,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                 value={displayName}
                 placeholder=""
                 placeholderTextColor="white"
-                onChangeText={(text) => setDisplayName({ firstName: text })}
+                onChangeText={(text) => setDisplayName(text)}
                 style={styles.textFieldWrapStyle}
                  //ref={workRef}
                 // onFocus={() => handleFocus(workRef)}
@@ -186,7 +184,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                 value={bio}
                 placeholder=""
                 placeholderTextColor="white"
-                onChangeText={(text) => setBio({ firstName: text })}
+                onChangeText={(text) => setBio(text)}
                 style={[styles.textFieldWrapStyle, {height: 100}]}
                  //ref={workRef}
                 // onFocus={() => handleFocus(workRef)}
@@ -196,11 +194,21 @@ const JoinGeneralPublicApplicationScreen = () => {
           </View>
 
          <View style={{flex:1}}>
+         <TouchableOpacity 
+                  style={styles.joinButton}
+                   onPress={ () =>
+                    navigation.navigate('JoinGeneralPublicApplication2Screen', {
+                      firstName: firstName,
+                      lastName: lastName,
+                      displayName: displayName, 
+                      bio: bio
+                    })
+                   }
+                >
             <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                <TouchableOpacity style={styles.joinButton}>
                     <Text style={styles.buttonText}>NEXT STEP</Text>
-                </TouchableOpacity>  
             </LinearGradient>
+            </TouchableOpacity>  
         </View>  */}
       </ScrollView>  
     </SafeAreaView>

@@ -8,22 +8,19 @@
   },
   "stickers" : [
     {
-      "filename" : "Bitcoin.sticker"
+      "filename" : "MRCIcon.sticker"
     },
     {
-      "filename" : "BlueWallet.sticker"
+      "filename" : "114.sticker"
     },
     {
-      "filename" : "bluebeast.sticker"
+      "filename" : "generic_profile.sticker"
     },
     {
-      "filename" : "Lightning.sticker"
+      "filename" : "flag.sticker"
     },
     {
-      "filename" : "Vault.sticker"
-    },
-    {
-      "filename" : "Bitcoin (Blue).sticker"
+      "filename" : "marscoin.sticker"
     }
   ]
 }
