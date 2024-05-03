@@ -22,7 +22,26 @@ import HandoffComponent from './components/handoff';
 import triggerHapticFeedback, { HapticFeedbackTypes } from './blue_modules/hapticFeedback';
 import MenuElements from './components/MenuElements';
 import { updateExchangeRate } from './blue_modules/currency';
+import axios from "axios";
+import { URL } from "react-native-url-polyfill";
 const A = require('./blue_modules/analytics');
+const bitcoinMessage = require("bitcoinjs-message");
+const bitcoin = require("bitcoinjs-lib");
+const pbkdf2 = require("pbkdf2");
+const bip39 = require("bip39");
+const bip32 = require("bip32");
+
+const BITCOIN = {
+  messagePrefix: "\x18Bitcoin Signed Message:\n",
+  bech32: "bc",
+  bip32: {
+    public: 0x0488b21e,
+    private: 0x0488ade4,
+  },
+  pubKeyHash: 0x00,
+  scriptHash: 0x05,
+  wif: 0x80,
+};
 
 const eventEmitter = Platform.OS === 'ios' ? new NativeEventEmitter(NativeModules.EventEmitter) : undefined;
 const { EventEmitter, SplashScreen } = NativeModules;
@@ -65,6 +84,15 @@ const App = () => {
   const clipboardContent = useRef();
   const colorScheme = useColorScheme();
 
+  // Assuming bip32 is imported correctly
+  const generateRoot = async (mnemonic) => {
+    const seed = await bip39.mnemonicToSeed(mnemonic);
+    const root = bitcoin.bip32.fromSeed(seed);
+    //const root = bip32.fromSeed(seed, BITCOIN);
+    return root;
+  };
+
+  
   const onNotificationReceived = async notification => {
     const payload = Object.assign({}, notification, notification.data);
     if (notification.data && notification.data.data) Object.assign(payload, notification.data.data);
@@ -103,9 +131,143 @@ const App = () => {
     if (walletsInitialized) {
       addListeners();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletsInitialized]);
 
+  function getCivicAddress(wallets) {
+    // Loop through the wallets array
+    for (let wallet of wallets) {
+        // Check if the wallet has the civic property set to true
+        if (wallet.civic) {
+            console.log('CIVIC ADDRESS:', wallet._address );
+            return wallet._address;
+        }
+    }
+    // Return null if no civic wallet is found
+    return null;
+  }  
+  
+  function getCivicMnemonic(wallets) {
+    // Loop through the wallets array
+    for (let wallet of wallets) {
+        // Check if the wallet has the civic property set to true
+        if (wallet.civic) {
+            console.log('CIVIC SEED:', wallet.secret );
+            return wallet.secret;
+        }
+    }
+    // Return null if no civic wallet is found
+    return null;
+  }  
+
+  // Takes in URL
+  // Creates SHA256 hash of URL.
+  function createBytes(url) {
+    const hash = pbkdf2.pbkdf2Sync(url, "", 1, 32, "sha256").toString("hex");
+
+    const bytes = [];
+    const BITS = 8;
+    const MSB = 0x7fffffff;
+    // Disregarding the most significant bit of each 32-bit chunk, because theres only 2^31 possible values
+    // for hardened derivation path at each level.
+    for (let i = 0; i < hash.length; i += BITS) {
+      let substringHash = hash.substring(i, i + BITS);
+
+      let substringMSB = parseInt(substringHash, 16) & MSB;
+
+      bytes.push(substringMSB);
+    }
+    return bytes;
+  }
+
+// breakdown URL
+function parseURL(url) {
+  let subString = new URL(url);
+
+  if (subString.host) return subString.host;
+
+  throw new Error("Unable to parse URL");
+}
+
+
+async function getToken() {
+  try {
+    const address = getCivicAddress(wallets);
+    const timestamp = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
+    const message = `https://martianrepublic.org/api/token?a=${address}&t=${timestamp}`;
+    let parsedURL;
+
+    try {
+      parsedURL = parseURL(message);
+    } catch (e) {
+      throw new Error(`PARSING BROKE: ${e}`);
+    }
+    const urlBytes = createBytes(parsedURL);
+    console.log("[DEEP DERIVATION...]", urlBytes);
+    
+    mnemonic = getCivicMnemonic(wallets)
+    const root = await generateRoot(mnemonic);
+    // Black Magic:
+    // Breaking down URL into bytes and deriving public addr from 
+    let child = null;
+    let custom_key = "m/88888888'/0'";
+    for (let i = 0; i < urlBytes.length; i++) {
+      const path_ext = `/${urlBytes[i]}'`;
+
+      custom_key += path_ext;
+      // console.log("\n[CUSTOM KEY]", custom_key);
+
+      child = root.derivePath(custom_key);
+    }
+
+    const wif = child.toWIF();
+
+    const keyPair = bitcoin.ECPair.fromWIF(wif, BITCOIN);
+
+    const privateKey = keyPair.privateKey;
+
+    const signedMsg = bitcoinMessage
+      .sign(message, privateKey, keyPair.compressed)
+      .toString("base64");
+
+    console.log('signature:', signedMsg);
+    console.log('CIVIC ADDRESS:', address);///public key
+    console.log('timestamp:', timestamp);
+    console.log('message:', message);
+    
+    const response = await axios.post("https://martianrepublic.org/api/token", {
+      a: address,
+      m: message,
+      s: signedMsg, 
+      t: timestamp,
+    }).then(response => {
+      console.log('Token retrieved:', response.data.token);
+    }).catch(error => {
+      console.error('Failed to retrieve token:', error.response.status, error.response.data);
+    });
+
+    console.log('RESPONSE:', response);
+    // if (response.data && response.data.token) {
+    //   await AsyncStorage.setItem('authToken', response.data.token);
+    //   console.log('Token retrieved and stored:', response.data.token);
+    //   return response.data.token;
+    // } else {
+    //   console.error('Failed to retrieve token:', response.data);
+    //   return null;
+    // }
+  } catch (error) {
+    console.error('Error fetching token:', error);
+    return null;
+  }
+}
+  
+  useEffect(() => {
+    if (walletsInitialized) {
+      getToken();
+      //getCivicAddress(wallets)
+      //console.log('Wallets:', wallets );
+    }
+    
+  }, [wallets]);
   const addListeners = () => {
     Linking.addEventListener('url', handleOpenURL);
     AppState.addEventListener('change', handleAppStateChange);

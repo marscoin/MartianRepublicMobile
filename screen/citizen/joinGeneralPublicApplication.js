@@ -9,7 +9,6 @@ import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import LinearGradient from 'react-native-linear-gradient';
 
-
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
   const { colors, fonts } = useTheme();
@@ -116,7 +115,7 @@ const JoinGeneralPublicApplicationScreen = () => {
         </View>
         <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC </Text>
 
-        <View style={{flexDirection:'row', justifyContent:'center', marginTop: 150,}}>
+        {/* <View style={{flexDirection:'row', justifyContent:'center', marginTop: 150,}}>
           <Text style={{fontFamily: fonts.regular.fontFamily, marginHorizontal: 20, color: 'white', fontSize: 18, fontWeight: '700', textAlign:'center'}}>APPLICATION WILL BE AVAILABLE IN THE NEXT VERSION OF THE APP!</Text>
         </View>
         <View style={{flex:1}}>
@@ -125,9 +124,9 @@ const JoinGeneralPublicApplicationScreen = () => {
                     <Text style={styles.buttonText}>GO BACK</Text>
                 </TouchableOpacity>  
             </LinearGradient>
-        </View> 
+        </View>  */}
 
-        {/* <View style={{flexDirection:'row', justifyContent:'space-between', marginTop: 50,}}>
+        <View style={{flexDirection:'row', justifyContent:'space-between', marginTop: 50,}}>
           <Text style={{fontFamily: fonts.regular.fontFamily, marginLeft: 20,color: 'white', fontSize: 20,}}>APPLICATION</Text>
           <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>1/3</Text>
         </View>
@@ -209,7 +208,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                     <Text style={styles.buttonText}>NEXT STEP</Text>
             </LinearGradient>
             </TouchableOpacity>  
-        </View>  */}
+        </View>  
       </ScrollView>  
     </SafeAreaView>
   );
