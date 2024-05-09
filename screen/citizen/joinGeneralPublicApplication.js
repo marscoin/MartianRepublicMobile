@@ -27,7 +27,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   };
 
   useEffect(() => {
-    console.log('photo taken: ', capturedImage)
+    console.log('capturedImage main screen: ', capturedImage)
   }, [capturedImage]);
   
   const styles = StyleSheet.create({
@@ -120,16 +120,15 @@ const JoinGeneralPublicApplicationScreen = () => {
       marginTop: 10
     },
     buttonContainer: {
-      position: 'absolute',
       flexDirection:'row',
-      bottom: 20,
-      right: 46,
-      justifyContent: 'center',
+      marginTop: 30,
+      justifyContent: 'space-between',
       alignItems: 'center',
     },
-    captureButton: {
-      width: 70, 
-      height: 70,
+    saveButton: {
+      width: 140, 
+      height: 50,
+      borderRadius: 8,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -142,12 +141,21 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
     const [imageUri, setImageUri] = useState(null);
+    useEffect(() => {
+      console.log('imageUri: ', imageUri)
+    }, [imageUri]);
+    
+
     const handleCapture = (event) => {
-      console.log("Captured event: ", event);  
-      if (event.capture) {  // Confirming the event structure
-        setImageUri(event.capture.uri);
-      }
-    };
+      if (event.type === 'left') {
+        onClose(); // Close the modal if the left button (Cancel) is pressed
+      } else {
+        
+          console.log("Captured event: ", event);  
+          setImageUri(event.captureImages[0].uri); // Assuming 'event.capture.uri' contains the image URI
+        
+      
+    }};
     const handleSave = () => {
       onImageCaptured(imageUri);
       setImageUri(null); // Reset after saving
@@ -166,42 +174,41 @@ const JoinGeneralPublicApplicationScreen = () => {
       >
         <View style={{flex:1}}>
           {imageUri ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Image source={{ uri: imageUri }} style={{ width: '100%', height: '80%' }} />
-          <TouchableOpacity onPress={handleSave} style={styles.button}>
-            <Text>Save</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleRetake} style={styles.button}>
-            <Text>Retake</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-          <CameraScreen
-            actions={{ rightButtonText: 'Done', leftButtonText: 'Cancel' }}
-            // onBottomButtonPressed={(event) => {
-            //   console.log("Event from camera: ", event);  
-            //   if (event.type === 'right') {
-            //     handleCapture(event);
-            //   } else {
-            //     onClose();
-            //   }
-            // }}
-            cameraFlipImage={require('../../img/flipCameraImg.png')}
-            saveToCameraRoll={true}
-            showCapturedImageCount={true}
-          />
-        )}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.captureButton} 
-            onPress={(event) => {
-              console.log("Event Type: ", event.type); // Check the type of the event
-  if (event.type === 'capture') { // Assuming 'capture' is a valid type
-    console.log("Captured Image URI: ", event.capture);
-  }
-            }}>
-              <Image source={require('../../img/capture.png')} style={styles.buttonImage} />
-            </TouchableOpacity>
-          </View>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'black' }}>
+              <Image source={{ uri: imageUri }} style={{ width: '70%', height: '40%' }} />
+              <View style = {styles.buttonContainer}>
+                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                  <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+                    <Text style={styles.buttonText}>Save</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
+                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                  <TouchableOpacity onPress={handleRetake} style={styles.saveButton}>
+                    <Text style={styles.buttonText}>Retake</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
+              </View>
+            </View>
+          ) : (
+            <CameraScreen
+              actions={{ leftButtonText: 'Go Back' }}
+              cameraType="front" 
+              onBottomButtonPressed={handleCapture}
+              //cameraFlipImageStyle={{width:  60, height: 60}}
+              captureButtonImage={require('../../img/capture.png')}
+              captureButtonImageStyle={{width:  100, height: 100}}
+              // flashImages={{
+              //   // optional, images for flash state
+              //   //on: require('path/to/image'),
+              //   //off: require('path/to/image'),
+              //   auto: require('../../img/flashAuto.png'),
+              // }}
+              
+              cameraFlipImage={require('../../img/flipCameraImg1.png')}
+              saveToCameraRoll={true}
+              showCapturedImageCount={true}
+            />
+          )}
           
         </View>
       </Modal>
@@ -299,16 +306,17 @@ const JoinGeneralPublicApplicationScreen = () => {
           </View>
 
           <View style={{ marginTop: 30, marginHorizontal: 20 }}>
-            <Text style={styles.medText}>Photo ID*</Text>
-            {capturedImage && (
-              <Image source={{ uri: capturedImage }} style={{ width: 100, height: 100 }} />
-            )}
+            <Text style={styles.medText}>Photo ID*</Text>         
             <TouchableOpacity 
               style={styles.cameraButton}
-              //onPress={() => navigation.navigate('MyCameraScreen')}
               onPress={() => setModalVisible(true)}
             >
+              {capturedImage && (
+              <Image source={{ uri: capturedImage }} style={{ width: 118, height: 138, borderRadius: 8, }} />
+            )}
+            {!capturedImage &&
               <Icon name="camera" size={36} type="font-awesome-5" color={'lightgray'} />
+            }
             </TouchableOpacity>
             <Text style={[styles.smallText, {marginTop: 10}]}> - Your full face, eyes and hairline must be visible </Text>
             <Text style={[styles.smallText, {marginTop: 10}]}> - No hats, head coverings, sunglasses, earbuds, hands or other objects that obscure your face </Text>
