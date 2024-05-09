@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, View, Text, TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text,Image,TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -9,6 +9,9 @@ import { Icon } from 'react-native-elements';
 import Button from '../../components/Button';
 import LinearGradient from 'react-native-linear-gradient';
 import { CameraScreen } from 'react-native-camera-kit';
+import RNFS from 'react-native-fs';
+//import { Image } from 'react-native-compressor';
+import { Image as CompressorImage, ImageCompressor, CompressionFormat } from 'react-native-compressor';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -29,6 +32,19 @@ const JoinGeneralPublicApplicationScreen = () => {
   useEffect(() => {
     console.log('capturedImage main screen: ', capturedImage)
   }, [capturedImage]);
+
+  async function compressImage(imageUri) {
+    try {
+      const compressedImage = await CompressorImage.compress(imageUri);
+      console.log('Compressed image URI:', compressedImage);
+      // Get file info
+    const fileInfo = await RNFS.stat(compressedImage);
+    console.log('File size in bytes:', fileInfo.size);
+      return compressedImage
+    } catch (error) {
+      console.error('Error compressing image:', error);
+    }
+  }
   
   const styles = StyleSheet.create({
     root: {
@@ -146,15 +162,13 @@ const JoinGeneralPublicApplicationScreen = () => {
     }, [imageUri]);
     
 
-    const handleCapture = (event) => {
+    const handleCapture = async (event) => {
       if (event.type === 'left') {
         onClose(); // Close the modal if the left button (Cancel) is pressed
       } else {
-        
           console.log("Captured event: ", event);  
-          setImageUri(event.captureImages[0].uri); // Assuming 'event.capture.uri' contains the image URI
-        
-      
+          const compressedUri = await compressImage(event.captureImages[0].uri);
+          setImageUri(compressedUri)
     }};
     const handleSave = () => {
       onImageCaptured(imageUri);
