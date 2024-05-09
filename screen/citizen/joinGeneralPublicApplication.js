@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, View, Text, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, View, Text, TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import navigationStyle from '../../components/navigationStyle';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
+import { Icon } from 'react-native-elements';
 import Button from '../../components/Button';
 import LinearGradient from 'react-native-linear-gradient';
+import { CameraScreen } from 'react-native-camera-kit';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -17,6 +18,17 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [lastName, setLastName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
+
+  const handleImageCaptured = (uri) => {
+    setCapturedImage(uri);
+    console.log('Image saved', uri);
+  };
+
+  useEffect(() => {
+    console.log('photo taken: ', capturedImage)
+  }, [capturedImage]);
   
   const styles = StyleSheet.create({
     root: {
@@ -48,8 +60,6 @@ const JoinGeneralPublicApplicationScreen = () => {
     },
     medText: {
       color:'white', 
-      //textAlign: 'center',
-      //justifyContent:'center',
       fontSize: 16,
       fontFamily: fonts.fontFamily,
       fontWeight:"400",
@@ -98,8 +108,105 @@ const JoinGeneralPublicApplicationScreen = () => {
       fontSize: 14,
       color: 'white'
     },
+    cameraButton:{
+      width: 120,
+      height: 140,
+      backgroundColor:colors.inputBackgroundColor,
+      borderRadius: 8,
+      borderWidth: 0.7,
+      borderColor: 'white',
+      alignSelf: 'center',
+      justifyContent: 'center',
+      marginTop: 10
+    },
+    buttonContainer: {
+      position: 'absolute',
+      flexDirection:'row',
+      bottom: 20,
+      right: 46,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    captureButton: {
+      width: 70, 
+      height: 70,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    buttonImage: {
+      width: 100,
+      height: 100,
+    }
 
   });
+
+  const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
+    const [imageUri, setImageUri] = useState(null);
+    const handleCapture = (event) => {
+      console.log("Captured event: ", event);  
+      if (event.capture) {  // Confirming the event structure
+        setImageUri(event.capture.uri);
+      }
+    };
+    const handleSave = () => {
+      onImageCaptured(imageUri);
+      setImageUri(null); // Reset after saving
+      onClose(); // Close the modal
+    };
+    const handleRetake = () => {
+      setImageUri(null); // Reset the imageUri to go back to the camera screen
+    };
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={isVisible}
+        onRequestClose={onClose}
+      >
+        <View style={{flex:1}}>
+          {imageUri ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Image source={{ uri: imageUri }} style={{ width: '100%', height: '80%' }} />
+          <TouchableOpacity onPress={handleSave} style={styles.button}>
+            <Text>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleRetake} style={styles.button}>
+            <Text>Retake</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+          <CameraScreen
+            actions={{ rightButtonText: 'Done', leftButtonText: 'Cancel' }}
+            // onBottomButtonPressed={(event) => {
+            //   console.log("Event from camera: ", event);  
+            //   if (event.type === 'right') {
+            //     handleCapture(event);
+            //   } else {
+            //     onClose();
+            //   }
+            // }}
+            cameraFlipImage={require('../../img/flipCameraImg.png')}
+            saveToCameraRoll={true}
+            showCapturedImageCount={true}
+          />
+        )}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.captureButton} 
+            onPress={(event) => {
+              console.log("Event Type: ", event.type); // Check the type of the event
+  if (event.type === 'capture') { // Assuming 'capture' is a valid type
+    console.log("Captured Image URI: ", event.capture);
+  }
+            }}>
+              <Image source={require('../../img/capture.png')} style={styles.buttonImage} />
+            </TouchableOpacity>
+          </View>
+          
+        </View>
+      </Modal>
+    );
+  };
 
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
@@ -179,7 +286,6 @@ const JoinGeneralPublicApplicationScreen = () => {
           <View style={{ marginTop: 30, marginHorizontal: 20 }}>
             <Text style={styles.medText}>Short Bio *</Text>
             <TextInput
-                //selectionColor={Colors.primaryColor}
                 value={bio}
                 placeholder=""
                 placeholderTextColor="white"
@@ -191,6 +297,29 @@ const JoinGeneralPublicApplicationScreen = () => {
                 multiline={true}
             />
           </View>
+
+          <View style={{ marginTop: 30, marginHorizontal: 20 }}>
+            <Text style={styles.medText}>Photo ID*</Text>
+            {capturedImage && (
+              <Image source={{ uri: capturedImage }} style={{ width: 100, height: 100 }} />
+            )}
+            <TouchableOpacity 
+              style={styles.cameraButton}
+              //onPress={() => navigation.navigate('MyCameraScreen')}
+              onPress={() => setModalVisible(true)}
+            >
+              <Icon name="camera" size={36} type="font-awesome-5" color={'lightgray'} />
+            </TouchableOpacity>
+            <Text style={[styles.smallText, {marginTop: 10}]}> - Your full face, eyes and hairline must be visible </Text>
+            <Text style={[styles.smallText, {marginTop: 10}]}> - No hats, head coverings, sunglasses, earbuds, hands or other objects that obscure your face </Text>
+          </View>
+
+          <CameraModal
+            isVisible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            onImageCaptured={handleImageCaptured}
+          />
+          
 
          <View style={{flex:1}}>
          <TouchableOpacity 

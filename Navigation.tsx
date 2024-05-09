@@ -103,6 +103,7 @@ import ImportCivicWalletDiscovery from './screen/citizen/importCivicDiscovery';
 import PleaseBackupCivic from './screen/citizen/pleaseBackupCivic';
 import JoinGeneralPublicApplicationScreen from './screen/citizen/joinGeneralPublicApplication';
 import JoinGeneralPublicApplication2Screen from './screen/citizen/joinGeneralPublicApplication2';
+import MyCameraScreen from './screen/citizen/cameraScreen';
 
 const WalletsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -275,6 +276,7 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="CitizenScreen" component={CitizenScreen} options={{headerShown: false}}  />
       <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication2Screen" component={JoinGeneralPublicApplication2Screen}  options={{headerShown: false}} />
+      <CitizenStack.Screen name="MyCameraScreen" component={MyCameraScreen}  options={{headerShown: false}} />
     </CitizenStack.Navigator>
   );
 };
