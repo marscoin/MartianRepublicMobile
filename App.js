@@ -176,7 +176,7 @@ function verifyPublicKey(privateKeyWIF, expectedPublicKey) {
     console.log('!!!!!!!!!!!!!!!publicKey', publicKey)
     const derivedAddress = deriveAddressFromPublicKey(publicKey, MARSCOIN);
     console.log('Derived Address:', derivedAddress);
-    console.log('Civic Address:', 'MVk86WKySkawkjRqmiazWMnbrf39qpCkLD');
+    //console.log('Civic Address:', );
     console.log('Do they match?', derivedAddress === 'MVk86WKySkawkjRqmiazWMnbrf39qpCkLD');
     
     return publicKey === expectedPublicKey;
@@ -208,6 +208,7 @@ async function getToken() {
     //let custom_key = "m/88888888'/0'";
     //let custom_key = `m/44'/0'/0'/0/0`;
     let custom_key =`m/44'/${MARSCOIN.bip44}'/0'/0/0` /////derives correct addresses
+    console.log('MARSCOIN.bip44',MARSCOIN.bip44)
     child = root.derivePath(custom_key);
     
     const wif = child.toWIF();

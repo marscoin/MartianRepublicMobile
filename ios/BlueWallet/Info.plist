@@ -6,6 +6,8 @@
 	<array>
 		<string>io.bluewallet.bluewallet.fetchTxsForWallet</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This application requires microphone access to record video with sound.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

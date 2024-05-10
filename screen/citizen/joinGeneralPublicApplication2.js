@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import navigationStyle from '../../components/navigationStyle';
@@ -19,6 +19,7 @@ import RNFS from 'react-native-fs';
 import { Image as CompressorImage } from 'react-native-compressor';
 import { RNCamera } from 'react-native-camera';
 import axios from 'axios';
+import { ViewPropTypes } from 'deprecated-react-native-prop-types'
 
 const JoinGeneralPublicApplication2Screen = () => {
   const navigation = useNavigation();
@@ -149,7 +150,38 @@ const JoinGeneralPublicApplication2Screen = () => {
       justifyContent: 'center',
       marginTop: 10
     },
-
+    container: {
+      flex: 1,
+      flexDirection: 'column',
+      backgroundColor: 'black',
+    },
+    preview: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+    },
+    captureContainer: {
+      flex: 1,
+      width: '100%',
+      //backgroundColor:'red'
+      //flexDirection: 'row',
+      //justifyContent: 'center',
+    },
+    capture: {
+      flex: 0,
+      width: 80,
+      height: 80,
+      backgroundColor: 'white',
+      borderRadius: 40,
+      borderColor: 'gray',
+      borderWidth: 5,
+      padding: 15,
+      paddingHorizontal: 20,
+      alignSelf: 'center',
+      margin: 20,
+      position: 'absolute',
+      bottom: 40
+    },
   });
 
   const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
@@ -255,6 +287,7 @@ const JoinGeneralPublicApplication2Screen = () => {
         <View style={styles.container}>
           <RNCamera
             ref={cameraRef}
+            //captureAudio={false}
             style={styles.preview}
             type={RNCamera.Constants.Type.front}
             flashMode={RNCamera.Constants.FlashMode.off}
@@ -275,8 +308,21 @@ const JoinGeneralPublicApplication2Screen = () => {
               if (status !== 'READY') return <View/>;
               return (
                 <View style={styles.captureContainer}>
-                  <TouchableOpacity onPress={handleRecord} style={styles.capture}>
-                    <Text style={{ color: 'white' }}>{isRecording ? 'Stop' : 'Record'}</Text>
+                  <TouchableOpacity 
+                    style={{flexDirection:'row', justifyContent:'space-between', marginTop: 90, marginLeft: 20}}
+                    onPress={()=>setModalVisible(false)}
+                  >
+                    <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={handleRecord} 
+                    style={[
+                      styles.capture, 
+                      { backgroundColor: isRecording ? '#FF7400' : 'white' },  // This line changes the background color
+                      { borderColor: isRecording ? 'white' : 'gray' }
+                    ]}
+                  >
+                    {/* <Text style={{ color: 'black' }}>{isRecording ? 'Stop' : 'Record'}</Text> */}
                   </TouchableOpacity>
                 </View>
               );
@@ -297,7 +343,7 @@ const JoinGeneralPublicApplication2Screen = () => {
       >
 
         <TouchableOpacity 
-          style={{flexDirection:'row', justifyContent:'space-between', marginTop: 20}}
+          style={{flexDirection:'row', justifyContent:'space-between', marginTop: 20, marginLeft: 20}}
           onPress={()=>navigation.goBack()}
         >
           <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />

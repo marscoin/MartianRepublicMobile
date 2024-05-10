@@ -332,6 +332,14 @@ PODS:
     - React
   - react-native-bw-file-access (1.0.0):
     - React-Core
+  - react-native-camera (4.2.1):
+    - React-Core
+    - react-native-camera/RCT (= 4.2.1)
+    - react-native-camera/RN (= 4.2.1)
+  - react-native-camera/RCT (4.2.1):
+    - React-Core
+  - react-native-camera/RN (4.2.1):
+    - React-Core
   - react-native-compressor (1.8.24):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
@@ -560,6 +568,7 @@ DEPENDENCIES:
   - react-native-biometrics (from `../node_modules/react-native-biometrics`)
   - react-native-blue-crypto (from `../node_modules/react-native-blue-crypto`)
   - react-native-bw-file-access (from `../blue_modules/react-native-bw-file-access`)
+  - react-native-camera (from `../node_modules/react-native-camera`)
   - react-native-compressor (from `../node_modules/react-native-compressor`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-idle-timer (from `../node_modules/react-native-idle-timer`)
@@ -681,6 +690,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-blue-crypto"
   react-native-bw-file-access:
     :path: "../blue_modules/react-native-bw-file-access"
+  react-native-camera:
+    :path: "../node_modules/react-native-camera"
   react-native-compressor:
     :path: "../node_modules/react-native-compressor"
   react-native-document-picker:
@@ -825,6 +836,7 @@ SPEC CHECKSUMS:
   react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
   react-native-blue-crypto: 23f1558ad3d38d7a2edb7e2f6ed1bc520ed93e56
   react-native-bw-file-access: b232fd1d902521ca046f3fc5990ab1465e1878d7
+  react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
   react-native-compressor: d84e28c430c8022cc44a45ec9ec26071269992c3
   react-native-document-picker: 3599b238843369026201d2ef466df53f77ae0452
   react-native-idle-timer: f7f651542b39dce9b9473e4578cb64a255075f17
