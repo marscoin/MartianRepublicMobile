@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, View, Text, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import navigationStyle from '../../components/navigationStyle';
 import loc from '../../loc';
@@ -14,15 +14,51 @@ import LinearGradient from 'react-native-linear-gradient';
 import WalletGradient from '../../class/wallet-gradient';
 import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
 import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
+import { CameraScreen } from 'react-native-camera-kit';
+import RNFS from 'react-native-fs';
+import { Image as CompressorImage } from 'react-native-compressor';
+import { RNCamera } from 'react-native-camera';
+import axios from 'axios';
 
 const JoinGeneralPublicApplication2Screen = () => {
   const navigation = useNavigation();
   const { colors, fonts } = useTheme();
   const route = useRoute();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
+
+  const handleImageCaptured = (uri) => {
+    setCapturedImage(uri);
+    console.log('Image saved', uri);
+  };
+
+  async function requestPermissions() {
+    if (Platform.OS === 'android') {
+      const result = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+      ]);
+      return result === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  }
+  
+  useEffect(() => {
+    requestPermissions();
+  }, []);
+
+  async function compressImage(imageUri) {
+    try {
+      const compressedImage = await CompressorImage.compress(imageUri);
+      console.log('Compressed video URI:', compressedImage);
+      // Get file info
+    const fileInfo = await RNFS.stat(compressedImage);
+    console.log('File size in bytes:', fileInfo.size);
+      return compressedImage
+    } catch (error) {
+      console.error('Error compressing video:', error);
+    }
+  }
   
   const styles = StyleSheet.create({
     root: {
@@ -102,8 +138,154 @@ const JoinGeneralPublicApplication2Screen = () => {
       fontSize: 14,
       color: 'white'
     },
+    cameraButton:{
+      width: 240,
+      height: 140,
+      backgroundColor:colors.inputBackgroundColor,
+      borderRadius: 8,
+      borderWidth: 0.7,
+      borderColor: 'white',
+      alignSelf: 'center',
+      justifyContent: 'center',
+      marginTop: 10
+    },
 
   });
+
+  const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
+    const [imageUri, setImageUri] = useState(null);
+    useEffect(() => {
+      console.log('imageUri: ', imageUri)
+    }, [imageUri]);
+    
+
+    const handleCapture = async (event) => {
+      if (event.type === 'left') {
+        onClose(); // Close the modal if the left button (Cancel) is pressed
+      } else {
+          console.log("Captured event: ", event);  
+          const compressedUri = await compressImage(event.captureImages[0].uri);
+          setImageUri(compressedUri)
+    }};
+    const handleSave = () => {
+      onImageCaptured(imageUri);
+      setImageUri(null); // Reset after saving
+      onClose(); // Close the modal
+    };
+    const handleRetake = () => {
+      setImageUri(null); // Reset the imageUri to go back to the camera screen
+    };
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={isVisible}
+        onRequestClose={onClose}
+      >
+        <View style={{flex:1}}>
+          {imageUri ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'black' }}>
+              <Image source={{ uri: imageUri }} style={{ width: '70%', height: '40%' }} />
+              <View style = {styles.buttonContainer}>
+                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                  <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+                    <Text style={styles.buttonText}>Save</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
+                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                  <TouchableOpacity onPress={handleRetake} style={styles.saveButton}>
+                    <Text style={styles.buttonText}>Retake</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
+              </View>
+            </View>
+          ) : (
+            <CameraScreen
+              actions={{ leftButtonText: 'Go Back' }}
+              cameraType="front" 
+              onBottomButtonPressed={handleCapture}
+              //cameraFlipImageStyle={{width:  60, height: 60}}
+              captureButtonImage={require('../../img/capture.png')}
+              captureButtonImageStyle={{width:  100, height: 100}}
+              // flashImages={{
+              //   // optional, images for flash state
+              //   //on: require('path/to/image'),
+              //   //off: require('path/to/image'),
+              //   auto: require('../../img/flashAuto.png'),
+              // }}
+              
+              cameraFlipImage={require('../../img/flipCameraImg1.png')}
+              saveToCameraRoll={true}
+              showCapturedImageCount={true}
+            />
+          )}
+          
+        </View>
+      </Modal>
+    );
+  };
+
+  const VideoCameraModal = ({ isVisible, onClose, onVideoCaptured }) => {
+    const cameraRef = useRef(null);
+    const [isRecording, setIsRecording] = useState(false);
+  
+    const handleRecord = async () => {
+      if (cameraRef.current && !isRecording) {
+        setIsRecording(true);
+        const promise = cameraRef.current.recordAsync();
+  
+        promise.then(video => {
+          console.log('Video captured', video.uri);
+          onVideoCaptured(video.uri);
+          setIsRecording(false);
+        }).catch(err => console.error('Video capture error', err));
+      } else {
+        cameraRef.current.stopRecording();  // this will trigger the promise resolution above
+      }
+    };
+  
+    return (
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={isVisible}
+        onRequestClose={onClose}
+      >
+        <View style={styles.container}>
+          <RNCamera
+            ref={cameraRef}
+            style={styles.preview}
+            type={RNCamera.Constants.Type.front}
+            flashMode={RNCamera.Constants.FlashMode.off}
+            androidCameraPermissionOptions={{
+              title: 'Permission to use camera',
+              message: 'We need your permission to use your camera',
+              buttonPositive: 'Ok',
+              buttonNegative: 'Cancel',
+            }}
+            androidRecordAudioPermissionOptions={{
+              title: 'Permission to use audio recording',
+              message: 'We need your permission to use your microphone',
+              buttonPositive: 'Ok',
+              buttonNegative: 'Cancel',
+            }}
+          >
+            {({ camera, status }) => {
+              if (status !== 'READY') return <View/>;
+              return (
+                <View style={styles.captureContainer}>
+                  <TouchableOpacity onPress={handleRecord} style={styles.capture}>
+                    <Text style={{ color: 'white' }}>{isRecording ? 'Stop' : 'Record'}</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            }}
+          </RNCamera>
+        </View>
+      </Modal>
+    );
+  };
 
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
@@ -126,7 +308,20 @@ const JoinGeneralPublicApplication2Screen = () => {
           <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>2/3</Text>
         </View>
 
-        
+
+        <View style={{ marginTop: 30, marginHorizontal: 20 }}>
+            <Text style={styles.medText}>Liveness proof</Text>
+        </View>
+
+        <View style={{ marginTop: 30, marginHorizontal: 20 }}>   
+            <TouchableOpacity 
+              style={styles.cameraButton}
+              onPress={() => setModalVisible(true)}
+            >
+              <Icon name="video" size={36} type="font-awesome-5" color={'lightgray'} />
+            </TouchableOpacity>
+            <Text style={[styles.smallText, {marginTop: 20}]}>Please film a short video clip to prove that you are a human</Text>
+          </View>
 
          <View style={{flex:1}}>
             <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
@@ -138,6 +333,12 @@ const JoinGeneralPublicApplication2Screen = () => {
                 </TouchableOpacity>  
             </LinearGradient>
         </View> 
+
+        <VideoCameraModal
+            isVisible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            //onImageCaptured={handleImageCaptured}
+        />
       </ScrollView>  
     </SafeAreaView>
   );

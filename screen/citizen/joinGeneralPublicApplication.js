@@ -10,8 +10,8 @@ import Button from '../../components/Button';
 import LinearGradient from 'react-native-linear-gradient';
 import { CameraScreen } from 'react-native-camera-kit';
 import RNFS from 'react-native-fs';
-//import { Image } from 'react-native-compressor';
-import { Image as CompressorImage, ImageCompressor, CompressionFormat } from 'react-native-compressor';
+import { Image as CompressorImage } from 'react-native-compressor';
+import axios from 'axios';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -29,10 +29,6 @@ const JoinGeneralPublicApplicationScreen = () => {
     console.log('Image saved', uri);
   };
 
-  useEffect(() => {
-    console.log('capturedImage main screen: ', capturedImage)
-  }, [capturedImage]);
-
   async function compressImage(imageUri) {
     try {
       const compressedImage = await CompressorImage.compress(imageUri);
@@ -44,6 +40,23 @@ const JoinGeneralPublicApplicationScreen = () => {
     } catch (error) {
       console.error('Error compressing image:', error);
     }
+  }
+
+  async function postName(url, firstName, lastName, token) {
+    response = await axios.post("https://martianrepublic.org/api/sfname", {
+      firstname: firstName,
+      lastname: lastName
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      console.log('Success:', response.data);
+    })
+    .catch(error => {
+      console.error('Error:', error.response);
+    });
   }
   
   const styles = StyleSheet.create({
@@ -347,13 +360,15 @@ const JoinGeneralPublicApplicationScreen = () => {
          <TouchableOpacity 
                   style={styles.joinButton}
                    onPress={ () =>
+                    {
+                      //postName(firstName, lastName);
                     navigation.navigate('JoinGeneralPublicApplication2Screen', {
                       firstName: firstName,
                       lastName: lastName,
                       displayName: displayName, 
                       bio: bio
                     })
-                   }
+                   }}
                 >
             <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                     <Text style={styles.buttonText}>NEXT STEP</Text>
