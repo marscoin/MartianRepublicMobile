@@ -365,6 +365,11 @@ PODS:
   - react-native-tcp-socket (6.0.6):
     - CocoaAsyncSocket
     - React-Core
+  - react-native-video (5.2.1):
+    - React-Core
+    - react-native-video/Video (= 5.2.1)
+  - react-native-video/Video (5.2.1):
+    - React-Core
   - react-native-webview (13.8.1):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
@@ -580,6 +585,7 @@ DEPENDENCIES:
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-secure-key-store (from `../node_modules/react-native-secure-key-store`)
   - react-native-tcp-socket (from `../node_modules/react-native-tcp-socket`)
+  - react-native-video (from `../node_modules/react-native-video`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - react-native-widget-center (from `../node_modules/react-native-widget-center`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -714,6 +720,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-secure-key-store"
   react-native-tcp-socket:
     :path: "../node_modules/react-native-tcp-socket"
+  react-native-video:
+    :path: "../node_modules/react-native-video"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
   react-native-widget-center:
@@ -848,6 +856,7 @@ SPEC CHECKSUMS:
   react-native-safe-area-context: b97eb6f9e3b7f437806c2ce5983f479f8eb5de4b
   react-native-secure-key-store: 910e6df6bc33cb790aba6ee24bc7818df1fe5898
   react-native-tcp-socket: e724380c910c2e704816ec817ed28f1342246ff7
+  react-native-video: c26780b224543c62d5e1b2a7244a5cd1b50e8253
   react-native-webview: bdc091de8cf7f8397653e30182efcd9f772e03b3
   react-native-widget-center: 12dfba20a4fa995850b52cf0afecf734397f4b9c
   React-NativeModulesApple: fd9fb8a2d2d789988f110c3c21c91fa0795fa2c7

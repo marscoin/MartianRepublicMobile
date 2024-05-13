@@ -277,7 +277,13 @@ const JoinGeneralPublicApplicationScreen = () => {
         <View style={{ flex: 1 }}>
         {capturedUri ? (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'black' }}>
-              <Image source={{ uri: capturedUri }} style={{ width: '70%', height: '40%', marginTop: 160, }} />
+             <TouchableOpacity 
+                      style={{flexDirection:'row', justifyContent:'space-between', alignSelf:'flex-start', marginTop: 100, marginLeft: 20}}
+                      onPress={()=>onClose()}
+                    >
+                      <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
+                    </TouchableOpacity>
+              <Image source={{ uri: capturedUri }} style={{ width: '70%', height: '40%', marginTop: 100, borderRadius: 20 }} />
               <View style = {styles.buttonContainer1}>
                 <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                   <TouchableOpacity onPress={handleSave} style={styles.saveButton}>

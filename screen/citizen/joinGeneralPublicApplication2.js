@@ -10,6 +10,7 @@ import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import SafeArea from '../../components/SafeArea';
 import usePrivacy from '../../hooks/usePrivacy';
+import Video from 'react-native-video';
 import LinearGradient from 'react-native-linear-gradient';
 import WalletGradient from '../../class/wallet-gradient';
 import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
@@ -239,20 +240,36 @@ const JoinGeneralPublicApplication2Screen = () => {
       backgroundColor: 'black',
   },
   videoPlayer: {
-      width: '100%',
+      width: '90%',
       height: '50%',
+      //marginHorizontal: 20,
   },
   preview: {
       flex: 1,
       justifyContent: 'flex-end',
       alignItems: 'center',
   },
+  actionButton: {
+    padding: 10,
+    margin: 10,
+    backgroundColor: 'lightgray',
+}
   });
 
   const VideoCameraModal = ({ isVisible, onClose, onVideoCaptured, onRetake, onSave  }) => {
     const cameraRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
     const [remainingTime, setRemainingTime] = useState(60); // Countdown from 60 seconds
+
+    const handleSave = () => {
+      // compressed = compressImage(capturedUri)
+       onVideoCaptured(capturedUri);
+       setCapturedVideo(null); // Reset after saving
+       onClose(); // Close the modal
+     };
+     const handleRetake = () => {
+       setCapturedVideo(null); // Reset the imageUri to go back to the camera screen
+     };
 
     useEffect(() => {
         let interval;
@@ -299,12 +316,18 @@ const JoinGeneralPublicApplication2Screen = () => {
         >
           {capturedVideo ? (
                 <View style={styles.videoReviewContainer}>
-                    <Video source={{ uri: capturedVideoUri }} style={styles.videoPlayer} />
+                   <TouchableOpacity 
+                      style={{flexDirection:'row', justifyContent:'space-between', alignSelf:'flex-start', marginTop: 20, marginLeft: 20}}
+                      onPress={()=>onClose()}
+                    >
+                      <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
+                    </TouchableOpacity>
+                    <Video source={{ uri: capturedVideo }} style={styles.videoPlayer} />
                     <View style={styles.buttonContainer}>
-                        <TouchableOpacity onPress={() => onRetake()} style={styles.actionButton}>
+                        <TouchableOpacity onPress={handleRetake} style={styles.actionButton}>
                             <Text>Retake</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => onSave(capturedVideoUri)} style={styles.actionButton}>
+                        <TouchableOpacity onPress={handleSave} style={styles.actionButton}>
                             <Text>Save</Text>
                         </TouchableOpacity>
                     </View>
@@ -393,8 +416,15 @@ const JoinGeneralPublicApplication2Screen = () => {
             >
               <Icon name="video" size={36} type="font-awesome-5" color={'lightgray'} />
             </TouchableOpacity>
-            <Text style={[styles.smallText, {marginTop: 20}]}>Please film a short video clip to prove that you are a human</Text>
-          </View>
+            <View>
+              <Text style={[styles.smallText, {marginTop: 20}]}>Please record a brief video to verify your identity.</Text>
+              <Text style={[styles.medText, {marginTop: 20, color:'#FF7400' }]}>INSTRUCTIONS</Text>
+              <Text style={[styles.medText, {marginTop: 20 }]}>1. Hold your phone horizontally (landscape) during the recording.</Text>
+              <Text style={[styles.medText, {marginTop: 20 }]}>2. Display your CIVIC ADDRESS clearly on a piece of paper within the video frame.</Text>
+              <Text style={[styles.medText, {marginTop: 20 }]}>3. Describe your reasons for wanting to join the Martian Congressional Republic.</Text>
+              <Text style={[styles.medText, {marginTop: 20, color:'#FF7400' }]}>Note: Your recording should not exceed 60 seconds.</Text>
+            </View>
+        </View>
 
          <View style={{flex:1}}>
             <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
