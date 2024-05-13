@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text,Image,TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
@@ -11,7 +11,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import { CameraScreen } from 'react-native-camera-kit';
 import RNFS from 'react-native-fs';
 import { Image as CompressorImage } from 'react-native-compressor';
+import { RNCamera } from 'react-native-camera';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -23,6 +25,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [bio, setBio] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [isFormValid, setIsFormValid] = useState(false);
 
   const handleImageCaptured = (uri) => {
     setCapturedImage(uri);
@@ -42,17 +45,20 @@ const JoinGeneralPublicApplicationScreen = () => {
     }
   }
 
-  async function postName(url, firstName, lastName, token) {
-    response = await axios.post("https://martianrepublic.org/api/sfname", {
+  async function postName() {
+    const token = await AsyncStorage.getItem('@auth_token');
+    response = await axios.post("https://martianrepublic.org/api/scitizen", {
       firstname: firstName,
-      lastname: lastName
+      lastname: lastName,
+      displayname: displayName,
+      shortbio: bio, 
     }, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
     .then(response => {
-      console.log('Success:', response.data);
+      console.log('Success:', response);
     })
     .catch(error => {
       console.error('Error:', error.response);
@@ -115,7 +121,7 @@ const JoinGeneralPublicApplicationScreen = () => {
         borderRadius: 20,
         marginHorizontal: 40,
         marginTop: 50,
-        height: 60
+        height: 60,
     },
     iconStyle: {
       width:80,
@@ -148,50 +154,82 @@ const JoinGeneralPublicApplicationScreen = () => {
       justifyContent: 'center',
       marginTop: 10
     },
-    buttonContainer: {
-      flexDirection:'row',
-      marginTop: 30,
-      justifyContent: 'space-between',
-      alignItems: 'center',
+    capture: {
+      flex: 0,
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      opacity: 0.8,
+      borderWidth: 4,
+      padding: 15,
+      paddingHorizontal: 20,
+      alignSelf: 'center',
+      margin: 20,
+      position: 'absolute',
+      bottom: 60,
+      backgroundColor: 'white',
+      borderColor: 'gray'
     },
+    buttonContainer: {
+      flex: 1,
+      width: '100%',
+    },
+    buttonContainer1: {
+      flex: 1,
+      flexDirection:'row',
+      width: '100%',
+      justifyContent: 'space-around',
+      marginTop: 20
+    },
+    // button: {
+    //   padding: 15,
+    //   backgroundColor: '#fff',
+    //   borderRadius: 5,
+    // },
+    buttonText: {
+      color:'white', 
+      textAlign: 'center',
+      fontSize: 16,
+      fontWeight:"600",
+      fontFamily: fonts.regular.fontFamily
+  },
     saveButton: {
-      width: 140, 
-      height: 50,
+      width: 120, 
+      height: 44,
       borderRadius: 8,
       justifyContent: 'center',
       alignItems: 'center',
     },
-    buttonImage: {
-      width: 100,
-      height: 100,
-    }
+    // buttonImage: {
+    //   width: 100,
+    //   height: 100,
+    // }
 
   });
 
   const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
-    const [imageUri, setImageUri] = useState(null);
-    useEffect(() => {
-      console.log('imageUri: ', imageUri)
-    }, [imageUri]);
-    
+    const cameraRef = useRef(null);
+    const [capturedUri, setCapturedUri] = useState(null);
+  
+    const takePicture = async () => {
+      if (cameraRef.current) {
+        const options = { quality: 0.5, base64: true };
+        const data = await cameraRef.current.takePictureAsync(options);
+        console.log('Path to image: ' + data.uri);
+        setCapturedUri(data.uri);
+        //onImageCaptured(data.uri); 
+      }
+    };
 
-    const handleCapture = async (event) => {
-      if (event.type === 'left') {
-        onClose(); // Close the modal if the left button (Cancel) is pressed
-      } else {
-          console.log("Captured event: ", event);  
-          const compressedUri = await compressImage(event.captureImages[0].uri);
-          setImageUri(compressedUri)
-    }};
     const handleSave = () => {
-      onImageCaptured(imageUri);
-      setImageUri(null); // Reset after saving
+      onImageCaptured(capturedUri);
+      setCapturedUri(null); // Reset after saving
       onClose(); // Close the modal
     };
     const handleRetake = () => {
-      setImageUri(null); // Reset the imageUri to go back to the camera screen
+      setCapturedUri(null); // Reset the imageUri to go back to the camera screen
     };
-
+  
     return (
       <Modal
         animationType="slide"
@@ -199,11 +237,11 @@ const JoinGeneralPublicApplicationScreen = () => {
         visible={isVisible}
         onRequestClose={onClose}
       >
-        <View style={{flex:1}}>
-          {imageUri ? (
+        <View style={{ flex: 1 }}>
+        {capturedUri ? (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'black' }}>
-              <Image source={{ uri: imageUri }} style={{ width: '70%', height: '40%' }} />
-              <View style = {styles.buttonContainer}>
+              <Image source={{ uri: capturedUri }} style={{ width: '70%', height: '40%', marginTop: 160, }} />
+              <View style = {styles.buttonContainer1}>
                 <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                   <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
                     <Text style={styles.buttonText}>Save</Text>
@@ -217,24 +255,26 @@ const JoinGeneralPublicApplicationScreen = () => {
               </View>
             </View>
           ) : (
-            <CameraScreen
-              actions={{ leftButtonText: 'Go Back' }}
-              cameraType="front" 
-              onBottomButtonPressed={handleCapture}
-              //cameraFlipImageStyle={{width:  60, height: 60}}
-              captureButtonImage={require('../../img/capture.png')}
-              captureButtonImageStyle={{width:  100, height: 100}}
-              // flashImages={{
-              //   // optional, images for flash state
-              //   //on: require('path/to/image'),
-              //   //off: require('path/to/image'),
-              //   auto: require('../../img/flashAuto.png'),
-              // }}
-              
-              cameraFlipImage={require('../../img/flipCameraImg1.png')}
-              saveToCameraRoll={true}
-              showCapturedImageCount={true}
-            />
+          <RNCamera
+            ref={cameraRef}
+            style={{ flex: 1 }}
+            type={RNCamera.Constants.Type.front}
+            flashMode={RNCamera.Constants.FlashMode.off}
+            //captureAudio={false}
+          >
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={{flexDirection:'row', justifyContent:'space-between', marginTop: 90, marginLeft: 20}}
+                onPress={()=>setModalVisible(false)}
+              >
+                  <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={takePicture} 
+                style={[styles.capture]}
+              />
+            </View>
+          </RNCamera>
           )}
           
         </View>
@@ -242,13 +282,94 @@ const JoinGeneralPublicApplicationScreen = () => {
     );
   };
 
+  // const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
+  //   const [imageUri, setImageUri] = useState(null);
+  //   useEffect(() => {
+  //     console.log('imageUri: ', imageUri)
+  //   }, [imageUri]);
+    
+
+  //   const handleCapture = async (event) => {
+  //     if (event.type === 'left') {
+  //       onClose(); // Close the modal if the left button (Cancel) is pressed
+  //     } else {
+  //         console.log("Captured event: ", event);  
+  //         const compressedUri = await compressImage(event.captureImages[0].uri);
+  //         setImageUri(compressedUri)
+  //   }};
+  //   const handleSave = () => {
+  //     onImageCaptured(imageUri);
+  //     setImageUri(null); // Reset after saving
+  //     onClose(); // Close the modal
+  //   };
+  //   const handleRetake = () => {
+  //     setImageUri(null); // Reset the imageUri to go back to the camera screen
+  //   };
+
+  //   return (
+  //     <Modal
+  //       animationType="slide"
+  //       transparent={false}
+  //       visible={isVisible}
+  //       onRequestClose={onClose}
+  //     >
+  //       <View style={{flex:1}}>
+  //         {imageUri ? (
+  //           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'black' }}>
+  //             <Image source={{ uri: imageUri }} style={{ width: '70%', height: '40%' }} />
+  //             <View style = {styles.buttonContainer}>
+  //               <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+  //                 <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+  //                   <Text style={styles.buttonText}>Save</Text>
+  //                 </TouchableOpacity>
+  //               </LinearGradient>
+  //               <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+  //                 <TouchableOpacity onPress={handleRetake} style={styles.saveButton}>
+  //                   <Text style={styles.buttonText}>Retake</Text>
+  //                 </TouchableOpacity>
+  //               </LinearGradient>
+  //             </View>
+  //           </View>
+  //         ) : (
+  //           <CameraScreen
+  //             actions={{ leftButtonText: 'Go Back' }}
+  //             cameraType="front" 
+  //             onBottomButtonPressed={handleCapture}
+  //             //cameraFlipImageStyle={{width:  60, height: 60}}
+  //             captureButtonImage={require('../../img/capture.png')}
+  //             captureButtonImageStyle={{width:  100, height: 100}}
+  //             // flashImages={{
+  //             //   // optional, images for flash state
+  //             //   //on: require('path/to/image'),
+  //             //   //off: require('path/to/image'),
+  //             //   auto: require('../../img/flashAuto.png'),
+  //             // }}
+              
+  //             cameraFlipImage={require('../../img/flipCameraImg1.png')}
+  //             saveToCameraRoll={true}
+  //             showCapturedImageCount={true}
+  //           />
+  //         )}
+          
+  //       </View>
+  //     </Modal>
+  //   );
+  // };
+  useEffect(() => {
+    const validateForm = () => {
+      return firstName.length > 0 && lastName.length > 0 && displayName.length > 0 && bio.length > 0 && capturedImage != null;
+    };
+  
+    setIsFormValid(validateForm());
+  }, [firstName, lastName, displayName, bio, capturedImage]);
+
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
     {/* ////margin -80 sticks screen to the tabbar///// */}
       <ScrollView 
             style={styles.root}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 200 }}
       >
         <View style={styles.center}>
             <Text style={styles.welcomeText}>Welcome to  </Text>
@@ -338,7 +459,7 @@ const JoinGeneralPublicApplicationScreen = () => {
               style={styles.cameraButton}
               onPress={() => setModalVisible(true)}
             >
-              {capturedImage && (
+            {capturedImage && (
               <Image source={{ uri: capturedImage }} style={{ width: 118, height: 138, borderRadius: 8, }} />
             )}
             {!capturedImage &&
@@ -354,14 +475,13 @@ const JoinGeneralPublicApplicationScreen = () => {
             onClose={() => setModalVisible(false)}
             onImageCaptured={handleImageCaptured}
           />
-          
 
          <View style={{flex:1}}>
          <TouchableOpacity 
                   style={styles.joinButton}
                    onPress={ () =>
                     {
-                      //postName(firstName, lastName);
+                      postName();
                     navigation.navigate('JoinGeneralPublicApplication2Screen', {
                       firstName: firstName,
                       lastName: lastName,
@@ -369,11 +489,15 @@ const JoinGeneralPublicApplicationScreen = () => {
                       bio: bio
                     })
                    }}
+                   disabled={!isFormValid}  // Disable the button if form is not valid
                 >
-            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+            <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
                     <Text style={styles.buttonText}>NEXT STEP</Text>
             </LinearGradient>
             </TouchableOpacity>  
+
+            { !isFormValid &&
+            <Text style={styles.smallText}>All fields marked with * are mandatory to proceed</Text>}
         </View>  
       </ScrollView>  
     </SafeAreaView>

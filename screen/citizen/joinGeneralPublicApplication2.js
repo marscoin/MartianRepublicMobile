@@ -163,18 +163,14 @@ const JoinGeneralPublicApplication2Screen = () => {
     captureContainer: {
       flex: 1,
       width: '100%',
-      //backgroundColor:'red'
-      //flexDirection: 'row',
-      //justifyContent: 'center',
     },
     capture: {
       flex: 0,
-      width: 80,
-      height: 80,
-      backgroundColor: 'white',
-      borderRadius: 40,
-      borderColor: 'gray',
-      borderWidth: 5,
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      opacity: 0.8,
+      borderWidth: 4,
       padding: 15,
       paddingHorizontal: 20,
       alignSelf: 'center',
@@ -223,7 +219,7 @@ const JoinGeneralPublicApplication2Screen = () => {
                 <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                   <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
                     <Text style={styles.buttonText}>Save</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity>x
                 </LinearGradient>
                 <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                   <TouchableOpacity onPress={handleRetake} style={styles.saveButton}>
@@ -318,12 +314,10 @@ const JoinGeneralPublicApplication2Screen = () => {
                     onPress={handleRecord} 
                     style={[
                       styles.capture, 
-                      { backgroundColor: isRecording ? '#FF7400' : 'white' },  // This line changes the background color
+                      { backgroundColor: isRecording ? '#FF7400' : 'white' },  
                       { borderColor: isRecording ? 'white' : 'gray' }
                     ]}
-                  >
-                    {/* <Text style={{ color: 'black' }}>{isRecording ? 'Stop' : 'Record'}</Text> */}
-                  </TouchableOpacity>
+                  />
                 </View>
               );
             }}

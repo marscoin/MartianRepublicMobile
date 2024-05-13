@@ -11,6 +11,7 @@ import loc from './loc';
 import { BlueDefaultTheme, BlueDarkTheme } from './components/themes';
 import InitRoot from './Navigation';
 import BlueClipboard from './blue_modules/clipboard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlueStorageContext } from './blue_modules/storage-context';
 import DeviceQuickActions from './class/quick-actions';
 import Notifications from './blue_modules/notifications';
@@ -21,28 +22,13 @@ import triggerHapticFeedback, { HapticFeedbackTypes } from './blue_modules/hapti
 import MenuElements from './components/MenuElements';
 import { updateExchangeRate } from './blue_modules/currency';
 import axios from "axios";
-import { URL } from "react-native-url-polyfill";
 const A = require('./blue_modules/analytics');
 const bitcoinMessage = require("bitcoinjs-message");
 const bitcoin = require("bitcoinjs-lib");
-const pbkdf2 = require("pbkdf2");
 const bip39 = require("bip39");
 const { BIP32Factory } = require('bip32')
 const ecc = require('tiny-secp256k1')
 const bip32 = BIP32Factory(ecc)
-var { randomBytes } = require('crypto')
-
-const BITCOIN = {
-  messagePrefix: "\x18Bitcoin Signed Message:\n",
-  bech32: "bc",
-  bip32: {
-    public: 0x0488b21e,
-    private: 0x0488ade4,
-  },
-  pubKeyHash: 0x00,
-  scriptHash: 0x05,
-  wif: 0x80,
-};
 
 const MARSCOIN = {
     messagePrefix: "\x19Marscoin Signed Message:\n",
@@ -95,7 +81,6 @@ const App = () => {
     return root;
   };
 
-  
   const onNotificationReceived = async notification => {
     const payload = Object.assign({}, notification, notification.data);
     if (notification.data && notification.data.data) Object.assign(payload, notification.data.data);
@@ -153,7 +138,6 @@ const App = () => {
     for (let wallet of wallets) {
         // Check if the wallet has the civic property set to true
         if (wallet.civic) {
-            console.log('CIVIC MNEMONIC:', wallet.secret );
             return wallet.secret;
         }
     }
@@ -161,85 +145,43 @@ const App = () => {
   }  
 
 
-function deriveAddressFromPublicKey(publicKey, network) {
-  const { address } = bitcoin.payments.p2pkh({
-      pubkey: Buffer.from(publicKey, 'hex'),
-      network: network
-  });
-  return address;
-}
-
-function verifyPublicKey(privateKeyWIF, expectedPublicKey) {
-    const keyPair = bitcoin.ECPair.fromWIF(privateKeyWIF, MARSCOIN);
-    
-    const publicKey = keyPair.publicKey;
-    console.log('!!!!!!!!!!!!!!!publicKey', publicKey)
-    const derivedAddress = deriveAddressFromPublicKey(publicKey, MARSCOIN);
-    console.log('Derived Address:', derivedAddress);
-    //console.log('Civic Address:', );
-    console.log('Do they match?', derivedAddress === 'MVk86WKySkawkjRqmiazWMnbrf39qpCkLD');
-    
-    return publicKey === expectedPublicKey;
-}
+  const storeToken = async (token) => {
+    try {
+      await AsyncStorage.setItem('@auth_token', token);
+      console.log('Token successfully saved');
+    } catch (error) {
+      console.error('Failed to save the token to storage', error);
+    }
+  };
 
 async function getToken() {
   try {
-    var address1 = 'MVk86WKySkawkjRqmiazWMnbrf39qpCkLD';
-    //var keyPair1 = bitcoin.ECPair.fromWIF('KyDQnrnvL28X7vGi8mw7kt4m4JYFArhE8C7Q8dJB76Pwbae1nr61', MARSCOIN)
-    var keyPair1 = bitcoin.ECPair.fromWIF('KxKYjXhM59QoQP4b7hK5Ajy72xxHUyAY56539ee1YVSDbaHsUZW8')
-    //var address1 = '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV'
-    var privateKey1 = keyPair1.privateKey
-    const timestamp = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
-    const message1 = `https://martianrepublic.org/api/token?a=${address1}&t=${timestamp}`;
-
-    var signature1 = bitcoinMessage.sign(message1, privateKey1, keyPair1.compressed)
-    //console.log('!!!!!!!!!', signature1.toString('base64'))
-    console.log('QQQQQQQQQQQQ', bitcoinMessage.verify(message1, address1, signature1))
-
     const address = getCivicAddress(wallets);
-    //const timestamp = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
+    const timestamp = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
     const message = `https://martianrepublic.org/api/token?a=${address}&t=${timestamp}`;
-    //let parsedURL;
-
 
     mnemonic = getCivicMnemonic(wallets)
     const root = await generateRoot(mnemonic);
     let child = null;
     //let custom_key = "m/88888888'/0'";
-    //let custom_key = `m/44'/0'/0'/0/0`;
     let custom_key =`m/44'/${MARSCOIN.bip44}'/0'/0/0` /////derives correct addresses
-    console.log('MARSCOIN.bip44',MARSCOIN.bip44)
     child = root.derivePath(custom_key);
-    
     const wif = child.toWIF();
-    console.log("wif", wif);
 
     const keyPair = bitcoin.ECPair.fromWIF(wif);
-    //console.log('keyPair:', keyPair);
-    const publicKey = keyPair.publicKey;
-    //console.log('publicKey:', publicKey);
-
     const privateKey = keyPair.privateKey;
-    console.log('privateKey:', privateKey);
-
+    
+    ///////SIGNING THE MESSAGE/////////
     const signedMsg = bitcoinMessage
       .sign(message, privateKey, keyPair.compressed)
-      .toString("base64");
+      .toString("base64");   
 
-      const signedMsg1 = bitcoinMessage
-      .sign(message1, privateKey1, keyPair1.compressed)
-      .toString("base64");      
-
-    console.log('signature:', signedMsg);
-    console.log('CIVIC ADDRESS:', address);
-    console.log('timestamp:', timestamp);
-    console.log('message:', message);
-
-    let isMatch = verifyPublicKey(wif, address);
-    console.log('Do the keys match?', isMatch); 
+    // console.log('signature:', signedMsg);
+    // console.log('CIVIC ADDRESS:', address);
+    // console.log('timestamp:', timestamp);
+    // console.log('message:', message);
 
     //Verify the signature
-    const network = MARSCOIN;
     const verified = bitcoinMessage.verify(message, address, signedMsg);
     console.log('Verification result:', verified);
     
@@ -250,9 +192,9 @@ async function getToken() {
       t: timestamp,
     }).then(response => {
       console.log('Token retrieved:', response.data.token);
+      storeToken(response.data.token); // Save the token once retrieved
     }).catch(error => {
-      console.error('Failed to retrieve token:', error.response.status, error.response.data);
-      //console.error('Failed to retrieve token:', error.response);
+      console.error('Failed to retrieve token:', error.response);
     });
 
     console.log('RESPONSE:', response);
@@ -355,7 +297,6 @@ async function getToken() {
       // data to refresh 1 wallet. let's refresh all.
       refreshAllWalletTransactions();
     }
-
     // if we are here - we did not act upon any push
     return false;
   };
