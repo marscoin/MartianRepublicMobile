@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text,Image,TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
@@ -6,14 +6,15 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
 import { Icon } from 'react-native-elements';
-import Button from '../../components/Button';
 import LinearGradient from 'react-native-linear-gradient';
-import { CameraScreen } from 'react-native-camera-kit';
 import RNFS from 'react-native-fs';
 import { Image as CompressorImage } from 'react-native-compressor';
 import { RNCamera } from 'react-native-camera';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { address } from 'bitcoinjs-lib';
+import { get } from '../../__mocks__/react-native-tor';
+
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -25,7 +26,21 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [bio, setBio] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [civicAddress, setCivicAddress] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
+  const {wallets} = useContext(BlueStorageContext);
+
+  function getCivicAddress(wallets) {
+    // Loop through the wallets array
+    for (let wallet of wallets) {
+        // Check if the wallet has the civic property set to true
+        if (wallet.civic) {
+            console.log('CIVIC ADDRESS:', wallet._address );
+            setCivicAddress(wallet._address);
+        }
+    }
+    return null;  // Return null if no civic wallet is found
+  }  
 
   const handleImageCaptured = (uri) => {
     setCapturedImage(uri);
@@ -34,6 +49,8 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   async function compressImage(imageUri) {
     try {
+      const ofileInfo = await RNFS.stat(imageUri);
+      console.log('Original file size in bytes:', ofileInfo.size);
       const compressedImage = await CompressorImage.compress(imageUri);
       console.log('Compressed image URI:', compressedImage);
       // Get file info
@@ -53,12 +70,31 @@ const JoinGeneralPublicApplicationScreen = () => {
       displayname: displayName,
       shortbio: bio, 
     }, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: {'Authorization': `Bearer ${token}`}
     })
     .then(response => {
-      console.log('Success:', response);
+      console.log('Success, data posted to api:', response.status);
+    })
+    .catch(error => {
+      console.error('Error:', error.response);
+    });
+  }
+
+  async function postPhoto() {
+    const token = await AsyncStorage.getItem('@auth_token');
+    // Convert the image to Base64
+    const base64 = await RNFS.readFile(capturedImage, 'base64');
+    const imageData = `data:image/jpeg;base64,${base64}`;
+
+    response = await axios.post("https://martianrepublic.org/api/pinpic", {
+      picture: imageData,
+      type: 'profile_pic',
+      address: civicAddress,
+    }, {
+      headers: {'Authorization': `Bearer ${token}`}
+    })
+    .then(response => {
+      console.log('Photo pinned!!!! hash:', response.data.hash);
     })
     .catch(error => {
       console.error('Error:', error.response);
@@ -222,6 +258,7 @@ const JoinGeneralPublicApplicationScreen = () => {
     };
 
     const handleSave = () => {
+     // compressed = compressImage(capturedUri)
       onImageCaptured(capturedUri);
       setCapturedUri(null); // Reset after saving
       onClose(); // Close the modal
@@ -260,7 +297,7 @@ const JoinGeneralPublicApplicationScreen = () => {
             style={{ flex: 1 }}
             type={RNCamera.Constants.Type.front}
             flashMode={RNCamera.Constants.FlashMode.off}
-            //captureAudio={false}
+            captureAudio={false}
           >
             <View style={styles.buttonContainer}>
               <TouchableOpacity 
@@ -282,79 +319,6 @@ const JoinGeneralPublicApplicationScreen = () => {
     );
   };
 
-  // const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
-  //   const [imageUri, setImageUri] = useState(null);
-  //   useEffect(() => {
-  //     console.log('imageUri: ', imageUri)
-  //   }, [imageUri]);
-    
-
-  //   const handleCapture = async (event) => {
-  //     if (event.type === 'left') {
-  //       onClose(); // Close the modal if the left button (Cancel) is pressed
-  //     } else {
-  //         console.log("Captured event: ", event);  
-  //         const compressedUri = await compressImage(event.captureImages[0].uri);
-  //         setImageUri(compressedUri)
-  //   }};
-  //   const handleSave = () => {
-  //     onImageCaptured(imageUri);
-  //     setImageUri(null); // Reset after saving
-  //     onClose(); // Close the modal
-  //   };
-  //   const handleRetake = () => {
-  //     setImageUri(null); // Reset the imageUri to go back to the camera screen
-  //   };
-
-  //   return (
-  //     <Modal
-  //       animationType="slide"
-  //       transparent={false}
-  //       visible={isVisible}
-  //       onRequestClose={onClose}
-  //     >
-  //       <View style={{flex:1}}>
-  //         {imageUri ? (
-  //           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'black' }}>
-  //             <Image source={{ uri: imageUri }} style={{ width: '70%', height: '40%' }} />
-  //             <View style = {styles.buttonContainer}>
-  //               <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-  //                 <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-  //                   <Text style={styles.buttonText}>Save</Text>
-  //                 </TouchableOpacity>
-  //               </LinearGradient>
-  //               <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-  //                 <TouchableOpacity onPress={handleRetake} style={styles.saveButton}>
-  //                   <Text style={styles.buttonText}>Retake</Text>
-  //                 </TouchableOpacity>
-  //               </LinearGradient>
-  //             </View>
-  //           </View>
-  //         ) : (
-  //           <CameraScreen
-  //             actions={{ leftButtonText: 'Go Back' }}
-  //             cameraType="front" 
-  //             onBottomButtonPressed={handleCapture}
-  //             //cameraFlipImageStyle={{width:  60, height: 60}}
-  //             captureButtonImage={require('../../img/capture.png')}
-  //             captureButtonImageStyle={{width:  100, height: 100}}
-  //             // flashImages={{
-  //             //   // optional, images for flash state
-  //             //   //on: require('path/to/image'),
-  //             //   //off: require('path/to/image'),
-  //             //   auto: require('../../img/flashAuto.png'),
-  //             // }}
-              
-  //             cameraFlipImage={require('../../img/flipCameraImg1.png')}
-  //             saveToCameraRoll={true}
-  //             showCapturedImageCount={true}
-  //           />
-  //         )}
-          
-  //       </View>
-  //     </Modal>
-  //   );
-  // };
   useEffect(() => {
     const validateForm = () => {
       return firstName.length > 0 && lastName.length > 0 && displayName.length > 0 && bio.length > 0 && capturedImage != null;
@@ -362,6 +326,10 @@ const JoinGeneralPublicApplicationScreen = () => {
   
     setIsFormValid(validateForm());
   }, [firstName, lastName, displayName, bio, capturedImage]);
+  
+  useEffect(() => {
+    getCivicAddress(wallets)
+  }, []);
 
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
@@ -448,7 +416,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                 style={[styles.textFieldWrapStyle, {height: 100}]}
                  //ref={workRef}
                 // onFocus={() => handleFocus(workRef)}
-                maxLength={500}
+                maxLength={700}
                 multiline={true}
             />
           </View>
@@ -482,12 +450,13 @@ const JoinGeneralPublicApplicationScreen = () => {
                    onPress={ () =>
                     {
                       postName();
-                    navigation.navigate('JoinGeneralPublicApplication2Screen', {
-                      firstName: firstName,
-                      lastName: lastName,
-                      displayName: displayName, 
-                      bio: bio
-                    })
+                      postPhoto();
+                      navigation.navigate('JoinGeneralPublicApplication2Screen', {
+                        firstName: firstName,
+                        lastName: lastName,
+                        displayName: displayName, 
+                        bio: bio
+                      })
                    }}
                    disabled={!isFormValid}  // Disable the button if form is not valid
                 >
