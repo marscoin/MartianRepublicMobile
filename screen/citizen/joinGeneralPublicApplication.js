@@ -449,8 +449,8 @@ const JoinGeneralPublicApplicationScreen = () => {
                   style={styles.joinButton}
                    onPress={ () =>
                     {
-                      postName();
-                      postPhoto();
+                      // postName();
+                      // postPhoto();
                       navigation.navigate('JoinGeneralPublicApplication2Screen', {
                         firstName: firstName,
                         lastName: lastName,
@@ -458,7 +458,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                         bio: bio
                       })
                    }}
-                   disabled={!isFormValid}  // Disable the button if form is not valid
+                   //disabled={!isFormValid}  // Disable the button if form is not valid
                 >
             <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
                     <Text style={styles.buttonText}>NEXT STEP</Text>
