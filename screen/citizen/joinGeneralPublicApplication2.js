@@ -1,27 +1,17 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import navigationStyle from '../../components/navigationStyle';
 import loc from '../../loc';
 import { Icon } from 'react-native-elements';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
-import Button from '../../components/Button';
-import SafeArea from '../../components/SafeArea';
-import usePrivacy from '../../hooks/usePrivacy';
 import Video from 'react-native-video';
 import LinearGradient from 'react-native-linear-gradient';
-import WalletGradient from '../../class/wallet-gradient';
-import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
-import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
-import { CameraScreen } from 'react-native-camera-kit';
 import RNFS from 'react-native-fs';
-import { Image as CompressorImage } from 'react-native-compressor';
+import { Video as CompressorVideo } from 'react-native-compressor';
 import { RNCamera } from 'react-native-camera';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ViewPropTypes } from 'deprecated-react-native-prop-types'
 
 const JoinGeneralPublicApplication2Screen = () => {
   const navigation = useNavigation();
@@ -30,7 +20,6 @@ const JoinGeneralPublicApplication2Screen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [capturedVideo, setCapturedVideo] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
-  const {wallets} = useContext(BlueStorageContext);
   
   const onVideoCaptured = (videoUri) => {
     setCapturedVideo(videoUri);
@@ -86,6 +75,13 @@ const JoinGeneralPublicApplication2Screen = () => {
   //     console.error('Error compressing video:', error);
   //   }
   // }
+
+  useEffect(() => {
+    const validateForm = () => {
+      return capturedVideo != null;
+    };
+    setIsFormValid(validateForm());
+  }, [capturedVideo]);
   
   const styles = StyleSheet.create({
     root: {
@@ -231,8 +227,6 @@ const JoinGeneralPublicApplication2Screen = () => {
   videoPlayer: {
       width: '90%',
       height: '40%',
-      //backgroundColor: 'red'
-      //marginHorizontal: 20,
   },
   preview: {
       flex: 1,
@@ -245,11 +239,9 @@ const JoinGeneralPublicApplication2Screen = () => {
     backgroundColor: 'lightgray',
   },
   buttonContainer1: {
-    //flex: 1,
     flexDirection:'row',
     width: '100%',
     justifyContent: 'space-around',
-    //marginTop: 20
   },
   saveButton: {
     width: 120, 
@@ -266,7 +258,6 @@ const JoinGeneralPublicApplication2Screen = () => {
   controlButton: {
     padding: 10,
     margin: 10,
-    //backgroundColor: 'lightgray',
     borderRadius: 5,
     },
   });
@@ -284,6 +275,7 @@ const JoinGeneralPublicApplication2Screen = () => {
        setCapturedUri(null); // Reset after saving
        onClose(); // Close the modal
      };
+
      const handleRetake = () => {
        setCapturedVideo(null); // Reset the imageUri to go back to the camera screen
      };
@@ -319,7 +311,7 @@ const JoinGeneralPublicApplication2Screen = () => {
             setRemainingTime(60); // Reset the timer
             try {
                 const video = await cameraRef.current.recordAsync();
-                onVideoCaptured(video.uri);
+                // onVideoCaptured(video.uri);
                 setCapturedUri(video.uri);
             } catch (err) {
                 console.error('Video capture error', err);

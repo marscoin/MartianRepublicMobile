@@ -1,41 +1,22 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import navigationStyle from '../../components/navigationStyle';
 import loc from '../../loc';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
-import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import SafeArea from '../../components/SafeArea';
-import usePrivacy from '../../hooks/usePrivacy';
-import Video from 'react-native-video';
 import LinearGradient from 'react-native-linear-gradient';
-import WalletGradient from '../../class/wallet-gradient';
-import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
-import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
-import { CameraScreen } from 'react-native-camera-kit';
 import RNFS from 'react-native-fs';
-import { Image as CompressorImage } from 'react-native-compressor';
-import { RNCamera } from 'react-native-camera';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ViewPropTypes } from 'deprecated-react-native-prop-types'
 
 const JoinGeneralPublicApplication3Screen = () => {
   const navigation = useNavigation();
   const { colors, fonts } = useTheme();
   const route = useRoute();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [capturedVideo, setCapturedVideo] = useState(null);
-  const [isFormValid, setIsFormValid] = useState(false);
-  const {wallets} = useContext(BlueStorageContext);
-  
-  const onVideoCaptured = (videoUri) => {
-    setCapturedVideo(videoUri);
-    console.log('Video URI:', videoUri);
-  }; 
 
   async function requestPermissions() {
     if (Platform.OS === 'android') {
@@ -51,28 +32,6 @@ const JoinGeneralPublicApplication3Screen = () => {
   useEffect(() => {
     requestPermissions();
   }, []);
-
-  async function postVideo() {
-    const token = await AsyncStorage.getItem('@auth_token');
-    const civicAddress = await AsyncStorage.getItem('civicAddress');
-    // Convert video to Base64
-    const base64 = await RNFS.readFile(capturedVideo, 'base64');
-    const videoData = `data:image/jpeg;base64,${base64}`;
-
-    response = await axios.post("https://martianrepublic.org/api/pinvideo", {
-      file: videoData,
-      type: 'profile_video',
-      address: civicAddress,
-    }, {
-      headers: {'Authorization': `Bearer ${token}`}
-    })
-    .then(response => {
-      console.log('Video pinned!!!! hash:', response.data.hash);
-    })
-    .catch(error => {
-      console.error('Error:', error.response);
-    });
-  }
   
   const styles = StyleSheet.create({
     root: {
@@ -151,9 +110,9 @@ const JoinGeneralPublicApplication3Screen = () => {
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
     {/* ////margin -80 sticks screen to the tabbar///// */}
       <ScrollView 
-            style={styles.root}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 200 }}
+        style={styles.root}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 200 }}
       >
         <TouchableOpacity 
           style={{flexDirection:'row', justifyContent:'space-between', marginTop: 20, marginLeft: 20}}
@@ -171,21 +130,19 @@ const JoinGeneralPublicApplication3Screen = () => {
             <Text style={styles.medText}>Check your application data: </Text>
         </View>
 
-
          <View style={{flex:1}}>
-         <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                <TouchableOpacity 
-                  style={styles.joinButton}
-                  // onPress={}
-                >
-                    <Text style={styles.buttonText}>PUBLISH APPLICATION</Text>
-                </TouchableOpacity>  
-            </LinearGradient>
+          <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+            <TouchableOpacity 
+              style={styles.joinButton}
+              // onPress={}
+            >
+                <Text style={styles.buttonText}>PUBLISH APPLICATION</Text>
+            </TouchableOpacity>  
+          </LinearGradient>
 
-            { !isFormValid &&
-                <Text style={[styles.smallText, {marginTop: 10}]}>Notarize via a blockchain transaction</Text>}
+            {!isFormValid &&
+              <Text style={[styles.smallText, {marginTop: 10}]}>Notarize via a blockchain transaction</Text>}
         </View> 
-
       </ScrollView>  
     </SafeAreaView>
   );
