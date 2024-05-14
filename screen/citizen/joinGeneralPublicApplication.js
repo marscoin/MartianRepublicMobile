@@ -26,7 +26,6 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [bio, setBio] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
-  const [civicAddress, setCivicAddress] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const {wallets} = useContext(BlueStorageContext);
 
@@ -35,18 +34,6 @@ const JoinGeneralPublicApplicationScreen = () => {
   const lastNameRef = useRef();
   const displayNameRef = useRef();
   const bioRef = useRef();
-
-  function getCivicAddress(wallets) {
-    // Loop through the wallets array
-    for (let wallet of wallets) {
-        // Check if the wallet has the civic property set to true
-        if (wallet.civic) {
-            console.log('CIVIC ADDRESS:', wallet._address );
-            setCivicAddress(wallet._address);
-        }
-    }
-    return null;  // Return null if no civic wallet is found
-  }  
 
   const handleImageCaptured = (uri) => {
     setCapturedImage(uri);
@@ -59,9 +46,8 @@ const JoinGeneralPublicApplicationScreen = () => {
       console.log('Original file size in bytes:', ofileInfo.size);
       const compressedImage = await CompressorImage.compress(imageUri);
       console.log('Compressed image URI:', compressedImage);
-      // Get file info
-    const fileInfo = await RNFS.stat(compressedImage);
-    console.log('File size in bytes:', fileInfo.size);
+      const fileInfo = await RNFS.stat(compressedImage);   // Get file info
+      console.log('File size in bytes:', fileInfo.size);
       return compressedImage
     } catch (error) {
       console.error('Error compressing image:', error);
@@ -88,6 +74,7 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   async function postPhoto() {
     const token = await AsyncStorage.getItem('@auth_token');
+    const civicAddress = await AsyncStorage.getItem('civicAddress');
     // Convert the image to Base64
     const base64 = await RNFS.readFile(capturedImage, 'base64');
     const imageData = `data:image/jpeg;base64,${base64}`;
@@ -100,7 +87,7 @@ const JoinGeneralPublicApplicationScreen = () => {
       headers: {'Authorization': `Bearer ${token}`}
     })
     .then(response => {
-      console.log('Photo pinned!!!! hash:', response.data.hash);
+      console.log('Photo pinned!!!! hash:', response.data.Hash);
     })
     .catch(error => {
       console.error('Error:', error.response);
@@ -223,11 +210,6 @@ const JoinGeneralPublicApplicationScreen = () => {
       justifyContent: 'space-around',
       marginTop: 20
     },
-    // button: {
-    //   padding: 15,
-    //   backgroundColor: '#fff',
-    //   borderRadius: 5,
-    // },
     buttonText: {
       color:'white', 
       textAlign: 'center',
@@ -325,7 +307,6 @@ const JoinGeneralPublicApplicationScreen = () => {
             </View>
           </RNCamera>
           )}
-          
         </View>
       </Modal>
     );
@@ -339,17 +320,13 @@ const JoinGeneralPublicApplicationScreen = () => {
     setIsFormValid(validateForm());
   }, [firstName, lastName, displayName, bio, capturedImage]);
   
-  useEffect(() => {
-    getCivicAddress(wallets)
-  }, []);
-
   return (
-    <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
+    <SafeAreaView style={{flex: 1}}> 
     {/* ////margin -80 sticks screen to the tabbar///// */}
       <KeyboardAvoidingView
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : null}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 5 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView 
@@ -383,7 +360,6 @@ const JoinGeneralPublicApplicationScreen = () => {
             <View style={{ marginTop: 30, marginHorizontal: 20 }}>
                 <Text style={styles.medText}>First Name *</Text>
                 <TextInput
-                    //selectionColor={Colors.primaryColor}
                     value={firstName}
                     placeholder=""
                     placeholderTextColor="white"
@@ -398,7 +374,6 @@ const JoinGeneralPublicApplicationScreen = () => {
               <View style={{ marginTop: 30, marginHorizontal: 20 }}>
                 <Text style={styles.medText}>Last Name *</Text>
                 <TextInput
-                    //selectionColor={Colors.primaryColor}
                     value={lastName}
                     placeholder=""
                     placeholderTextColor="white"
@@ -413,7 +388,6 @@ const JoinGeneralPublicApplicationScreen = () => {
               <View style={{ marginTop: 30, marginHorizontal: 20 }}>
                 <Text style={styles.medText}>Display Name *</Text>
                 <TextInput
-                    //selectionColor={Colors.primaryColor}
                     value={displayName}
                     placeholder=""
                     placeholderTextColor="white"
@@ -468,8 +442,8 @@ const JoinGeneralPublicApplicationScreen = () => {
                       style={styles.joinButton}
                       onPress={ () =>
                         {
-                          // postName();
-                          // postPhoto();
+                          //postName();
+                          //postPhoto();
                           navigation.navigate('JoinGeneralPublicApplication2Screen', {
                             firstName: firstName,
                             lastName: lastName,

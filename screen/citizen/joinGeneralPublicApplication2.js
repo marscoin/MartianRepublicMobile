@@ -29,33 +29,12 @@ const JoinGeneralPublicApplication2Screen = () => {
   const route = useRoute();
   const [modalVisible, setModalVisible] = useState(false);
   const [capturedVideo, setCapturedVideo] = useState(null);
-  const [civicAddress, setCivicAddress] = useState(null);
+  const [isFormValid, setIsFormValid] = useState(false);
   const {wallets} = useContext(BlueStorageContext);
-
-  function getCivicAddress(wallets) {
-    // Loop through the wallets array
-    for (let wallet of wallets) {
-        // Check if the wallet has the civic property set to true
-        if (wallet.civic) {
-            console.log('CIVIC ADDRESS:', wallet._address );
-            setCivicAddress(wallet._address);
-        }
-    }
-    return null;  // Return null if no civic wallet is found
-  }  
-  useEffect(() => {
-    getCivicAddress(wallets)
-  }, []);
-
-  const handleImageCaptured = (uri) => {
-    setCapturedImage(uri);
-    console.log('Image saved', uri);
-  };
   
   const onVideoCaptured = (videoUri) => {
     setCapturedVideo(videoUri);
     console.log('Video URI:', videoUri);
-    // You can handle further logic here, such as updating state or posting the video
   }; 
 
   async function requestPermissions() {
@@ -75,7 +54,8 @@ const JoinGeneralPublicApplication2Screen = () => {
 
   async function postVideo() {
     const token = await AsyncStorage.getItem('@auth_token');
-    // Convert the image to Base64
+    const civicAddress = await AsyncStorage.getItem('civicAddress');
+    // Convert video to Base64
     const base64 = await RNFS.readFile(capturedVideo, 'base64');
     const videoData = `data:image/jpeg;base64,${base64}`;
 
@@ -94,18 +74,18 @@ const JoinGeneralPublicApplication2Screen = () => {
     });
   }
 
-  async function compressImage(imageUri) {
-    try {
-      const compressedImage = await CompressorImage.compress(imageUri);
-      console.log('Compressed video URI:', compressedImage);
-      // Get file info
-    const fileInfo = await RNFS.stat(compressedImage);
-    console.log('File size in bytes:', fileInfo.size);
-      return compressedImage
-    } catch (error) {
-      console.error('Error compressing video:', error);
-    }
-  }
+  // async function compressVideo(imageUri) {
+  //   try {
+  //     const compressedImage = await CompressorImage.compress(imageUri);
+  //     console.log('Compressed video URI:', compressedImage);
+  //     // Get file info
+  //   const fileInfo = await RNFS.stat(compressedImage);
+  //   console.log('File size in bytes:', fileInfo.size);
+  //     return compressedImage
+  //   } catch (error) {
+  //     console.error('Error compressing video:', error);
+  //   }
+  // }
   
   const styles = StyleSheet.create({
     root: {
@@ -137,12 +117,20 @@ const JoinGeneralPublicApplication2Screen = () => {
     },
     medText: {
       color:'white', 
-      //textAlign: 'center',
-      //justifyContent:'center',
       fontSize: 16,
       fontFamily: fonts.fontFamily,
       fontWeight:"400",
       fontFamily: 'Orbitron-Regular',
+    },
+    infoText: {
+      color:'white', 
+      fontSize: 26,
+      fontFamily: fonts.fontFamily,
+      fontWeight:"600",
+      letterSpacing: 1.2,
+      fontFamily: 'Orbitron-Regular',
+      transform: [{ rotate: '90deg' }] ,
+      alignSelf:'flex-end'
     },
     buttonText: {
         color:'white', 
@@ -156,8 +144,9 @@ const JoinGeneralPublicApplication2Screen = () => {
       textAlign: 'center',
       fontSize: 16,
       fontWeight:"600",
+      transform: [{ rotate: '90deg' }] ,
       fontFamily: fonts.regular.fontFamily
-  },
+    },
     joinButton: {
         paddingVertical:10,
         borderRadius: 20,
@@ -241,7 +230,8 @@ const JoinGeneralPublicApplication2Screen = () => {
   },
   videoPlayer: {
       width: '90%',
-      height: '50%',
+      height: '40%',
+      //backgroundColor: 'red'
       //marginHorizontal: 20,
   },
   preview: {
@@ -253,23 +243,62 @@ const JoinGeneralPublicApplication2Screen = () => {
     padding: 10,
     margin: 10,
     backgroundColor: 'lightgray',
-}
+  },
+  buttonContainer1: {
+    //flex: 1,
+    flexDirection:'row',
+    width: '100%',
+    justifyContent: 'space-around',
+    //marginTop: 20
+  },
+  saveButton: {
+    width: 120, 
+    height: 44,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  controlBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  controlButton: {
+    padding: 10,
+    margin: 10,
+    //backgroundColor: 'lightgray',
+    borderRadius: 5,
+    },
   });
 
   const VideoCameraModal = ({ isVisible, onClose, onVideoCaptured, onRetake, onSave  }) => {
     const cameraRef = useRef(null);
+    const [capturedUri, setCapturedUri] = useState(null);
     const [isRecording, setIsRecording] = useState(false);
+    const [videoPaused, setVideoPaused] = useState(true);
     const [remainingTime, setRemainingTime] = useState(60); // Countdown from 60 seconds
 
     const handleSave = () => {
       // compressed = compressImage(capturedUri)
        onVideoCaptured(capturedUri);
-       setCapturedVideo(null); // Reset after saving
+       setCapturedUri(null); // Reset after saving
        onClose(); // Close the modal
      };
      const handleRetake = () => {
        setCapturedVideo(null); // Reset the imageUri to go back to the camera screen
      };
+
+     const stopRecording = () => {
+      if (cameraRef.current && isRecording) {
+          cameraRef.current.stopRecording();
+          setIsRecording(false);
+          setRemainingTime(60);
+      }
+  };
+
+  const togglePlayPause = () => {
+      setVideoPaused(!videoPaused);
+  };
 
     useEffect(() => {
         let interval;
@@ -291,19 +320,12 @@ const JoinGeneralPublicApplication2Screen = () => {
             try {
                 const video = await cameraRef.current.recordAsync();
                 onVideoCaptured(video.uri);
+                setCapturedUri(video.uri);
             } catch (err) {
                 console.error('Video capture error', err);
             }
         } else if (isRecording) {
             stopRecording();
-        }
-    };
-
-    const stopRecording = () => {
-        if (cameraRef.current && isRecording) {
-            cameraRef.current.stopRecording();
-            setIsRecording(false);
-            setRemainingTime(60); // Reset timer when stopped
         }
     };
 
@@ -315,23 +337,39 @@ const JoinGeneralPublicApplication2Screen = () => {
             onRequestClose={onClose}
         >
           {capturedVideo ? (
-                <View style={styles.videoReviewContainer}>
-                   <TouchableOpacity 
-                      style={{flexDirection:'row', justifyContent:'space-between', alignSelf:'flex-start', marginTop: 20, marginLeft: 20}}
-                      onPress={()=>onClose()}
-                    >
-                      <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
-                    </TouchableOpacity>
-                    <Video source={{ uri: capturedVideo }} style={styles.videoPlayer} />
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity onPress={handleRetake} style={styles.actionButton}>
-                            <Text>Retake</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={handleSave} style={styles.actionButton}>
-                            <Text>Save</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+              <View style={styles.videoReviewContainer}>
+                  <TouchableOpacity 
+                    style={{flexDirection:'row', justifyContent:'space-between', alignSelf:'flex-start', marginTop: 20, marginLeft: 20}}
+                    onPress={()=>onClose()}
+                  >
+                    <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
+                  </TouchableOpacity>
+                  <Video
+                      source={{ uri: capturedVideo }}
+                      style={styles.videoPlayer}
+                      paused={videoPaused}
+                      resizeMode="contain"
+                      onEnd={() => setVideoPaused(true)}
+                  />
+                  <View style={styles.controlBar}>
+                      <TouchableOpacity onPress={togglePlayPause} style={styles.controlButton}>
+                          <Icon name={videoPaused ? 'play-circle-outline' : 'pause'} size={40} color={'white'} />
+                      </TouchableOpacity>
+                  </View>
+
+                  <View style = {styles.buttonContainer1}>
+                    <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                      <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+                        <Text style={styles.buttonText}>Save</Text>
+                      </TouchableOpacity>
+                    </LinearGradient>
+                    <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                      <TouchableOpacity onPress={handleRetake} style={styles.saveButton}>
+                        <Text style={styles.buttonText}>Retake</Text>
+                      </TouchableOpacity>
+                    </LinearGradient>
+                  </View>
+              </View>
             ) : (    
                 <RNCamera
                     ref={cameraRef}
@@ -364,6 +402,16 @@ const JoinGeneralPublicApplication2Screen = () => {
                                 >
                                     <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
                                 </TouchableOpacity>
+
+                                {!isRecording &&
+                                <Text style={[styles.infoText, {marginTop: 200 }]}>Please hold your phone horizontally (landscape) during the recording.</Text>}
+
+                                {isRecording &&
+                                <View style={{flexDirection:'row'}}>
+                                  
+                                  <Text style={[styles.infoText, {marginTop: 200 }]}>If you don't know what to say, read this: "I herewith declare that I, (your name), am human and a member of the Martian Republic."</Text>
+                                </View>}
+
                                 <TouchableOpacity 
                                     onPress={handleRecord} 
                                     style={[
@@ -389,9 +437,8 @@ const JoinGeneralPublicApplication2Screen = () => {
       <ScrollView 
             style={styles.root}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 200 }}
       >
-
         <TouchableOpacity 
           style={{flexDirection:'row', justifyContent:'space-between', marginTop: 20, marginLeft: 20}}
           onPress={()=>navigation.goBack()}
@@ -404,37 +451,64 @@ const JoinGeneralPublicApplication2Screen = () => {
           <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>2/3</Text>
         </View>
 
-
         <View style={{ marginTop: 30, marginHorizontal: 20 }}>
             <Text style={styles.medText}>Liveness proof</Text>
         </View>
 
         <View style={{ marginTop: 30, marginHorizontal: 20 }}>   
+          {!capturedVideo && 
             <TouchableOpacity 
               style={styles.cameraButton}
               onPress={() => setModalVisible(true)}
             >
               <Icon name="video" size={36} type="font-awesome-5" color={'lightgray'} />
             </TouchableOpacity>
-            <View>
+          }
+          {capturedVideo &&
+            <TouchableOpacity 
+              style={styles.cameraButton}
+              onPress={() => setModalVisible(true)}
+            >
+              <Video
+                source={{ uri: capturedVideo }}
+                style={styles.videoPlayer}
+                resizeMode='contain'
+              />
+            </TouchableOpacity>
+          }
+          <View>
               <Text style={[styles.smallText, {marginTop: 20}]}>Please record a brief video to verify your identity.</Text>
               <Text style={[styles.medText, {marginTop: 20, color:'#FF7400' }]}>INSTRUCTIONS</Text>
               <Text style={[styles.medText, {marginTop: 20 }]}>1. Hold your phone horizontally (landscape) during the recording.</Text>
               <Text style={[styles.medText, {marginTop: 20 }]}>2. Display your CIVIC ADDRESS clearly on a piece of paper within the video frame.</Text>
               <Text style={[styles.medText, {marginTop: 20 }]}>3. Describe your reasons for wanting to join the Martian Congressional Republic.</Text>
               <Text style={[styles.medText, {marginTop: 20, color:'#FF7400' }]}>Note: Your recording should not exceed 60 seconds.</Text>
-            </View>
+          </View>
         </View>
 
          <View style={{flex:1}}>
-            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+         <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
                 <TouchableOpacity 
                   style={styles.joinButton}
-                  // onPress={}
+                  onPress={ () =>
+                    {
+                      //postName();
+                      //postPhoto();
+                      navigation.navigate('JoinGeneralPublicApplication3Screen', {
+                        // firstName: firstName,
+                        // lastName: lastName,
+                        // displayName: displayName, 
+                        // bio: bio
+                      })
+                  }}
+                  //disabled={!isFormValid}
                 >
                     <Text style={styles.buttonText}>NEXT STEP</Text>
                 </TouchableOpacity>  
             </LinearGradient>
+
+            { !isFormValid &&
+                <Text style={[styles.smallText, {marginTop: 10}]}>Upload video to proceed</Text>}
         </View> 
 
         <VideoCameraModal

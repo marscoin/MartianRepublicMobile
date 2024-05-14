@@ -121,17 +121,28 @@ const App = () => {
     }
   }, [walletsInitialized]);
 
+  const storeCivic = async (address) => {
+    try {
+      await AsyncStorage.setItem('civicAddress', address);
+      console.log('CivicAddress successfully saved', address);
+    } catch (error) {
+      console.error('Failed to save the civicAddress to storage', error);
+    }
+  };
+
   function getCivicAddress(wallets) {
     // Loop through the wallets array
     for (let wallet of wallets) {
         // Check if the wallet has the civic property set to true
         if (wallet.civic) {
             console.log('CIVIC ADDRESS:', wallet._address );
+            storeCivic(wallet._address)
             return wallet._address;
         }
     }
     return null;  // Return null if no civic wallet is found
   }  
+  
   
   function getCivicMnemonic(wallets) {
     // Loop through the wallets array
