@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text,Image,TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, View, TouchableWithoutFeedback, Keyboard, Text,Image, KeyboardAvoidingView, TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -29,6 +29,12 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [civicAddress, setCivicAddress] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const {wallets} = useContext(BlueStorageContext);
+
+  const scrollViewRef = useRef();
+  const firstNameRef = useRef();
+  const lastNameRef = useRef();
+  const displayNameRef = useRef();
+  const bioRef = useRef();
 
   function getCivicAddress(wallets) {
     // Loop through the wallets array
@@ -340,141 +346,150 @@ const JoinGeneralPublicApplicationScreen = () => {
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
     {/* ////margin -80 sticks screen to the tabbar///// */}
-      <ScrollView 
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView 
             style={styles.root}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 200 }}
-      >
-        <View style={styles.center}>
-            <Text style={styles.welcomeText}>Welcome to  </Text>
-            <Image style={styles.iconStyle} source={require('../../img/icon.png')} accessible={false} />
-        </View>
-        <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC </Text>
+            ref={scrollViewRef}
+          >
+            <View style={styles.center}>
+              <Text style={styles.welcomeText}>Welcome to  </Text>
+              <Image style={styles.iconStyle} source={require('../../img/icon.png')} accessible={false} />
+            </View>
+            <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC </Text>
 
-        {/* <View style={{flexDirection:'row', justifyContent:'center', marginTop: 150,}}>
-          <Text style={{fontFamily: fonts.regular.fontFamily, marginHorizontal: 20, color: 'white', fontSize: 18, fontWeight: '700', textAlign:'center'}}>APPLICATION WILL BE AVAILABLE IN THE NEXT VERSION OF THE APP!</Text>
-        </View>
-        <View style={{flex:1}}>
-            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                <TouchableOpacity style={styles.joinButton} onPress={() => navigation.goBack()}>
-                    <Text style={styles.buttonText}>GO BACK</Text>
-                </TouchableOpacity>  
-            </LinearGradient>
-        </View>  */}
+            {/* <View style={{flexDirection:'row', justifyContent:'center', marginTop: 150,}}>
+              <Text style={{fontFamily: fonts.regular.fontFamily, marginHorizontal: 20, color: 'white', fontSize: 18, fontWeight: '700', textAlign:'center'}}>APPLICATION WILL BE AVAILABLE IN THE NEXT VERSION OF THE APP!</Text>
+            </View>
+            <View style={{flex:1}}>
+                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                    <TouchableOpacity style={styles.joinButton} onPress={() => navigation.goBack()}>
+                        <Text style={styles.buttonText}>GO BACK</Text>
+                    </TouchableOpacity>  
+                </LinearGradient>
+            </View>  */}
 
-        <View style={{flexDirection:'row', justifyContent:'space-between', marginTop: 50,}}>
-          <Text style={{fontFamily: fonts.regular.fontFamily, marginLeft: 20,color: 'white', fontSize: 20,}}>APPLICATION</Text>
-          <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>1/3</Text>
-        </View>
+            <View style={{flexDirection:'row', justifyContent:'space-between', marginTop: 50}}>
+              <Text style={{fontFamily: fonts.regular.fontFamily, marginLeft: 20,color: 'white', fontSize: 20,}}>APPLICATION</Text>
+              <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>1/3</Text>
+            </View>
 
-        <View style={{ marginTop: 30, marginHorizontal: 20 }}>
-            <Text style={styles.medText}>First Name *</Text>
-            <TextInput
-                //selectionColor={Colors.primaryColor}
-                value={firstName}
-                placeholder=""
-                placeholderTextColor="white"
-                onChangeText={(text) => setFirstName(text)}
-                style={styles.textFieldWrapStyle}
-                 //ref={workRef}
-                // onFocus={() => handleFocus(workRef)}
-                maxLength={50}
-            />
-          </View>
+            <View style={{ marginTop: 30, marginHorizontal: 20 }}>
+                <Text style={styles.medText}>First Name *</Text>
+                <TextInput
+                    //selectionColor={Colors.primaryColor}
+                    value={firstName}
+                    placeholder=""
+                    placeholderTextColor="white"
+                    onChangeText={(text) => setFirstName(text)}
+                    style={styles.textFieldWrapStyle}
+                    ref={firstNameRef}
+                    onFocus={() => scrollViewRef.current.scrollTo({ y: 0, animated: true })}    
+                    maxLength={50}
+                />
+              </View>
 
-          <View style={{ marginTop: 30, marginHorizontal: 20 }}>
-            <Text style={styles.medText}>Last Name *</Text>
-            <TextInput
-                //selectionColor={Colors.primaryColor}
-                value={lastName}
-                placeholder=""
-                placeholderTextColor="white"
-                onChangeText={(text) => setLastName(text)}
-                style={styles.textFieldWrapStyle}
-                 //ref={workRef}
-                // onFocus={() => handleFocus(workRef)}
-                maxLength={50}
-            />
-          </View>
+              <View style={{ marginTop: 30, marginHorizontal: 20 }}>
+                <Text style={styles.medText}>Last Name *</Text>
+                <TextInput
+                    //selectionColor={Colors.primaryColor}
+                    value={lastName}
+                    placeholder=""
+                    placeholderTextColor="white"
+                    onChangeText={(text) => setLastName(text)}
+                    style={styles.textFieldWrapStyle}
+                    ref={lastNameRef}
+                    onFocus={() => scrollViewRef.current.scrollTo({ y: 0, animated: true })}    
+                    maxLength={50}
+                />
+              </View>
 
-          <View style={{ marginTop: 30, marginHorizontal: 20 }}>
-            <Text style={styles.medText}>Display Name *</Text>
-            <TextInput
-                //selectionColor={Colors.primaryColor}
-                value={displayName}
-                placeholder=""
-                placeholderTextColor="white"
-                onChangeText={(text) => setDisplayName(text)}
-                style={styles.textFieldWrapStyle}
-                 //ref={workRef}
-                // onFocus={() => handleFocus(workRef)}
-                maxLength={50}
-            />
-          </View>
+              <View style={{ marginTop: 30, marginHorizontal: 20 }}>
+                <Text style={styles.medText}>Display Name *</Text>
+                <TextInput
+                    //selectionColor={Colors.primaryColor}
+                    value={displayName}
+                    placeholder=""
+                    placeholderTextColor="white"
+                    onChangeText={(text) => setDisplayName(text)}
+                    style={styles.textFieldWrapStyle}
+                    ref={displayNameRef}
+                    onFocus={() => scrollViewRef.current.scrollTo({ y: 150, animated: true })}    
+                    maxLength={50}
+                />
+              </View>
 
-          <View style={{ marginTop: 30, marginHorizontal: 20 }}>
-            <Text style={styles.medText}>Short Bio *</Text>
-            <TextInput
-                value={bio}
-                placeholder=""
-                placeholderTextColor="white"
-                onChangeText={(text) => setBio(text)}
-                style={[styles.textFieldWrapStyle, {height: 100}]}
-                 //ref={workRef}
-                // onFocus={() => handleFocus(workRef)}
-                maxLength={700}
-                multiline={true}
-            />
-          </View>
+              <View style={{ marginTop: 30, marginHorizontal: 20 }}>
+                <Text style={styles.medText}>Short Bio *</Text>
+                <TextInput
+                    value={bio}
+                    placeholder=""
+                    placeholderTextColor="white"
+                    onChangeText={(text) => setBio(text)}
+                    style={[styles.textFieldWrapStyle, {height: 100}]}
+                    ref={bioRef}
+                    onFocus={() => scrollViewRef.current.scrollTo({ y: 300, animated: true })}    
+                    maxLength={700}
+                    multiline={true}
+                />
+              </View>
 
-          <View style={{ marginTop: 30, marginHorizontal: 20 }}>
-            <Text style={styles.medText}>Photo ID*</Text>         
-            <TouchableOpacity 
-              style={styles.cameraButton}
-              onPress={() => setModalVisible(true)}
-            >
-            {capturedImage && (
-              <Image source={{ uri: capturedImage }} style={{ width: 118, height: 138, borderRadius: 8, }} />
-            )}
-            {!capturedImage &&
-              <Icon name="camera" size={36} type="font-awesome-5" color={'lightgray'} />
-            }
-            </TouchableOpacity>
-            <Text style={[styles.smallText, {marginTop: 10}]}> - Your full face, eyes and hairline must be visible </Text>
-            <Text style={[styles.smallText, {marginTop: 10}]}> - No hats, head coverings, sunglasses, earbuds, hands or other objects that obscure your face </Text>
-          </View>
-
-          <CameraModal
-            isVisible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            onImageCaptured={handleImageCaptured}
-          />
-
-         <View style={{flex:1}}>
-         <TouchableOpacity 
-                  style={styles.joinButton}
-                   onPress={ () =>
-                    {
-                      // postName();
-                      // postPhoto();
-                      navigation.navigate('JoinGeneralPublicApplication2Screen', {
-                        firstName: firstName,
-                        lastName: lastName,
-                        displayName: displayName, 
-                        bio: bio
-                      })
-                   }}
-                   //disabled={!isFormValid}  // Disable the button if form is not valid
+              <View style={{ marginTop: 30, marginHorizontal: 20 }}>
+                <Text style={styles.medText}>Photo ID*</Text>         
+                <TouchableOpacity 
+                  style={styles.cameraButton}
+                  onPress={() => setModalVisible(true)}
                 >
-            <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
-                    <Text style={styles.buttonText}>NEXT STEP</Text>
-            </LinearGradient>
-            </TouchableOpacity>  
+                {capturedImage && (
+                  <Image source={{ uri: capturedImage }} style={{ width: 118, height: 138, borderRadius: 8, }} />
+                )}
+                {!capturedImage &&
+                  <Icon name="camera" size={36} type="font-awesome-5" color={'lightgray'} />
+                }
+                </TouchableOpacity>
+                <Text style={[styles.smallText, {marginTop: 10}]}> - Your full face, eyes and hairline must be visible </Text>
+                <Text style={[styles.smallText, {marginTop: 10}]}> - No hats, head coverings, sunglasses, earbuds, hands or other objects that obscure your face </Text>
+              </View>
 
-            { !isFormValid &&
-            <Text style={styles.smallText}>All fields marked with * are mandatory to proceed</Text>}
-        </View>  
-      </ScrollView>  
+              <CameraModal
+                isVisible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                onImageCaptured={handleImageCaptured}
+              />
+
+            <View style={{flex:1}}>
+            <TouchableOpacity 
+                      style={styles.joinButton}
+                      onPress={ () =>
+                        {
+                          // postName();
+                          // postPhoto();
+                          navigation.navigate('JoinGeneralPublicApplication2Screen', {
+                            firstName: firstName,
+                            lastName: lastName,
+                            displayName: displayName, 
+                            bio: bio
+                          })
+                      }}
+                      //disabled={!isFormValid}  // Disable the button if form is not valid
+                    >
+                <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
+                        <Text style={styles.buttonText}>NEXT STEP</Text>
+                </LinearGradient>
+                </TouchableOpacity>  
+
+                { !isFormValid &&
+                <Text style={styles.smallText}>All fields marked with * are mandatory to proceed</Text>}
+            </View>  
+          </ScrollView> 
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView> 
     </SafeAreaView>
   );
 };
