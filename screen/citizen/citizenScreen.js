@@ -99,233 +99,6 @@ const CitizenScreen = () => {
       }
 
     const [state, dispatch] = useReducer(martianReducer, initialState);
-    
-    const styles = StyleSheet.create({
-        root: {
-            flex:1,
-        },
-        center: {
-            marginTop: 20,
-            height:80,
-            flexDirection:'row',
-            marginHorizontal: 16,
-            justifyContent:'center',
-            alignItems:'center'
-        },
-        welcomeText: {
-            color:'white', 
-            textAlign: 'center',
-            justifyContent:'center',
-            fontSize: 24,
-            fontFamily: 'Orbitron-Black',
-            marginTop: 30
-        },
-        smallText: {
-            color:'white', 
-            textAlign: 'center',
-            justifyContent:'center',
-            fontSize: 10,
-            fontFamily: 'Orbitron-SemiBold',
-            letterSpacing: 1.5, 
-        },
-        buttonText: {
-            color:'white', 
-            textAlign: 'center',
-            fontSize: 18,
-            fontFamily: 'Orbitron-Black',
-            letterSpacing: 1.5, 
-        },
-        joinButton: {
-            height: 60,
-            borderRadius: 20,
-            marginHorizontal: 20,
-            justifyContent:'center',
-        },
-        joinButtonGradient: {
-            height: 60,
-            borderRadius: 20,
-            marginHorizontal: 20,
-        },
-        iconStyle: {
-            width:80,
-            maxHeight: 80,
-            marginTop: 30,
-        },
-        itemRoot: {
-            backgroundColor: 'transparent',
-            padding: 10,
-            marginVertical: 17,
-        },
-        image: {
-            width: 50,
-            height: 45,
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-        },
-        imageLG: {
-            width: '100%',
-            height: 100,
-            marginTop: 0
-        },
-        transparentText: {
-            backgroundColor: 'transparent',
-            fontFamily: 'Orbitron-Black',
-            letterSpacing: 1.5, 
-        },
-        label: {
-            backgroundColor: 'transparent',
-            fontSize: 14,
-            color: '#fff',
-            writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-            fontFamily: 'Orbitron-Black',
-            letterSpacing: 1.5, 
-        },
-        balance: {
-            backgroundColor: 'transparent',
-            fontWeight: 'bold',
-            fontSize: 20,
-            writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-            color: '#fff',
-            fontFamily: 'Orbitron-Black',
-            letterSpacing: 1.1, 
-        },
-        gradient: {
-            padding: 15,
-            borderRadius: 10,
-            minHeight: 30,
-            width: 120,
-            elevation: 5,
-        },
-        noWallet: {
-            height: 200,
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: '#FF7400',
-            borderStyle:'dashed',
-            marginHorizontal: 20,
-            alignItems:'center',
-            justifyContent: 'center', 
-            padding:30
-        },
-        noWalletText: {
-            color:'white', 
-            textAlign: 'center',
-            fontSize: 18,
-            fontWeight:"600",
-            fontFamily: 'Orbitron-Regular',
-            letterSpacing: 1.1, 
-        },
-        filterButton: {
-            height: 24,
-            borderRadius: 10,
-            justifyContent:'center',
-            alignItems:'center',
-            padding: 5
-        },
-        filterButtonText: {
-            color:'white', 
-            fontSize: 10,
-            fontFamily: 'Orbitron-Black',
-            letterSpacing: 1.5, 
-        },
-        filterButtonGradientActive: {
-            height: 24,
-            borderRadius: 10,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            justifyContent:'center',
-            alignItems:'center',
-        },
-        filterButtonGradientInactive: {
-            height: 24,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            borderRadius: 10,
-            justifyContent:'center',
-            alignItems:'center',
-            backgroundColor: '#B0B0B0', // Grey color for inactive state
-        },
-        filterBlock: {
-            flex:1, 
-            width:'100%',
-            alignItems: 'center', 
-            justifyContent:'space-around',
-            flexDirection:'row',
-            borderWidth: 1,
-            borderBottomWidth: 0.5,
-            borderColor: '#FF7400',
-            padding: 10,
-            borderTopRightRadius: 10,
-            borderTopLeftRadius: 10
-        },
-        citizensContainer: {
-            flex: 1, 
-            width: windowWidth,
-            borderWidth: 0.5,
-            borderColor: '#FF7400',
-            //backgroundColor: 'white'
-          },
-        citizenItem: {
-            //height: 100,
-            flexDirection: 'row',
-            alignItems: 'center',
-           // justifyContent: 'space-between',
-            borderBottomWidth: 0.3,
-            borderColor: '#FF7400',
-            padding: 10,
-            width: windowWidth,
-            //backgroundColor: 'white'
-        },
-        citizenImage: {
-            width: windowWidth * 0.19,
-            height: windowWidth * 0.19,
-            marginHorizontal: 5,
-            borderRadius: 10
-        },
-        citizenAddress: {
-            fontSize: 14,
-            color: '#FFF',
-            marginTop: 5,
-            fontFamily: 'Orbitron-Regular',
-        },
-        missingFieldsText: {
-            fontSize: 10,
-            color: '#FFF',
-            marginTop: 3,
-            fontFamily: 'Orbitron-Regular',
-        },
-        citizenDate: {
-            fontSize: 14,
-            color: '#AAA',
-            marginTop: 5,
-            fontFamily: 'Orbitron-Regular',
-        },
-        citizenName: {
-            fontSize: 18,
-            color:  '#FF7400',
-            fontFamily: 'Orbitron-Regular',
-            fontWeight:"500",
-            letterSpacing: 1.1, 
-            //marginRight: 50,
-        },
-        endorsTxt: {
-            fontSize: 8,
-            color:  '#FF7400',
-            fontFamily: 'Orbitron-Regular',
-            fontWeight:"500",
-            // marginBottom: 5
-        },
-        endorseButton: {
-            borderColor:  '#FF7400',
-            borderWidth:1,
-            borderRadius: 10,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            alignItems: 'center',
-            justifyContent: 'center'
-        },
-    });
 
     const fetchGeneralPublic = async () => {
         try {
@@ -351,7 +124,6 @@ const CitizenScreen = () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/citizen?page=${citizenPageRef.current}`);
             //console.log('CITIZENS', response.data);
-    
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedCitizens.current) === JSON.stringify(response.data)) {
                 console.log("No new citizens data to fetch.");
@@ -370,15 +142,26 @@ const CitizenScreen = () => {
 
     const fetchApplicants = async () => {
         try {
-            const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`)
-            console.log('APPLICANTS', response.data)
-            dispatch({ type: 'SET_APPLICANTS', payload: response.data });   
-            dispatch({ type: 'SET_LAST_PAGE_APPLICANTS', payload: response.data.last_page });   
+            const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`);
+            
+            console.log('APPLICANTS', response.data);
+            const sortedApplicants = response.data.data.sort((a, b) => {
+                const countA = countMissingFields(a);
+                const countB = countMissingFields(b);
+                return countA - countB;
+            });
+            // Prepare the whole response object with the sorted data
+            const updatedResponse = {
+                ...response.data,
+                data: sortedApplicants
+            };
+            dispatch({ type: 'SET_APPLICANTS', payload: updatedResponse });
+            dispatch({ type: 'SET_LAST_PAGE_APPLICANTS', payload: response.data.last_page });
         } catch (error) {
-            console.error(`Error fetching applicants:`, error);   
+            console.error(`Error fetching applicants:`, error);
         } finally {
         }
-    }
+    };
 
     const getMissingFields = (applicant) => {
         const allFields = ["name", "shortbio", "avatar_link", "liveness_link"];
@@ -403,8 +186,31 @@ const CitizenScreen = () => {
     
         return missingFields;
     };
-      
 
+    const countMissingFields = (applicant) => {
+        let count = 0;
+        // Check if the citizen object is present and proceed accordingly
+        if (!applicant.citizen) {return 4}
+        // Check each field in the citizen object and increment the count if the field is missing
+        if (!applicant.citizen.firstname || !applicant.citizen.lastname || !applicant.citizen.displayname) {
+            count++; // Treating any missing part of the name as one missing field
+        }
+        if (!applicant.citizen.shortbio) {count++}
+        if (!applicant.citizen.avatar_link) {count++}
+        if (!applicant.citizen.liveness_link) {count++}
+        return count;
+    };
+
+    const hasAllFields = (applicant) => {
+        if (!applicant.citizen) return false;
+        return applicant.citizen.firstname && 
+               applicant.citizen.lastname && 
+               applicant.citizen.displayname && 
+               applicant.citizen.shortbio && 
+               applicant.citizen.avatar_link && 
+               applicant.citizen.liveness_link;
+    };
+      
     useEffect(() => {
         // Check if any civic wallet matches a citizen's address
         const checkIfCitizen = () => {
@@ -416,7 +222,6 @@ const CitizenScreen = () => {
                 dispatch({ type: 'SET_IS_CITIZEN', payload: true });
             }
         };
-
         if (wallets.length > 0 && state.citizens.length > 0) {
             checkIfCitizen();
         }
@@ -642,7 +447,7 @@ const CitizenScreen = () => {
                             extraData={state.applicants.data}
                             renderItem={({ item }) => {
                                 const missingFields = getMissingFields(item);
-                            
+                                const allFieldsPresent = hasAllFields(item);
                                 return (
                                     <View key={item.userid} style={styles.citizenItem}>
                                         <View style={{ flex: 1, flexDirection: 'row' }}>
@@ -651,14 +456,14 @@ const CitizenScreen = () => {
                                                 {item.address && <Text numberOfLines={2} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>}
                                                 {item.citizen&&item.citizen.updated_at && <Text numberOfLines={2} style={styles.citizenAddress}>Last update: {new Date(item.citizen.updated_at).toLocaleDateString()}</Text>}
                                             </View>
-                                            <View style={{ alignItems: 'flex-start', marginLeft: 10 }}>
+                                            <View style={{ alignItems: 'flex-start', marginLeft: 5 }}>
                                                 {["name", "shortbio", "avatar_link", "liveness_link"].map((field, index) => (
                                                     <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
                                                         <View style={{
                                                             width: 6,
                                                             height: 6,
                                                             borderRadius: 3,
-                                                            backgroundColor: missingFields.has(field) ? '#FF7400' : 'white',
+                                                            backgroundColor: missingFields.has(field) ? 'white' : '#67FC58',
                                                         }}/>
                                                         <Text numberOfLines={1} style={[styles.missingFieldsText, { marginLeft: 5 }]}>
                                                             {field.charAt(0).toUpperCase() + field.slice(1).replace("_link", "").replace("_", " ")}
@@ -666,6 +471,17 @@ const CitizenScreen = () => {
                                                     </View>
                                                 ))}
                                             </View>
+                                            {allFieldsPresent && (
+                                                    <TouchableOpacity 
+                                                        style={styles.completeButton}
+                                                        onPress={() => navigation.navigate('SendWithAddress')}
+                                                    >
+                                                        <Text style={styles.donateText}>
+                                                            DONATE
+                                                        </Text>
+                                                        <Image style={styles.marscoinStyle} source={require('../../img/marscoin.png')} accessible={false} />
+                                                    </TouchableOpacity>
+                                                )}
                                         </View>
                                     </View>
                                 );
@@ -673,7 +489,7 @@ const CitizenScreen = () => {
                             keyExtractor={(item) => item.userid.toString()}
                             onEndReached={handleEndApplicantsReached}
                             onEndReachedThreshold={0.5}
-                            scrollEnabled={true}
+                            scrollEnabled={false}
                         />
                     </View>
                 }
@@ -682,5 +498,253 @@ const CitizenScreen = () => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+    root: {
+        flex:1,
+    },
+    center: {
+        marginTop: 20,
+        height:80,
+        flexDirection:'row',
+        marginHorizontal: 16,
+        justifyContent:'center',
+        alignItems:'center'
+    },
+    welcomeText: {
+        color:'white', 
+        textAlign: 'center',
+        justifyContent:'center',
+        fontSize: 24,
+        fontFamily: 'Orbitron-Black',
+        marginTop: 30
+    },
+    smallText: {
+        color:'white', 
+        textAlign: 'center',
+        justifyContent:'center',
+        fontSize: 10,
+        fontFamily: 'Orbitron-SemiBold',
+        letterSpacing: 1.5, 
+    },
+    buttonText: {
+        color:'white', 
+        textAlign: 'center',
+        fontSize: 18,
+        fontFamily: 'Orbitron-Black',
+        letterSpacing: 1.5, 
+    },
+    joinButton: {
+        height: 60,
+        borderRadius: 20,
+        marginHorizontal: 20,
+        justifyContent:'center',
+    },
+    joinButtonGradient: {
+        height: 60,
+        borderRadius: 20,
+        marginHorizontal: 20,
+    },
+    iconStyle: {
+        width:80,
+        maxHeight: 80,
+        marginTop: 30,
+    },
+    marscoinStyle: {
+        width: 33,
+        maxHeight: 33,
+        marginTop: 3
+    },
+    itemRoot: {
+        backgroundColor: 'transparent',
+        padding: 10,
+        marginVertical: 17,
+    },
+    image: {
+        width: 50,
+        height: 45,
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+    },
+    imageLG: {
+        width: '100%',
+        height: 100,
+        marginTop: 0
+    },
+    transparentText: {
+        backgroundColor: 'transparent',
+        fontFamily: 'Orbitron-Black',
+        letterSpacing: 1.5, 
+    },
+    label: {
+        backgroundColor: 'transparent',
+        fontSize: 14,
+        color: '#fff',
+        writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+        fontFamily: 'Orbitron-Black',
+        letterSpacing: 1.5, 
+    },
+    balance: {
+        backgroundColor: 'transparent',
+        fontWeight: 'bold',
+        fontSize: 20,
+        writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+        color: '#fff',
+        fontFamily: 'Orbitron-Black',
+        letterSpacing: 1.1, 
+    },
+    gradient: {
+        padding: 15,
+        borderRadius: 10,
+        minHeight: 30,
+        width: 120,
+        elevation: 5,
+    },
+    noWallet: {
+        height: 200,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#FF7400',
+        borderStyle:'dashed',
+        marginHorizontal: 20,
+        alignItems:'center',
+        justifyContent: 'center', 
+        padding:30
+    },
+    noWalletText: {
+        color:'white', 
+        textAlign: 'center',
+        fontSize: 18,
+        fontWeight:"600",
+        fontFamily: 'Orbitron-Regular',
+        letterSpacing: 1.1, 
+    },
+    filterButton: {
+        height: 24,
+        borderRadius: 10,
+        justifyContent:'center',
+        alignItems:'center',
+        padding: 5
+    },
+    filterButtonText: {
+        color:'white', 
+        fontSize: 10,
+        fontFamily: 'Orbitron-Black',
+        letterSpacing: 1.5, 
+    },
+    filterButtonGradientActive: {
+        height: 24,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        justifyContent:'center',
+        alignItems:'center',
+    },
+    filterButtonGradientInactive: {
+        height: 24,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+        justifyContent:'center',
+        alignItems:'center',
+        backgroundColor: '#B0B0B0', // Grey color for inactive state
+    },
+    filterBlock: {
+        flex:1, 
+        width:'100%',
+        alignItems: 'center', 
+        justifyContent:'space-around',
+        flexDirection:'row',
+        borderWidth: 1,
+        borderBottomWidth: 0.5,
+        borderColor: '#FF7400',
+        padding: 10,
+        borderTopRightRadius: 10,
+        borderTopLeftRadius: 10
+    },
+    citizensContainer: {
+        flex: 1, 
+        width: windowWidth,
+        borderWidth: 0.5,
+        borderColor: '#FF7400',
+        //backgroundColor: 'white'
+      },
+    citizenItem: {
+        //height: 100,
+        flexDirection: 'row',
+        alignItems: 'center',
+       // justifyContent: 'space-between',
+        borderBottomWidth: 0.3,
+        borderColor: '#FF7400',
+        padding: 10,
+        width: windowWidth,
+        //backgroundColor: 'white'
+    },
+    citizenImage: {
+        width: windowWidth * 0.19,
+        height: windowWidth * 0.19,
+        marginHorizontal: 5,
+        borderRadius: 10
+    },
+    citizenAddress: {
+        fontSize: 12,
+        color: '#FFF',
+        marginTop: 5,
+        fontFamily: 'Orbitron-Regular',
+    },
+    missingFieldsText: {
+        fontSize: 10,
+        color: '#FFF',
+        marginTop: 3,
+        fontFamily: 'Orbitron-Regular',
+    },
+    donateText: {
+        fontSize: 9,
+        color: '#FFF',
+        fontFamily: 'Orbitron-Black',
+    },
+    citizenDate: {
+        fontSize: 12,
+        color: '#AAA',
+        marginTop: 5,
+        fontFamily: 'Orbitron-Regular',
+    },
+    citizenName: {
+        fontSize: 18,
+        color:  '#FF7400',
+        fontFamily: 'Orbitron-Regular',
+        fontWeight:"500",
+        letterSpacing: 1.1, 
+        //marginRight: 50,
+    },
+    endorsTxt: {
+        fontSize: 8,
+        color:  '#FF7400',
+        fontFamily: 'Orbitron-Regular',
+        fontWeight:"500",
+        // marginBottom: 5
+    },
+    endorseButton: {
+        borderColor:  '#FF7400',
+        borderWidth:1,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    completeButton: {
+        //backgroundColor: '#FF7400',  // Orange color
+        height: 60,
+        alignSelf:'center',
+        alignItems:'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 8,
+        borderRadius: 16,
+        marginLeft: 20,  // Push the button to the far right
+    },
+});
 
 export default CitizenScreen;

@@ -30,8 +30,6 @@ const TransactionIncomingIcon = props => {
     <View style={styles.boxIncoming}>
       <View style={[styles.ballIncoming, stylesHooks.ballIncoming]}>
         <Icon name="arrow-right-bold-hexagon-outline" size={33} type="material-community" color={colors.incomingForegroundColor} />
-        {/* <FontAwesomeIcon icon={faArrowRightFromBracket} size={22} color="white" /> */}
-        
       </View>
     </View>
   );

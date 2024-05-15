@@ -97,6 +97,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import CitizenScreen from './screen/citizen/citizenScreen';
+import SendWithAddress from './screen/citizen/sendWithAddress';
 import AreYouCitizenScreen from './screen/citizen/areYouCitizen';
 import ImportCivicWalletScreen from './screen/citizen/importCivicWalletScreen';
 import ImportCivicWalletDiscovery from './screen/citizen/importCivicDiscovery';
@@ -277,6 +278,12 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication2Screen" component={JoinGeneralPublicApplication2Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication3Screen" component={JoinGeneralPublicApplication3Screen}  options={{headerShown: false}} />
+      <CitizenStack.Screen
+        name="SendWithAddress"
+        component={SendWithAddress}
+        //options={SendWithAddress.navigationOptions(theme)}
+        initialParams={SendWithAddress.initialParams}
+      />
     </CitizenStack.Navigator>
   );
 };
