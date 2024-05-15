@@ -270,7 +270,7 @@ const CitizenScreen = () => {
             //height: 100,
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'space-between',
+           // justifyContent: 'space-between',
             borderBottomWidth: 0.3,
             borderColor: '#FF7400',
             padding: 10,
@@ -284,14 +284,22 @@ const CitizenScreen = () => {
             borderRadius: 10
         },
         citizenAddress: {
-            fontSize: 16,
+            fontSize: 14,
             color: '#FFF',
             marginTop: 5,
+            fontFamily: 'Orbitron-Regular',
+        },
+        missingFieldsText: {
+            fontSize: 10,
+            color: '#FFF',
+            marginTop: 3,
+            fontFamily: 'Orbitron-Regular',
         },
         citizenDate: {
             fontSize: 14,
             color: '#AAA',
-            marginTop: 5
+            marginTop: 5,
+            fontFamily: 'Orbitron-Regular',
         },
         citizenName: {
             fontSize: 18,
@@ -371,6 +379,31 @@ const CitizenScreen = () => {
         } finally {
         }
     }
+
+    const getMissingFields = (applicant) => {
+        const allFields = ["name", "shortbio", "avatar_link", "liveness_link"];
+        const missingFields = new Set();
+    
+        if (!applicant || !applicant.citizen) {
+            allFields.forEach(field => missingFields.add(field));
+            return missingFields;
+        }
+    
+        // Check if any part of the name is missing
+        if (!applicant.citizen.firstname || !applicant.citizen.lastname || !applicant.citizen.displayname) {
+            missingFields.add("name");
+        }
+    
+        // Add field to missingFields if it's empty or missing
+        allFields.forEach(field => {
+            if (field !== "name" && !applicant.citizen[field]) {
+                missingFields.add(field);
+            }
+        });
+    
+        return missingFields;
+    };
+      
 
     useEffect(() => {
         // Check if any civic wallet matches a citizen's address
@@ -607,20 +640,40 @@ const CitizenScreen = () => {
                             key={'applicants-list'}
                             data={state.applicants.data}
                             extraData={state.applicants.data}
-                            renderItem={({ item }) => (
-                                <View key={item.userid} style={styles.citizenItem}>
-                                    <View style={{ marginLeft: 10 }}>
-                                        <Text style={styles.citizenName}>{item.fullname}</Text>
-                                        {item.address &&
-                                        <Text style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text> 
-                                        }
+                            renderItem={({ item }) => {
+                                const missingFields = getMissingFields(item);
+                            
+                                return (
+                                    <View key={item.userid} style={styles.citizenItem}>
+                                        <View style={{ flex: 1, flexDirection: 'row' }}>
+                                            <View style={{justifyContent: 'center', width: '56%', marginLeft: 10 }}>
+                                                <Text numberOfLines={2} style={styles.citizenName}>{item.fullname}</Text>
+                                                {item.address && <Text numberOfLines={2} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>}
+                                                {item.citizen&&item.citizen.updated_at && <Text numberOfLines={2} style={styles.citizenAddress}>Last update: {new Date(item.citizen.updated_at).toLocaleDateString()}</Text>}
+                                            </View>
+                                            <View style={{ alignItems: 'flex-start', marginLeft: 10 }}>
+                                                {["name", "shortbio", "avatar_link", "liveness_link"].map((field, index) => (
+                                                    <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
+                                                        <View style={{
+                                                            width: 6,
+                                                            height: 6,
+                                                            borderRadius: 3,
+                                                            backgroundColor: missingFields.has(field) ? '#FF7400' : 'white',
+                                                        }}/>
+                                                        <Text numberOfLines={1} style={[styles.missingFieldsText, { marginLeft: 5 }]}>
+                                                            {field.charAt(0).toUpperCase() + field.slice(1).replace("_link", "").replace("_", " ")}
+                                                        </Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        </View>
                                     </View>
-                                </View>
-                            )}
-                            keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                                );
+                            }}
+                            keyExtractor={(item) => item.userid.toString()}
                             onEndReached={handleEndApplicantsReached}
-                            onEndReachedThreshold={0.5} 
-                            scrollEnabled={false}
+                            onEndReachedThreshold={0.5}
+                            scrollEnabled={true}
                         />
                     </View>
                 }

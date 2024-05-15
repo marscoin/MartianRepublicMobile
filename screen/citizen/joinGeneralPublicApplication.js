@@ -122,7 +122,6 @@ const JoinGeneralPublicApplicationScreen = () => {
     }
 };
 
-
   useEffect(() => {
     if (photoIPFS) {
       navigation.navigate('JoinGeneralPublicApplication2Screen', {
