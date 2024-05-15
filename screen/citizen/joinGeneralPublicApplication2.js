@@ -13,13 +13,16 @@ import { RNCamera } from 'react-native-camera';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const JoinGeneralPublicApplication2Screen = () => {
+const JoinGeneralPublicApplication2Screen = ({params}) => {
   const navigation = useNavigation();
   const { colors, fonts } = useTheme();
   const route = useRoute();
+  const {firstName, lastName, displayName, bio, photo} = route.params;
+  console.log('PARAMS',route.params )
   const [modalVisible, setModalVisible] = useState(false);
   const [capturedVideo, setCapturedVideo] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [videoIPFS, setVideoIPFS] = useState(null);
   
   const onVideoCaptured = (videoUri) => {
     setCapturedVideo(videoUri);
@@ -57,11 +60,33 @@ const JoinGeneralPublicApplication2Screen = () => {
     })
     .then(response => {
       console.log('Video pinned!!!! hash:', response.data.hash);
+      setVideoIPFS(response.data.hash)
     })
     .catch(error => {
       console.error('Error:', error.response);
     });
   }
+
+  const handleSubmit = async () => {
+    try {
+        await postVideo();
+    } catch (error) {
+        console.error("Error in submission video:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (videoIPFS) {
+      navigation.navigate('JoinGeneralPublicApplication3Screen', {
+        firstName,
+        lastName,
+        displayName,
+        bio,
+        photo,
+        video: videoIPFS
+      });
+    }
+  }, [videoIPFS]); 
 
   // async function compressVideo(imageUri) {
   //   try {
@@ -482,17 +507,7 @@ const JoinGeneralPublicApplication2Screen = () => {
          <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
                 <TouchableOpacity 
                   style={styles.joinButton}
-                  onPress={ () =>
-                    {
-                      //postName();
-                      //postPhoto();
-                      navigation.navigate('JoinGeneralPublicApplication3Screen', {
-                        // firstName: firstName,
-                        // lastName: lastName,
-                        // displayName: displayName, 
-                        // bio: bio
-                      })
-                  }}
+                  onPress={handleSubmit}
                   //disabled={!isFormValid}
                 >
                     <Text style={styles.buttonText}>NEXT STEP</Text>

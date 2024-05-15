@@ -10,6 +10,7 @@ import WalletGradient from '../../class/wallet-gradient';
 import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
 import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const windowWidth = Dimensions.get('window').width;
@@ -37,6 +38,23 @@ const CitizenScreen = () => {
     const lastFetchedPublic = useRef([]);
     const route = useRoute();
     const imageLoadError = useRef({});
+
+    async function fetchUser() {
+        //console.log('USER DATA1');
+        const token = await AsyncStorage.getItem('@auth_token');
+        response = await axios.post("https://martianrepublic.org/api/scitizen", {
+            // firstname:'',
+            //lastname: '',
+     //bio:''
+          }, {
+          headers: {'Authorization': `Bearer ${token}`}
+        })
+        console.log('USER DATA', response.data);
+        
+      }
+      useEffect(() => {
+        fetchUser()
+      }, []);  
 
     function martianReducer(state, action) {
         switch (action.type) {
@@ -345,7 +363,7 @@ const CitizenScreen = () => {
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`)
-            //console.log('APPLICANTS', response.data)
+            console.log('APPLICANTS', response.data)
             dispatch({ type: 'SET_APPLICANTS', payload: response.data });   
             dispatch({ type: 'SET_LAST_PAGE_APPLICANTS', payload: response.data.last_page });   
         } catch (error) {

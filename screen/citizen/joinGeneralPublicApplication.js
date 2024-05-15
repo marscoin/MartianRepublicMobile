@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, StyleSheet, View, TouchableWithoutFeedback, Keyboard, Text,Image, KeyboardAvoidingView, TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, View, TouchableWithoutFeedback, Keyboard, Text,Image, KeyboardAvoidingView, TouchableOpacity, TextInput, I18nManager, Modal, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -15,10 +15,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { address } from 'bitcoinjs-lib';
 import { get } from '../../__mocks__/react-native-tor';
 
-
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
   const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const route = useRoute();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -26,6 +26,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [bio, setBio] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [photoIPFS, setPhotoIPFS] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const {wallets} = useContext(BlueStorageContext);
 
@@ -53,14 +54,13 @@ const JoinGeneralPublicApplicationScreen = () => {
       console.error('Error compressing image:', error);
     }
   }
-
   async function postName() {
     const token = await AsyncStorage.getItem('@auth_token');
-    response = await axios.post("https://martianrepublic.org/api/scitizen", {
+    return axios.post("https://martianrepublic.org/api/scitizen", {
       firstname: firstName,
       lastname: lastName,
       displayname: displayName,
-      shortbio: bio, 
+      shortbio: bio,
     }, {
       headers: {'Authorization': `Bearer ${token}`}
     })
@@ -71,165 +71,69 @@ const JoinGeneralPublicApplicationScreen = () => {
       console.error('Error:', error.response);
     });
   }
-
+  
   async function postPhoto() {
     const token = await AsyncStorage.getItem('@auth_token');
     const civicAddress = await AsyncStorage.getItem('civicAddress');
-    // Convert the image to Base64
     const base64 = await RNFS.readFile(capturedImage, 'base64');
     const imageData = `data:image/jpeg;base64,${base64}`;
 
-    response = await axios.post("https://martianrepublic.org/api/pinpic", {
-      picture: imageData,
-      type: 'profile_pic',
-      address: civicAddress,
-    }, {
-      headers: {'Authorization': `Bearer ${token}`}
-    })
-    .then(response => {
-      console.log('Photo pinned!!!! hash:', response.data.Hash);
-    })
-    .catch(error => {
-      console.error('Error:', error.response);
-    });
+    try {
+        const response = await axios.post("https://martianrepublic.org/api/pinpic", {
+            picture: imageData,
+            type: 'profile_pic',
+            address: civicAddress,
+        }, {
+            headers: {'Authorization': `Bearer ${token}`}
+        });
+        console.log('Photo pinned!!!! hash:', response.data.Hash);
+        setPhotoIPFS(response.data.Hash);
+    } catch (error) {
+        console.error('Error posting photo:', error.response || error);
+    }
   }
-  
-  const styles = StyleSheet.create({
-    root: {
-      flex:1
-    },
-    center: {
-      height:80,
-      backgroundColor:'red',
-      flexDirection:'row',
-      marginHorizontal: 16,
-      backgroundColor: colors.elevated,
-      justifyContent:'center',
-      alignItems:'center'
-    },
-    welcomeText: {
-        color:'white', 
-        textAlign: 'center',
-        justifyContent:'center',
-        fontSize: 24,
-        fontFamily: 'Orbitron-Black',
-        marginTop: 30
-    },
-    smallText: {
-        color:'white', 
-        textAlign: 'center',
-        justifyContent:'center',
-        fontSize: 10,
-        fontFamily: 'Orbitron-SemiBold'
-    },
-    medText: {
-      color:'white', 
-      fontSize: 16,
-      fontFamily: fonts.fontFamily,
-      fontWeight:"400",
-      fontFamily: 'Orbitron-Regular',
-    },
-    buttonText: {
-        color:'white', 
-        textAlign: 'center',
-        fontSize: 18,
-        fontWeight:"600",
-        fontFamily: fonts.regular.fontFamily
-    },
-    joinButton: {
-        paddingVertical:10,
-        width: '90%',
-        borderRadius: 20,
-        marginHorizontal: 20,
-        justifyContent:'center',
-    },
-    joinButtonGradient: {
-        paddingVertical:10,
-        alignItems:'center',
-        justifyContent:'center',
-        borderRadius: 20,
-        marginHorizontal: 40,
-        marginTop: 50,
-        height: 60,
-    },
-    iconStyle: {
-      width:80,
-      maxHeight: 80,
-      marginTop: 30,
-    },
-    textFieldWrapStyle: {
-      height: 40,
-      marginTop: 10,
-      borderRadius: 8,
-      elevation: 2.0,
-      backgroundColor:colors.inputBackgroundColor,
-      borderColor: 'white',
-      borderWidth: 0.7,
-      paddingHorizontal: 5,
-      paddingVertical: 5,
-      fontFamily: 'Orbitron-Regular', 
-      letterSpacing: 1.1,
-      fontSize: 14,
-      color: 'white'
-    },
-    cameraButton:{
-      width: 120,
-      height: 140,
-      backgroundColor:colors.inputBackgroundColor,
-      borderRadius: 8,
-      borderWidth: 0.7,
-      borderColor: 'white',
-      alignSelf: 'center',
-      justifyContent: 'center',
-      marginTop: 10
-    },
-    capture: {
-      flex: 0,
-      width: 70,
-      height: 70,
-      borderRadius: 35,
-      opacity: 0.8,
-      borderWidth: 4,
-      padding: 15,
-      paddingHorizontal: 20,
-      alignSelf: 'center',
-      margin: 20,
-      position: 'absolute',
-      bottom: 60,
-      backgroundColor: 'white',
-      borderColor: 'gray'
-    },
-    buttonContainer: {
-      flex: 1,
-      width: '100%',
-    },
-    buttonContainer1: {
-      flex: 1,
-      flexDirection:'row',
-      width: '100%',
-      justifyContent: 'space-around',
-      marginTop: 20
-    },
-    buttonText: {
-      color:'white', 
-      textAlign: 'center',
-      fontSize: 16,
-      fontWeight:"600",
-      fontFamily: fonts.regular.fontFamily
-  },
-    saveButton: {
-      width: 120, 
-      height: 44,
-      borderRadius: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    // buttonImage: {
-    //   width: 100,
-    //   height: 100,
-    // }
 
-  });
+  const handleSubmit = async () => {
+    if (!isFormValid) {
+        // If form is not valid, show an alert and do not proceed.
+        Alert.alert('Validation Error', 'Make sure all required fields are filled in and Photo ID is taken!');
+        return; // Stop execution if the form is not valid.
+    }
+
+    try {
+        await postName(); // Ensure name is posted before proceeding.
+        await postPhoto(); // Ensure photo is posted and hash is received before navigating.
+
+        // Check if photoIPFS has a value after posting photo
+        if (photoIPFS) {
+            navigation.navigate('JoinGeneralPublicApplication2Screen', {
+                firstName,
+                lastName,
+                displayName,
+                bio,
+                photo: photoIPFS
+            });
+        } else {
+            //console.warn("Photo IPFS hash is not available yet.");
+        }
+    } catch (error) {
+        console.error("Error in submission:", error);
+        Alert.alert('Error', 'An error occurred during submission.');
+    }
+};
+
+
+  useEffect(() => {
+    if (photoIPFS) {
+      navigation.navigate('JoinGeneralPublicApplication2Screen', {
+        firstName,
+        lastName,
+        displayName,
+        bio,
+        photo: photoIPFS
+      });
+    }
+  }, [photoIPFS]); 
 
   const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
     const cameraRef = useRef(null);
@@ -316,7 +220,6 @@ const JoinGeneralPublicApplicationScreen = () => {
     const validateForm = () => {
       return firstName.length > 0 && lastName.length > 0 && displayName.length > 0 && bio.length > 0 && capturedImage != null;
     };
-  
     setIsFormValid(validateForm());
   }, [firstName, lastName, displayName, bio, capturedImage]);
   
@@ -439,27 +342,16 @@ const JoinGeneralPublicApplicationScreen = () => {
 
             <View style={{flex:1}}>
             <TouchableOpacity 
-                      style={styles.joinButton}
-                      onPress={ () =>
-                        {
-                          //postName();
-                          //postPhoto();
-                          navigation.navigate('JoinGeneralPublicApplication2Screen', {
-                            firstName: firstName,
-                            lastName: lastName,
-                            displayName: displayName, 
-                            bio: bio
-                          })
-                      }}
-                      //disabled={!isFormValid}  // Disable the button if form is not valid
-                    >
-                <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
-                        <Text style={styles.buttonText}>NEXT STEP</Text>
-                </LinearGradient>
-                </TouchableOpacity>  
-
+              style={styles.joinButton}
+              onPress={handleSubmit}
+              //disabled={!isFormValid}
+            >
+              <LinearGradient colors={isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['gray', 'gray']} style={styles.joinButtonGradient}>
+                <Text style={styles.buttonText}>NEXT STEP</Text>
+              </LinearGradient>
+            </TouchableOpacity>
                 { !isFormValid &&
-                <Text style={styles.smallText}>All fields marked with * are mandatory to proceed</Text>}
+                <Text style={styles.smallText}>All fields marked with * are required to proceed</Text>}
             </View>  
           </ScrollView> 
         </TouchableWithoutFeedback>
@@ -468,5 +360,136 @@ const JoinGeneralPublicApplicationScreen = () => {
   );
 };
 
+const getStyles = (colors, fonts) => StyleSheet.create({
+  root: {
+    flex:1
+  },
+  center: {
+    height:80,
+    backgroundColor:'red',
+    flexDirection:'row',
+    marginHorizontal: 16,
+    backgroundColor: colors.elevated,
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  welcomeText: {
+      color:'white', 
+      textAlign: 'center',
+      justifyContent:'center',
+      fontSize: 24,
+      fontFamily: 'Orbitron-Black',
+      marginTop: 30
+  },
+  smallText: {
+      color:'white', 
+      textAlign: 'center',
+      justifyContent:'center',
+      fontSize: 10,
+      fontFamily: 'Orbitron-SemiBold'
+  },
+  medText: {
+    color:'white', 
+    fontSize: 16,
+    fontFamily: fonts.fontFamily,
+    fontWeight:"400",
+    fontFamily: 'Orbitron-Regular',
+  },
+  buttonText: {
+      color:'white', 
+      textAlign: 'center',
+      fontSize: 18,
+      fontWeight:"600",
+      fontFamily: fonts.regular.fontFamily
+  },
+  joinButton: {
+      paddingVertical:10,
+      width: '90%',
+      borderRadius: 20,
+      marginHorizontal: 20,
+      justifyContent:'center',
+  },
+  joinButtonGradient: {
+      paddingVertical:10,
+      alignItems:'center',
+      justifyContent:'center',
+      borderRadius: 20,
+      marginHorizontal: 40,
+      marginTop: 50,
+      height: 60,
+  },
+  iconStyle: {
+    width:80,
+    maxHeight: 80,
+    marginTop: 30,
+  },
+  textFieldWrapStyle: {
+    height: 40,
+    marginTop: 10,
+    borderRadius: 8,
+    elevation: 2.0,
+    backgroundColor:colors.inputBackgroundColor,
+    borderColor: 'white',
+    borderWidth: 0.7,
+    paddingHorizontal: 5,
+    paddingVertical: 5,
+    fontFamily: 'Orbitron-Regular', 
+    letterSpacing: 1.1,
+    fontSize: 14,
+    color: 'white'
+  },
+  cameraButton:{
+    width: 120,
+    height: 140,
+    backgroundColor:colors.inputBackgroundColor,
+    borderRadius: 8,
+    borderWidth: 0.7,
+    borderColor: 'white',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    marginTop: 10
+  },
+  capture: {
+    flex: 0,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    opacity: 0.8,
+    borderWidth: 4,
+    padding: 15,
+    paddingHorizontal: 20,
+    alignSelf: 'center',
+    margin: 20,
+    position: 'absolute',
+    bottom: 60,
+    backgroundColor: 'white',
+    borderColor: 'gray'
+  },
+  buttonContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  buttonContainer1: {
+    flex: 1,
+    flexDirection:'row',
+    width: '100%',
+    justifyContent: 'space-around',
+    marginTop: 20
+  },
+  buttonText: {
+    color:'white', 
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight:"600",
+    fontFamily: fonts.regular.fontFamily
+},
+  saveButton: {
+    width: 120, 
+    height: 44,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default JoinGeneralPublicApplicationScreen;
