@@ -271,6 +271,7 @@ const AppNavigator = () => {
 const CitizenStack = createNativeStackNavigator();
 
 const CitizenRoot = () => {
+  const theme = useTheme();
   return (
     <CitizenStack.Navigator screenOptions={{ headerShown: false }} >
       {/* <CitizenStack.Screen name="AreYouCitizenScreen" component={AreYouCitizenScreen} options={{ headerShown: false }}   /> */}
@@ -278,12 +279,24 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication2Screen" component={JoinGeneralPublicApplication2Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication3Screen" component={JoinGeneralPublicApplication3Screen}  options={{headerShown: false}} />
+      <CitizenStack.Screen name="SendWithAddress" component={SendWithAddress} initialParams={SendWithAddress.initialParams}/>
+      <CitizenStack.Screen name="Confirm" component={Confirm} options={Confirm.navigationOptions(theme)} />
+      <CitizenStack.Screen name="CreateTransaction" component={SendCreate} options={SendCreate.navigationOptions(theme)} />
       <CitizenStack.Screen
-        name="SendWithAddress"
-        component={SendWithAddress}
-        //options={SendWithAddress.navigationOptions(theme)}
-        initialParams={SendWithAddress.initialParams}
+        name="Success"
+        component={Success}
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+        }}
       />
+      {/* <SendDetailsStack.Screen name="PsbtMultisig" component={PsbtMultisig} options={PsbtMultisig.navigationOptions(theme)} />
+      <SendDetailsStack.Screen
+        name="PsbtMultisigQRCode"
+        component={PsbtMultisigQRCode}
+        options={PsbtMultisigQRCode.navigationOptions(theme)}
+      />
+      <SendDetailsStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} /> */}
     </CitizenStack.Navigator>
   );
 };

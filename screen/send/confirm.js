@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, TouchableOpacity, StyleSheet, Switch, View } from 'react-native';
 import { Text } from 'react-native-elements';
 import { PayjoinClient } from 'payjoin-client';
+import { Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import PayjoinTransaction from '../../class/payjoin-transaction';
 import { BlueText, BlueCard } from '../../BlueComponents';
@@ -25,6 +26,7 @@ const Bignumber = require('bignumber.js');
 const bitcoin = require('bitcoinjs-lib');
 
 const Confirm = () => {
+  const navigation = useNavigation();
   const { wallets, fetchAndSaveWalletTransactions, isElectrumDisabled } = useContext(BlueStorageContext);
   const [isBiometricUseCapableAndEnabled, setIsBiometricUseCapableAndEnabled] = useState(false);
   const { params } = useRoute();
@@ -245,6 +247,13 @@ const Confirm = () => {
 
   return (
     <SafeArea style={[styles.root, stylesHook.root]}>
+      <TouchableOpacity 
+            style={{flexDirection:'row', justifyContent:'space-between',  marginLeft: 20}}
+            onPress={()=>navigation.goBack()}
+          >
+            <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
+          </TouchableOpacity>
+      
       <View style={styles.cardTop}>
         <FlatList
           scrollEnabled={recipients.length > 1}

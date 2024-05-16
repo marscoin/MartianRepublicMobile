@@ -1190,7 +1190,7 @@ const SendWithAddress = () => {
       letterSpacing: 1.1,
       color:'#FF7400',
       fontSize: 20,
-      fontWeifht: '500',
+      fontWeight: '600',
       alignSelf: 'center',
       marginHorizontal: 20,
       marginTop: 30
@@ -1200,7 +1200,7 @@ const SendWithAddress = () => {
       letterSpacing: 1.2,
       color:'white',
       fontSize: 16,
-      fontWeifht: '500',
+      fontWeight: '500',
       alignSelf: 'center',
       marginHorizontal: 20,
       marginTop: 10,
