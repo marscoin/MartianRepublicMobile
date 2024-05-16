@@ -282,6 +282,7 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="SendWithAddress" component={SendWithAddress} initialParams={SendWithAddress.initialParams}/>
       <CitizenStack.Screen name="Confirm" component={Confirm} options={Confirm.navigationOptions(theme)} />
       <CitizenStack.Screen name="CreateTransaction" component={SendCreate} options={SendCreate.navigationOptions(theme)} />
+      <CitizenStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} />
       <CitizenStack.Screen
         name="Success"
         component={Success}

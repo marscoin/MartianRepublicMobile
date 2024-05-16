@@ -12,6 +12,7 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { useTheme } from '../../components/themes';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 import SafeArea from '../../components/SafeArea';
+import { removeTrailingZeros } from '../../loc';
 
 const SelectWallet = () => {
   const { chainType, onWalletSelect, availableWallets, noWalletExplanationText } = useRoute().params;
@@ -39,51 +40,53 @@ const SelectWallet = () => {
     itemRoot: {
       backgroundColor: 'transparent',
       padding: 10,
-      marginVertical: 17,
+      marginVertical: 15,
+      height: 180, 
+      marginHorizontal: 10
     },
     gradient: {
       padding: 15,
       borderRadius: 10,
       minHeight: 164,
+      height: 180,
       elevation: 5,
+      marginHorizontal: 10
     },
     image: {
-      width: 99,
-      height: 94,
+      width: 150,
+      height: 150,
       position: 'absolute',
       bottom: 0,
       right: 0,
     },
     transparentText: {
-      backgroundColor: 'transparent',
+      fontFamily: 'Orbitron-Bold',
     },
     label: {
-      backgroundColor: 'transparent',
       fontSize: 19,
-      color: '#fff',
+      color: 'black',
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+      fontFamily: 'Orbitron-Bold',
     },
-
     balance: {
-      backgroundColor: 'transparent',
       fontWeight: 'bold',
+      fontFamily: 'Orbitron-Bold',
       fontSize: 36,
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-      color: '#fff',
+      color: 'black',
     },
     latestTxLabel: {
-      backgroundColor: 'transparent',
       fontSize: 13,
-      color: '#fff',
+      color: 'black',
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+      fontFamily: 'Orbitron-Regular',
     },
     latestTxValue: {
-      backgroundColor: 'transparent',
       fontWeight: 'bold',
       fontSize: 16,
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-
-      color: '#fff',
+      fontFamily: 'Orbitron-Regular',
+      color: 'black',
     },
     noWallets: {
       flex: 1,
@@ -94,7 +97,53 @@ const SelectWallet = () => {
     center: {
       textAlign: 'center',
     },
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 34,
+    },
+    text: {
+      fontSize: 30,
+      fontWeight: '900',
+      fontFamily: 'Orbitron-Black', 
+    },
+    chooseText: {
+      textAlign: 'center',
+      fontSize: 20,
+      fontWeight: '600',
+      fontFamily: 'Orbitron-Black', 
+      marginTop: 40
+    },
+    line: {
+      position: 'absolute',
+      top: 3, 
+      left: 2,
+      right: 2,
+      height: 4,
+      backgroundColor: 'black',
+    },
+    imageGold: {
+      position: 'absolute', 
+      top: 10,
+      left: 20,
+      right: 0,
+      width: '94%',
+      // height: '100%',
+      zIndex: -1,
+      resizeMode:'stretch',
+      padding: 12,
+      borderRadius: 12,
+      minHeight: 164,
+      height: 180 
+  },
   });
+
+  const MarscoinSymbol = () => (
+    <View style={styles.container}>
+      <Text style={styles.text}>M</Text>
+      <View style={styles.line} />
+    </View>
+  );
 
   useEffect(() => {
     console.log('SelectWallet - useEffect');
@@ -113,7 +162,6 @@ const SelectWallet = () => {
     setOptions(
       isModal
         ? {
-            // eslint-disable-next-line react/no-unstable-nested-components
             headerLeft: () => (
               <TouchableOpacity
                 accessibilityRole="button"
@@ -129,10 +177,12 @@ const SelectWallet = () => {
           }
         : {},
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [closeImage, isModal, styles.button]);
 
   const renderItem = ({ item }) => {
+    const prebalance = Number((item.getBalance()))/100000000
+    const balance = !item.hideBalance && (removeTrailingZeros(prebalance) );
+   
     return (
       <TouchableOpacity
         onPress={() => {
@@ -141,8 +191,53 @@ const SelectWallet = () => {
         }}
         accessibilityRole="button"
       >
-        <View shadowOpacity={40 / 100} shadowOffset={{ width: 0, height: 0 }} shadowRadius={5} style={styles.itemRoot}>
-          <LinearGradient shadowColor="#000000" colors={WalletGradient.gradientsFor(item.type)} style={styles.gradient}>
+        {/* /////CIVIC WALLET DESIGN////// */}
+        {item.civic &&
+        <View style={styles.itemRoot}>
+          <Image style={styles.imageGold} source={require('../../img/gold3.jpeg')} />
+          <View style={styles.gradient}>
+            {/* <Image
+              source={(() => {
+                switch (item.type) {
+                  case LightningLdkWallet.type:
+                  case LightningCustodianWallet.type:
+                    return I18nManager.isRTL ? require('../../img/lnd-shape-rtl.png') : require('../../img/lnd-shape.png');
+                  case MultisigHDWallet.type:
+                    return I18nManager.isRTL ? require('../../img/vault-shape-rtl.png') : require('../../img/vault-shape.png');
+                  default:
+                    return I18nManager.isRTL ? require('../../img/marscoin_transparent2.png') : require('../../img/marscoin_transparent2.png');
+                }
+              })()}
+              style={styles.image}
+            /> */}
+
+            <Text style={styles.transparentText} />
+            <Text numberOfLines={1} style={styles.label}>
+              {item.getLabel()}
+            </Text>
+            {item.hideBalance ? (
+              <BluePrivateBalance />
+            ) : (
+              <Text numberOfLines={1} style={styles.balance}>
+                 <MarscoinSymbol />
+                  {' '}
+                  {balance}  
+              </Text>
+            )}
+            <Text style={styles.transparentText} />
+            <Text numberOfLines={1} style={styles.latestTxLabel}>
+              {loc.wallets.list_latest_transaction}
+            </Text>
+            <Text numberOfLines={1} style={styles.latestTxValue}>
+              {transactionTimeToReadable(item.getLatestTransactionTime())}
+            </Text>
+          </View>
+        </View>}
+
+        {/* /////OTHER WALLETS DESIGN////// */}
+        {!item.civic &&
+        <View style={styles.itemRoot}>
+          <LinearGradient colors={WalletGradient.gradientsFor(item.type)} style={styles.gradient}>
             <Image
               source={(() => {
                 switch (item.type) {
@@ -165,8 +260,10 @@ const SelectWallet = () => {
             {item.hideBalance ? (
               <BluePrivateBalance />
             ) : (
-              <Text numberOfLines={1} adjustsFontSizeToFit style={styles.balance}>
-                {formatBalance(Number(item.getBalance()), item.getPreferredBalanceUnit(), true)}
+              <Text numberOfLines={1} style={styles.balance}>
+                 <MarscoinSymbol />
+                  {' '}
+                  {balance}  
               </Text>
             )}
             <Text style={styles.transparentText} />
@@ -177,7 +274,7 @@ const SelectWallet = () => {
               {transactionTimeToReadable(item.getLatestTransactionTime())}
             </Text>
           </LinearGradient>
-        </View>
+        </View>}
       </TouchableOpacity>
     );
   };
@@ -201,6 +298,7 @@ const SelectWallet = () => {
   } else {
     return (
       <SafeArea>
+        <BlueText style={styles.chooseText}>Choose a wallet</BlueText>
         <FlatList extraData={data} data={data} renderItem={renderItem} keyExtractor={(_item, index) => `${index}`} />
       </SafeArea>
     );

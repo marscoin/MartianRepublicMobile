@@ -308,7 +308,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
           }}
         >
           <LinearGradient 
-              shadowColor={colors.shadowColor} 
+              //shadowColor={colors.shadowColor} 
               //colors = {item.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white']}
               colors={WalletGradient.gradientsFor(item.type)} 
               style={iStyles.grad}
