@@ -474,7 +474,7 @@ const CitizenScreen = () => {
                                             {allFieldsPresent && (
                                                     <TouchableOpacity 
                                                         style={styles.completeButton}
-                                                        onPress={() => navigation.navigate('SendWithAddress',{address: item.address})}
+                                                        onPress={() => navigation.navigate('SendWithAddress',{address: item.address, name: item.fullname})}
                                                     >
                                                         <Text style={styles.donateText}>
                                                             DONATE

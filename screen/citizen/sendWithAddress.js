@@ -35,6 +35,7 @@ import loc, { formatBalance, formatBalanceWithoutSuffix } from '../../loc';
 import CoinsSelected from '../../components/CoinsSelected';
 import BottomModal from '../../components/BottomModal';
 import AddressInput from '../../components/AddressInput';
+import AddressInputNoScan from '../../components/AddressInputNoScan';
 import AmountInput from '../../components/AmountInput';
 import InputAccessoryAllFunds from '../../components/InputAccessoryAllFunds';
 import { AbstractHDElectrumWallet } from '../../class/wallets/abstract-hd-electrum-wallet';
@@ -45,7 +46,7 @@ import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import ListItem from '../../components/ListItem';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
-import { btcToSatoshi, fiatToBTC } from '../../blue_modules/currency';
+import { btcToSatoshi} from '../../blue_modules/currency';
 import presentAlert from '../../components/Alert';
 const prompt = require('../../helpers/prompt');
 const fs = require('../../blue_modules/fs');
@@ -57,7 +58,6 @@ const SendWithAddress = () => {
   const navigation = useNavigation();
   const { name, params: routeParams } = useRoute();
   console.log('PARAMS', routeParams)
-  // console.log('PARAMS', routeParams)
   const scrollView = useRef();
   const scrollIndex = useRef(0);
   const { colors } = useTheme();
@@ -452,7 +452,7 @@ const SendWithAddress = () => {
         addrs[scrollIndex.current].address = dataWithoutSchema;
         return [...addrs];
       });
-      setIsLoading(false);
+      setIsLoading(false); 
       return;
     }
 
@@ -1187,13 +1187,24 @@ const SendWithAddress = () => {
     },
     donateText: {
       fontFamily: 'Orbitron-Bold',
-      letterSpacing: 1.2,
+      letterSpacing: 1.1,
       color:'#FF7400',
-      fontSize: 24,
+      fontSize: 20,
       fontWeifht: '500',
       alignSelf: 'center',
       marginHorizontal: 20,
-      marginVertical: 40
+      marginTop: 30
+    },
+    donateNameText: {
+      fontFamily: 'Orbitron-Bold',
+      letterSpacing: 1.2,
+      color:'white',
+      fontSize: 16,
+      fontWeifht: '500',
+      alignSelf: 'center',
+      marginHorizontal: 20,
+      marginTop: 10,
+      marginBottom: 30
       
     },
   });
@@ -1453,7 +1464,6 @@ const SendWithAddress = () => {
                   )
                   break;
               }
-
               addrs[index] = addr;
               return [...addrs];
             });
@@ -1503,7 +1513,7 @@ const SendWithAddress = () => {
           </TouchableOpacity>
         )} */}
 
-        <AddressInput
+        <AddressInputNoScan
           onChangeText={text => {
             text = text.trim();
             const { address, amount, memo, payjoinUrl: pjUrl } = 
@@ -1544,8 +1554,15 @@ const SendWithAddress = () => {
       <View style={[styles.root, stylesHook.root]} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
         <View>
           <KeyboardAvoidingView enabled={!Platform.isPad} behavior="position">
+          <TouchableOpacity 
+            style={{flexDirection:'row', justifyContent:'space-between', marginTop: 20, marginLeft: 20}}
+            onPress={()=>navigation.goBack()}
+          >
+            <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
+          </TouchableOpacity>
 
-          <Text style={stylesHook.donateText}>DONATE TO APPLICANT </Text>
+          <Text style={stylesHook.donateText}>DONATION TO APPLICANT </Text>
+          <Text style={stylesHook.donateNameText}>{routeParams.name} </Text>
             {/* /////////Currency and address//////// */}
             <FlatList
               keyboardShouldPersistTaps="always"
@@ -1616,7 +1633,6 @@ const SendWithAddress = () => {
     </TouchableWithoutFeedback>
   );
 };
-
 export default SendWithAddress;
 
 SendWithAddress.actionKeys = {
