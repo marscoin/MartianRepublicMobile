@@ -23,6 +23,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
   const [capturedVideo, setCapturedVideo] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const [videoIPFS, setVideoIPFS] = useState(null);
+  const [capturedUri, setCapturedUri] = useState(null);
   
   const onVideoCaptured = (videoUri) => {
     setCapturedVideo(videoUri);
@@ -213,6 +214,11 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       justifyContent: 'center',
       marginTop: 10
     },
+    videoPlayerMain: {
+      width: 240,
+      height: 160,
+      alignSelf: 'center'
+    },
     container: {
       flex: 1,
       flexDirection: 'column',
@@ -248,50 +254,51 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'black',
-  },
-  videoPlayer: {
-      width: '90%',
-      height: '40%',
-  },
-  preview: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-  },
-  actionButton: {
-    padding: 10,
-    margin: 10,
-    backgroundColor: 'lightgray',
-  },
-  buttonContainer1: {
-    flexDirection:'row',
-    width: '100%',
-    justifyContent: 'space-around',
-  },
-  saveButton: {
-    width: 120, 
-    height: 44,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  controlBar: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  controlButton: {
-    padding: 10,
-    margin: 10,
-    borderRadius: 5,
     },
+    videoPlayer: {
+        width: '90%',
+        height: '40%',
+    },
+    preview: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+    },
+    actionButton: {
+      padding: 10,
+      margin: 10,
+      backgroundColor: 'lightgray',
+    },
+    buttonContainer1: {
+      flexDirection:'row',
+      width: '100%',
+      justifyContent: 'space-around',
+    },
+    saveButton: {
+      width: 120, 
+      height: 44,
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    controlBar: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    controlButton: {
+      padding: 10,
+      margin: 10,
+      borderRadius: 5,
+      },
   });
 
   const VideoCameraModal = ({ isVisible, onClose, onVideoCaptured, onRetake, onSave  }) => {
     const cameraRef = useRef(null);
-    const [capturedUri, setCapturedUri] = useState(null);
+    // const [capturedUri, setCapturedUri] = useState(null);
     const [isRecording, setIsRecording] = useState(false);
     const [videoPaused, setVideoPaused] = useState(true);
+    const [videoEnded, setVideoEnded] = useState(false);
     const [remainingTime, setRemainingTime] = useState(60); // Countdown from 60 seconds
 
     const handleSave = () => {
@@ -313,9 +320,19 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       }
   };
 
-  const togglePlayPause = () => {
-      setVideoPaused(!videoPaused);
-  };
+    const togglePlayPause = () => {
+      if (videoEnded) { // If video has ended, replay from start
+          setVideoPaused(false);
+          setVideoEnded(false); // Reset video end status
+      } else {
+          setVideoPaused(!videoPaused);
+      }
+    };
+
+    const onVideoEnd = () => {
+        setVideoPaused(true);
+        setVideoEnded(true); // Set video end status to true
+    };
 
     useEffect(() => {
         let interval;
@@ -336,7 +353,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
             setRemainingTime(60); // Reset the timer
             try {
                 const video = await cameraRef.current.recordAsync();
-                // onVideoCaptured(video.uri);
+                onVideoCaptured(video.uri);
                 setCapturedUri(video.uri);
             } catch (err) {
                 console.error('Video capture error', err);
@@ -346,12 +363,18 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         }
     };
 
+    const handleModalClose = () => {
+      setVideoPaused(true);
+      setVideoEnded(false);
+      onClose();
+    };
+
     return (
         <Modal
             animationType="slide"
             transparent={false}
             visible={isVisible}
-            onRequestClose={onClose}
+            onRequestClose={handleModalClose}
         >
           {capturedVideo ? (
               <View style={styles.videoReviewContainer}>
@@ -362,12 +385,13 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
                     <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
                   </TouchableOpacity>
                   <Video
-                      source={{ uri: capturedVideo }}
-                      style={styles.videoPlayer}
-                      paused={videoPaused}
-                      resizeMode="contain"
-                      onEnd={() => setVideoPaused(true)}
-                  />
+                        source={{ uri: capturedVideo }}
+                        style={styles.videoPlayer}
+                        paused={videoPaused}
+                        resizeMode="contain"
+                        onEnd={onVideoEnd} // Handle video end
+                        repeat={true} // Control if the video should loop
+                    />
                   <View style={styles.controlBar}>
                       <TouchableOpacity onPress={togglePlayPause} style={styles.controlButton}>
                           <Icon name={videoPaused ? 'play-circle-outline' : 'pause'} size={40} color={'white'} />
@@ -483,12 +507,12 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
           }
           {capturedVideo &&
             <TouchableOpacity 
-              style={styles.cameraButton}
+              //style={styles.cameraButton}
               onPress={() => setModalVisible(true)}
             >
               <Video
                 source={{ uri: capturedVideo }}
-                style={styles.videoPlayer}
+                style={styles.videoPlayerMain}
                 resizeMode='contain'
               />
             </TouchableOpacity>

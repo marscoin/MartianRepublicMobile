@@ -143,8 +143,7 @@ const CitizenScreen = () => {
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`);
-            
-            console.log('APPLICANTS', response.data);
+            //console.log('APPLICANTS', response.data);
             const sortedApplicants = response.data.data.sort((a, b) => {
                 const countA = countMissingFields(a);
                 const countB = countMissingFields(b);
