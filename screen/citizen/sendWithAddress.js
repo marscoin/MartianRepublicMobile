@@ -57,7 +57,7 @@ const SendWithAddress = () => {
   const { wallets, setSelectedWalletID, sleep, txMetadata, saveToDisk } = useContext(BlueStorageContext);
   const navigation = useNavigation();
   const { name, params: routeParams } = useRoute();
-  console.log('PARAMS', routeParams)
+  //console.log('PARAMS', routeParams)
   const scrollView = useRef();
   const scrollIndex = useRef(0);
   const { colors } = useTheme();
@@ -661,7 +661,7 @@ const SendWithAddress = () => {
       recipients = outputs;
     }
 
-    navigation.navigate('Confirm', {
+    navigation.navigate('SendConfirm', {
       fee: new BigNumber(fee).dividedBy(100000000).toNumber(),////
       memo: transactionMemo,
       walletID: wallet.getID(),
@@ -1203,8 +1203,8 @@ const SendWithAddress = () => {
       fontWeight: '500',
       alignSelf: 'center',
       marginHorizontal: 20,
-      marginTop: 10,
-      marginBottom: 30
+      marginTop: 5,
+      marginBottom: 20
       
     },
   });

@@ -195,11 +195,11 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
       );
     if (balanceMode === 'balanceZub') 
       return (
-        <View style={[styles.balanceCont, {flexDirection:'row'}]}>
+        <View style={[styles.balanceCont, {flexDirection:'row', paddingRight: 60}]}>
           <Text
               testID="WalletBalance"
               numberOfLines={1}
-              adjustsFontSizeToFit
+              //adjustsFontSizeToFit
               style={[styles.walletBalance, {fontSize: 30}]}
             >
               {balanceZub}
@@ -207,7 +207,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
           <Text
               testID="WalletBalance"
               numberOfLines={1}
-              adjustsFontSizeToFit
+              //adjustsFontSizeToFit
               style={[styles.walletBalance, {fontSize: 20, alignSelf:'flex-end', marginBottom: 5}]}
             >
               zubrin

@@ -13,14 +13,15 @@ import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import SafeArea from '../../components/SafeArea';
 
-const Success = () => {
-  const pop = () => {
-    getParent().pop();
+const SendSuccess = () => {
+  console.log('SEND SUCCESS SCREEN')
+  const navigation = useNavigation();
+  const onDonePressed = () => {
+    navigation.navigate('CitizenScreen');
   };
-  
   const { colors } = useTheme();
   const { getParent } = useNavigation();
-  const { amount, fee, amountUnit = BitcoinUnit.BTC, invoiceDescription = '', onDonePressed = pop } = useRoute().params;
+  const { amount, fee, amountUnit = BitcoinUnit.BTC, invoiceDescription = '' } = useRoute().params;
   const stylesHook = StyleSheet.create({
     root: {
       backgroundColor: colors.elevated,
@@ -52,7 +53,7 @@ const Success = () => {
   );
 };
 
-export default Success;
+export default SendSuccess;
 
 export const SuccessView = ({ amount, amountUnit, fee, invoiceDescription, shouldAnimate = true }) => {
   const animationRef = useRef();

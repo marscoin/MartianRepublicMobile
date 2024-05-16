@@ -98,6 +98,8 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 
 import CitizenScreen from './screen/citizen/citizenScreen';
 import SendWithAddress from './screen/citizen/sendWithAddress';
+import SendConfirm from './screen/citizen/sendConfirm';
+import SendSuccess from './screen/citizen/sendSuccess';
 import AreYouCitizenScreen from './screen/citizen/areYouCitizen';
 import ImportCivicWalletScreen from './screen/citizen/importCivicWalletScreen';
 import ImportCivicWalletDiscovery from './screen/citizen/importCivicDiscovery';
@@ -280,24 +282,12 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="JoinGeneralPublicApplication2Screen" component={JoinGeneralPublicApplication2Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication3Screen" component={JoinGeneralPublicApplication3Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="SendWithAddress" component={SendWithAddress} initialParams={SendWithAddress.initialParams}/>
-      <CitizenStack.Screen name="Confirm" component={Confirm} options={Confirm.navigationOptions(theme)} />
+      <CitizenStack.Screen name="PsbtMultisig" component={PsbtMultisig} options={PsbtMultisig.navigationOptions(theme)} />
+      <CitizenStack.Screen name="SendConfirm" component={SendConfirm} options={Confirm.navigationOptions(theme)} />
       <CitizenStack.Screen name="CreateTransaction" component={SendCreate} options={SendCreate.navigationOptions(theme)} />
       <CitizenStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} />
-      <CitizenStack.Screen
-        name="Success"
-        component={Success}
-        options={{
-          headerShown: false,
-          gestureEnabled: false,
-        }}
-      />
-      {/* <SendDetailsStack.Screen name="PsbtMultisig" component={PsbtMultisig} options={PsbtMultisig.navigationOptions(theme)} />
-      <SendDetailsStack.Screen
-        name="PsbtMultisigQRCode"
-        component={PsbtMultisigQRCode}
-        options={PsbtMultisigQRCode.navigationOptions(theme)}
-      />
-      <SendDetailsStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} /> */}
+      <CitizenStack.Screen name="SendSuccess" component={SendSuccess} options={{headerShown: false,gestureEnabled: false}}/>
+      <CitizenStack.Screen name="SendDetailsRoot" component={SendDetailsRoot} options={NavigationDefaultOptions} />
     </CitizenStack.Navigator>
   );
 };
@@ -430,11 +420,9 @@ const WalletsRoot = () => {
         component={SignVerifyStackRoot}
         options={{ ...NavigationDefaultOptions, ...StatusBarLightOptions }}
       />
-     
       <WalletsStack.Screen name="ReceiveDetailsRoot" component={ReceiveDetailsStackRoot} options={NavigationDefaultOptions} />
       <WalletsStack.Screen name="LappBrowserRoot" component={LappBrowserStackRoot} options={NavigationDefaultOptions} />
       <WalletsStack.Screen name="LDKOpenChannelRoot" component={LDKOpenChannelRoot} options={NavigationDefaultOptions} />
-
       <WalletsStack.Screen
         name="ScanQRCodeRoot"
         component={ScanQRCodeRoot}
@@ -446,74 +434,8 @@ const WalletsRoot = () => {
         initialParams={ScanQRCode.initialParams}
       />
 
-<WalletsStack.Screen name="PaymentCodeRoot" component={PaymentCodeStackRoot} options={NavigationDefaultOptions} />
+      <WalletsStack.Screen name="PaymentCodeRoot" component={PaymentCodeStackRoot} options={NavigationDefaultOptions} />
 
-      {/* //////ADDED FROM ADD STACK//////// */}
-      {/* <WalletsStack.Screen
-        name="AddWallet"
-        component={AddWallet}
-        options={navigationStyle({
-          closeButton: true,
-          headerBackVisible: false,
-          title: loc.wallets.add_title,
-          headerStyle:{
-            backgroundColor:'black'
-          }
-        })(theme)}
-      />
-      <WalletsStack.Screen 
-          name="ImportWallet" 
-          component={ImportWallet} 
-          options={ImportWallet.navigationOptions(theme)} />
-     <WalletsStack.Screen 
-      name="ImportWalletDiscovery"
-      component={ImportWalletDiscovery}
-      options={
-        ImportWalletDiscovery.navigationOptions(theme)
-       }
-      
-    />
-    <WalletsStack.Screen 
-      name="ImportCustomDerivationPath"
-      component={ImportCustomDerivationPath}
-      options={ImportCustomDerivationPath.navigationOptions(theme)}
-    />
-    <WalletsStack.Screen  name="ImportSpeed" component={ImportSpeed} options={ImportSpeed.navigationOptions(theme)} />
-    <WalletsStack.Screen 
-      name="PleaseBackup"
-      component={PleaseBackup}
-      options={navigationStyle({
-        gestureEnabled: false,
-        headerBackVisible: false,
-        title: loc.pleasebackup.title,
-        headerStyle:{
-          backgroundColor:'black'
-        }
-      })(theme)}
-    />
-    <WalletsStack.Screen 
-      name="PleaseBackupLNDHub"
-      component={PleaseBackupLNDHub}
-      options={PleaseBackupLNDHub.navigationOptions(theme)}
-    />
-    <WalletsStack.Screen  name="PleaseBackupLdk" component={PleaseBackupLdk} options={PleaseBackupLdk.navigationOptions(theme)} />
-    <WalletsStack.Screen  name="ProvideEntropy" component={ProvideEntropy} options={ProvideEntropy.navigationOptions(theme)} />
-    <WalletsStack.Screen 
-      name="WalletsAddMultisig"
-      component={WalletsAddMultisig}
-      options={WalletsAddMultisig.navigationOptions(theme)}
-      initialParams={WalletsAddMultisig.initialParams}
-    />
-    <WalletsStack.Screen 
-      name="WalletsAddMultisigStep2"
-      component={WalletsAddMultisigStep2}
-      options={WalletsAddMultisigStep2.navigationOptions(theme)}
-    />
-    <WalletsStack.Screen 
-      name="WalletsAddMultisigHelp"
-      component={WalletsAddMultisigHelp}
-      options={WalletAddMultisigHelpNavigationOptions}
-    /> */}
     </WalletsStack.Navigator>
   );
 };

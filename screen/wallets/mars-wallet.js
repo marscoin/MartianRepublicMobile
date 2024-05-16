@@ -644,7 +644,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   _getWifForAddress(address) {
-    console.log("==== [MARS] _getWifForAddress ====");
+    //console.log("==== [MARS] _getWifForAddress ====");
     if (this._address_to_wif_cache[address])
       return this._address_to_wif_cache[address]; // cache hit
 
@@ -1223,15 +1223,15 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       changeAddress
     );
 
-    console.log("\n\n --- UTXOs: " + JSON.stringify(utxos));
-    console.log("\n--- Inputs: " + JSON.stringify(inputs));
-    console.log("\n");
-    console.log("--- Outputs: " + JSON.stringify(outputs));
-    console.log("\n");
-    console.log("--- Fee: " + fee);
-    console.log("\n");
-    console.log("--- Change Address: " + changeAddress);
-    console.log("\n\n");
+    // console.log("\n\n --- UTXOs: " + JSON.stringify(utxos));
+    // console.log("\n--- Inputs: " + JSON.stringify(inputs));
+    // console.log("\n");
+    // console.log("--- Outputs: " + JSON.stringify(outputs));
+    // console.log("\n");
+    // console.log("--- Fee: " + fee);
+    // console.log("\n");
+    // console.log("--- Change Address: " + changeAddress);
+    // console.log("\n\n");
 
     sequence = sequence || AbstractHDElectrumWallet.defaultRBFSequence;
     let psbt = new bitcoin.Psbt({ network: Marscoin.mainnet });
