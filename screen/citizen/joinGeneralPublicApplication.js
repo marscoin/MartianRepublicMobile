@@ -513,7 +513,6 @@ import React, { useEffect, useState, useRef, useContext } from 'react';
 import { Platform, Alert, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { useTheme } from '../../components/themes';
 import LinearGradient from 'react-native-linear-gradient';
 import { BlueSpacing20 } from '../../BlueComponents';
@@ -524,7 +523,6 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import Snackbar from 'react-native-snackbar';
 import sha256 from 'crypto-js/sha256';
 import bitcoin from 'bitcoinjs-lib';
-import bip39 from 'bip39';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -534,6 +532,11 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const bip39 = require("bip39");
+  const { BIP32Factory } = require('bip32')
+  const ecc = require('tiny-secp256k1')
+  const bip32 = BIP32Factory(ecc)
+
   //const {firstName, lastName, displayName, bio, photo, video} = route.params;
   //console.log('PARAMS',route.params )
 
@@ -562,8 +565,6 @@ const JoinGeneralPublicApplicationScreen = () => {
   
   const sendMARS = async (marsAmount, receiverAddress) => {
     console.log(' SEND MARS START')
-    //const senderAddress = await AsyncStorage.getItem("public_address");
-  
     try {
       const txInputsOutputs = await getTxInputsOutputs(civic, receiverAddress, marsAmount);
       return txInputsOutputs;
@@ -574,12 +575,8 @@ const JoinGeneralPublicApplicationScreen = () => {
   };
 
   const signMARS = async (message, marsAmount, txInputsOutputs) => {
-    const mnemonic = await AsyncStorage.getItem("mnemonic_key");
-    if (!mnemonic) {
-      alert("No mnemonic key stored, please set up your wallet first.");
-      return;
-    }
-  
+    const mnemonic = await AsyncStorage.getItem("civicMnemonic");
+    console.log('CivicMnemonic from signMars::::::', mnemonic);
     const seed = bip39.mnemonicToSeedSync(mnemonic);
     const root = bitcoin.bip32.fromSeed(seed, bitcoin.networks.bitcoin); // Adjust for Marscoin network
     const child = root.derivePath("m/44'/2'/0'/0/0");
@@ -690,7 +687,7 @@ const JoinGeneralPublicApplicationScreen = () => {
         const message = "GP_" + cid;
         console.log('message: ', message)
         
-        // const io = await sendMARS(1, "<?=$public_address?>");
+        //const io = await sendMARS(1, "<?=$public_address?>");
         const fee = 0.01
         const mars_amount = 0.01
         const total_amount = fee + parseInt(mars_amount)
@@ -709,7 +706,8 @@ const JoinGeneralPublicApplicationScreen = () => {
         //     throw e;
         // }
         ///////SENDING TRANSACTION TO SAVE MESSAGE IN BLOCKCHAIN////////
-        const transactionResponse = await sendMARS(0.01, civic);
+        // const transactionResponse = await sendMARS(0.01, civic);
+        // const tx = await signMARS(message, mars_amount, io);
         console.error('transactionResponse', transactionResponse);
         if (transactionResponse.success) {
           Snackbar.show({ text: 'Published successfully!', duration: Snackbar.LENGTH_SHORT });

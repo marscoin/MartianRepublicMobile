@@ -130,6 +130,15 @@ const App = () => {
     }
   };
 
+  const storeMnemonic = async (mnemonic) => {
+    try {
+      await AsyncStorage.setItem('civicMnemonic', mnemonic);
+      console.log('CivicMnemonic successfully saved!!!!!!!!', mnemonic);
+    } catch (error) {
+      console.error('Failed to save the civicMnemonic to storage', error);
+    }
+  };
+
   function getCivicAddress(wallets) {
     // Loop through the wallets array
     for (let wallet of wallets) {
@@ -143,12 +152,12 @@ const App = () => {
     return null;  // Return null if no civic wallet is found
   }  
   
-  
   function getCivicMnemonic(wallets) {
     // Loop through the wallets array
     for (let wallet of wallets) {
         // Check if the wallet has the civic property set to true
         if (wallet.civic) {
+            storeMnemonic(wallet.secret)
             return wallet.secret;
         }
     }
