@@ -523,6 +523,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Snackbar from 'react-native-snackbar';
 import sha256 from 'crypto-js/sha256';
+import bitcoin from 'bitcoinjs-lib';
+import bip39 from 'bip39';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -530,12 +532,11 @@ const JoinGeneralPublicApplicationScreen = () => {
   const styles = getStyles(colors, fonts);
   const route = useRoute();
   const [isVerified, setIsVerified] = useState(false);
-  const [loading, setLoading] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-
   //const {firstName, lastName, displayName, bio, photo, video} = route.params;
   //console.log('PARAMS',route.params )
+
   const params = {"bio": "Love", "address": "MckshlbfvldrfLove", "displayName": "Hopefully ", "firstName": "Yana", "lastName": "Hope", "photo": "QmdGcEhQp862VDhxCHYo8vcAfMiQgwc8kYfkdM2F6vsdLT", "video": "QmQ6ebHWPbhDpjrePbwV3PjUDxnMAMRHWDRhA56gU6BxxJ"}
   console.log('PARAMS',params )
   const [formData, setFormData] = useState({
@@ -550,53 +551,180 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   const toggleVerify = () => setIsVerified(!isVerified);
 
-  const handleSubmit = async () => {
-    setLoading(true);
+  const getTxInputsOutputs = async (senderAddress, receiverAddress, amount) => {
+    // API call to get UTXOs for senderAddress
+    // This is a placeholder. You should replace it with actual API call
+    return {
+      inputs: [],
+      outputs: [{address: receiverAddress, value: amount}],
+    };
+  };
+  
+  const sendMARS = async (marsAmount, receiverAddress) => {
+    console.log(' SEND MARS START')
+    //const senderAddress = await AsyncStorage.getItem("public_address");
+  
     try {
-        //await postVideo();
-    } catch (error) {
-        console.error("Error publishing application:", error);
-    } finally {
-        setLoading(false);
+      const txInputsOutputs = await getTxInputsOutputs(civic, receiverAddress, marsAmount);
+      return txInputsOutputs;
+    } catch (e) {
+      console.error("Failed to get transaction inputs and outputs", e);
+      throw e;
     }
   };
 
+  const signMARS = async (message, marsAmount, txInputsOutputs) => {
+    const mnemonic = await AsyncStorage.getItem("mnemonic_key");
+    if (!mnemonic) {
+      alert("No mnemonic key stored, please set up your wallet first.");
+      return;
+    }
+  
+    const seed = bip39.mnemonicToSeedSync(mnemonic);
+    const root = bitcoin.bip32.fromSeed(seed, bitcoin.networks.bitcoin); // Adjust for Marscoin network
+    const child = root.derivePath("m/44'/2'/0'/0/0");
+    const { address } = bitcoin.payments.p2pkh({ pubkey: child.publicKey, network: bitcoin.networks.bitcoin });
+  
+    const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
+    psbt.setVersion(1);
+    psbt.setMaximumFeeRate(10000000); // Satoshis per byte
+  
+    // Assume inputs and outputs are properly set up in txInputsOutputs
+    txInputsOutputs.inputs.forEach(input => {
+      psbt.addInput({
+        hash: input.txId,
+        index: input.vout,
+        nonWitnessUtxo: Buffer.from(input.rawTx, 'hex'),
+      });
+    });
+  
+    txInputsOutputs.outputs.forEach(output => {
+      psbt.addOutput({
+        address: output.address,
+        value: output.value,
+      });
+    });
+  
+    psbt.signInput(0, child);
+    psbt.finalizeAllInputs();
+    const tx = psbt.extractTransaction().toHex();
+  
+    // Function to broadcast transaction
+    try {
+      const txId = await broadcastTx(tx);
+      console.log('Transaction ID:', txId);
+      return txId;
+    } catch (error) {
+      console.error("Failed to broadcast transaction", error);
+      throw error;
+    }
+  };
+
+  const sendMetadata = async (message) => {
+    setIsLoading(true);
+    try {
+      const txids2watch = [];
+      // Assuming message is the data you want to store on the blockchain
+      const psbt = new bitcoin.Psbt(); // Initialize a new partially signed Bitcoin transaction (update with Marscoin specifics)
+      psbt.addOutput({
+        script: bitcoin.script.nullData.output.encode(Buffer.from(message)), // Use OP_RETURN to embed your message
+        value: 0, // No Marscoin is being sent
+      });
+  
+      // More code here to add inputs, sign the transaction etc.
+      const txHex = psbt.finalizeAllInputs().extractTransaction().toHex();
+      await broadcast(txHex);
+      const txid = bitcoin.Transaction.fromHex(txHex).getId();
+      txids2watch.push(txid);
+  
+      Notifications.majorTomToGroundControl([], [], txids2watch);
+  
+      triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
+      navigate('SendSuccess', {
+        message: 'Data published successfully',
+        txid,
+      });
+  
+      setIsLoading(false);
+  
+      await new Promise(resolve => setTimeout(resolve, 3000)); // sleep to make sure network propagates
+      fetchAndSaveWalletTransactions(walletID);
+    } catch (error) {
+      triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
+      setIsLoading(false);
+      presentAlert({ message: error.message });
+    }
+  };
+  
+
   const validateAndSubmit = async () => {
-    const { firstName, lastName, displayName, bio, photo, video } = formData;
+    const { firstName, lastName, displayName, bio, photo, video, civic } = formData;
     const token = await AsyncStorage.getItem('@auth_token');
+
     if (!firstName || !lastName || !displayName || !bio || !photo || !video) {
       Alert.alert('Error', 'All fields are required.');
       return;
     }
+    setIsPublishing(true);
+    Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
+
     try {
-      setIsPublishing(true);
-      Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
-
-      const dataObject = { data: formData }; // Create JSON object from formData
-      const jsonString = JSON.stringify(dataObject.data); // Convert data object to JSON string
+      const dataObject = { data: formData };
+      const jsonString = JSON.stringify(dataObject.data);
       console.log('JSON:', jsonString)
-      const hash = sha256(jsonString).toString();// Generate SHA-256 hash of the JSON string
+      const hash = sha256(jsonString).toString();
       console.log('JSON hash:', hash)
-      dataObject.meta = { hash };// Add hash to your data object
-      const completeData = JSON.stringify(dataObject);// Complete JSON object with both data and hash
+      dataObject.meta = { hash };
+      const completeData = JSON.stringify(dataObject);
       console.log('completeData:', completeData)
-
-      const { data } = await axios.post('https://martianrepublic.org/api/permapinjson', { 
+      const { data } = await axios.post('https://martianrepublic.org/api/pinjson', {
         type: 'data',
         payload: completeData,
-        address: civic 
+        address: civic
       }, {
-        headers: {'Authorization': `Bearer ${token}`}
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      
-      Snackbar.show({ text: 'Published successfully!', duration: Snackbar.LENGTH_SHORT });
-      setIsPublishing(false);
-      Clipboard.setString(data.someImportantDetail);
-      Alert.alert('Success', 'Published successfully!');
+
+      if (data.Hash) {
+        const cid = data.Hash;
+        const message = "GP_" + cid;
+        console.log('message: ', message)
+        
+        // const io = await sendMARS(1, "<?=$public_address?>");
+        const fee = 0.01
+        const mars_amount = 0.01
+        const total_amount = fee + parseInt(mars_amount)
+        console.log('estimated-fee: ', fee)
+
+        // try {
+        //     const tx = await signMARS(message, mars_amount, io);
+        //     $("#publish_progress_message").show().text("Published successfully...");
+        //     $("#publish_progress_message").show().text(tx.tx_hash);
+        //     const data = await doAjax("/api/setfeed", {"type": "GP", "txid": tx.tx_hash, "embedded_link": "https://ipfs.marscoin.org/ipfs/"+cid, "address": '<?=$public_address?>'});
+        //     if(data.Hash){
+        //         if(!alert('Submitted to Marscoin Blockchain successfully')){window.location.reload();}
+        //     }
+
+        // } catch (e) {
+        //     throw e;
+        // }
+        ///////SENDING TRANSACTION TO SAVE MESSAGE IN BLOCKCHAIN////////
+        const transactionResponse = await sendMARS(0.01, civic);
+        console.error('transactionResponse', transactionResponse);
+        if (transactionResponse.success) {
+          Snackbar.show({ text: 'Published successfully!', duration: Snackbar.LENGTH_SHORT });
+          Alert.alert('Success', `Published successfully! Transaction ID: ${transactionResponse.txId}`);
+        } else {
+          throw new Error('Transaction failed');
+        }
+      } else {
+        throw new Error('Failed to pin data');
+      }
     } catch (error) {
-      setIsPublishing(false);
-      Snackbar.show({ text: 'Failed to publish', duration: Snackbar.LENGTH_SHORT });
+      Snackbar.show({ text: `Failed to publish: ${error.message}`, duration: Snackbar.LENGTH_SHORT });
       console.error('Publishing failed:', error);
+    } finally {
+      setIsPublishing(false);
     }
   };
 
