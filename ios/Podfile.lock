@@ -531,6 +531,8 @@ PODS:
     - React-Core
   - RNShare (10.0.2):
     - React-Core
+  - RNSnackbar (2.6.2):
+    - React-Core
   - RNSVG (13.14.0):
     - React-Core
   - RNVectorIcons (10.0.3):
@@ -626,6 +628,7 @@ DEPENDENCIES:
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNShare (from `../node_modules/react-native-share`)
+  - RNSnackbar (from `../node_modules/react-native-snackbar`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - RNWatch (from `../node_modules/react-native-watch-connectivity`)
@@ -802,6 +805,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNShare:
     :path: "../node_modules/react-native-share"
+  RNSnackbar:
+    :path: "../node_modules/react-native-snackbar"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   RNVectorIcons:
@@ -897,6 +902,7 @@ SPEC CHECKSUMS:
   RNReanimated: 5afba582037b0dae040a5f927dec7fdd18e430c3
   RNScreens: 3c5b9f4a9dcde752466854b6109b79c0e205dad3
   RNShare: 859ff710211285676b0bcedd156c12437ea1d564
+  RNSnackbar: 3727b42bf6c4314a53c18185b5203e915a4ab020
   RNSVG: d00c8f91c3cbf6d476451313a18f04d220d4f396
   RNVectorIcons: 64e6a523ac30a3241efa9baf1ffbcc5e76ff747a
   RNWatch: fd30ca40a5b5ef58dcbc195638e68219bc455236

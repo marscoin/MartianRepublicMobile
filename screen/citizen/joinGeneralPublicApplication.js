@@ -512,8 +512,6 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import navigationStyle from '../../components/navigationStyle';
-import loc from '../../loc';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { useTheme } from '../../components/themes';
@@ -525,7 +523,7 @@ import RNFS from 'react-native-fs';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Clipboard from '@react-native-clipboard/clipboard';
-import Snackbar from '@react-native-community/snackbar';
+import Snackbar from 'react-native-snackbar';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
