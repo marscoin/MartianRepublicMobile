@@ -510,13 +510,11 @@
 // export default JoinGeneralPublicApplicationScreen;
 
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, Image, StyleSheet, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { useTheme } from '../../components/themes';
-import Button from '../../components/Button';
-import SafeArea from '../../components/SafeArea';
 import LinearGradient from 'react-native-linear-gradient';
 import { BlueSpacing20 } from '../../BlueComponents';
 import RNFS from 'react-native-fs';
@@ -530,12 +528,71 @@ const JoinGeneralPublicApplicationScreen = () => {
   const { colors, fonts } = useTheme();
   const styles = getStyles(colors, fonts);
   const route = useRoute();
+  const [isVerified, setIsVerified] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    displayName: '',
+    bio: '',
+    photo: '',
+    video: ''
+  });
+  const [isPublishing, setIsPublishing] = useState(false);
+
   //const {firstName, lastName, displayName, bio, photo, video} = route.params;
   //console.log('PARAMS',route.params )
   const params = {"bio": "Love", "address": "MckshlbfvldrfLove", "displayName": "Hopefully ", "firstName": "Yana", "lastName": "Hope", "photo": "QmdGcEhQp862VDhxCHYo8vcAfMiQgwc8kYfkdM2F6vsdLT", "video": "QmQ6ebHWPbhDpjrePbwV3PjUDxnMAMRHWDRhA56gU6BxxJ"}
   console.log('PARAMS',params )
 
-  
+  const toggleVerify = () => setIsVerified(!isVerified);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+        //await postVideo();
+    } catch (error) {
+        console.error("Error publishing application:", error);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const validateAndSubmit = async () => {
+    const { firstName, lastName, displayName, bio, photo, video } = formData;
+    if (!firstName || !lastName || !displayName || !bio || !photo || !video) {
+      Alert.alert('Error', 'All fields are required.');
+      return;
+    }
+
+    try {
+      setIsPublishing(true);
+      Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
+      const jsonString = JSON.stringify({ data: formData });
+      const { data } = await axios.post('https://yourapi.com/api/permapinjson', { jsonString });
+      
+      Snackbar.show({ text: 'Published successfully!', duration: Snackbar.LENGTH_SHORT });
+      setIsPublishing(false);
+      Clipboard.setString(data.someImportantDetail);
+      Alert.alert('Success', 'Published successfully!');
+    } catch (error) {
+      setIsPublishing(false);
+      Snackbar.show({ text: 'Failed to publish', duration: Snackbar.LENGTH_SHORT });
+      console.error('Publishing failed:', error);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    Clipboard.setString(text);
+    console.log('copied to clipboard', text)
+    Snackbar.show({
+      text: `${text} copied to clipboard!`,
+      duration: Snackbar.LENGTH_SHORT,
+      numberOfLines: 5
+    });
+  };
+
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
     {/* ////margin -80 sticks screen to the tabbar///// */}
@@ -566,62 +623,71 @@ const JoinGeneralPublicApplicationScreen = () => {
           <View style={styles.headerBox}>
             <Text style={styles.headerText}>Full Name: </Text>
           </View> 
-          <View style={styles.contentBox}>
+          <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(`${params.firstName} ${params.lastName}`)}>
             <Text style={styles.contentText}>{params.firstName}</Text>
             <Text style={styles.contentText}> {params.lastName} </Text>
-          </View>
+          </TouchableOpacity>
         </View>
         
         <View style={styles.orangeBox}>
             <View style={styles.headerBox}>
               <Text style={styles.headerText}>Display Name: </Text>
             </View>
-            <View style={styles.contentBox}>
+            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(params.displayName)}>
               <Text style={styles.contentText}>{params.displayName} </Text>
-            </View>
+            </TouchableOpacity>
         </View>
 
         <View style={styles.orangeBox}>
             <View style={styles.headerBox}>
               <Text style={styles.headerText}>Short Bio: </Text>
             </View>
-            <View style={styles.contentBox}>
+            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(params.bio)}>
               <Text style={styles.contentText}>{params.bio} </Text>
-            </View>
+            </TouchableOpacity>
         </View>
 
         <View style={styles.orangeBox}>
             <View style={styles.headerBox}>
               <Text style={styles.headerText}>Profile Picture: </Text>
             </View>
-            <View style={styles.contentBox}>
+            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(`https://ipfs.marscoin.org/ipfs/${params.photo}`)}>
               <Text style={styles.contentText}>{`https://ipfs.marscoin.org/ipfs/${params.photo}`}</Text>
-            </View>
+            </TouchableOpacity>
         </View>
 
         <View style={styles.orangeBox}>
             <View style={styles.headerBox}>
               <Text style={styles.headerText}>Liveness Video Proof: </Text>
             </View>
-            <View style={styles.contentBox}>
+            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(`https://ipfs.marscoin.org/ipfs/${params.video}`)}>
               <Text style={styles.contentText}>{`https://ipfs.marscoin.org/ipfs/${params.video}`}</Text>
-            </View>
+            </TouchableOpacity>
         </View>
 
         <View style={[styles.orangeBox, {borderBottomWidth: 1}]}>
             <View style={styles.headerBox}>
               <Text style={styles.headerText}>Civic Address: </Text>
             </View>
-            <View style={styles.contentBox}>
+            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(params.address)}>
               <Text style={styles.contentText}>{params.address} </Text>
-            </View>
+            </TouchableOpacity>
+        </View>
+
+        {/* Checkbox for Verification */}
+        <View style={styles.checkboxContainer}>
+          <TouchableOpacity style={styles.checkbox} onPress={toggleVerify}>
+            <Icon name={isVerified ? "check-square" : "square"} size={24} type="font-awesome-5" color={isVerified ? '#FF7400' : 'gray'} />
+          </TouchableOpacity>
+          <Text style={styles.checkboxLabel} onPress={toggleVerify}>{`I, ${params.firstName} ${params.lastName}, verify that all data is correct and final. I confirm publishing my application data in Marscoin blockchain. `}</Text>
         </View>
 
          <View style={{flex:1}}>
-          <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+         <LinearGradient colors={ isVerified ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
             <TouchableOpacity 
               style={styles.joinButton}
-              // onPress={}
+              disabled={!isVerified}
+              onPress={handleSubmit}
             >
                 <Text style={styles.buttonText}>PUBLISH APPLICATION</Text>
             </TouchableOpacity>  
@@ -639,14 +705,6 @@ const getStyles = (colors, fonts) => StyleSheet.create({
   root: {
     flex:1
   },
-  center: {
-    height:80,
-    backgroundColor:'red',
-    flexDirection:'row',
-    marginHorizontal: 16,
-    justifyContent:'center',
-    alignItems:'center'
-  },
   orangeBox: {
     width: '90%',
     flexDirection: 'row',
@@ -655,7 +713,6 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     borderBottomWidth: 0,
     borderColor:'#FF7400', 
     alignSelf:'center',
-    //backgroundColor: '#2F2D2B', // Dark background for the container
   },
   headerBox: {
     width: '40%',
@@ -670,7 +727,6 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'black',  
     padding: 10,
-    //backgroundColor: '#2F2D2B'
   },
   smallText: {
     color:'white', 
@@ -716,12 +772,29 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     justifyContent:'center',
   },
   joinButtonGradient: {
-      paddingVertical:10,
-      alignItems:'center',
-      justifyContent:'center',
-      borderRadius: 20,
-      marginHorizontal: 40,
-      marginTop: 50
+    paddingVertical:10,
+    alignItems:'center',
+    justifyContent:'center',
+    borderRadius: 20,
+    marginHorizontal: 40,
+    marginTop: 50
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 30,
+    marginHorizontal: 20
+  },
+  checkbox: {
+    marginRight: 12,
+    backgroundColor: '#2F2D2B'
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: 'white',
+    fontFamily: fonts.regular.fontFamily,
+    marginRight: 20,
+    lineHeight: 18
   },
 });
 export default JoinGeneralPublicApplicationScreen;
