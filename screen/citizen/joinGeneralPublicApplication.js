@@ -342,7 +342,15 @@ const JoinGeneralPublicApplicationScreen = () => {
             <View style={{flex:1}}>
             <TouchableOpacity 
               style={styles.joinButton}
-              onPress={handleSubmit}
+              onPress={()=>
+                navigation.navigate('JoinGeneralPublicApplication2Screen', {
+                  firstName,
+                  lastName,
+                  displayName,
+                  bio,
+                  photo: photoIPFS
+              })}
+              //onPress={handleSubmit}
               //disabled={!isFormValid}
             >
               <LinearGradient colors={isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['gray', 'gray']} style={styles.joinButtonGradient}>

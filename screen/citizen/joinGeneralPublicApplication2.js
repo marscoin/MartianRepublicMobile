@@ -45,28 +45,68 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
     requestPermissions();
   }, []);
 
+  // async function postVideo() {
+  //   console.log('POST VIDEO START');
+  //   const token = await AsyncStorage.getItem('@auth_token');
+  //   const civicAddress = await AsyncStorage.getItem('civicAddress');
+  //   // Convert video to Base64
+  //   const base64 = await RNFS.readFile(capturedVideo, 'base64');
+  //   const videoData = `data:video/mp4;base64,${base64}`;
+
+  //   response = await axios.post("https://martianrepublic.org/api/pinvideo", {
+  //     file: videoData,
+  //     type: 'personal_video',
+  //     address: civicAddress,
+  //   }, {
+  //     headers: {'Authorization': `Bearer ${token}`}
+  //   })
+  //   .then(response => {
+  //     console.log('Video pinned!!!! hash:', response);
+  //     setVideoIPFS(response.data.hash)
+  //   })
+  //   .catch(error => {
+  //     console.error('Error:', error.response);
+  //   });
+  // }
+
   async function postVideo() {
+    console.log('POST VIDEO START');
     const token = await AsyncStorage.getItem('@auth_token');
     const civicAddress = await AsyncStorage.getItem('civicAddress');
-    // Convert video to Base64
-    const base64 = await RNFS.readFile(capturedVideo, 'base64');
-    const videoData = `data:image/jpeg;base64,${base64}`;
 
-    response = await axios.post("https://martianrepublic.org/api/pinvideo", {
-      file: videoData,
-      type: 'profile_video',
-      address: civicAddress,
-    }, {
-      headers: {'Authorization': `Bearer ${token}`}
-    })
-    .then(response => {
-      console.log('Video pinned!!!! hash:', response.data.hash);
-      setVideoIPFS(response.data.hash)
-    })
-    .catch(error => {
-      console.error('Error:', error.response);
+    // Create an instance of FormData
+    const formData = new FormData();
+    
+    // Add video file to the form data. 'file' is the field name the server expects
+    formData.append('file', {
+        uri: capturedVideo,
+        type: 'video/mp4', // MIME type of the file
+        name: 'upload.mp4' // Optional: file name if required by backend
     });
-  }
+
+    // Add other data the server expects
+    formData.append('type', 'personal_video');
+    formData.append('address', civicAddress);
+
+    try {
+        const response = await axios.post("https://martianrepublic.org/api/pinvideo", formData, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data', // Important: Axios handles the boundary
+            }
+        });
+
+        if (response.status === 200 && response.data) {
+            console.log('Video pinned!!!! hash:', response.data.Hash);
+            //setVideoIPFS(response.data.Hash); 
+        } else {
+            console.log('Failed to upload video, status:', response.status);
+        }
+    } catch (error) {
+        console.error('Error uploading video:', error.response ? error.response.data : error.message);
+    }
+}
+
 
   const handleSubmit = async () => {
     try {
@@ -348,19 +388,22 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
     }, [isRecording, remainingTime]);
 
     const handleRecord = async () => {
-        if (cameraRef.current && !isRecording) {
-            setIsRecording(true);
-            setRemainingTime(60); // Reset the timer
-            try {
-                const video = await cameraRef.current.recordAsync();
-                onVideoCaptured(video.uri);
-                setCapturedUri(video.uri);
-            } catch (err) {
-                console.error('Video capture error', err);
-            }
-        } else if (isRecording) {
-            stopRecording();
-        }
+      if (cameraRef.current && !isRecording) {
+          setIsRecording(true);
+          setRemainingTime(60); // Reset the timer
+          const options = {
+              quality: RNCamera.Constants.VideoQuality["480p"], // Set lower video quality
+          };
+          try {
+              const video = await cameraRef.current.recordAsync(options);
+              onVideoCaptured(video.uri);
+              setCapturedUri(video.uri);
+          } catch (err) {
+              console.error('Video capture error', err);
+          }
+      } else if (isRecording) {
+          stopRecording();
+      }
     };
 
     const handleModalClose = () => {
