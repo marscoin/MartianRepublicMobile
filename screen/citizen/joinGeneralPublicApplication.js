@@ -510,7 +510,7 @@
 // export default JoinGeneralPublicApplicationScreen;
 
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
+import { Platform, Alert, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -522,6 +522,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Snackbar from 'react-native-snackbar';
+import sha256 from 'crypto-js/sha256';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -531,20 +532,21 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    displayName: '',
-    bio: '',
-    photo: '',
-    video: ''
-  });
   const [isPublishing, setIsPublishing] = useState(false);
 
   //const {firstName, lastName, displayName, bio, photo, video} = route.params;
   //console.log('PARAMS',route.params )
   const params = {"bio": "Love", "address": "MckshlbfvldrfLove", "displayName": "Hopefully ", "firstName": "Yana", "lastName": "Hope", "photo": "QmdGcEhQp862VDhxCHYo8vcAfMiQgwc8kYfkdM2F6vsdLT", "video": "QmQ6ebHWPbhDpjrePbwV3PjUDxnMAMRHWDRhA56gU6BxxJ"}
   console.log('PARAMS',params )
+  const [formData, setFormData] = useState({
+    firstName: params.firstName,
+    lastName: params.lastName,
+    displayName: params.displayName,
+    bio: params.bio,
+    photo: params.photo,
+    video: params.video
+  });
+  const [civic, setCivic] = useState(params.address)
 
   const toggleVerify = () => setIsVerified(!isVerified);
 
@@ -561,16 +563,31 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   const validateAndSubmit = async () => {
     const { firstName, lastName, displayName, bio, photo, video } = formData;
+    const token = await AsyncStorage.getItem('@auth_token');
     if (!firstName || !lastName || !displayName || !bio || !photo || !video) {
       Alert.alert('Error', 'All fields are required.');
       return;
     }
-
     try {
       setIsPublishing(true);
       Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
-      const jsonString = JSON.stringify({ data: formData });
-      const { data } = await axios.post('https://yourapi.com/api/permapinjson', { jsonString });
+
+      const dataObject = { data: formData }; // Create JSON object from formData
+      const jsonString = JSON.stringify(dataObject.data); // Convert data object to JSON string
+      console.log('JSON:', jsonString)
+      const hash = sha256(jsonString).toString();// Generate SHA-256 hash of the JSON string
+      console.log('JSON hash:', hash)
+      dataObject.meta = { hash };// Add hash to your data object
+      const completeData = JSON.stringify(dataObject);// Complete JSON object with both data and hash
+      console.log('completeData:', completeData)
+
+      const { data } = await axios.post('https://martianrepublic.org/api/permapinjson', { 
+        type: 'data',
+        payload: completeData,
+        address: civic 
+      }, {
+        headers: {'Authorization': `Bearer ${token}`}
+      });
       
       Snackbar.show({ text: 'Published successfully!', duration: Snackbar.LENGTH_SHORT });
       setIsPublishing(false);
@@ -686,8 +703,9 @@ const JoinGeneralPublicApplicationScreen = () => {
          <LinearGradient colors={ isVerified ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
             <TouchableOpacity 
               style={styles.joinButton}
-              disabled={!isVerified}
-              onPress={handleSubmit}
+              //disabled={!isVerified}
+              //onPress={handleSubmit}
+              onPress={validateAndSubmit} disabled={isPublishing}
             >
                 <Text style={styles.buttonText}>PUBLISH APPLICATION</Text>
             </TouchableOpacity>  
