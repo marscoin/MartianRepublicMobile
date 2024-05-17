@@ -17,22 +17,8 @@ const JoinGeneralPublicApplication3Screen = () => {
   const navigation = useNavigation();
   const { colors, fonts } = useTheme();
   const route = useRoute();
-
-  async function requestPermissions() {
-    if (Platform.OS === 'android') {
-      const result = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-      ]);
-      return result === PermissionsAndroid.RESULTS.GRANTED;
-    }
-    return true;
-  }
-  
-  useEffect(() => {
-    requestPermissions();
-  }, []);
-  
+  const {firstName, lastName, displayName, bio, photo, video} = route.params;
+  console.log('PARAMS',route.params )
   const styles = StyleSheet.create({
     root: {
       flex:1
@@ -46,13 +32,14 @@ const JoinGeneralPublicApplication3Screen = () => {
       justifyContent:'center',
       alignItems:'center'
     },
-    welcomeText: {
-        color:'white', 
-        textAlign: 'center',
-        justifyContent:'center',
-        fontSize: 24,
-        fontFamily: 'Orbitron-Black',
-        marginTop: 30
+    orangeBox: {
+      width: 200,
+      marginHorizontal: 20,
+      borderWidth: 1,
+      backgroundColor: 'red',
+      borderColor:'#FF7400', 
+      justifyContent:'center',
+      alignItems:'center'
     },
     smallText: {
         color:'white', 
@@ -68,16 +55,6 @@ const JoinGeneralPublicApplication3Screen = () => {
       fontWeight:"400",
       fontFamily: 'Orbitron-Regular',
     },
-    infoText: {
-      color:'white', 
-      fontSize: 26,
-      fontFamily: fonts.fontFamily,
-      fontWeight:"600",
-      letterSpacing: 1.2,
-      fontFamily: 'Orbitron-Regular',
-      transform: [{ rotate: '90deg' }] ,
-      alignSelf:'flex-end'
-    },
     buttonText: {
         color:'white', 
         textAlign: 'center',
@@ -85,26 +62,37 @@ const JoinGeneralPublicApplication3Screen = () => {
         fontWeight:"600",
         fontFamily: fonts.regular.fontFamily
     },
-    iconStyle: {
-      width:80,
-      maxHeight: 80,
-      marginTop: 30,
-    },
     joinButton: {
       paddingVertical:10,
       borderRadius: 20,
       marginHorizontal: 20,
       justifyContent:'center',
-  },
-  joinButtonGradient: {
-      paddingVertical:10,
-      alignItems:'center',
-      justifyContent:'center',
-      borderRadius: 20,
-      marginHorizontal: 40,
-      marginTop: 50
-  },
-  });
+    },
+    joinButtonGradient: {
+        paddingVertical:10,
+        alignItems:'center',
+        justifyContent:'center',
+        borderRadius: 20,
+        marginHorizontal: 40,
+        marginTop: 50
+    },
+  
+    });
+
+  async function requestPermissions() {
+    if (Platform.OS === 'android') {
+      const result = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+      ]);
+      return result === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  }
+  
+  useEffect(() => {
+    requestPermissions();
+  }, []);
 
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
@@ -125,8 +113,16 @@ const JoinGeneralPublicApplication3Screen = () => {
           <Text style={{fontFamily: fonts.regular.fontFamily, marginLeft: 20,color: 'white', fontSize: 20,}}>APPLICATION</Text>
           <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>3/3</Text>
         </View>
+        <View style={{flexDirection:'row', justifyContent:'space-between', marginTop: 30,}}>
+          <Text style={{fontFamily: fonts.regular.fontFamily, marginLeft: 20,color: 'white', fontSize: 20,}}>APPLICATION</Text>
+          <Text style={[styles.buttonText, {alignSelf: 'flex-end', marginRight: 20,fontSize: 16}]}>3/3</Text>
+        </View>
 
         <View style={{ marginTop: 30, marginHorizontal: 20 }}>
+            <Text style={styles.medText}>Check your application data: </Text>
+        </View>
+
+        <View style={styles.orangeBox}>
             <Text style={styles.medText}>Check your application data: </Text>
         </View>
 
@@ -140,13 +136,12 @@ const JoinGeneralPublicApplication3Screen = () => {
             </TouchableOpacity>  
           </LinearGradient>
 
-            {!isFormValid &&
-              <Text style={[styles.smallText, {marginTop: 10}]}>Notarize via a blockchain transaction</Text>}
+            {/* {!isFormValid &&
+              <Text style={[styles.smallText, {marginTop: 10}]}>Notarize via a blockchain transaction</Text>} */}
         </View> 
       </ScrollView>  
     </SafeAreaView>
   );
 };
-
 
 export default JoinGeneralPublicApplication3Screen;

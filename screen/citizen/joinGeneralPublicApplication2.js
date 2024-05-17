@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
 import { Icon } from 'react-native-elements';
@@ -24,6 +24,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
   const [isFormValid, setIsFormValid] = useState(false);
   const [videoIPFS, setVideoIPFS] = useState(null);
   const [capturedUri, setCapturedUri] = useState(null);
+  const [loading, setLoading] = useState(false);
   
   const onVideoCaptured = (videoUri) => {
     setCapturedVideo(videoUri);
@@ -44,30 +45,6 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
   useEffect(() => {
     requestPermissions();
   }, []);
-
-  // async function postVideo() {
-  //   console.log('POST VIDEO START');
-  //   const token = await AsyncStorage.getItem('@auth_token');
-  //   const civicAddress = await AsyncStorage.getItem('civicAddress');
-  //   // Convert video to Base64
-  //   const base64 = await RNFS.readFile(capturedVideo, 'base64');
-  //   const videoData = `data:video/mp4;base64,${base64}`;
-
-  //   response = await axios.post("https://martianrepublic.org/api/pinvideo", {
-  //     file: videoData,
-  //     type: 'personal_video',
-  //     address: civicAddress,
-  //   }, {
-  //     headers: {'Authorization': `Bearer ${token}`}
-  //   })
-  //   .then(response => {
-  //     console.log('Video pinned!!!! hash:', response);
-  //     setVideoIPFS(response.data.hash)
-  //   })
-  //   .catch(error => {
-  //     console.error('Error:', error.response);
-  //   });
-  // }
 
   async function postVideo() {
     console.log('POST VIDEO START');
@@ -98,7 +75,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
 
         if (response.status === 200 && response.data) {
             console.log('Video pinned!!!! hash:', response.data.Hash);
-            //setVideoIPFS(response.data.Hash); 
+            setVideoIPFS(response.data.Hash); 
         } else {
             console.log('Failed to upload video, status:', response.status);
         }
@@ -107,12 +84,14 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
     }
 }
 
-
   const handleSubmit = async () => {
+    setLoading(true);
     try {
         await postVideo();
     } catch (error) {
         console.error("Error in submission video:", error);
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -128,19 +107,6 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       });
     }
   }, [videoIPFS]); 
-
-  // async function compressVideo(imageUri) {
-  //   try {
-  //     const compressedImage = await CompressorImage.compress(imageUri);
-  //     console.log('Compressed video URI:', compressedImage);
-  //     // Get file info
-  //   const fileInfo = await RNFS.stat(compressedImage);
-  //   console.log('File size in bytes:', fileInfo.size);
-  //     return compressedImage
-  //   } catch (error) {
-  //     console.error('Error compressing video:', error);
-  //   }
-  // }
 
   useEffect(() => {
     const validateForm = () => {
@@ -387,22 +353,40 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         return () => clearInterval(interval);
     }, [isRecording, remainingTime]);
 
+
+    async function compressVideo(videoUri) {
+      try {
+        const options = {
+          compressionMethod: 'auto', // or 'manual' for more control
+          quality: 'low', // 'low', 'medium', 'high'
+          bitrateMultiplier: 0.5, // Reduces bitrate to 75% of the original
+          removeAudio: false,
+        };
+        const compressedVideoUri = await CompressorVideo.compress(videoUri, options);
+        console.log('Compressed video path:', compressedVideoUri);
+        return compressedVideoUri;
+      } catch (error) {
+        console.error('Error compressing video:', error);
+      }
+    }
+
     const handleRecord = async () => {
       if (cameraRef.current && !isRecording) {
-          setIsRecording(true);
-          setRemainingTime(60); // Reset the timer
+        setIsRecording(true);
+        setRemainingTime(60); // Reset the timer
+        try {
           const options = {
-              quality: RNCamera.Constants.VideoQuality["480p"], // Set lower video quality
+            quality: RNCamera.Constants.VideoQuality["480p"],
           };
-          try {
-              const video = await cameraRef.current.recordAsync(options);
-              onVideoCaptured(video.uri);
-              setCapturedUri(video.uri);
-          } catch (err) {
-              console.error('Video capture error', err);
-          }
+          const video = await cameraRef.current.recordAsync(options);
+          const compressedVideoUri = await compressVideo(video.uri);
+          onVideoCaptured(compressedVideoUri);
+          setCapturedUri(compressedVideoUri);
+        } catch (err) {
+          console.error('Video capture error', err);
+        }
       } else if (isRecording) {
-          stopRecording();
+        stopRecording();
       }
     };
 
@@ -512,8 +496,8 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
                 </RNCamera>
             )}
         </Modal>
-    );
-};
+     );
+  };
 
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
@@ -571,18 +555,23 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         </View>
 
          <View style={{flex:1}}>
-         <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
+            <LinearGradient colors={ isFormValid ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
                 <TouchableOpacity 
                   style={styles.joinButton}
                   onPress={handleSubmit}
-                  //disabled={!isFormValid}
+                  disabled={!isFormValid}
                 >
-                    <Text style={styles.buttonText}>NEXT STEP</Text>
+                    {loading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.buttonText}>NEXT STEP</Text>
+                    )}
                 </TouchableOpacity>  
             </LinearGradient>
-
+          
             { !isFormValid &&
-                <Text style={[styles.smallText, {marginTop: 10}]}>Upload video to proceed</Text>}
+                <Text style={[styles.smallText, {marginTop: 10}]}>Upload video to proceed</Text>
+            }
         </View> 
 
         <VideoCameraModal
