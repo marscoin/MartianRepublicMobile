@@ -744,8 +744,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     // anyway, result has `.confirmations` property for each utxo, so outside caller can easily filter out unconfirmed if he wants to
 
     addressess = [...new Set(addressess)]; // deduplicate just for any case
-
+    //console.log('!!!!!!!!!!!!!!!addressess', addressess)
     const fetchedUtxo = await MARSConnection.multiGetUtxoByAddress(addressess);
+    //console.log('!!!!!!!!!!!!!!!fetchedUtxo', fetchedUtxo)
     this._utxo = [];
     for (const arr of Object.values(fetchedUtxo)) {
       //console.log(arr);
@@ -756,7 +757,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     this.utxo = this._utxo;
     // this belongs in `.getUtxo()`
     for (const u of this.utxo) {
-      // console.log("-- [fetchUtxo] utxo " + JSON.stringify(u));
+      //console.log("-- [fetchUtxo] utxo " + JSON.stringify(u));
       u.txid = u.txId;
       u.hex = u.hex;
       u.amount = u.value;
@@ -765,7 +766,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         u.confirmations =
           MARSConnection.estimateCurrentBlockheight() - u.height;
     }
-
     this.utxo = this.utxo.sort((a, b) => a.amount - b.amount);
   }
 
@@ -1208,7 +1208,8 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     changeAddress,
     sequence,
     skipSigning = false,
-    masterFingerprint
+    masterFingerprint,
+    message = null
   ) {
     console.log("\n\n\n=== Generating Transaction === ");
 
@@ -1316,9 +1317,19 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       psbt.addOutput(outputData);
       console.log("--- Finished creating individual output ---");
     });
+    
+    if(message)
+      {
+        const data = Buffer.from(message);
+        const embed = bitcoin.payments.embed({ data: [data] });
+        psbt.addOutput({
+          script: embed.output,
+          value: 0,
+        });
+      }
 
     console.log("\n\n\n=== CREATED ALL OUTPUTS ===\n\n\n");
-
+    console.log("skip signing: ", skipSigning);
     if (!skipSigning) {
       // skiping signing related stuff
       console.log(`--- Signing Inputs for ` + keypairs.length + "keys");
@@ -1328,7 +1339,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       }
     }
 
-    console.log(psbt.validateSignaturesOfAllInputs());
+    console.log('psbt.validateSignaturesOfAllInputs()', psbt.validateSignaturesOfAllInputs());
 
     let tx;
     if (!skipSigning) {

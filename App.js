@@ -196,10 +196,10 @@ async function getToken() {
       .sign(message, privateKey, keyPair.compressed)
       .toString("base64");   
 
-    // console.log('signature:', signedMsg);
-    // console.log('CIVIC ADDRESS:', address);
-    // console.log('timestamp:', timestamp);
-    // console.log('message:', message);
+    console.log('signature:', signedMsg);
+    console.log('CIVIC ADDRESS:', address);
+    console.log('timestamp:', timestamp);
+    console.log('message:', message);
 
     //Verify the signature
     const verified = bitcoinMessage.verify(message, address, signedMsg);

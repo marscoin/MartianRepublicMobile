@@ -509,7 +509,7 @@
 
 // export default JoinGeneralPublicApplicationScreen;
 
-import React, { useEffect, useState, useRef, useContext } from 'react';
+import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import { Platform, Alert, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
@@ -523,25 +523,57 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import Snackbar from 'react-native-snackbar';
 import sha256 from 'crypto-js/sha256';
 import bitcoin from 'bitcoinjs-lib';
+import { HDSegwitBech32Wallet, MultisigHDWallet, WatchOnlyWallet } from '../../class';
+import { AbstractHDElectrumWallet } from '../../class/wallets/abstract-hd-electrum-wallet';
+import { BlueStorageContext } from '../../blue_modules/storage-context';
+import BigNumber from 'bignumber.js';
+import NetworkTransactionFees, { NetworkTransactionFee } from '../../models/networkTransactionFees';
+
+const BlueElectrum = require('../../blue_modules/BlueElectrum');
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+
   const { colors, fonts } = useTheme();
   const styles = getStyles(colors, fonts);
-  const route = useRoute();
+
+  const [networkTransactionFees, setNetworkTransactionFees] = useState(new NetworkTransactionFee(3, 2, 1));
+  const { wallets} = useContext(BlueStorageContext);
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [wallet, setWallet] = useState(null);
+  const [changeAddress, setChangeAddress] = useState();
+
+  const [customFee, setCustomFee] = useState(null);
+  const [feePrecalc, setFeePrecalc] = useState({ current: null, slowFee: null, mediumFee: null, fastestFee: null });
+  const [feeUnit, setFeeUnit] = useState();
+
   const bip39 = require("bip39");
   const { BIP32Factory } = require('bip32')
   const ecc = require('tiny-secp256k1')
   const bip32 = BIP32Factory(ecc)
+  const bitcoin = require("bitcoinjs-lib");
+
+  const MARSCOIN = {
+    messagePrefix: "\x19Marscoin Signed Message:\n",
+    bech32: "M",
+    bip44: 2,
+    bip32: {
+      public: 0x043587cf,
+      private: 0x04358394,
+    },
+    pubKeyHash: 0x32,
+    scriptHash: 0x32,
+    wif: 0x80,
+};
 
   //const {firstName, lastName, displayName, bio, photo, video} = route.params;
   //console.log('PARAMS',route.params )
 
-  const params = {"bio": "Love", "address": "MckshlbfvldrfLove", "displayName": "Hopefully ", "firstName": "Yana", "lastName": "Hope", "photo": "QmdGcEhQp862VDhxCHYo8vcAfMiQgwc8kYfkdM2F6vsdLT", "video": "QmQ6ebHWPbhDpjrePbwV3PjUDxnMAMRHWDRhA56gU6BxxJ"}
-  console.log('PARAMS',params )
+  const params = {"bio": "Test", "address": 'MC1kMoACQZQwmR8tSSmSQzUBDUYhEKkbee', "displayName": "Test ", "firstName": "MobileTest", "lastName": "test", "photo": "https://ipfs.marscoin.org/ipfs/QmdGcEhQp862VDhxCHYo8vcAfMiQgwc8kYfkdM2F6vsdLT", "video": "https://ipfs.marscoin.org/ipfs/QmQ6ebHWPbhDpjrePbwV3PjUDxnMAMRHWDRhA56gU6BxxJ"}
+  //console.log('PARAMS',params )
   const [formData, setFormData] = useState({
     firstName: params.firstName,
     lastName: params.lastName,
@@ -550,109 +582,95 @@ const JoinGeneralPublicApplicationScreen = () => {
     photo: params.photo,
     video: params.video
   });
+
   const [civic, setCivic] = useState(params.address)
 
+  function getCivicWallet(wallets) {
+    // Loop through the wallets array
+    for (let wallet of wallets) {
+        // Check if the wallet has the civic property set to true
+        if (wallet.civic) {
+            console.log('CIVIC WALLET IS SET!' );
+            setWallet(wallet)
+            return wallet;
+        }
+    }
+    return null;  // Return null if no civic wallet is found
+  }  
+
+  useEffect(() => {
+    getCivicWallet(wallets)
+  }, []);
+
   const toggleVerify = () => setIsVerified(!isVerified);
+  
+ // if cutomFee is not set, we need to choose highest possible fee for wallet balance
+  // if there are no funds for even Slow option, use 1 sat/vbyte fee
+    // const feeRate = useMemo(() => {
+    //   if (customFee) return customFee;
+    //   if (feePrecalc.slowFee === null) return '1'; // wait for precalculated fees
+    //   let initialFee;
+    //   if (feePrecalc.fastestFee !== null) {
+    //     initialFee = String(networkTransactionFees.fastestFee);
+    //   } else if (feePrecalc.mediumFee !== null) {
+    //     initialFee = String(networkTransactionFees.mediumFee);
+    //   } else {
+    //     initialFee = String(networkTransactionFees.slowFee);
+    //   }
+    //   return initialFee;
+    // }, [customFee, feePrecalc, networkTransactionFees]);
 
-  const getTxInputsOutputs = async (senderAddress, receiverAddress, amount) => {
-    // API call to get UTXOs for senderAddress
-    // This is a placeholder. You should replace it with actual API call
-    return {
-      inputs: [],
-      outputs: [{address: receiverAddress, value: amount}],
-    };
-  };
-  
-  const sendMARS = async (marsAmount, receiverAddress) => {
-    console.log(' SEND MARS START')
-    try {
-      const txInputsOutputs = await getTxInputsOutputs(civic, receiverAddress, marsAmount);
-      return txInputsOutputs;
-    } catch (e) {
-      console.error("Failed to get transaction inputs and outputs", e);
-      throw e;
-    }
-  };
+  const broadcast = async transaction => {
+    /////SENDING TX TO BLOCKCHAIN/////
+    await BlueElectrum.ping();
+    await BlueElectrum.waitTillConnected();
 
-  const signMARS = async (message, marsAmount, txInputsOutputs) => {
-    const mnemonic = await AsyncStorage.getItem("civicMnemonic");
-    console.log('CivicMnemonic from signMars::::::', mnemonic);
-    const seed = bip39.mnemonicToSeedSync(mnemonic);
-    const root = bitcoin.bip32.fromSeed(seed, bitcoin.networks.bitcoin); // Adjust for Marscoin network
-    const child = root.derivePath("m/44'/2'/0'/0/0");
-    const { address } = bitcoin.payments.p2pkh({ pubkey: child.publicKey, network: bitcoin.networks.bitcoin });
-  
-    const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-    psbt.setVersion(1);
-    psbt.setMaximumFeeRate(10000000); // Satoshis per byte
-  
-    // Assume inputs and outputs are properly set up in txInputsOutputs
-    txInputsOutputs.inputs.forEach(input => {
-      psbt.addInput({
-        hash: input.txId,
-        index: input.vout,
-        nonWitnessUtxo: Buffer.from(input.rawTx, 'hex'),
-      });
-    });
-  
-    txInputsOutputs.outputs.forEach(output => {
-      psbt.addOutput({
-        address: output.address,
-        value: output.value,
-      });
-    });
-  
-    psbt.signInput(0, child);
-    psbt.finalizeAllInputs();
-    const tx = psbt.extractTransaction().toHex();
-  
-    // Function to broadcast transaction
-    try {
-      const txId = await broadcastTx(tx);
-      console.log('Transaction ID:', txId);
-      return txId;
-    } catch (error) {
-      console.error("Failed to broadcast transaction", error);
-      throw error;
+    const result = await wallet.broadcastTx(transaction);
+    if (!result) {
+      throw new Error(loc.errors.broadcast);
     }
+    return result;
   };
 
   const sendMetadata = async (message) => {
+    console.log(' SEND METADATA!!! START')
     setIsLoading(true);
     try {
-      const txids2watch = [];
-      // Assuming message is the data you want to store on the blockchain
-      const psbt = new bitcoin.Psbt(); // Initialize a new partially signed Bitcoin transaction (update with Marscoin specifics)
-      psbt.addOutput({
-        script: bitcoin.script.nullData.output.encode(Buffer.from(message)), // Use OP_RETURN to embed your message
-        value: 0, // No Marscoin is being sent
-      });
+      const lutxo = wallet._utxo.filter(utxo => utxo.address === civic);
+      console.log('wallet._utxo', lutxo)
+      const targets = [];
+      targets.push({ address: civic, value: 0 });
+      
+      const feeRate = 17 /////sat/vByte
+      //const feeRate = String(networkTransactionFees.mediumFee);
+      console.log('FEEEEEEE::::', feeRate);
+      const requestedSatPerByte = Number(feeRate);
+      console.log('requestedSatPerByte::::', requestedSatPerByte);
+      const change = civic;
   
-      // More code here to add inputs, sign the transaction etc.
-      const txHex = psbt.finalizeAllInputs().extractTransaction().toHex();
-      await broadcast(txHex);
-      const txid = bitcoin.Transaction.fromHex(txHex).getId();
-      txids2watch.push(txid);
-  
-      Notifications.majorTomToGroundControl([], [], txids2watch);
-  
-      triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
-      navigate('SendSuccess', {
-        message: 'Data published successfully',
-        txid,
-      });
-  
+      const { tx, outputs, psbt, fee } = await wallet.createTransaction(
+        lutxo,
+        targets,
+        requestedSatPerByte,
+        change,
+        undefined, // sequence
+        false,     // skipSigning
+        undefined, // masterFingerprint
+        message    // message
+      );
+ 
+      const txHex = tx.toHex();
+      broadcastResult = await broadcast(txHex);
+      console.log('Broadcast result:', broadcastResult);
+
+      Snackbar.show({ text: 'Data published successfully!', duration: Snackbar.LENGTH_SHORT });
       setIsLoading(false);
-  
-      await new Promise(resolve => setTimeout(resolve, 3000)); // sleep to make sure network propagates
-      fetchAndSaveWalletTransactions(walletID);
     } catch (error) {
-      triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
+      console.error("Failed to send metadata:", error);
+      Snackbar.show({ text: `Error: ${error.message}`, duration: Snackbar.LENGTH_LONG });
       setIsLoading(false);
-      presentAlert({ message: error.message });
     }
   };
-  
 
   const validateAndSubmit = async () => {
     const { firstName, lastName, displayName, bio, photo, video, civic } = formData;
@@ -688,33 +706,12 @@ const JoinGeneralPublicApplicationScreen = () => {
         console.log('message: ', message)
         
         //const io = await sendMARS(1, "<?=$public_address?>");
-        const fee = 0.01
-        const mars_amount = 0.01
-        const total_amount = fee + parseInt(mars_amount)
-        console.log('estimated-fee: ', fee)
+        // const fee = 0.01
+        // const mars_amount = 0.01
+        // const total_amount = fee + parseInt(mars_amount)
+        // console.log('estimated-fee: ', fee)
 
-        // try {
-        //     const tx = await signMARS(message, mars_amount, io);
-        //     $("#publish_progress_message").show().text("Published successfully...");
-        //     $("#publish_progress_message").show().text(tx.tx_hash);
-        //     const data = await doAjax("/api/setfeed", {"type": "GP", "txid": tx.tx_hash, "embedded_link": "https://ipfs.marscoin.org/ipfs/"+cid, "address": '<?=$public_address?>'});
-        //     if(data.Hash){
-        //         if(!alert('Submitted to Marscoin Blockchain successfully')){window.location.reload();}
-        //     }
-
-        // } catch (e) {
-        //     throw e;
-        // }
-        ///////SENDING TRANSACTION TO SAVE MESSAGE IN BLOCKCHAIN////////
-        // const transactionResponse = await sendMARS(0.01, civic);
-        // const tx = await signMARS(message, mars_amount, io);
-        console.error('transactionResponse', transactionResponse);
-        if (transactionResponse.success) {
-          Snackbar.show({ text: 'Published successfully!', duration: Snackbar.LENGTH_SHORT });
-          Alert.alert('Success', `Published successfully! Transaction ID: ${transactionResponse.txId}`);
-        } else {
-          throw new Error('Transaction failed');
-        }
+        sendMetadata(message) 
       } else {
         throw new Error('Failed to pin data');
       }

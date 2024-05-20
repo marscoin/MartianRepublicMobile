@@ -483,7 +483,6 @@ const SendWithAddress = () => {
         ? BitcoinUnit.BTC
         : wallet.getNetwork()
 
-   
       setAddresses(addrs => {
         addrs[scrollIndex.current].address = address;
         addrs[scrollIndex.current].amount = options.amount;
@@ -499,7 +498,6 @@ const SendWithAddress = () => {
       setPayjoinUrl(options.pj || '');
       // RN Bug: contentOffset gets reset to 0 when state changes. Remove code once this bug is resolved.
       setTimeout(() => scrollView.current.scrollToIndex({ index: currentIndex, animated: false }), 50);
-    
 
     setIsLoading(false);
   };
@@ -614,7 +612,7 @@ const SendWithAddress = () => {
     // console.log("(OLD SEND) THE TX BEING BUILT:", tx)
     // console.log("(OLD SEND) THE TX BEING BUILT:", outputs)
     // console.log("(OLD SEND) THE TX BEING BUILT:",  psbt)
-    console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
+   //console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
 
     if (tx && routeParams.launchedBy && psbt) {
       console.warn('navigating back to ', routeParams.launchedBy);
