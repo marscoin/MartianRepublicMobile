@@ -624,7 +624,6 @@ const JoinGeneralPublicApplicationScreen = () => {
     /////SENDING TX TO BLOCKCHAIN/////
     await BlueElectrum.ping();
     await BlueElectrum.waitTillConnected();
-
     const result = await wallet.broadcastTx(transaction);
     if (!result) {
       throw new Error(loc.errors.broadcast);
@@ -636,12 +635,14 @@ const JoinGeneralPublicApplicationScreen = () => {
     console.log(' SEND METADATA!!! START')
     setIsLoading(true);
     try {
-      const lutxo = wallet._utxo.filter(utxo => utxo.address === civic);
+      //const utxos = wallet.fetchUtxo(); 
+      const lutxo = wallet._utxo;
+      //const lutxo = wallet._utxo.filter(utxo => utxo.address === civic);
       console.log('wallet._utxo', lutxo)
       const targets = [];
       targets.push({ address: civic, value: 0 });
       
-      const feeRate = 17 /////sat/vByte
+      const feeRate = 50
       //const feeRate = String(networkTransactionFees.mediumFee);
       console.log('FEEEEEEE::::', feeRate);
       const requestedSatPerByte = Number(feeRate);
@@ -704,14 +705,8 @@ const JoinGeneralPublicApplicationScreen = () => {
         const cid = data.Hash;
         const message = "GP_" + cid;
         console.log('message: ', message)
-        
-        //const io = await sendMARS(1, "<?=$public_address?>");
-        // const fee = 0.01
-        // const mars_amount = 0.01
-        // const total_amount = fee + parseInt(mars_amount)
-        // console.log('estimated-fee: ', fee)
-
         sendMetadata(message) 
+        //sendMetadata(null) 
       } else {
         throw new Error('Failed to pin data');
       }
@@ -757,7 +752,7 @@ const JoinGeneralPublicApplicationScreen = () => {
             <Text style={styles.medText}>Check your application data: </Text>
         </View>
 
-      <BlueSpacing20/>
+        <BlueSpacing20/>
 
         <View style={styles.orangeBox}>
           <View style={styles.headerBox}>
@@ -791,8 +786,8 @@ const JoinGeneralPublicApplicationScreen = () => {
             <View style={styles.headerBox}>
               <Text style={styles.headerText}>Profile Picture: </Text>
             </View>
-            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(`https://ipfs.marscoin.org/ipfs/${params.photo}`)}>
-              <Text style={styles.contentText}>{`https://ipfs.marscoin.org/ipfs/${params.photo}`}</Text>
+            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(`/${params.photo}`)}>
+              <Text style={styles.contentText}>{`${params.photo}`}</Text>
             </TouchableOpacity>
         </View>
 
@@ -800,8 +795,8 @@ const JoinGeneralPublicApplicationScreen = () => {
             <View style={styles.headerBox}>
               <Text style={styles.headerText}>Liveness Video Proof: </Text>
             </View>
-            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(`https://ipfs.marscoin.org/ipfs/${params.video}`)}>
-              <Text style={styles.contentText}>{`https://ipfs.marscoin.org/ipfs/${params.video}`}</Text>
+            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(`${params.video}`)}>
+              <Text style={styles.contentText}>{`${params.video}`}</Text>
             </TouchableOpacity>
         </View>
 
@@ -826,9 +821,8 @@ const JoinGeneralPublicApplicationScreen = () => {
          <LinearGradient colors={ isVerified ? ['#FFB67D','#FF8A3E', '#FF7400']: ['gray', 'gray']} style={styles.joinButtonGradient}>
             <TouchableOpacity 
               style={styles.joinButton}
-              //disabled={!isVerified}
-              //onPress={handleSubmit}
-              onPress={validateAndSubmit} disabled={isPublishing}
+              onPress={validateAndSubmit} 
+              disabled={isPublishing}
             >
                 <Text style={styles.buttonText}>PUBLISH APPLICATION</Text>
             </TouchableOpacity>  

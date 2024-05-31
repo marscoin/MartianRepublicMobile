@@ -129,6 +129,14 @@ const TransactionsStatus = () => {
   }, [walletID, wallets]);
   useEffect(() => {
     console.log('PARAMS tx', tx)
+    if (!tx) {
+      //console.error('Transaction object is undefined.');
+    } else {
+      console.log('INPUTS:', tx.inputs);
+      console.log('OUTPUTS:', tx.outputs);
+    }
+    //console.log('INPUTS', tx.inputs)
+    //console.log('INPUTS', tx.outputs)
   }, [tx]);
 
   // re-fetching tx status periodically

@@ -487,9 +487,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
     const { inputs, outputs, fee } = algo(utxos, targets, feeRate);
 
-    //console.log("INPUTS:", inputs)
-    //console.log("OUTPUTS:", outputs)
-    //console.log("FEE", fee)
+    console.log("INPUTS:", inputs)
+    console.log("OUTPUTS:", outputs)
+    console.log("FEE", fee)
 
     if (!inputs || !outputs) {
       throw new Error("Not enough balance");
@@ -1406,6 +1406,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   async broadcastTx(txhex) {
     console.log("==== [MARS] broadcastTx ==== ");
     const broadcast = await MARSConnection.broadcastV2(txhex);
+    console.log("==== [MARS] broadcastTx ==== ", broadcast);
     console.log({ broadcast });
     if (broadcast.indexOf("successfully") !== -1) return true;
     return broadcast.length === 64; // this means return string is txid (precise length), so it was broadcasted ok

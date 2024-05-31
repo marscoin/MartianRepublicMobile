@@ -80,7 +80,7 @@ const WalletTransactionsCivic = ({ navigation }) => {
    */
   const getTransactionsSliced = (lmt = Infinity) => {
     let txs = wallet.getTransactions();
-    console.log('getTransactionsSliced8888888888', txs)
+    //console.log('getTransactionsSliced8888888888', txs)
     for (const tx of txs) {
       tx.sort_ts = +new Date(tx.received);
     }
