@@ -111,7 +111,7 @@ const CitizenScreen = () => {
                 return; // Stop the fetching process as data is repeated
             }
             // Update the last fetched data
-            lastFetchedCitizens.current = response.data;
+            lastFetchedPublic.current = response.data;
             // Dispatch new data to the reducer
             dispatch({ type: 'SET_GENERAL_PUBLIC', payload: response.data });
         } catch (error) {
@@ -415,7 +415,7 @@ const CitizenScreen = () => {
                                     <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
                                     <Text numberOfLines={1} style={styles.citizenDate}>Joined: {new Date(item.created_at).toLocaleDateString()}</Text>
                                 </View>
-                                {item.user.profile.citizen===0 &&
+                                {item.user.profile.citizen === 0 &&  ////if user is a citizen - show ENDORSE button
                                 <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
                                     <View style ={styles.endorseButton}>
                                         <Text style={styles.endorsTxt}>ENDORSE</Text>
@@ -423,7 +423,7 @@ const CitizenScreen = () => {
                                 
                                     <Text style={[styles.citizenName, {fontSize: 20, marginTop: 10}]}>{item.user.profile.endorse_cnt}</Text>
                                 </View>}
-                                {item.user.profile.citizen===1 &&
+                                {item.user.profile.citizen === 1 && ////if user is not a citizen - show checkbox
                                 <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
                                     <Icon name="check-circle" type="material-community" color="#FF7400" />
                                 </View>}
@@ -718,16 +718,18 @@ const styles = StyleSheet.create({
         //marginRight: 50,
     },
     endorsTxt: {
-        fontSize: 8,
-        color:  '#FF7400',
+        fontSize: 8.5,
+        color:'white',
+        //color:  '#FF7400',
         fontFamily: 'Orbitron-Regular',
         fontWeight:"500",
         // marginBottom: 5
     },
     endorseButton: {
         borderColor:  '#FF7400',
-        borderWidth:1,
+        borderWidth: 1,
         borderRadius: 10,
+        backgroundColor:'#FF7400',
         paddingHorizontal: 10,
         paddingVertical: 5,
         alignItems: 'center',
