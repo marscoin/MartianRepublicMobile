@@ -12,21 +12,22 @@ import { Image as CompressorImage } from 'react-native-compressor';
 import { RNCamera } from 'react-native-camera';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { address } from 'bitcoinjs-lib';
-import { get } from '../../__mocks__/react-native-tor';
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
   const { colors, fonts } = useTheme();
   const styles = getStyles(colors, fonts);
   const route = useRoute();
+  const [userData, setUserData] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
+  const [buttonPressed, setButtonPressed] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [photoIPFS, setPhotoIPFS] = useState(null);
+  const [isPhotoChanged, setIsPhotoChanged] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const {wallets} = useContext(BlueStorageContext);
   const [loading, setLoading] = useState(false);
@@ -39,8 +40,49 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   const handleImageCaptured = (uri) => {
     setCapturedImage(uri);
+    setIsPhotoChanged(true); // Indicate that a new photo has been taken
     console.log('Image saved', uri);
   };
+
+  async function fetchUser() {
+    const token = await AsyncStorage.getItem('@auth_token');
+    response = await axios.post("https://martianrepublic.org/api/scitizen", {
+        // firstname:'',
+        //lastname: '',
+        //bio:''
+      }, {
+      headers: {'Authorization': `Bearer ${token}`}
+    })
+    console.log('USER DATA', response.data);
+    setUserData(response.data);
+    if (response.data.citizen) {
+      const { firstname, lastname, displayname, shortbio, avatar_link } = response.data.citizen;
+      setFirstName(firstname || '');
+      setLastName(lastname || '');
+      setDisplayName(displayname || '');
+      setBio(shortbio || '');
+      if (avatar_link) {
+        setCapturedImage(avatar_link);
+        setPhotoIPFS(avatar_link); // Assuming avatar_link is the IPFS hash/link
+        setIsPhotoChanged(false); // Photo is not new, it's from previous data
+      }
+    }
+    // setUserData(response.data)
+    // {response.data.citizen.lastname &&
+    //   setFirstName(response.data.citizen.firstname)}
+    // {response.data.citizen.lastname &&
+    //   setLastName(response.data.citizen.lastname)}
+    // {response.data.citizen.displayname &&
+    //   setDisplayName(response.data.citizen.displayname)}
+    // {response.data.citizen.shortbio &&
+    //   setBio(response.data.citizen.shortbio)}
+    // {response.data.citizen.avatar_link &&  
+    //   setCapturedImage(response.data.citizen.avatar_link)}
+  }
+  useEffect(() => {
+    fetchUser()
+  }, []);  
+  
 
   async function compressImage(imageUri) {
     try {
@@ -78,7 +120,7 @@ const JoinGeneralPublicApplicationScreen = () => {
     const civicAddress = await AsyncStorage.getItem('civicAddress');
     const base64 = await RNFS.readFile(capturedImage, 'base64');
     const imageData = `data:image/jpeg;base64,${base64}`;
-
+    //console.log('image data', imageData)
     try {
         const response = await axios.post("https://martianrepublic.org/api/pinpic", {
             picture: imageData,
@@ -96,38 +138,39 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   const handleSubmit = async () => {
     if (!isFormValid) {
-        // If form is not valid, show an alert and do not proceed.
-        Alert.alert('Validation Error', 'Make sure all required fields are filled in and Photo ID is taken!');
-        return; // Stop execution if the form is not valid.
+      Alert.alert('Validation Error', 'Make sure all required fields are filled in and Photo ID is taken!');
+      return;
     }
-
     setLoading(true);
     try {
-        await postName(); // Ensure name is posted before proceeding.
-        await postPhoto(); // Ensure photo is posted and hash is received before navigating.
-
-        // Check if photoIPFS has a value after posting photo
-        if (photoIPFS) {
-            navigation.navigate('JoinGeneralPublicApplication2Screen', {
-                firstName,
-                lastName,
-                displayName,
-                bio,
-                photo: photoIPFS
-            });
-        } else {
-            //console.warn("Photo IPFS hash is not available yet.");
-        }
+      await postName();
+      let photoHash = photoIPFS;
+      if (isPhotoChanged && capturedImage) {
+        photoHash = await postPhoto(); // Upload and get new IPFS hash
+      }
+      setButtonPressed(true)
+      if (photoHash) {
+        navigation.navigate('JoinGeneralPublicApplication2Screen', {
+          firstName,
+          lastName,
+          displayName,
+          bio,
+          photo: photoHash
+        });
+        
+      }
     } catch (error) {
-        console.error("Error in submission:", error);
-        Alert.alert('Error', 'An error occurred during submission.');
+      console.error("Error in submission:", error);
+      Alert.alert('Error', 'An error occurred during submission.');
     } finally {
       setLoading(false);
     }
-};
+  };
+
 
   useEffect(() => {
-    if (photoIPFS) {
+    // Ensure both that the button has been pressed and that the photoIPFS is not null
+    if (buttonPressed && photoIPFS) {
       navigation.navigate('JoinGeneralPublicApplication2Screen', {
         firstName,
         lastName,
@@ -135,8 +178,10 @@ const JoinGeneralPublicApplicationScreen = () => {
         bio,
         photo: photoIPFS
       });
+      // Optionally reset buttonPressed to false to prevent repeated navigation
+      setButtonPressed(false);
     }
-  }, [photoIPFS]); 
+}, [buttonPressed, photoIPFS]); // React only on changes to buttonPressed or photoIPFS
 
   const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
     const cameraRef = useRef(null);
@@ -266,11 +311,9 @@ const JoinGeneralPublicApplicationScreen = () => {
             <View style={{ marginTop: 30, marginHorizontal: 20 }}>
                 <Text style={styles.medText}>First Name *</Text>
                 <TextInput
-                    value={firstName}
-                    placeholder=""
-                    placeholderTextColor="white"
-                    onChangeText={(text) => setFirstName(text)}
                     style={styles.textFieldWrapStyle}
+                    value={firstName}
+                    onChangeText={(text) => setFirstName(text)}
                     ref={firstNameRef}
                     onFocus={() => scrollViewRef.current.scrollTo({ y: 0, animated: true })}    
                     maxLength={50}
@@ -280,11 +323,9 @@ const JoinGeneralPublicApplicationScreen = () => {
               <View style={{ marginTop: 30, marginHorizontal: 20 }}>
                 <Text style={styles.medText}>Last Name *</Text>
                 <TextInput
-                    value={lastName}
-                    placeholder=""
-                    placeholderTextColor="white"
-                    onChangeText={(text) => setLastName(text)}
                     style={styles.textFieldWrapStyle}
+                    value={lastName}
+                    onChangeText={(text) => setLastName(text)}
                     ref={lastNameRef}
                     onFocus={() => scrollViewRef.current.scrollTo({ y: 0, animated: true })}    
                     maxLength={50}
@@ -294,11 +335,9 @@ const JoinGeneralPublicApplicationScreen = () => {
               <View style={{ marginTop: 30, marginHorizontal: 20 }}>
                 <Text style={styles.medText}>Display Name *</Text>
                 <TextInput
-                    value={displayName}
-                    placeholder=""
-                    placeholderTextColor="white"
-                    onChangeText={(text) => setDisplayName(text)}
                     style={styles.textFieldWrapStyle}
+                    value={displayName}
+                    onChangeText={(text) => setDisplayName(text)}
                     ref={displayNameRef}
                     onFocus={() => scrollViewRef.current.scrollTo({ y: 150, animated: true })}    
                     maxLength={50}
@@ -308,11 +347,9 @@ const JoinGeneralPublicApplicationScreen = () => {
               <View style={{ marginTop: 30, marginHorizontal: 20 }}>
                 <Text style={styles.medText}>Short Bio *</Text>
                 <TextInput
-                    value={bio}
-                    placeholder=""
-                    placeholderTextColor="white"
-                    onChangeText={(text) => setBio(text)}
                     style={[styles.textFieldWrapStyle, {height: 100}]}
+                    value={bio}
+                    onChangeText={(text) => setBio(text)}
                     ref={bioRef}
                     onFocus={() => scrollViewRef.current.scrollTo({ y: 300, animated: true })}    
                     maxLength={700}
@@ -425,13 +462,13 @@ const getStyles = (colors, fonts) => StyleSheet.create({
       justifyContent:'center',
   },
   joinButtonGradient: {
-      paddingVertical:10,
-      alignItems:'center',
-      justifyContent:'center',
-      borderRadius: 20,
-      marginHorizontal: 40,
-      marginTop: 50,
-      height: 60,
+    paddingVertical:10,
+    alignItems:'center',
+    justifyContent:'center',
+    borderRadius: 20,
+    marginHorizontal: 40,
+    marginTop: 50,
+    height: 60,
   },
   iconStyle: {
     width:80,
@@ -439,16 +476,16 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     marginTop: 30,
   },
   textFieldWrapStyle: {
+    fontFamily: 'Orbitron-Regular',
     height: 40,
     marginTop: 10,
     borderRadius: 8,
     elevation: 2.0,
-    backgroundColor:colors.inputBackgroundColor,
+    backgroundColor: colors.inputBackgroundColor,
     borderColor: 'white',
     borderWidth: 0.7,
-    paddingHorizontal: 5,
+    paddingHorizontal: 10,
     paddingVertical: 5,
-    fontFamily: 'Orbitron-Regular', 
     letterSpacing: 1.1,
     fontSize: 14,
     color: 'white'

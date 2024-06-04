@@ -143,7 +143,7 @@ const CitizenScreen = () => {
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`);
-            //console.log('APPLICANTS', response.data);
+            console.log('APPLICANTS', response.data);
             const sortedApplicants = response.data.data.sort((a, b) => {
                 const countA = countMissingFields(a);
                 const countB = countMissingFields(b);
@@ -375,13 +375,13 @@ const CitizenScreen = () => {
                                     </View>
                                     {item.user.profile.endorse_cnt && 
                                         <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                            <Text numberOfLines={1} style={styles.endorsTxt}>ENDORSEMENTS</Text>
+                                            <Text numberOfLines={1} style={styles.endorsTxt1}>ENDORSEMENTS</Text>
                                             <Text style={[styles.citizenName, {fontSize: 22, marginTop:5}]}>{item.user.profile.endorse_cnt}</Text>
                                         </View>
                                     }
                                     {!item.user.profile.endorse_cnt && 
                                         <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
-                                            <Text numberOfLines={1} style={[styles.endorsTxt, {marginBottom: 8}]}>FOUNDER</Text>
+                                            <Text numberOfLines={1} style={[styles.endorsTxt1, {marginBottom: 8}]}>FOUNDER</Text>
                                             <Icon name="medal" type="material-community" color="#FF7400" />
                                         </View>
                                     }
@@ -716,6 +716,12 @@ const styles = StyleSheet.create({
         fontWeight:"500",
         letterSpacing: 1.1, 
         //marginRight: 50,
+    },
+    endorsTxt1: {
+        fontSize: 8,
+        color:  '#FF7400',
+        fontFamily: 'Orbitron-Regular',
+        fontWeight:"500",
     },
     endorsTxt: {
         fontSize: 8.5,
