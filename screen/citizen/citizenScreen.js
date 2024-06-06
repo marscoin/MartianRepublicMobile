@@ -1,4 +1,4 @@
-import React, { useEffect, useContext , useRef, useReducer} from 'react';
+import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
 import { ScrollView, Platform,ActivityIndicator, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
@@ -23,6 +23,7 @@ const CitizenScreen = () => {
     const citizenPageRef = useRef(1);
     const publicPageRef = useRef(1);
     const applicantPageRef = useRef(1);
+    const [userData, setUserData] = useState('');
     const initialState = {
         filterCitizen: true,
         filterPublic: false,
@@ -45,12 +46,12 @@ const CitizenScreen = () => {
         response = await axios.post("https://martianrepublic.org/api/scitizen", {
             // firstname:'',
             //lastname: '',
-     //bio:''
+            //bio:''
           }, {
           headers: {'Authorization': `Bearer ${token}`}
         })
         console.log('USER DATA', response.data);
-        
+        setUserData(response.data)
       }
       useEffect(() => {
         fetchUser()
@@ -283,29 +284,46 @@ const CitizenScreen = () => {
                 </View>
                 <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
                 
-                {/* ///////////JOIN MARS BLOCK///////// */}
-                {!state.isCitizen &&
-                <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
-                    <View style={styles.noWallet}>
-                        <Text style={[styles.noWalletText, {marginBottom: 15}]}>SUBMIT YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
-                        <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                            <TouchableOpacity 
-                                style={[styles.joinButton]}
-                                onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
-                            >
-                                <Text style={styles.noWalletText}>JOIN MARS!</Text>
-                            </TouchableOpacity>
-                        </LinearGradient>
-                    </View>  
-                </View>
-                }
-                {state.isCitizen &&
-                <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
-                    <View style={styles.noWallet}>
-                        <Text style={[styles.noWalletText, { fontSize: 34, letterSpacing: 4, fontWeight:'800'}]}>WELCOME CITIZEN</Text>
-                    </View>  
-                </View>
-                }
+                {/* ///////////APPLICATION BLOCK - JOIN MARS if new, CONTINUE if has application, WELCOME CITIZEN for ciitzens///////// */}
+                {userData && (
+                <>
+                    {state.isCitizen ? (
+                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
+                            <View style={styles.noWallet}>
+                                <Text style={[styles.noWalletText, { fontSize: 34, letterSpacing: 4, fontWeight:'800'}]}>WELCOME CITIZEN</Text>
+                            </View>  
+                        </View>
+                    ) : userData.profile.has_application === 0 ? (
+                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
+                            <View style={styles.noWallet}>
+                                <Text style={[styles.noWalletText, {marginBottom: 15}]}>SUBMIT YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
+                                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                                    <TouchableOpacity 
+                                        style={[styles.joinButton]}
+                                        onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                                    >
+                                        <Text style={styles.noWalletText}>JOIN MARS!</Text>
+                                    </TouchableOpacity>
+                                </LinearGradient>
+                            </View>  
+                        </View>
+                    ) : (
+                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
+                            <View style={styles.noWallet}>
+                                <Text style={[styles.noWalletText, {marginBottom: 15}]}>CONTINUE YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
+                                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                                    <TouchableOpacity 
+                                        style={[styles.joinButton]}
+                                        onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                                    >
+                                        <Text style={styles.noWalletText}>CONTINUE</Text>
+                                    </TouchableOpacity>
+                                </LinearGradient>
+                            </View>  
+                        </View>
+                    )}
+                </>
+                )}
 
                 <Image style={styles.imageLG} source={require('../../img/sunrise.png')} />
 
@@ -452,8 +470,8 @@ const CitizenScreen = () => {
                                         <View style={{ flex: 1, flexDirection: 'row' }}>
                                             <View style={{justifyContent: 'center', width: '56%', marginLeft: 10 }}>
                                                 <Text numberOfLines={2} style={styles.citizenName}>{item.fullname}</Text>
-                                                {item.address && <Text numberOfLines={2} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>}
-                                                {item.citizen&&item.citizen.updated_at && <Text numberOfLines={2} style={styles.citizenAddress}>Last update: {new Date(item.citizen.updated_at).toLocaleDateString()}</Text>}
+                                                {item.citizen && item.citizen.public_address &&  <Text numberOfLines={2} style={styles.citizenAddress}>Address: {item.citizen.public_address.slice(0,9)}</Text>}
+                                                {item.citizen && item.citizen.updated_at && <Text numberOfLines={2} style={styles.citizenAddress}>Last update: {new Date(item.citizen.updated_at).toLocaleDateString()}</Text>}
                                             </View>
                                             <View style={{ alignItems: 'flex-start', marginLeft: 5 }}>
                                                 {["name", "shortbio", "avatar_link", "liveness_link"].map((field, index) => (
