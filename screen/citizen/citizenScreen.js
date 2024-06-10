@@ -6,7 +6,6 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
 import LinearGradient from 'react-native-linear-gradient';
-import WalletGradient from '../../class/wallet-gradient';
 import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
 import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
 import axios from 'axios';
@@ -34,19 +33,14 @@ const CitizenScreen = () => {
         imageLoadErrors: {},
         isCitizen: false
       };
-    //console.log('wallets', wallets)
     const lastFetchedCitizens = useRef([]);
     const lastFetchedPublic = useRef([]);
     const route = useRoute();
     const imageLoadError = useRef({});
 
     async function fetchUser() {
-        //console.log('USER DATA1');
         const token = await AsyncStorage.getItem('@auth_token');
         response = await axios.post("https://martianrepublic.org/api/scitizen", {
-            // firstname:'',
-            //lastname: '',
-            //bio:''
           }, {
           headers: {'Authorization': `Bearer ${token}`}
         })
@@ -144,7 +138,7 @@ const CitizenScreen = () => {
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`);
-            console.log('APPLICANTS', response.data);
+            //console.log('APPLICANTS', response.data);
             const sortedApplicants = response.data.data.sort((a, b) => {
                 const countA = countMissingFields(a);
                 const countB = countMissingFields(b);
@@ -271,7 +265,7 @@ const CitizenScreen = () => {
     
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
-    {/* ////margin -80 sticks screen to the tabbar///// */}
+        {/* ////margin -80 sticks screen to the tabbar///// */}
         <View style={styles.root}>
             <ScrollView 
                 style={styles.root}
@@ -286,13 +280,34 @@ const CitizenScreen = () => {
                 
                 {/* ///////////APPLICATION BLOCK - JOIN MARS if new, CONTINUE if has application, WELCOME CITIZEN for ciitzens///////// */}
                 {userData && (
-                <>
-                    {state.isCitizen ? (
-                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
-                            <View style={styles.noWallet}>
-                                <Text style={[styles.noWalletText, { fontSize: 34, letterSpacing: 4, fontWeight:'800'}]}>WELCOME CITIZEN</Text>
+                    <>
+                    {/* ///////CITIZEN BLOCK//////// */}
+                    {userData.profile.citizen === 1 ? (
+                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40, marginHorizontal: 20}}>    
+                            <View style={styles.citizenID}>
+                                <Image
+                                    source={state.imageLoadErrors[userData.citizen.id] ? require('../../img/genericprofile.png') : !userData.citizen.avatar_link? require('../../img/genericprofile.png'):{ uri: userData.citizen.avatar_link }}
+                                    style={[styles.citizenImageID,{marginLeft: 20}]} 
+                                    onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: userData.citizen.id} })}
+                                />
+                                
+                                
+                                <View style={styles.citizenItemID}>
+                                    <View style={{borderColor: '#EEE9E4', borderWidth: 1, borderRadius: 8, padding: 8, alignItems: 'center', justifyContent:'center', marginBottom: 10}}>
+                                        <Text style={[styles.noWalletText, { fontSize: 20, letterSpacing: 2, fontWeight:'800', color: 'white' }]}>CITIZEN ID</Text>
+                                    </View>
+                                    <View style={{ marginHorizontal: 15, width: windowWidth * 0.45 }}>
+                                        <Text numberOfLines={1} style={[styles.citizenName, {lineHeight:26}]}>{userData.citizen.firstname} </Text>
+                                        <Text numberOfLines={1} style={[styles.citizenName, {lineHeight:26}]}>{userData.citizen.lastname}</Text>
+                                        <Text numberOfLines={1} style={[styles.citizenAddress, {fontSize:10}]}>Address: {userData.citizen.public_address.slice(0,9)}</Text>
+                                      
+                                        <Text numberOfLines={1} style={[styles.citizenAddress, {fontSize:10}]}>Citizen since: {new Date(userData.citizen.created_at).toLocaleDateString()}</Text>
+                                        
+                                    </View>
+                                </View>
                             </View>  
                         </View>
+                    /* ///////NEWCOMMERS//////// */
                     ) : userData.profile.has_application === 0 ? (
                         <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
                             <View style={styles.noWallet}>
@@ -308,6 +323,7 @@ const CitizenScreen = () => {
                             </View>  
                         </View>
                     ) : (
+                    /* ///////CONTINUE APPLICATION//////// */    
                         <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
                             <View style={styles.noWallet}>
                                 <Text style={[styles.noWalletText, {marginBottom: 15}]}>CONTINUE YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
@@ -322,7 +338,7 @@ const CitizenScreen = () => {
                             </View>  
                         </View>
                     )}
-                </>
+                    </>
                 )}
 
                 <Image style={styles.imageLG} source={require('../../img/sunrise.png')} />
@@ -627,7 +643,28 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         alignItems:'center',
         justifyContent: 'center', 
-        padding:30
+        padding:30,
+        marginBottom: 30,
+    },
+    citizenID: {
+        height: 170,
+        flexDirection:'row',
+        width: windowWidth * 0.9,
+        borderRadius: 20,
+        //borderColor: '#FF7400',
+        backgroundColor: '#684526',
+        marginHorizontal: 20,
+        alignItems:'center',
+        justifyContent: 'center', 
+        padding:30,
+        shadowColor: "#000",
+                  shadowOffset: {
+                    width: 0,
+                    height: 3,
+                  },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 3.65,
+                  elevation: 8,
     },
     noWalletText: {
         color:'white', 
@@ -685,18 +722,18 @@ const styles = StyleSheet.create({
         width: windowWidth,
         borderWidth: 0.5,
         borderColor: '#FF7400',
-        //backgroundColor: 'white'
       },
     citizenItem: {
-        //height: 100,
         flexDirection: 'row',
         alignItems: 'center',
-       // justifyContent: 'space-between',
         borderBottomWidth: 0.3,
         borderColor: '#FF7400',
         padding: 10,
         width: windowWidth,
-        //backgroundColor: 'white'
+    },
+    citizenItemID: {
+        alignItems: 'center',
+        padding: 10,
     },
     citizenImage: {
         width: windowWidth * 0.19,
@@ -704,11 +741,17 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
         borderRadius: 10
     },
+    citizenImageID: {
+        width: windowWidth * 0.25,
+        height: windowWidth * 0.25,
+        borderRadius: 10
+    },
     citizenAddress: {
         fontSize: 12,
         color: '#FFF',
         marginTop: 5,
         fontFamily: 'Orbitron-Regular',
+        letterSpacing: 1.2,
     },
     missingFieldsText: {
         fontSize: 10,
@@ -733,7 +776,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Orbitron-Regular',
         fontWeight:"500",
         letterSpacing: 1.1, 
-        //marginRight: 50,
     },
     endorsTxt1: {
         fontSize: 8,
@@ -744,10 +786,8 @@ const styles = StyleSheet.create({
     endorsTxt: {
         fontSize: 8.5,
         color:'white',
-        //color:  '#FF7400',
         fontFamily: 'Orbitron-Regular',
         fontWeight:"500",
-        // marginBottom: 5
     },
     endorseButton: {
         borderColor:  '#FF7400',
@@ -760,7 +800,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center'
     },
     completeButton: {
-        //backgroundColor: '#FF7400',  // Orange color
         height: 60,
         alignSelf:'center',
         alignItems:'center',
