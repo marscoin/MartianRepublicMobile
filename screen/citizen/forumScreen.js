@@ -22,7 +22,36 @@ const ForumScreen = () => {
     const navigation = useNavigation();
     const { colors } = useTheme();
     const route = useRoute();
-    const [userData, setUserData] = useState('');
+    const initialState = {
+        filterPublicSquare: true,
+        filterProposals: false,
+        filterAmendment: false,
+        filterSupport: false,
+        publicSquareData: [],
+        isLoading: false,
+        error: null,
+      };
+
+      function forumReducer(state, action) {
+        switch (action.type) {
+            case 'SET_FILTER_PUBLIC_SQUARE':
+                return { ...state, filterPublicSquare: true, filterProposals: false, filterAmendment: false, filterSupport: false };
+            case 'SET_FILTER_PROPOSALS':
+                return { ...state, filterPublicSquare: false, filterProposals: true, filterAmendment: false, filterSupport: false };
+            case 'SET_FILTER_AMENDMENT':
+                return { ...state, filterPublicSquare: false, filterProposals: false, filterAmendment: true, filterSupport: false };
+            case 'SET_FILTER_SUPPORT':
+                return { ...state, filterPublicSquare: false, filterProposals: false, filterAmendment: false, filterSupport: true };  
+            case 'SET_IS_LOADING':
+                    return { ...state, isLoading: true, error: null };
+            case 'SET_PUBLIC_SQUARE_DATA':
+                    return { ...state, publicSquareData: action.payload, isLoading: false };
+          default:
+            throw new Error();
+        }
+      }  
+    
+    const [state, dispatch] = useReducer(forumReducer, initialState);
 
     
     async function fetchPublicSquareData() {
@@ -30,6 +59,7 @@ const ForumScreen = () => {
         // response = await axios.get(`https://martianrepublic.org/api/forum/categories/threads`, { headers: {'Authorization': `Bearer ${token}`}})
         response = await axios.get(`https://martianrepublic.org/api/forum/category/1/threads`, { headers: {'Authorization': `Bearer ${token}`}})
         console.log('PUBLIC SQUARE DATA', response.data);
+        dispatch({ type: 'SET_PUBLIC_SQUARE_DATA', payload: response.data.threads });
     }
 
     async function fetchProposalsData() {
@@ -52,9 +82,12 @@ const ForumScreen = () => {
 
     useEffect(() => {
         fetchPublicSquareData()
-        fetchProposalsData()
-        fetchAmendmentData()
-        fetchSupportData()
+    }, []);  
+
+    useEffect(() => {
+        // fetchProposalsData()
+        // fetchAmendmentData()
+        // fetchSupportData()
     }, []);  
 
       
@@ -71,13 +104,98 @@ const ForumScreen = () => {
           </View>
         </TouchableOpacity>
 
-        <View style={styles.root}>
+        <View >
+            {/* ///////////FILTER BLOCK///////// */}
+            <ScrollView 
+                style={styles.filterBlock}
+                horizontal={true}
+            >
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => {
+                            dispatch({ type: 'SET_FILTER_PUBLIC_SQUARE' })
+                        }}
+                    >
+                        <LinearGradient
+                            colors={state.filterPublicSquare ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // Change to grey gradient if inactive
+                            style={state.filterPublicSquare ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
+                        >
+                            <Text style={styles.filterButtonText}>PUBLIC SQUARE</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => {
+                            dispatch({ type: 'SET_FILTER_PROPOSALS' })
+                        }}
+                    >
+                        <LinearGradient
+                            colors={state.filterProposals ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
+                            style={state.filterProposals ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
+                        >
+                            <Text style={styles.filterButtonText}>PROPOSALS</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => {
+                            dispatch({ type: 'SET_FILTER_AMENDMENT' })
+                        }}
+                    >
+                        <LinearGradient
+                            colors={state.filterAmendment ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
+                            style={state.filterAmendment ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
+                        >
+                            <Text style={styles.filterButtonText}>AMENDMENT</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => {
+                            dispatch({ type: 'SET_FILTER_SUPPORT' })
+                        }}
+                    >
+                        <LinearGradient
+                            colors={state.filterSupport ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
+                            style={state.filterSupport ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
+                        >
+                            <Text style={styles.filterButtonText}>SUPPORT</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+            </ScrollView >
+
+            <View style={{ alignItems: 'center', justifyContent:'center', margin: 10, backgroundColor: '#2F2D2B', padding : 8}}>
+                {state.filterPublicSquare &&
+                    <Text style={styles.filterDescriptionText}>General Public Discussion Forum</Text>
+                }
+                {state.filterProposals &&
+                    <Text style={styles.filterDescriptionText}>Start discussing a new proposal</Text>
+                }
+                {state.filterAmendment &&
+                    <Text style={styles.filterDescriptionText}>MCR Development Discussion</Text>
+                }
+                {state.filterSupport &&
+                    <Text style={styles.filterDescriptionText}>Questions & Answers</Text>
+                }
+            </View>
+
             <ScrollView 
                 style={styles.root}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-               
+                {state.filterPublicSquare && state.publicSquareData && state.publicSquareData.map((thread) => (
+                    <View key={thread.id} style={styles.threadBlock}>
+                        <Text style={styles.threadTitle}>{thread.title}</Text>
+                        <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
+                        <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
+                        <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
+                    </View>
+                ))}
+
             </ScrollView>
         </View>
     </SafeAreaView>
@@ -85,9 +203,6 @@ const ForumScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    root: {
-        flex:1,
-    },
     center: {
         marginTop: 20,
         height:80,
@@ -104,6 +219,84 @@ const styles = StyleSheet.create({
         letterSpacing: 1.1, 
         marginHorizontal: 20,
         alignSelf: 'center'
+    },
+    filterBlock: {
+        width:'100%',
+        flexDirection:'row',
+        padding: 10,
+    },
+    filterButton: {
+        height: 24,
+        borderRadius: 10,
+        justifyContent:'center',
+        alignItems:'center',
+        padding: 5, 
+        marginHorizontal: 5
+    },
+    filterButtonText: {
+        color:'white', 
+        fontSize: 10,
+        fontFamily: 'Orbitron-Black',
+        letterSpacing: 1.2, 
+    },
+    filterDescriptionText: {
+        color:'white', 
+        fontSize: 15,
+        fontFamily: 'Orbitron-Regular',
+        letterSpacing: 1.2, 
+    },
+    filterButtonGradientActive: {
+        height: 24,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        justifyContent:'center',
+        alignItems:'center',
+    },
+    filterButtonGradientInactive: {
+        height: 24,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+        justifyContent:'center',
+        alignItems:'center',
+        backgroundColor: '#B0B0B0', // Grey color for inactive state
+    },
+    threadBlock: {
+        backgroundColor: '#2F2D2B',
+        padding: 15,
+        borderRadius: 5,
+        marginVertical: 8,
+        marginHorizontal: 10,
+    },
+    threadTitle: {
+        fontSize: 18,
+        color: 'white',
+        fontWeight: 'bold',
+        fontFamily: 'Orbitron-Regular',
+        marginBottom: 10,
+        letterSpacing: 1.1
+    },
+    threadAuthor: {
+        fontSize: 14,
+        color: '#FF7400',
+        fontFamily: 'Orbitron-Regular',
+        marginBottom: 3,
+        letterSpacing: 1.1
+    },
+    threadDate: {
+        fontSize: 14,
+        color: 'grey',
+        fontFamily: 'Orbitron-Regular',
+        marginBottom: 3,
+        letterSpacing: 1.1
+    },
+    threadReplies: {
+        fontSize: 14,
+        color: 'white',
+        fontFamily: 'Orbitron-Regular',
+        marginBottom: 3,
+        letterSpacing: 1.1
     },
     
 });
