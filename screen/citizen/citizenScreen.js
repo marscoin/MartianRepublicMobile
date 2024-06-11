@@ -284,7 +284,7 @@ const CitizenScreen = () => {
                     {/* ///////CITIZEN BLOCK//////// */}
                     {userData.profile.citizen === 1 ? (
                         <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40, marginHorizontal: 20}}>    
-                            <View style={styles.citizenID}>
+                            {/* <View style={styles.citizenID}>
                                 <Image
                                     source={state.imageLoadErrors[userData.citizen.id] ? require('../../img/genericprofile.png') : !userData.citizen.avatar_link? require('../../img/genericprofile.png'):{ uri: userData.citizen.avatar_link }}
                                     style={[styles.citizenImageID,{marginLeft: 20}]} 
@@ -305,7 +305,24 @@ const CitizenScreen = () => {
                                         
                                     </View>
                                 </View>
-                            </View>  
+                            </View>   */}
+                                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                                    <TouchableOpacity 
+                                        style={[styles.joinButton]}
+                                        //onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                                    >
+                                        <Text style={[styles.noWalletText, {paddingHorizontal: 8}]}>OPEN CIVIC ID</Text>
+                                    </TouchableOpacity>
+                                </LinearGradient>
+                                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={[styles.joinButtonGradient, {marginTop: 20}]}>
+                                    <TouchableOpacity 
+                                        style={[styles.joinButton]}
+                                        onPress={() => navigation.navigate('ForumScreen')}
+                                    >
+                                        <Text style={styles.noWalletText}>CITIZEN FORUM</Text>
+                                    </TouchableOpacity>
+                                </LinearGradient>
+
                         </View>
                     /* ///////NEWCOMMERS//////// */
                     ) : userData.profile.has_application === 0 ? (
@@ -396,7 +413,11 @@ const CitizenScreen = () => {
                             data={state.citizens.data}
                             extradata={state.citizens.data}
                             renderItem={({ item }) => (
-                                <View key={item.userid} style={styles.citizenItem}>
+                                <TouchableOpacity 
+                                    key={item.userid} 
+                                    style={styles.citizenItem}
+                                    onPress={() => navigation.navigate('IndividualCitizenScreen',{person: item})}
+                                >
                                     <Image
                                         source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : !item.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: item.user.citizen.avatar_link }}
                                         style={styles.citizenImage} 
@@ -419,7 +440,7 @@ const CitizenScreen = () => {
                                             <Icon name="medal" type="material-community" color="#FF7400" />
                                         </View>
                                     }
-                                </View>
+                                </TouchableOpacity>
                             )}
                             keyExtractor={(item) => item.userid.toString()} // Use userid as the key
                             onEndReached={handleEndCitizensReached}
@@ -438,30 +459,33 @@ const CitizenScreen = () => {
                             data={state.generalPublic.data}
                             extradata={state.generalPublic.data}
                             renderItem={({ item }) => (
-                                <View  style={[styles.citizenItem, {justifyContent:'flex-start'}]}>
-                                <Image    
-                                    source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : { uri: item.profile_image }}
-                                    style={styles.citizenImage} 
-                                    onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: item.id } })}
-                                />
-                                <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
-                                    <Text numberOfLines={2} style={styles.citizenName}>{item.user.fullname}</Text>
-                                    <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
-                                    <Text numberOfLines={1} style={styles.citizenDate}>Joined: {new Date(item.created_at).toLocaleDateString()}</Text>
-                                </View>
-                                {item.user.profile.citizen === 0 &&  ////if user is a citizen - show ENDORSE button
-                                <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                    <View style ={styles.endorseButton}>
-                                        <Text style={styles.endorsTxt}>ENDORSE</Text>
+                                <TouchableOpacity 
+                                    style={[styles.citizenItem, {justifyContent:'flex-start'}]}
+                                    onPress={() => navigation.navigate('IndividualPublicScreen',{person: item})}
+                                >
+                                    <Image    
+                                        source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : { uri: item.profile_image }}
+                                        style={styles.citizenImage} 
+                                        onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: item.id } })}
+                                    />
+                                    <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
+                                        <Text numberOfLines={2} style={styles.citizenName}>{item.user.fullname}</Text>
+                                        <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
+                                        <Text numberOfLines={1} style={styles.citizenDate}>Joined: {new Date(item.created_at).toLocaleDateString()}</Text>
                                     </View>
-                                
-                                    <Text style={[styles.citizenName, {fontSize: 20, marginTop: 10}]}>{item.user.profile.endorse_cnt}</Text>
-                                </View>}
-                                {item.user.profile.citizen === 1 && ////if user is not a citizen - show checkbox
-                                <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                    <Icon name="check-circle" type="material-community" color="#FF7400" />
-                                </View>}
-                            </View>
+                                    {item.user.profile.citizen === 0 &&  ////if user is a citizen - show ENDORSE button
+                                    <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                        <View style ={styles.endorseButton}>
+                                            <Text style={styles.endorsTxt}>ENDORSE</Text>
+                                        </View>
+                                    
+                                        <Text style={[styles.citizenName, {fontSize: 20, marginTop: 10}]}>{item.user.profile.endorse_cnt}</Text>
+                                    </View>}
+                                    {item.user.profile.citizen === 1 && ////if user is not a citizen - show checkbox
+                                    <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                        <Icon name="check-circle" type="material-community" color="#FF7400" />
+                                    </View>}
+                                </TouchableOpacity>
                             )}
                             keyExtractor={(item) => item.userid.toString()} // Use userid as the key
                             onEndReached={handleEndPublicReached}
@@ -482,7 +506,11 @@ const CitizenScreen = () => {
                                 const missingFields = getMissingFields(item);
                                 const allFieldsPresent = hasAllFields(item);
                                 return (
-                                    <View key={item.userid} style={styles.citizenItem}>
+                                    <TouchableOpacity 
+                                        key={item.userid} 
+                                        style={styles.citizenItem}
+                                        onPress={() => navigation.navigate('IndividualApplicantScreen',{person: item})}
+                                    >
                                         <View style={{ flex: 1, flexDirection: 'row' }}>
                                             <View style={{justifyContent: 'center', width: '56%', marginLeft: 10 }}>
                                                 <Text numberOfLines={2} style={styles.citizenName}>{item.fullname}</Text>
@@ -516,7 +544,7 @@ const CitizenScreen = () => {
                                                     </TouchableOpacity>
                                                 )}
                                         </View>
-                                    </View>
+                                    </TouchableOpacity>
                                 );
                             }}
                             keyExtractor={(item) => item.userid.toString()}

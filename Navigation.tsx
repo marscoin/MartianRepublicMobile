@@ -97,6 +97,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import CitizenScreen from './screen/citizen/citizenScreen';
+import IndividualCitizenScreen from './screen/citizen/individualCitizenScreen';
+import IndividualPublicScreen from './screen/citizen/individualPublicScreen';
+import IndividualApplicantScreen from './screen/citizen/individualApplicantScreen';
+import ForumScreen from './screen/citizen/forumScreen';
 import SendWithAddress from './screen/citizen/sendWithAddress';
 import SendConfirm from './screen/citizen/sendConfirm';
 import SendSuccess from './screen/citizen/sendSuccess';
@@ -276,8 +280,12 @@ const CitizenRoot = () => {
   const theme = useTheme();
   return (
     <CitizenStack.Navigator screenOptions={{ headerShown: false }} >
-      {/* <CitizenStack.Screen name="AreYouCitizenScreen" component={AreYouCitizenScreen} options={{ headerShown: false }}   /> */}
+      {/* <CitizenStack.Screen name="AreYouCitizenScreen" component={AreYouCitizenScreen} options={{ headerShown: false }}/> */}
       <CitizenStack.Screen name="CitizenScreen" component={CitizenScreen} options={{headerShown: false}}  />
+      <CitizenStack.Screen name="IndividualCitizenScreen" component={IndividualCitizenScreen} options={{headerShown: false}}/>
+      <CitizenStack.Screen name="IndividualPublicScreen" component={IndividualPublicScreen} options={{headerShown: false}}  />
+      <CitizenStack.Screen name="IndividualApplicantScreen" component={IndividualApplicantScreen} options={{headerShown: false}}  />
+      <CitizenStack.Screen name="ForumScreen" component={ForumScreen} options={{headerShown: false}}  />
       <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication2Screen" component={JoinGeneralPublicApplication2Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication3Screen" component={JoinGeneralPublicApplication3Screen}  options={{headerShown: false}} />
