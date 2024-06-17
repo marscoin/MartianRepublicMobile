@@ -28,6 +28,9 @@ const ForumScreen = () => {
         filterAmendment: false,
         filterSupport: false,
         publicSquareData: [],
+        proposalsData:[],
+        amendmentData:[],
+        supportData: [],
         isLoading: false,
         error: null,
       };
@@ -43,9 +46,15 @@ const ForumScreen = () => {
             case 'SET_FILTER_SUPPORT':
                 return { ...state, filterPublicSquare: false, filterProposals: false, filterAmendment: false, filterSupport: true };  
             case 'SET_IS_LOADING':
-                    return { ...state, isLoading: true, error: null };
+                return { ...state, isLoading: true, error: null };
             case 'SET_PUBLIC_SQUARE_DATA':
-                    return { ...state, publicSquareData: action.payload, isLoading: false };
+                return { ...state, publicSquareData: action.payload };
+            case 'SET_PROPOSALS_DATA':
+                return { ...state, proposalsData: action.payload };
+            case 'SET_AMENDMENT_DATA':
+                return { ...state, amendmentData: action.payload };
+            case 'SET_SUPPORT_DATA':
+                return { ...state, supportData: action.payload };    
           default:
             throw new Error();
         }
@@ -56,40 +65,38 @@ const ForumScreen = () => {
     
     async function fetchPublicSquareData() {
         const token = await AsyncStorage.getItem('@auth_token');
-        // response = await axios.get(`https://martianrepublic.org/api/forum/categories/threads`, { headers: {'Authorization': `Bearer ${token}`}})
         response = await axios.get(`https://martianrepublic.org/api/forum/category/1/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        console.log('PUBLIC SQUARE DATA', response.data);
+        //console.log('PUBLIC SQUARE DATA', response.data);
         dispatch({ type: 'SET_PUBLIC_SQUARE_DATA', payload: response.data.threads });
     }
 
     async function fetchProposalsData() {
         const token = await AsyncStorage.getItem('@auth_token');
         response = await axios.get(`https://martianrepublic.org/api/forum/category/2/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        console.log('PROPOSALS DATA', response.data);
+        //console.log('PROPOSALS DATA', response.data);
+        dispatch({ type: 'SET_PROPOSALS_DATA', payload: response.data.threads });
     }
 
     async function fetchAmendmentData() {
         const token = await AsyncStorage.getItem('@auth_token');
         response = await axios.get(`https://martianrepublic.org/api/forum/category/3/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        console.log('AMENDMENTS DATA', response.data);
+        //console.log('AMENDMENT DATA', response.data);
+        dispatch({ type: 'SET_AMENDMENT_DATA', payload: response.data.threads });
     }
 
     async function fetchSupportData() {
         const token = await AsyncStorage.getItem('@auth_token');
         response = await axios.get(`https://martianrepublic.org/api/forum/category/3/threads`, { headers: {'Authorization': `Bearer ${token}`}})
         console.log('SUPPORT DATA', response.data);
+        dispatch({ type: 'SET_SUPPORT_DATA', payload: response.data.threads });
     }
 
     useEffect(() => {
         fetchPublicSquareData()
+        fetchProposalsData()
+        fetchAmendmentData()
+        fetchSupportData()
     }, []);  
-
-    useEffect(() => {
-        // fetchProposalsData()
-        // fetchAmendmentData()
-        // fetchSupportData()
-    }, []);  
-
       
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
@@ -196,6 +203,33 @@ const ForumScreen = () => {
                     </View>
                 ))}
 
+                {state.filterProposals && state.proposalsData && state.proposalsData.map((thread) => (
+                    <View key={thread.id} style={styles.threadBlock}>
+                        <Text style={styles.threadTitle}>{thread.title}</Text>
+                        <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
+                        <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
+                        <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
+                    </View>
+                ))}
+
+                {state.filterAmendment && state.amendmentData && state.amendmentData.map((thread) => (
+                    <View key={thread.id} style={styles.threadBlock}>
+                        <Text style={styles.threadTitle}>{thread.title}</Text>
+                        <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
+                        <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
+                        <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
+                    </View>
+                ))}
+
+                {state.filterSupport && state.supportData && state.supportData.map((thread) => (
+                    <View key={thread.id} style={styles.threadBlock}>
+                        <Text style={styles.threadTitle}>{thread.title}</Text>
+                        <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
+                        <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
+                        <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
+                    </View>
+                ))}
+
             </ScrollView>
         </View>
     </SafeAreaView>
@@ -270,7 +304,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
     },
     threadTitle: {
-        fontSize: 18,
+        fontSize: 17,
         color: 'white',
         fontWeight: 'bold',
         fontFamily: 'Orbitron-Regular',
@@ -296,7 +330,8 @@ const styles = StyleSheet.create({
         color: 'white',
         fontFamily: 'Orbitron-Regular',
         marginBottom: 3,
-        letterSpacing: 1.1
+        letterSpacing: 1.1,
+        marginTop: 5
     },
     
 });
