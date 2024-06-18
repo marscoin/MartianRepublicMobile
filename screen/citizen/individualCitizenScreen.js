@@ -23,7 +23,7 @@ const IndividualCitizenScreen = () => {
     const { colors } = useTheme();
     const route = useRoute();
     const person = route.params.person;
-    console.log('PARAMS',person )
+    //console.log('PARAMS',person )
    
     const [userData, setUserData] = useState('');
     const [videoAvailable, setVideoAvailable] = useState(true);
@@ -47,18 +47,18 @@ const IndividualCitizenScreen = () => {
         headers: {'Authorization': `Bearer ${token}`}
       })
         console.log('PERSONAL DATA', response.data);
-        //setUserData(response.data)
+        setUserData(response.data)
     }
 
     useEffect(() => {
         fetchPersonDetails()
     }, []);  
 
-    useEffect(() => {
-        if (!person.user.citizen.liveness_link) {
-          setVideoAvailable(false); // Automatically set to unavailable if link is empty
-        }
-      }, [person.user.citizen.liveness_link]);
+    // useEffect(() => {
+    //     if (!person.user.citizen.liveness_link) {
+    //       setVideoAvailable(false); // Automatically set to unavailable if link is empty
+    //     }
+    //   }, [person.user.citizen.liveness_link]);
       
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
@@ -75,14 +75,20 @@ const IndividualCitizenScreen = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-                <Image
-                    source={ !person.profile_image? require('../../img/genericprofile.png'):{ uri: person.profile_image }}
-                    style={styles.profileImage} 
-                    onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: person.id} })}
-                />
+                {userData.citizen && userData.citizen.avatar_link &&
+                    <Image
+                        source={ !userData.citizen.avatar_link? require('../../img/genericprofile.png'):{ uri: userData.citizen.avatar_link }}
+                        style={styles.profileImage} 
+                    />
+                }
 
-                <Text numberOfLines={2} style={styles.citizenName}>{person.user.fullname}</Text>
-                
+                {userData.citizen && userData.citizen.firstname && userData.citizen.lastname &&
+                    <Text numberOfLines={2} style={styles.citizenName}>{userData.citizen.firstname}{userData.citizen.lastname}</Text>
+                }
+                {userData.citizen && userData.citizen.displayname &&
+                    <Text numberOfLines={2} style={styles.displayname}>{userData.citizen.displayname}</Text>
+                }
+
                 <Text numberOfLines={1} style={styles.header}>Address</Text>
                 <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.address)}>
                     <Text numberOfLines={2} style={styles.txt}>{person.address} </Text>
@@ -93,19 +99,30 @@ const IndividualCitizenScreen = () => {
                     <Text numberOfLines={2} style={styles.txt}>{new Date(person.mined).toLocaleDateString()} </Text>
                 </View>
 
+                {person.user && person.user.profile.endorse_cnt &&
+                <>
                 <Text numberOfLines={1} style={styles.header}>Endorsements </Text>
                 <View style={styles.txtCont} >
                     <Text numberOfLines={1} style={styles.txt}>{person.user.profile.endorse_cnt} </Text>
                 </View>
+                </>}
+
+                {userData.citizen && userData.citizen.shortbio &&
+                <>
+                <Text numberOfLines={1} style={styles.header}>Short Bio </Text>
+                <View style={styles.txtCont} >
+                    <Text numberOfLines={50} style={styles.txt}>{userData.citizen.shortbio} </Text>
+                </View>
+                </>}
 
                 <Text numberOfLines={2} style={styles.header}>IPFS application link </Text>
                 <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.embedded_link)}>
-                    <Text numberOfLines={2} style={styles.txt}>{person.embedded_link} </Text>
+                    <Text numberOfLines={3} style={styles.txt}>{person.embedded_link} </Text>
                 </TouchableOpacity>
 
                 <Text numberOfLines={2} style={styles.header}>Liveness Video Proof </Text>
 
-                {person.user.citizen.liveness_link && !videoError ?
+                {person.user && person.user.citizen && person.user.citizen.liveness_link && !videoError ?
                     <Video
                         source={{ uri: person.user.citizen.liveness_link }}
                         style={styles.videoPlayer}
@@ -123,11 +140,13 @@ const IndividualCitizenScreen = () => {
                         <Text style={styles.placeholderText}>VIDEO UNAVAILABLE</Text>
                     </View>
                 }
-
-                <Text numberOfLines={1} style={styles.header}>Video link </Text>
-                <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.user.citizen.liveness_link)}>
-                    <Text numberOfLines={2} style={styles.txt}>{person.user.citizen.liveness_link} </Text>
-                </TouchableOpacity>
+                {person.user && person.user.citizen.liveness_link &&
+                <>
+                    <Text numberOfLines={1} style={styles.header}>Video link </Text>
+                    <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.user.citizen.liveness_link)}>
+                        <Text numberOfLines={3} style={styles.txt}>{person.user.citizen.liveness_link} </Text>
+                    </TouchableOpacity>
+                </>}
                 
             </ScrollView>
         </View>
@@ -171,6 +190,16 @@ const styles = StyleSheet.create({
         letterSpacing: 1.1, 
         marginHorizontal: 20,
         marginTop: 20
+    },
+    displayname: {
+        fontSize: 18,
+        color:  'white',
+        fontFamily: 'Orbitron-Regular',
+        fontWeight:"500",
+        letterSpacing: 1.1, 
+        marginHorizontal: 20,
+        opacity: 0.7,
+        // marginTop: 20
     },
     txt: {
         fontSize: 14,

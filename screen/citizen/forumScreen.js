@@ -66,7 +66,7 @@ const ForumScreen = () => {
     async function fetchPublicSquareData() {
         const token = await AsyncStorage.getItem('@auth_token');
         response = await axios.get(`https://martianrepublic.org/api/forum/category/1/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        //console.log('PUBLIC SQUARE DATA', response.data);
+        console.log('PUBLIC SQUARE DATA', response.data);
         dispatch({ type: 'SET_PUBLIC_SQUARE_DATA', payload: response.data.threads });
     }
 
@@ -87,7 +87,7 @@ const ForumScreen = () => {
     async function fetchSupportData() {
         const token = await AsyncStorage.getItem('@auth_token');
         response = await axios.get(`https://martianrepublic.org/api/forum/category/3/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        console.log('SUPPORT DATA', response.data);
+        //console.log('SUPPORT DATA', response.data);
         dispatch({ type: 'SET_SUPPORT_DATA', payload: response.data.threads });
     }
 

@@ -98,7 +98,7 @@ const CitizenScreen = () => {
     const fetchGeneralPublic = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/public?page=${publicPageRef.current}`)
-            //console.log('GENERAL PUBLIC', response.data) 
+            console.log('GENERAL PUBLIC', response.data) 
 
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedPublic.current) === JSON.stringify(response.data)) {
@@ -309,7 +309,7 @@ const CitizenScreen = () => {
                                 <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                                     <TouchableOpacity 
                                         style={[styles.joinButton]}
-                                        //onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                                        onPress={() => navigation.navigate('CivicIDScreen', {user: userData})}
                                     >
                                         <Text style={[styles.noWalletText, {paddingHorizontal: 8}]}>OPEN CIVIC ID</Text>
                                     </TouchableOpacity>
@@ -461,7 +461,8 @@ const CitizenScreen = () => {
                             renderItem={({ item }) => (
                                 <TouchableOpacity 
                                     style={[styles.citizenItem, {justifyContent:'flex-start'}]}
-                                    onPress={() => navigation.navigate('IndividualPublicScreen',{person: item})}
+                                    //onPress={() => navigation.navigate('IndividualPublicScreen',{person: item})}
+                                    onPress={() => navigation.navigate('IndividualCitizenScreen',{person: item})}
                                 >
                                     <Image    
                                         source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : { uri: item.profile_image }}
@@ -509,7 +510,8 @@ const CitizenScreen = () => {
                                     <TouchableOpacity 
                                         key={item.userid} 
                                         style={styles.citizenItem}
-                                        onPress={() => navigation.navigate('IndividualApplicantScreen',{person: item})}
+                                        //onPress={() => navigation.navigate('IndividualApplicantScreen',{person: item})}
+                                        onPress={() => navigation.navigate('IndividualCitizenScreen',{person: item})}
                                     >
                                         <View style={{ flex: 1, flexDirection: 'row' }}>
                                             <View style={{justifyContent: 'center', width: '56%', marginLeft: 10 }}>

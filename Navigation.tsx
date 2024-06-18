@@ -101,6 +101,7 @@ import IndividualCitizenScreen from './screen/citizen/individualCitizenScreen';
 import IndividualPublicScreen from './screen/citizen/individualPublicScreen';
 import IndividualApplicantScreen from './screen/citizen/individualApplicantScreen';
 import ForumScreen from './screen/citizen/forumScreen';
+import CivicIDScreen from './screen/citizen/civicID';
 import SendWithAddress from './screen/citizen/sendWithAddress';
 import SendConfirm from './screen/citizen/sendConfirm';
 import SendSuccess from './screen/citizen/sendSuccess';
@@ -286,6 +287,7 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="IndividualPublicScreen" component={IndividualPublicScreen} options={{headerShown: false}}  />
       <CitizenStack.Screen name="IndividualApplicantScreen" component={IndividualApplicantScreen} options={{headerShown: false}}  />
       <CitizenStack.Screen name="ForumScreen" component={ForumScreen} options={{headerShown: false}}  />
+      <CitizenStack.Screen name="CivicIDScreen" component={CivicIDScreen} options={{headerShown: false}}  />
       <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication2Screen" component={JoinGeneralPublicApplication2Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication3Screen" component={JoinGeneralPublicApplication3Screen}  options={{headerShown: false}} />
