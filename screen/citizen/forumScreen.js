@@ -195,12 +195,16 @@ const ForumScreen = () => {
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
                 {state.filterPublicSquare && state.publicSquareData && state.publicSquareData.map((thread) => (
-                    <View key={thread.id} style={styles.threadBlock}>
+                    <TouchableOpacity 
+                        key={thread.id} 
+                        style={styles.threadBlock}
+                        onPress={() => navigation.navigate('ForumThreadScreen',{thread: thread})}
+                    >
                         <Text style={styles.threadTitle}>{thread.title}</Text>
                         <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
                         <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
                         <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
-                    </View>
+                    </TouchableOpacity>
                 ))}
 
                 {state.filterProposals && state.proposalsData && state.proposalsData.map((thread) => (

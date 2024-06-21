@@ -23,7 +23,7 @@ const IndividualCitizenScreen = () => {
     const { colors } = useTheme();
     const route = useRoute();
     const person = route.params.person;
-    //console.log('PARAMS',person )
+    console.log('PARAMS',person )
    
     const [userData, setUserData] = useState('');
     const [videoAvailable, setVideoAvailable] = useState(true);
@@ -46,7 +46,7 @@ const IndividualCitizenScreen = () => {
         }, {
         headers: {'Authorization': `Bearer ${token}`}
       })
-        console.log('PERSONAL DATA', response.data);
+        //console.log('PERSONAL DATA', response.data);
         setUserData(response.data)
     }
 
