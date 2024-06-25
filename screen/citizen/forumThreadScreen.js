@@ -84,16 +84,14 @@ const ForumThreadScreen = () => {
 
         <View style={{ marginTop: 5, alignItems: 'center'}}>
             <Text style={styles.headerTxt}> {threadTitle} </Text>
-        
-
-        <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.orangeButtonGradient}>
-            <TouchableOpacity 
-                style={[styles.orangeButton]}
-                onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
-            >
-                <Text style={styles.buttonText}> New comment + </Text>
-            </TouchableOpacity>
-        </LinearGradient>
+            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.orangeButtonGradient}>
+                <TouchableOpacity 
+                    style={[styles.orangeButton]}
+                    //onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                >
+                    <Text style={styles.buttonText}> New comment </Text>
+                </TouchableOpacity>
+            </LinearGradient>
         </View>
 
         <FlatList

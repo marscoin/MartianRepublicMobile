@@ -1,5 +1,5 @@
 import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
-import { ScrollView, Platform,ActivityIndicator, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import { ScrollView, Platform, TextInput, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -11,7 +11,6 @@ import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Video from 'react-native-video';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Snackbar from 'react-native-snackbar';
 
@@ -61,8 +60,10 @@ const ForumScreen = () => {
       }  
     
     const [state, dispatch] = useReducer(forumReducer, initialState);
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [newPostTitle, setNewPostTitle] = useState('');
+    const [newPostContent, setNewPostContent] = useState('');
 
-    
     async function fetchPublicSquareData() {
         const token = await AsyncStorage.getItem('@auth_token');
         response = await axios.get(`https://martianrepublic.org/api/forum/category/1/threads`, { headers: {'Authorization': `Bearer ${token}`}})
@@ -91,12 +92,34 @@ const ForumScreen = () => {
         dispatch({ type: 'SET_SUPPORT_DATA', payload: response.data.threads });
     }
 
+    async function createNewPost() {
+        const token = await AsyncStorage.getItem('@auth_token');
+        response = await axios.post(`https://martianrepublic.org/api/forum/thread`, 
+            { 
+                "category_id": state.filterPublicSquare ? 1 : state.filterProposals ? 2 : state.filterAmendment ? 3 : 4,
+                "title": newPostTitle,
+                "content": newPostContent 
+            },
+            { headers: {'Authorization': `Bearer ${token}`}}
+        );
+        setModalVisible(false);
+        setNewPostTitle('');
+        setNewPostContent('');
+        // Fetch the updated data
+        fetchPublicSquareData();
+        fetchProposalsData();
+        fetchAmendmentData();
+        fetchSupportData();
+    }
+
     useEffect(() => {
         fetchPublicSquareData()
         fetchProposalsData()
         fetchAmendmentData()
         fetchSupportData()
     }, []);  
+
+    const isFormValid = newPostTitle !== '' && newPostContent !== '';
       
   return (
     <SafeAreaView style={{flex: 1}}> 
@@ -186,6 +209,15 @@ const ForumScreen = () => {
                 {state.filterSupport &&
                     <Text style={styles.filterDescriptionText}>Questions & Answers</Text>
                 }
+
+                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.orangeButtonGradient}>
+                    <TouchableOpacity 
+                        style={[styles.orangeButton]}
+                        onPress={() => setModalVisible(true)}
+                    >
+                        <Text style={styles.buttonText}>New thread</Text>
+                    </TouchableOpacity>
+                </LinearGradient>
             </View>
 
             <ScrollView 
@@ -201,7 +233,7 @@ const ForumScreen = () => {
                     >
                         <Text style={styles.threadTitle}>{thread.title}</Text>
                         <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
-                        <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
+                        <Text style={styles.threadDate}>Created: {new Date(thread.created_at).toLocaleDateString()}</Text>
                         <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
                     </TouchableOpacity>
                 ))}
@@ -210,7 +242,7 @@ const ForumScreen = () => {
                     <View key={thread.id} style={styles.threadBlock}>
                         <Text style={styles.threadTitle}>{thread.title}</Text>
                         <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
-                        <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
+                        <Text style={styles.threadDate}>Created: {new Date(thread.created_at).toLocaleDateString()}</Text>
                         <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
                     </View>
                 ))}
@@ -219,7 +251,7 @@ const ForumScreen = () => {
                     <View key={thread.id} style={styles.threadBlock}>
                         <Text style={styles.threadTitle}>{thread.title}</Text>
                         <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
-                        <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
+                        <Text style={styles.threadDate}>Created: {new Date(thread.created_at).toLocaleDateString()}</Text>
                         <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
                     </View>
                 ))}
@@ -228,13 +260,65 @@ const ForumScreen = () => {
                     <View key={thread.id} style={styles.threadBlock}>
                         <Text style={styles.threadTitle}>{thread.title}</Text>
                         <Text style={styles.threadAuthor}>Author: {thread.author_name}</Text>
-                        <Text style={styles.threadDate}>Created at: {new Date(thread.created_at).toLocaleDateString()}</Text>
+                        <Text style={styles.threadDate}>Created: {new Date(thread.created_at).toLocaleDateString()}</Text>
                         <Text style={styles.threadReplies}>Replies: {thread.reply_count}</Text>
                     </View>
                 ))}
 
             </ScrollView>
         </View>
+
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isModalVisible}
+            onRequestClose={() => {
+                setModalVisible(!isModalVisible);
+            }}
+        >
+            <View style={styles.modalContainer}>
+                <View style={styles.modalView}>
+                <TouchableOpacity 
+                    style={{alignSelf: 'flex-end'}}
+                    hitSlop={20}
+                    onPress={() => setModalVisible(false)}
+                >
+                    <Icon name="close" size={20} type="font-awesome" color={'white'} />
+                </TouchableOpacity>
+                        <Text style={styles.header}>Create New Thread</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Title"
+                            placeholderTextColor= "gray"
+                            value={newPostTitle}
+                            onChangeText={setNewPostTitle}
+                            maxLength={255}
+                        />
+                        <TextInput
+                            style={[styles.input, styles.textArea]}
+                            placeholder="Text"
+                            placeholderTextColor= "gray"
+                            value={newPostContent}
+                            onChangeText={setNewPostContent}
+                            multiline={true}
+                            maxLength={255}
+                        />
+
+                        <LinearGradient 
+                            colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
+                            style={[styles.orangeButtonGradient, {marginTop: 40}]}
+                        >
+                        <TouchableOpacity 
+                            style={[styles.orangeButton]}
+                            onPress={createNewPost}
+                            disabled={!isFormValid}
+                        >
+                            <Text style={[styles.buttonText]}>Post</Text>
+                        </TouchableOpacity>
+                </LinearGradient>
+                </View>
+            </View>
+        </Modal>
     </SafeAreaView>
   );
 };
@@ -335,6 +419,60 @@ const styles = StyleSheet.create({
         marginBottom: 3,
         letterSpacing: 1.1,
         marginTop: 5
+    },
+    orangeButton: {
+        height: 36,
+        width: 200,
+        borderRadius: 10,
+        justifyContent:'center',
+        marginBottom: 12, 
+        textAlign:'center',
+    },
+    orangeButtonGradient: {
+        height: 36,
+        width: 200,
+        borderRadius: 10,
+        marginVertical: 12, 
+    },
+    buttonText: {
+        color:'white', 
+        textAlign: 'center',
+        fontSize: 15,
+        fontWeight:"600",
+        fontFamily: 'Orbitron-Regular',
+        letterSpacing: 1.1, 
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    modalView: {
+        width: '100%',
+        height: '66%',
+        backgroundColor: "black",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+    },
+    input: {
+        width: '100%',
+        height: 40,
+        borderRadius: 5,
+        borderColor: 'white',
+        borderWidth: 0.5,
+        marginTop: 30,
+        backgroundColor: '#2F2D2B',
+        padding: 10,
+        paddingTop: 12,
+        fontFamily: "Orbitron-Regular",
+        color: 'white',
+        fontWeight:"400",
+        letterSpacing: 1.1, 
+
+    },
+    textArea: {
+        height: 200,
+        textAlignVertical: 'top'
     },
     
 });
