@@ -1,5 +1,5 @@
 import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
-import { ScrollView, Platform,ActivityIndicator, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import { ScrollView, Platform, TextInput, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -27,6 +27,10 @@ const ForumThreadScreen = () => {
     const threadId = route.params.thread.id;
     console.log('PARAMS', route.params)
     const [threadData, setThreadData] = useState('');
+    const [replyToPostId, setReplyToPostId] = useState(null); //state to track the post being replied to
+
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [newCommentContent, setNewCommentContent] = useState('');
 
     const transformThreadData = (data) => {
         let messages = [];
@@ -69,6 +73,37 @@ const ForumThreadScreen = () => {
             console.error('Error fetching thread data:', error);
         }
     }
+
+    const isFormValid = newCommentContent !== '';
+
+    async function createNewComment() {
+        const token = await AsyncStorage.getItem('@auth_token');
+        response = await axios.post(`https://martianrepublic.org/api/forum/thread/${threadId}/comment`, 
+            { 
+                "content": newCommentContent,
+                "post_id": replyToPostId 
+            },
+            { headers: {'Authorization': `Bearer ${token}`}}
+        );
+        setModalVisible(false);
+        setNewCommentContent('');
+        setReplyToPostId(null);
+        fetchThreadData(); // Fetch the updated data
+    }
+
+    // async function createReplyComment() {
+    //     const token = await AsyncStorage.getItem('@auth_token');
+    //     response = await axios.post(`https://martianrepublic.org/api/forum/thread/${threadId}/comment`, 
+    //         { 
+    //             "content": newCommentContent,
+    //             "post_id": replyToPostId 
+    //         },
+    //         { headers: {'Authorization': `Bearer ${token}`}}
+    //     );
+    //     setModalVisible(false);
+    //     setNewCommentContent('');
+    //     fetchThreadData(); // Fetch the updated data
+    // }
       
   return (
     <SafeAreaView style={{flex: 1, marginBottom: -30}}> 
@@ -87,7 +122,7 @@ const ForumThreadScreen = () => {
             <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.orangeButtonGradient}>
                 <TouchableOpacity 
                     style={[styles.orangeButton]}
-                    //onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                    onPress={() => setModalVisible(true)}
                 >
                     <Text style={styles.buttonText}> New comment </Text>
                 </TouchableOpacity>
@@ -104,18 +139,91 @@ const ForumThreadScreen = () => {
                         {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                     </Text>
                     <Text style={styles.threadTxt}>{item.content}</Text>
+                    <TouchableOpacity 
+                        style={{alignSelf: 'flex-end', marginVertical: 5}}
+                        hitSlop={20}
+                        onPress={() => {
+                            setReplyToPostId(item.id); // Set the post_id when replying to a comment
+                            setModalVisible(true);
+                        }}
+                    >
+                        <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
+                    </TouchableOpacity>
+
+                    {/* <TouchableOpacity 
+                        style={{alignSelf: 'flex-end'}}
+                        hitSlop={20}
+                        onPress={() => setModalVisible(false)}
+                    >
+                        <Icon name="share-variant" size={30} type="material-community" color={'#FF7400'} />
+                    </TouchableOpacity> */}
                     {/* Display comments if available */}
                     {item.comments.map(comment => (
                         <View key={comment.id} style={styles.commentBlock}>
                             <Text style={styles.threadReplies}>{comment.content}</Text>
                             <Text style={styles.threadAuthor}>{comment.fullname}</Text>
-                            <Text style={styles.threadDate}>{new Date(comment.created_at).toLocaleDateString()}</Text>
+                            <Text style={styles.threadDate}>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                            
+                            </Text>
+                            <TouchableOpacity 
+                                style={{alignSelf: 'flex-end', marginVertical: 5}}
+                                hitSlop={20}
+                                onPress={() => {
+                                    setReplyToPostId(comment.id); // Set the post_id when replying to a comment
+                                    setModalVisible(true);
+                                }}
+                            >
+                                <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
+                            </TouchableOpacity>
                         </View>
                     ))}
                 </View>
             )}
         />
 
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isModalVisible}
+            onRequestClose={() => {
+                setModalVisible(!isModalVisible);
+            }}
+        >
+            <View style={styles.modalContainer}>
+                <View style={styles.modalView}>
+                <TouchableOpacity 
+                    style={{alignSelf: 'flex-end'}}
+                    hitSlop={20}
+                    onPress={() => setModalVisible(false)}
+                >
+                    <Icon name="close" size={20} type="font-awesome" color={'white'} />
+                </TouchableOpacity>
+                        <Text style={styles.headerTxt}>Create New Comment</Text>
+                        <TextInput
+                            style={[styles.input, styles.textArea]}
+                            placeholder="Text"
+                            placeholderTextColor= "gray"
+                            value={newCommentContent}
+                            onChangeText={setNewCommentContent}
+                            multiline={true}
+                            maxLength={1000}
+                        />
+
+                        <LinearGradient 
+                            colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
+                            style={[styles.orangeButtonGradient, {marginTop: 40}]}
+                        >
+                        <TouchableOpacity 
+                            style={[styles.orangeButton]}
+                            onPress={createNewComment}
+                            disabled={!isFormValid}
+                        >
+                            <Text style={[styles.buttonText]}>Post Comment</Text>
+                        </TouchableOpacity>
+                </LinearGradient>
+                </View>
+            </View>
+        </Modal>
      
     </SafeAreaView>
   );
@@ -251,6 +359,38 @@ const styles = StyleSheet.create({
         fontWeight:"600",
         fontFamily: 'Orbitron-Regular',
         letterSpacing: 1.1, 
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    modalView: {
+        width: '100%',
+        height: '66%',
+        backgroundColor: "black",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+    },
+    input: {
+        width: '100%',
+        height: 40,
+        borderRadius: 5,
+        borderColor: 'white',
+        borderWidth: 0.5,
+        marginTop: 30,
+        backgroundColor: '#2F2D2B',
+        padding: 10,
+        paddingTop: 12,
+        fontFamily: "Orbitron-Regular",
+        color: 'white',
+        fontWeight:"400",
+        letterSpacing: 1.1, 
+
+    },
+    textArea: {
+        height: 230,
+        textAlignVertical: 'top'
     },
 });
 
