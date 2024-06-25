@@ -1,19 +1,12 @@
-import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
-import { ScrollView, Platform, TextInput, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, TextInput, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
-import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
 import LinearGradient from 'react-native-linear-gradient';
-import { BlueText, BlueSpacing20, BluePrivateBalance } from '../../BlueComponents';
-import { LightningLdkWallet, MultisigHDWallet, LightningCustodianWallet } from '../../class';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Clipboard from '@react-native-clipboard/clipboard';
-import Snackbar from 'react-native-snackbar';
-import { title } from 'process';
 import { formatDistanceToNow } from 'date-fns';
 
 const windowWidth = Dimensions.get('window').width;
@@ -25,50 +18,41 @@ const ForumThreadScreen = () => {
     const route = useRoute();
     const threadTitle = route.params.thread.title;
     const threadId = route.params.thread.id;
-    console.log('PARAMS', route.params)
     const [threadData, setThreadData] = useState('');
-    const [replyToPostId, setReplyToPostId] = useState(null); //state to track the post being replied to
-
+    const [replyToPostId, setReplyToPostId] = useState(null);
     const [isModalVisible, setModalVisible] = useState(false);
     const [newCommentContent, setNewCommentContent] = useState('');
 
     const transformThreadData = (data) => {
         let messages = [];
         let messageMap = {};
-    
         data.forEach(item => {
-            // Copy the item to prevent modifying the original data
-            const comment = {...item, comments: []};
-    
+            const comment = { ...item, comments: [] };
+
             if (comment.pid === null) {
-                // It's a main message
                 messages.push(comment);
                 messageMap[comment.id] = comment;
             } else {
-                // It's a comment on a message
                 if (messageMap[comment.pid]) {
                     messageMap[comment.pid].comments.push(comment);
                 }
             }
         });
-    
         return messages;
     };
-    
+
     useEffect(() => {
         fetchThreadData();
     }, [threadId]);
-    
+
     async function fetchThreadData() {
-        console.log('THREAD ID for fetching', threadId);
         try {
             const token = await AsyncStorage.getItem('@auth_token');
             const response = await axios.get(`https://martianrepublic.org/api/forum/thread/${threadId}/comments`, {
-                headers: {'Authorization': `Bearer ${token}`}
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const formattedData = transformThreadData(response.data.comments.original.comments);
             setThreadData(formattedData);
-            console.log('Formatted THREAD DATA', formattedData);
         } catch (error) {
             console.error('Error fetching thread data:', error);
         }
@@ -78,7 +62,7 @@ const ForumThreadScreen = () => {
 
     async function createNewComment() {
         const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.post(`https://martianrepublic.org/api/forum/thread/${threadId}/comment`, 
+        await axios.post(`https://martianrepublic.org/api/forum/thread/${threadId}/comment`, 
             { 
                 "content": newCommentContent,
                 "post_id": replyToPostId 
@@ -88,146 +72,131 @@ const ForumThreadScreen = () => {
         setModalVisible(false);
         setNewCommentContent('');
         setReplyToPostId(null);
-        fetchThreadData(); // Fetch the updated data
+        fetchThreadData(); 
     }
 
-    // async function createReplyComment() {
-    //     const token = await AsyncStorage.getItem('@auth_token');
-    //     response = await axios.post(`https://martianrepublic.org/api/forum/thread/${threadId}/comment`, 
-    //         { 
-    //             "content": newCommentContent,
-    //             "post_id": replyToPostId 
-    //         },
-    //         { headers: {'Authorization': `Bearer ${token}`}}
-    //     );
-    //     setModalVisible(false);
-    //     setNewCommentContent('');
-    //     fetchThreadData(); // Fetch the updated data
-    // }
-      
-  return (
-    <SafeAreaView style={{flex: 1, marginBottom: -30}}> 
-        <TouchableOpacity 
-          style={styles.header}
-          onPress={()=>navigation.goBack()}
-        >
-          <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
-          <View style={{flex: 1, justifyContent:'center'}}>
-            <Text style={styles.headerTxt}>COMMENTARY</Text>
-          </View>
-        </TouchableOpacity>
-
-        <View style={{ marginTop: 5, alignItems: 'center'}}>
-            <Text style={styles.headerTxt}> {threadTitle} </Text>
-            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.orangeButtonGradient}>
-                <TouchableOpacity 
-                    style={[styles.orangeButton]}
-                    onPress={() => setModalVisible(true)}
-                >
-                    <Text style={styles.buttonText}> New comment </Text>
-                </TouchableOpacity>
-            </LinearGradient>
+    const Comment = ({ comment }) => (
+        <View style={styles.commentBlock}>
+            <Text style={styles.threadReplies}>{comment.content}</Text>
+            <Text style={styles.threadAuthor}>{comment.fullname}</Text>
+            <Text style={styles.threadDate}>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</Text>
+            {/* <TouchableOpacity 
+                style={{alignSelf: 'flex-end', marginVertical: 5}}
+                hitSlop={20}
+                onPress={() => {
+                    setReplyToPostId(comment.id);
+                    setModalVisible(true);
+                }}
+            >
+                <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
+            </TouchableOpacity> */}
+            {comment.comments.map(nestedComment => (
+                <Comment key={nestedComment.id} comment={nestedComment} />
+            ))}
         </View>
+    );
 
-        <FlatList
-            data={threadData}
-            keyExtractor={item => item.id.toString()}
-            renderItem={({ item }) => (
-                <View style={styles.threadBlock}>
-                    <Text style={styles.threadAuthor}>{item.fullname}</Text>
-                    <Text style={styles.threadDate}>
-                        {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                    </Text>
-                    <Text style={styles.threadTxt}>{item.content}</Text>
-                    <TouchableOpacity 
-                        style={{alignSelf: 'flex-end', marginVertical: 5}}
-                        hitSlop={20}
+    return (
+        <SafeAreaView style={{ flex: 1, marginBottom: -30 }}>
+            <TouchableOpacity
+                style={styles.header}
+                onPress={() => navigation.goBack()}
+            >
+                <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                    <Text style={styles.headerTxt}>COMMENTARY</Text>
+                </View>
+            </TouchableOpacity>
+
+            <View style={{ marginTop: 5, alignItems: 'center' }}>
+                <Text style={styles.headerTxt}>{threadTitle}</Text>
+                <LinearGradient colors={['#FFB67D', '#FF8A3E', '#FF7400']} style={styles.orangeButtonGradient}>
+                    <TouchableOpacity
+                        style={[styles.orangeButton]}
                         onPress={() => {
-                            setReplyToPostId(item.id); // Set the post_id when replying to a comment
+                            setReplyToPostId(null);
                             setModalVisible(true);
                         }}
                     >
-                        <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
+                        <Text style={styles.buttonText}>New comment</Text>
                     </TouchableOpacity>
+                </LinearGradient>
+            </View>
 
-                    {/* <TouchableOpacity 
-                        style={{alignSelf: 'flex-end'}}
-                        hitSlop={20}
-                        onPress={() => setModalVisible(false)}
-                    >
-                        <Icon name="share-variant" size={30} type="material-community" color={'#FF7400'} />
-                    </TouchableOpacity> */}
-                    {/* Display comments if available */}
-                    {item.comments.map(comment => (
-                        <View key={comment.id} style={styles.commentBlock}>
-                            <Text style={styles.threadReplies}>{comment.content}</Text>
-                            <Text style={styles.threadAuthor}>{comment.fullname}</Text>
-                            <Text style={styles.threadDate}>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                            
-                            </Text>
-                            <TouchableOpacity 
-                                style={{alignSelf: 'flex-end', marginVertical: 5}}
-                                hitSlop={20}
-                                onPress={() => {
-                                    setReplyToPostId(comment.id); // Set the post_id when replying to a comment
-                                    setModalVisible(true);
-                                }}
-                            >
-                                <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
-                            </TouchableOpacity>
-                        </View>
-                    ))}
-                </View>
-            )}
-        />
+            <FlatList
+                data={threadData}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({ item }) => (
+                    <View style={styles.threadBlock}>
+                        <Text style={styles.threadAuthor}>{item.fullname}</Text>
+                        <Text style={styles.threadDate}>
+                            {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                        </Text>
+                        <Text style={styles.threadTxt}>{item.content}</Text>
+                        <TouchableOpacity
+                            style={{ alignSelf: 'flex-end', marginVertical: 5 }}
+                            hitSlop={20}
+                            onPress={() => {
+                                setReplyToPostId(item.id);
+                                setModalVisible(true);
+                            }}
+                        >
+                            <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
+                        </TouchableOpacity>
+                        {item.comments.map(comment => (
+                            <Comment key={comment.id} comment={comment} />
+                        ))}
+                    </View>
+                )}
+            />
 
-        <Modal
-            animationType="slide"
-            transparent={true}
-            visible={isModalVisible}
-            onRequestClose={() => {
-                setModalVisible(!isModalVisible);
-            }}
-        >
-            <View style={styles.modalContainer}>
-                <View style={styles.modalView}>
-                <TouchableOpacity 
-                    style={{alignSelf: 'flex-end'}}
-                    hitSlop={20}
-                    onPress={() => setModalVisible(false)}
-                >
-                    <Icon name="close" size={20} type="font-awesome" color={'white'} />
-                </TouchableOpacity>
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isModalVisible}
+                onRequestClose={() => {
+                    setModalVisible(!isModalVisible);
+                }}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalView}>
+                        <TouchableOpacity
+                            style={{ alignSelf: 'flex-end' }}
+                            hitSlop={20}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Icon name="close" size={20} type="font-awesome" color={'white'} />
+                        </TouchableOpacity>
                         <Text style={styles.headerTxt}>Create New Comment</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             placeholder="Text"
-                            placeholderTextColor= "gray"
+                            placeholderTextColor="gray"
                             value={newCommentContent}
                             onChangeText={setNewCommentContent}
                             multiline={true}
                             maxLength={1000}
                         />
 
-                        <LinearGradient 
+                        <LinearGradient
                             colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
-                            style={[styles.orangeButtonGradient, {marginTop: 40}]}
+                            style={[styles.orangeButtonGradient, { marginTop: 40 }]}
                         >
-                        <TouchableOpacity 
-                            style={[styles.orangeButton]}
-                            onPress={createNewComment}
-                            disabled={!isFormValid}
-                        >
-                            <Text style={[styles.buttonText]}>Post Comment</Text>
-                        </TouchableOpacity>
-                </LinearGradient>
+                            <TouchableOpacity
+                                style={[styles.orangeButton]}
+                                onPress={createNewComment}
+                                disabled={!isFormValid}
+                            >
+                                <Text style={[styles.buttonText]}>Post Comment</Text>
+                            </TouchableOpacity>
+                        </LinearGradient>
+                    </View>
                 </View>
-            </View>
-        </Modal>
-     
-    </SafeAreaView>
-  );
+            </Modal>
+        </SafeAreaView>
+    );
 };
+
 
 const styles = StyleSheet.create({
     center: {
