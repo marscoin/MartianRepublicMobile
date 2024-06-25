@@ -133,6 +133,7 @@
     "buffer-reverse": "^1.0.1",
     "coinselect": "3.1.13",
     "crypto-js": "4.2.0",
+    "date-fns": "^3.6.0",
     "dayjs": "1.11.10",
     "deprecated-react-native-prop-types": "^5.0.0",
     "detox": "20.18.4",

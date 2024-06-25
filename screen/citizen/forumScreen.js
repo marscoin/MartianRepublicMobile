@@ -99,8 +99,7 @@ const ForumScreen = () => {
     }, []);  
       
   return (
-    <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
-        {/* ////margin -80 sticks screen to the tabbar///// */}
+    <SafeAreaView style={{flex: 1}}> 
         <TouchableOpacity 
           style={{flexDirection:'row', marginVertical: 20, marginLeft: 20}}
           onPress={()=>navigation.goBack()}
@@ -192,7 +191,7 @@ const ForumScreen = () => {
             <ScrollView 
                 style={styles.root}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: 200 }}
             >
                 {state.filterPublicSquare && state.publicSquareData && state.publicSquareData.map((thread) => (
                     <TouchableOpacity 

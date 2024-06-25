@@ -98,7 +98,7 @@ const CitizenScreen = () => {
     const fetchGeneralPublic = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/public?page=${publicPageRef.current}`)
-            console.log('GENERAL PUBLIC', response.data) 
+            //console.log('GENERAL PUBLIC', response.data) 
 
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedPublic.current) === JSON.stringify(response.data)) {
@@ -284,28 +284,7 @@ const CitizenScreen = () => {
                     {/* ///////CITIZEN BLOCK//////// */}
                     {userData.profile.citizen === 1 ? (
                         <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40, marginHorizontal: 20}}>    
-                            {/* <View style={styles.citizenID}>
-                                <Image
-                                    source={state.imageLoadErrors[userData.citizen.id] ? require('../../img/genericprofile.png') : !userData.citizen.avatar_link? require('../../img/genericprofile.png'):{ uri: userData.citizen.avatar_link }}
-                                    style={[styles.citizenImageID,{marginLeft: 20}]} 
-                                    onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: userData.citizen.id} })}
-                                />
-                                
-                                
-                                <View style={styles.citizenItemID}>
-                                    <View style={{borderColor: '#EEE9E4', borderWidth: 1, borderRadius: 8, padding: 8, alignItems: 'center', justifyContent:'center', marginBottom: 10}}>
-                                        <Text style={[styles.noWalletText, { fontSize: 20, letterSpacing: 2, fontWeight:'800', color: 'white' }]}>CITIZEN ID</Text>
-                                    </View>
-                                    <View style={{ marginHorizontal: 15, width: windowWidth * 0.45 }}>
-                                        <Text numberOfLines={1} style={[styles.citizenName, {lineHeight:26}]}>{userData.citizen.firstname} </Text>
-                                        <Text numberOfLines={1} style={[styles.citizenName, {lineHeight:26}]}>{userData.citizen.lastname}</Text>
-                                        <Text numberOfLines={1} style={[styles.citizenAddress, {fontSize:10}]}>Address: {userData.citizen.public_address.slice(0,9)}</Text>
-                                      
-                                        <Text numberOfLines={1} style={[styles.citizenAddress, {fontSize:10}]}>Citizen since: {new Date(userData.citizen.created_at).toLocaleDateString()}</Text>
-                                        
-                                    </View>
-                                </View>
-                            </View>   */}
+                        
                                 <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                                     <TouchableOpacity 
                                         style={[styles.joinButton]}

@@ -1,5 +1,5 @@
 import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
-import { ScrollView, Platform,ActivityIndicator, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import { ScrollView, Platform,ActivityIndicator, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Snackbar from 'react-native-snackbar';
 import { title } from 'process';
+import { formatDistanceToNow } from 'date-fns';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -70,17 +71,30 @@ const ForumThreadScreen = () => {
     }
       
   return (
-    <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
-        {/* ////margin -80 sticks screen to the tabbar///// */}
+    <SafeAreaView style={{flex: 1, marginBottom: -30}}> 
         <TouchableOpacity 
           style={styles.header}
           onPress={()=>navigation.goBack()}
         >
           <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
           <View style={{flex: 1, justifyContent:'center'}}>
-            <Text style={styles.headerTxt}> {threadTitle} </Text>
+            <Text style={styles.headerTxt}>COMMENTARY</Text>
           </View>
         </TouchableOpacity>
+
+        <View style={{ marginTop: 5, alignItems: 'center'}}>
+            <Text style={styles.headerTxt}> {threadTitle} </Text>
+        
+
+        <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.orangeButtonGradient}>
+            <TouchableOpacity 
+                style={[styles.orangeButton]}
+                onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+            >
+                <Text style={styles.buttonText}> New comment + </Text>
+            </TouchableOpacity>
+        </LinearGradient>
+        </View>
 
         <FlatList
             data={threadData}
@@ -88,13 +102,15 @@ const ForumThreadScreen = () => {
             renderItem={({ item }) => (
                 <View style={styles.threadBlock}>
                     <Text style={styles.threadAuthor}>{item.fullname}</Text>
-                    <Text style={styles.threadDate}>{new Date(item.created_at).toLocaleDateString()}</Text>
+                    <Text style={styles.threadDate}>
+                        {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                    </Text>
                     <Text style={styles.threadTxt}>{item.content}</Text>
                     {/* Display comments if available */}
                     {item.comments.map(comment => (
                         <View key={comment.id} style={styles.commentBlock}>
                             <Text style={styles.threadReplies}>{comment.content}</Text>
-                            <Text style={styles.threadAuthor}>By: {comment.fullname}</Text>
+                            <Text style={styles.threadAuthor}>{comment.fullname}</Text>
                             <Text style={styles.threadDate}>{new Date(comment.created_at).toLocaleDateString()}</Text>
                         </View>
                     ))}
@@ -120,7 +136,6 @@ const styles = StyleSheet.create({
         flexDirection:'row', 
         marginVertical: 20, 
         marginLeft: 20,
-        //justifyContent:'center',
         alignItems: 'center'
     },
     headerTxt: {
@@ -173,7 +188,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         justifyContent:'center',
         alignItems:'center',
-        backgroundColor: '#B0B0B0', // Grey color for inactive state
+        backgroundColor: '#B0B0B0', 
     },
     threadBlock: {
         backgroundColor: '#2F2D2B',
@@ -183,12 +198,11 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
     },
     threadTxt: {
-        fontSize: 14,
+        fontSize: 16,
         color: 'white',
-        fontFamily: 'Orbitron-Regular',
         marginBottom: 10,
-        letterSpacing: 1.1,
-        lineHeight: 19
+        marginTop: 8,
+        lineHeight: 21
     },
     threadAuthor: {
         fontSize: 14,
@@ -205,12 +219,11 @@ const styles = StyleSheet.create({
         letterSpacing: 1.1
     },
     threadReplies: {
-        fontSize: 14,
+        fontSize: 16,
         color: 'white',
-        fontFamily: 'Orbitron-Regular',
-        marginBottom: 3,
-        letterSpacing: 1.1,
-        marginTop: 5
+        marginBottom: 5,
+        marginTop: 5,
+        lineHeight: 20
     },
     commentBlock: {
         backgroundColor: '#444444', // Darker than threadBlock
@@ -218,6 +231,28 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginVertical: 4,
         marginHorizontal: 20, // Indent comments to visually nest under the message
+    },
+    orangeButton: {
+        height: 36,
+        width: 200,
+        borderRadius: 10,
+        justifyContent:'center',
+        marginBottom: 12, 
+        textAlign:'center',
+    },
+    orangeButtonGradient: {
+        height: 36,
+        width: 200,
+        borderRadius: 10,
+        marginVertical: 12, 
+    },
+    buttonText: {
+        color:'white', 
+        textAlign: 'center',
+        fontSize: 15,
+        fontWeight:"600",
+        fontFamily: 'Orbitron-Regular',
+        letterSpacing: 1.1, 
     },
 });
 
