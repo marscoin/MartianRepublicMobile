@@ -99,9 +99,9 @@ const styles = StyleSheet.create({
         resizeMode: 'stretch', 
     },
     profileImage: {
-        height: 130, 
-        width: 130,
-        borderRadius: 20,  
+        height: 120, 
+        width: 120,
+        borderRadius:10,  
         transform: [{ rotateZ: '90deg' }],
         resizeMode: 'stretch', 
         position: 'absolute',
@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
         color: 'black',
         fontFamily: 'Orbitron-Black',
         position: 'absolute',
-        top: windowHeight * 0.18,
-        left: -20,
+        top: windowHeight * 0.16,
+        left: 20,
         transform: [{ rotateZ: '90deg' }],
     },
     txt: {
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
         transform: [{ rotateZ: '90deg' }],
         maxWidth: windowHeight * 0.28,
         letterSpacing: 1.1,
-        // backgroundColor:'red'
+        //backgroundColor:'red'
     },
     date: {
         fontSize: 18,
@@ -164,8 +164,8 @@ const styles = StyleSheet.create({
         color: 'black',
         fontFamily: 'Orbitron-Black',
         position: 'absolute',
-        top: 274,
-        left: 50,
+        top: 270,
+        left: 70,
         transform: [{ rotateZ: '90deg' }],
         letterSpacing: 2,
     },

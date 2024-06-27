@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, TextInput, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { ScrollView, TextInput, KeyboardAvoidingView, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useTheme } from '../../components/themes';
@@ -28,7 +28,6 @@ const ForumThreadScreen = () => {
         let messageMap = {};
         data.forEach(item => {
             const comment = { ...item, comments: [] };
-
             if (comment.pid === null) {
                 messages.push(comment);
                 messageMap[comment.id] = comment;
@@ -53,6 +52,7 @@ const ForumThreadScreen = () => {
             });
             const formattedData = transformThreadData(response.data.comments.original.comments);
             setThreadData(formattedData);
+            console.log('THREAD INDIVIDUAL DATA', response.data.comments.original)
         } catch (error) {
             console.error('Error fetching thread data:', error);
         }
@@ -77,9 +77,9 @@ const ForumThreadScreen = () => {
 
     const Comment = ({ comment }) => (
         <View style={styles.commentBlock}>
-            <Text style={styles.threadReplies}>{comment.content}</Text>
             <Text style={styles.threadAuthor}>{comment.fullname}</Text>
             <Text style={styles.threadDate}>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</Text>
+            <Text style={styles.threadReplies}>{comment.content}</Text>
             {/* <TouchableOpacity 
                 style={{alignSelf: 'flex-end', marginVertical: 5}}
                 hitSlop={20}
@@ -158,40 +158,42 @@ const ForumThreadScreen = () => {
                     setModalVisible(!isModalVisible);
                 }}
             >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalView}>
-                        <TouchableOpacity
-                            style={{ alignSelf: 'flex-end' }}
-                            hitSlop={20}
-                            onPress={() => setModalVisible(false)}
-                        >
-                            <Icon name="close" size={20} type="font-awesome" color={'white'} />
-                        </TouchableOpacity>
-                        <Text style={styles.headerTxt}>Create New Comment</Text>
-                        <TextInput
-                            style={[styles.input, styles.textArea]}
-                            placeholder="Text"
-                            placeholderTextColor="gray"
-                            value={newCommentContent}
-                            onChangeText={setNewCommentContent}
-                            multiline={true}
-                            maxLength={1000}
-                        />
-
-                        <LinearGradient
-                            colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
-                            style={[styles.orangeButtonGradient, { marginTop: 40 }]}
-                        >
+                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalView}>
                             <TouchableOpacity
-                                style={[styles.orangeButton]}
-                                onPress={createNewComment}
-                                disabled={!isFormValid}
+                                style={{ alignSelf: 'flex-end' }}
+                                hitSlop={20}
+                                onPress={() => setModalVisible(false)}
                             >
-                                <Text style={[styles.buttonText]}>Post Comment</Text>
+                                <Icon name="close" size={20} type="font-awesome" color={'white'} />
                             </TouchableOpacity>
-                        </LinearGradient>
+                            <Text style={styles.headerTxt}>Create New Comment</Text>
+                            <TextInput
+                                style={[styles.input, styles.textArea]}
+                                placeholder="Text"
+                                placeholderTextColor="gray"
+                                value={newCommentContent}
+                                onChangeText={setNewCommentContent}
+                                multiline={true}
+                                maxLength={1000}
+                            />
+
+                            <LinearGradient
+                                colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
+                                style={[styles.orangeButtonGradient, { marginTop: 20 }]}
+                            >
+                                <TouchableOpacity
+                                    style={[styles.orangeButton]}
+                                    onPress={createNewComment}
+                                    disabled={!isFormValid}
+                                >
+                                    <Text style={[styles.buttonText]}>Post Comment</Text>
+                                </TouchableOpacity>
+                            </LinearGradient>
+                        </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </SafeAreaView>
     );
@@ -335,7 +337,7 @@ const styles = StyleSheet.create({
     },
     modalView: {
         width: '100%',
-        height: '66%',
+        height: '75%',
         backgroundColor: "black",
         borderRadius: 20,
         padding: 35,
@@ -358,7 +360,7 @@ const styles = StyleSheet.create({
 
     },
     textArea: {
-        height: 230,
+        height: 200,
         textAlignVertical: 'top'
     },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
-import { ScrollView, Platform, TextInput, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import { ScrollView, Platform, KeyboardAvoidingView, TextInput, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -87,7 +87,7 @@ const ForumScreen = () => {
 
     async function fetchSupportData() {
         const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.get(`https://martianrepublic.org/api/forum/category/3/threads`, { headers: {'Authorization': `Bearer ${token}`}})
+        response = await axios.get(`https://martianrepublic.org/api/forum/category/4/threads`, { headers: {'Authorization': `Bearer ${token}`}})
         //console.log('SUPPORT DATA', response.data);
         dispatch({ type: 'SET_SUPPORT_DATA', payload: response.data.threads });
     }
@@ -288,15 +288,16 @@ const ForumScreen = () => {
                 setModalVisible(!isModalVisible);
             }}
         >
-            <View style={styles.modalContainer}>
-                <View style={styles.modalView}>
-                <TouchableOpacity 
-                    style={{alignSelf: 'flex-end'}}
-                    hitSlop={20}
-                    onPress={() => setModalVisible(false)}
-                >
-                    <Icon name="close" size={20} type="font-awesome" color={'white'} />
-                </TouchableOpacity>
+             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalView}>
+                    <TouchableOpacity 
+                        style={{alignSelf: 'flex-end'}}
+                        hitSlop={20}
+                        onPress={() => setModalVisible(false)}
+                    >
+                        <Icon name="close" size={20} type="font-awesome" color={'white'} />
+                    </TouchableOpacity>
                         <Text style={styles.header}>Create New Thread</Text>
                         <TextInput
                             style={styles.input}
@@ -318,7 +319,7 @@ const ForumScreen = () => {
 
                         <LinearGradient 
                             colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
-                            style={[styles.orangeButtonGradient, {marginTop: 40}]}
+                            style={[styles.orangeButtonGradient, {marginTop: 20}]}
                         >
                         <TouchableOpacity 
                             style={[styles.orangeButton]}
@@ -327,9 +328,10 @@ const ForumScreen = () => {
                         >
                             <Text style={[styles.buttonText]}>Post</Text>
                         </TouchableOpacity>
-                </LinearGradient>
+                    </LinearGradient>
+                    </View>
                 </View>
-            </View>
+            </KeyboardAvoidingView>
         </Modal>
     </SafeAreaView>
   );
@@ -460,7 +462,7 @@ const styles = StyleSheet.create({
     },
     modalView: {
         width: '100%',
-        height: '66%',
+        height: '80%',
         backgroundColor: "black",
         borderRadius: 20,
         padding: 35,
