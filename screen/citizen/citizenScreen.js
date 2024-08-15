@@ -490,7 +490,7 @@ const CitizenScreen = () => {
                                         key={item.userid} 
                                         style={styles.citizenItem}
                                         //onPress={() => navigation.navigate('IndividualApplicantScreen',{person: item})}
-                                        onPress={() => navigation.navigate('IndividualCitizenScreen',{person: item})}
+                                        onPress={() => navigation.navigate('IndividualApplicantScreen',{person: item})}
                                     >
                                         <View style={{ flex: 1, flexDirection: 'row' }}>
                                             <View style={{justifyContent: 'center', width: '56%', marginLeft: 10 }}>

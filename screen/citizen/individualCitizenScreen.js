@@ -46,7 +46,7 @@ const IndividualCitizenScreen = () => {
         }, {
         headers: {'Authorization': `Bearer ${token}`}
       })
-        //console.log('PERSONAL DATA', response.data);
+        console.log('PERSONAL DATA', response.data);
         setUserData(response.data)
     }
 
@@ -83,7 +83,7 @@ const IndividualCitizenScreen = () => {
                 }
 
                 {userData.citizen && userData.citizen.firstname && userData.citizen.lastname &&
-                    <Text numberOfLines={2} style={styles.citizenName}>{userData.citizen.firstname}{userData.citizen.lastname}</Text>
+                    <Text numberOfLines={2} style={styles.citizenName}>{userData.citizen.firstname} {userData.citizen.lastname}</Text>
                 }
                 {userData.citizen && userData.citizen.displayname &&
                     <Text numberOfLines={2} style={styles.displayname}>{userData.citizen.displayname}</Text>
