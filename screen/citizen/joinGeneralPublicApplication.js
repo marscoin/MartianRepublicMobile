@@ -27,6 +27,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [buttonPressed, setButtonPressed] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [photoIPFS, setPhotoIPFS] = useState(null);
+  const [videoIPFS, setVideoIPFS] = useState(null);
   const [isPhotoChanged, setIsPhotoChanged] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const {wallets} = useContext(BlueStorageContext);
@@ -48,15 +49,13 @@ const JoinGeneralPublicApplicationScreen = () => {
     const token = await AsyncStorage.getItem('@auth_token');
     response = await axios.post("https://martianrepublic.org/api/scitizen", {
         // firstname:'',
-        //lastname: '',
-        //bio:''
       }, {
       headers: {'Authorization': `Bearer ${token}`}
     })
     console.log('USER DATA', response.data);
     setUserData(response.data);
     if (response.data.citizen) {
-      const { firstname, lastname, displayname, shortbio, avatar_link } = response.data.citizen;
+      const { firstname, lastname, displayname, shortbio, avatar_link, liveness_link} = response.data.citizen;
       setFirstName(firstname || '');
       setLastName(lastname || '');
       setDisplayName(displayname || '');
@@ -66,18 +65,10 @@ const JoinGeneralPublicApplicationScreen = () => {
         setPhotoIPFS(avatar_link); // Assuming avatar_link is the IPFS hash/link
         setIsPhotoChanged(false); // Photo is not new, it's from previous data
       }
+      if (liveness_link) {
+        setVideoIPFS(liveness_link);
+      }
     }
-    // setUserData(response.data)
-    // {response.data.citizen.lastname &&
-    //   setFirstName(response.data.citizen.firstname)}
-    // {response.data.citizen.lastname &&
-    //   setLastName(response.data.citizen.lastname)}
-    // {response.data.citizen.displayname &&
-    //   setDisplayName(response.data.citizen.displayname)}
-    // {response.data.citizen.shortbio &&
-    //   setBio(response.data.citizen.shortbio)}
-    // {response.data.citizen.avatar_link &&  
-    //   setCapturedImage(response.data.citizen.avatar_link)}
   }
   useEffect(() => {
     fetchUser()
@@ -144,20 +135,25 @@ const JoinGeneralPublicApplicationScreen = () => {
     setLoading(true);
     try {
       await postName();
-      let photoHash = photoIPFS;
+      let photoHash = photoIPFS; // Existing photo IPFS hash
+      let videoHash = videoIPFS; // Existing video IPFS hash
+
       if (isPhotoChanged && capturedImage) {
-        photoHash = await postPhoto(); // Upload and get new IPFS hash
+        photoHash = await postPhoto(); // Upload and get new IPFS hash for the photo
       }
-      setButtonPressed(true)
-      if (photoHash) {
+      // Assuming there's a scenario where the video might be updated or checked
+      // This might include a function like postVideo() if you have video uploading logic
+
+      setButtonPressed(true);
+      if (photoHash) { // Also, consider checking videoHash if it's necessary for the navigation
         navigation.navigate('JoinGeneralPublicApplication2Screen', {
           firstName,
           lastName,
           displayName,
           bio,
-          photo: photoHash
+          photo: photoHash,
+          video: videoHash  // Include the video link here
         });
-        
       }
     } catch (error) {
       console.error("Error in submission:", error);
@@ -165,23 +161,25 @@ const JoinGeneralPublicApplicationScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+};
+
+useEffect(() => {
+  // React only on changes to buttonPressed or photoIPFS (add videoIPFS if it affects the outcome)
+  if (buttonPressed && photoIPFS) {
+    navigation.navigate('JoinGeneralPublicApplication2Screen', {
+      firstName,
+      lastName,
+      displayName,
+      bio,
+      photo: photoIPFS,
+      video: videoIPFS  // Ensure video IPFS is included in navigation here as well
+    });
+    setButtonPressed(false); // Reset buttonPressed to prevent repeated navigation
+  }
+}, [buttonPressed, photoIPFS, videoIPFS]); // Include videoIPFS in the dependency array if it's relevant
 
 
-  useEffect(() => {
-    // Ensure both that the button has been pressed and that the photoIPFS is not null
-    if (buttonPressed && photoIPFS) {
-      navigation.navigate('JoinGeneralPublicApplication2Screen', {
-        firstName,
-        lastName,
-        displayName,
-        bio,
-        photo: photoIPFS
-      });
-      // Optionally reset buttonPressed to false to prevent repeated navigation
-      setButtonPressed(false);
-    }
-}, [buttonPressed, photoIPFS]); // React only on changes to buttonPressed or photoIPFS
+  
 
   const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
     const cameraRef = useRef(null);
@@ -383,14 +381,6 @@ const JoinGeneralPublicApplicationScreen = () => {
             <View style={{flex:1}}>
             <TouchableOpacity 
               style={styles.joinButton}
-              // onPress={()=>
-              //   navigation.navigate('JoinGeneralPublicApplication2Screen', {
-              //     firstName,
-              //     lastName,
-              //     displayName,
-              //     bio,
-              //     photo: photoIPFS
-              // })}
               onPress={handleSubmit}
               disabled={!isFormValid}
             >

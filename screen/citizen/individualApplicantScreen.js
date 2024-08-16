@@ -27,6 +27,7 @@ const IndividualApplicantScreen = () => {
    
     const [userData, setUserData] = useState('');
     const [videoAvailable, setVideoAvailable] = useState(true);
+    const [isVideoPaused, setIsVideoPaused] = useState(true);
     const [videoError, setVideoError] = useState(false);
     const imageLoadError = useRef({});
 
@@ -90,7 +91,7 @@ const IndividualApplicantScreen = () => {
                 }
 
                 <Text numberOfLines={1} style={styles.header}>Address</Text>
-                <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.address)}>
+                <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.citizen.public_address)}>
                     <Text numberOfLines={2} style={styles.txt}>{person.citizen.public_address} </Text>
                 </TouchableOpacity>
 
@@ -116,6 +117,7 @@ const IndividualApplicantScreen = () => {
                         style={styles.videoPlayer}
                         resizeMode='contain'
                         controls={true}
+                        paused={isVideoPaused}
                         onError={(e) => {
                             console.log("Video error:", e);
                             if (e.error.domain === "NSURLErrorDomain" && e.error.code === -1008) {

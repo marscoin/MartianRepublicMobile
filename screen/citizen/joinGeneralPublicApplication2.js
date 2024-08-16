@@ -17,10 +17,11 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
   const navigation = useNavigation();
   const { colors, fonts } = useTheme();
   const route = useRoute();
-  const {firstName, lastName, displayName, bio, photo} = route.params;
+  const {firstName, lastName, displayName, bio, photo, video} = route.params;
   console.log('PARAMS',route.params )
   const [modalVisible, setModalVisible] = useState(false);
-  const [capturedVideo, setCapturedVideo] = useState(null);
+  const [capturedVideo, setCapturedVideo] = useState(route.params.video);
+  const [isVideoPaused, setIsVideoPaused] = useState(true);
   const [isFormValid, setIsFormValid] = useState(false);
   const [videoIPFS, setVideoIPFS] = useState(null);
   const [capturedUri, setCapturedUri] = useState(null);
@@ -539,6 +540,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
             >
               <Video
                 source={{ uri: capturedVideo }}
+                paused={isVideoPaused}
                 style={styles.videoPlayerMain}
                 resizeMode='contain'
               />
