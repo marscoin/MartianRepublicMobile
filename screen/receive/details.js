@@ -297,18 +297,27 @@ const ReceiveDetails = () => {
     console.log('receive/details - componentDidMount');
     wallet.setUserHasSavedExport(true);
     await saveToDisk();
+    
     let newAddress;
-    if (address) {
+  
+    if (wallet.civic) {
+      // If the wallet is a Civic wallet, always use the civic address
+      newAddress = wallet._address; // Assuming `_address` is the civic address
+      console.log('Civic wallet detected. Using Civic address:', newAddress);
+    } else if (address) {
+      // Use the provided address
+      newAddress = address;
       setAddressBIP21Encoded(address);
       await Notifications.tryToObtainPermissions();
       Notifications.majorTomToGroundControl([address], [], []);
     } else {
+      // Default logic for non-Civic wallets
       if (wallet.chain === Chain.ONCHAIN) {
         try {
           if (!isElectrumDisabled) newAddress = await Promise.race([wallet.getAddressAsync(), sleep(1000)]);
         } catch (_) {}
         if (newAddress === undefined) {
-          // either sleep expired or getAddressAsync threw an exception
+          // Fallback logic
           console.warn('either sleep expired or getAddressAsync threw an exception');
           newAddress = wallet._getExternalAddressByIndex(wallet.getNextFreeAddressIndex());
         } else {
@@ -320,19 +329,21 @@ const ReceiveDetails = () => {
           newAddress = wallet.getAddress();
         } catch (_) {}
         if (newAddress === undefined) {
-          // either sleep expired or getAddressAsync threw an exception
+          // Fallback logic
           console.warn('either sleep expired or getAddressAsync threw an exception');
           newAddress = wallet.getAddress();
         } else {
           saveToDisk(); // caching whatever getAddressAsync() generated internally
         }
       }
-      setAddressBIP21Encoded(newAddress);
-      await Notifications.tryToObtainPermissions();
-      Notifications.majorTomToGroundControl([newAddress], [], []);
     }
+  
+    setAddressBIP21Encoded(newAddress);
+    await Notifications.tryToObtainPermissions();
+    Notifications.majorTomToGroundControl([newAddress], [], []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
 
   const setAddressBIP21Encoded = addr => {
     const newBip21encoded = DeeplinkSchemaMatch.bip21encode(addr);

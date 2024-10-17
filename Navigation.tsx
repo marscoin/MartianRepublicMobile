@@ -737,7 +737,7 @@ const ReceiveDetailsStackRoot = () => {
           navigationStyle({
             closeButton: true,
             headerBackVisible: false,
-            headerTitle: ' ',
+            //headerTitle: ' ',
             headerStyle:{
               backgroundColor:'black'
             }
