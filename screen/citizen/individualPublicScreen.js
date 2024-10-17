@@ -26,6 +26,8 @@ const IndividualPublicScreen = () => {
     console.log('PARAMS',person )
    
     const [userData, setUserData] = useState('');
+    const [videoAvailable, setVideoAvailable] = useState(true);
+    const [videoError, setVideoError] = useState(false);
     const imageLoadError = useRef({});
 
     const copyToClipboard = (text) => {
@@ -36,7 +38,21 @@ const IndividualPublicScreen = () => {
           duration: Snackbar.LENGTH_SHORT,
           numberOfLines: 5
         });
-      };
+    };
+    
+    async function fetchPersonDetails() {
+       const token = await AsyncStorage.getItem('@auth_token');
+        response = await axios.get(`https://martianrepublic.org/api/citizen/${person.address}`, {
+        }, {
+        headers: {'Authorization': `Bearer ${token}`}
+      })
+        console.log('PERSONAL DATA', response.data);
+        setUserData(response.data)
+    }
+
+    useEffect(() => {
+        fetchPersonDetails()
+    }, []);  
       
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
@@ -53,48 +69,78 @@ const IndividualPublicScreen = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-                {/* <Image
-                    source={ !person.profile_image? require('../../img/genericprofile.png'):{ uri: person.profile_image }}
-                    style={styles.profileImage} 
-                    onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: person.id} })}
-                />
+                {userData.citizen && userData.citizen.avatar_link &&
+                    <Image
+                        source={ !userData.citizen.avatar_link? require('../../img/genericprofile.png'):{ uri: userData.citizen.avatar_link }}
+                        style={styles.profileImage} 
+                    />
+                }
 
-                <Text numberOfLines={2} style={styles.citizenName}>{person.user.fullname}</Text>
-                
-                <Text numberOfLines={1} style={styles.header}>Address</Text>
+                {userData.citizen && userData.citizen.firstname && userData.citizen.lastname &&
+                    <Text numberOfLines={2} style={styles.citizenName}>{userData.citizen.firstname} {userData.citizen.lastname}</Text>
+                }
+                {userData.citizen && userData.citizen.displayname &&
+                    <Text numberOfLines={2} style={styles.displayname}>{userData.citizen.displayname}</Text>
+                }
+
+                <Text numberOfLines={1} style={styles.header}>Civic address</Text>
                 <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.address)}>
                     <Text numberOfLines={2} style={styles.txt}>{person.address} </Text>
                 </TouchableOpacity>
 
-                <Text numberOfLines={1} style={styles.header}>MCR Citizen since </Text>
+                <Text numberOfLines={1} style={styles.header}>MCR Public since </Text>
                 <View style={styles.txtCont} >
                     <Text numberOfLines={2} style={styles.txt}>{new Date(person.mined).toLocaleDateString()} </Text>
                 </View>
 
+                {person.user && person.user.profile.endorse_cnt &&
+                <>
                 <Text numberOfLines={1} style={styles.header}>Endorsements </Text>
                 <View style={styles.txtCont} >
                     <Text numberOfLines={1} style={styles.txt}>{person.user.profile.endorse_cnt} </Text>
                 </View>
+                </>}
+
+                {userData.citizen && userData.citizen.shortbio &&
+                <>
+                <Text numberOfLines={1} style={styles.header}>Short Bio </Text>
+                <View style={styles.txtCont} >
+                    <Text numberOfLines={50} style={styles.txt}>{userData.citizen.shortbio} </Text>
+                </View>
+                </>}
 
                 <Text numberOfLines={2} style={styles.header}>IPFS application link </Text>
                 <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.embedded_link)}>
-                    <Text numberOfLines={2} style={styles.txt}>{person.embedded_link} </Text>
+                    <Text numberOfLines={3} style={styles.txt}>{person.embedded_link} </Text>
                 </TouchableOpacity>
 
                 <Text numberOfLines={2} style={styles.header}>Liveness Video Proof </Text>
 
-                <Video
-                    source={{ uri: person.user.citizen.liveness_link }}
-                    style={styles.videoPlayer}
-                    resizeMode='contain'
-                    controls={true}
-                    onError={(e) => console.log("Video error:", e)}
-                />
-
-                <Text numberOfLines={1} style={styles.header}>Video link </Text>
-                <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.user.citizen.liveness_link)}>
-                    <Text numberOfLines={2} style={styles.txt}>{person.user.citizen.liveness_link} </Text>
-                </TouchableOpacity> */}
+                {person.user && person.user.citizen && person.user.citizen.liveness_link && !videoError ?
+                    <Video
+                        source={{ uri: person.user.citizen.liveness_link }}
+                        style={styles.videoPlayer}
+                        resizeMode='contain'
+                        controls={true}
+                        onError={(e) => {
+                            console.log("Video error:", e);
+                            if (e.error.domain === "NSURLErrorDomain" && e.error.code === -1008) {
+                            setVideoError(true); // Set video error state to true if the resource is unavailable
+                            }
+                        }}
+                    />
+                :
+                    <View style={styles.videoPlaceholder}>
+                        <Text style={styles.placeholderText}>VIDEO UNAVAILABLE</Text>
+                    </View>
+                }
+                {person.user && person.user.citizen.liveness_link &&
+                <>
+                    <Text numberOfLines={1} style={styles.header}>Video link </Text>
+                    <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.user.citizen.liveness_link)}>
+                        <Text numberOfLines={3} style={styles.txt}>{person.user.citizen.liveness_link} </Text>
+                    </TouchableOpacity>
+                </>}
                 
             </ScrollView>
         </View>
@@ -139,6 +185,16 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginTop: 20
     },
+    displayname: {
+        fontSize: 18,
+        color:  'white',
+        fontFamily: 'Orbitron-Regular',
+        fontWeight:"500",
+        letterSpacing: 1.1, 
+        marginHorizontal: 20,
+        opacity: 0.7,
+        // marginTop: 20
+    },
     txt: {
         fontSize: 14,
         color:  'white',
@@ -158,8 +214,23 @@ const styles = StyleSheet.create({
     videoPlayer: {
         width: 240,
         height: 160,
-        alignSelf: 'center'
+        alignSelf: 'center',
+        marginTop: 20,
     },
+    videoPlaceholder: {
+        width: 240,
+        height: 160,
+        backgroundColor: '#2F2D2B',
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+        marginTop: 10
+      },
+      placeholderText: {
+        color: 'white',
+        fontSize: 16,
+        textAlign: 'center',
+      },
 });
 
 export default IndividualPublicScreen;

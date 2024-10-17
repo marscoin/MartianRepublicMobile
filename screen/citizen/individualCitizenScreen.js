@@ -89,15 +89,21 @@ const IndividualCitizenScreen = () => {
                     <Text numberOfLines={2} style={styles.displayname}>{userData.citizen.displayname}</Text>
                 }
 
-                <Text numberOfLines={1} style={styles.header}>Address</Text>
+                <Text numberOfLines={1} style={styles.header}>Civic address</Text>
                 <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.address)}>
                     <Text numberOfLines={2} style={styles.txt}>{person.address} </Text>
                 </TouchableOpacity>
 
-                <Text numberOfLines={1} style={styles.header}>MCR Citizen since </Text>
-                <View style={styles.txtCont} >
-                    <Text numberOfLines={2} style={styles.txt}>{new Date(person.mined).toLocaleDateString()} </Text>
-                </View>
+                {person.user && 
+                <>
+                    <Text numberOfLines={1} style={styles.header}>
+                        {person.user.profile.citizen === 1 ? 'MCR Citizen since' : 'MCR Public since'}
+                    </Text>
+                    <View style={styles.txtCont}>
+                        <Text numberOfLines={2} style={styles.txt}>{new Date(person.mined).toLocaleDateString()} </Text>
+                    </View>
+                </>
+                }
 
                 {person.user && person.user.profile.endorse_cnt &&
                 <>
@@ -122,11 +128,12 @@ const IndividualCitizenScreen = () => {
 
                 <Text numberOfLines={2} style={styles.header}>Liveness Video Proof </Text>
 
-                {person.user && person.user.citizen && person.user.citizen.liveness_link && !videoError ?
+                {person.user && person.user.citizen !== null && person.user.citizen.liveness_link && !videoError ?
                     <Video
                         source={{ uri: person.user.citizen.liveness_link }}
                         style={styles.videoPlayer}
                         resizeMode='contain'
+                        paused={true}
                         controls={true}
                         onError={(e) => {
                             console.log("Video error:", e);
@@ -140,7 +147,7 @@ const IndividualCitizenScreen = () => {
                         <Text style={styles.placeholderText}>VIDEO UNAVAILABLE</Text>
                     </View>
                 }
-                {person.user && person.user.citizen.liveness_link &&
+                {person.user && person.user.citizen !== null && person.user.citizen.liveness_link &&
                 <>
                     <Text numberOfLines={1} style={styles.header}>Video link </Text>
                     <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.user.citizen.liveness_link)}>
@@ -220,7 +227,8 @@ const styles = StyleSheet.create({
     videoPlayer: {
         width: 240,
         height: 160,
-        alignSelf: 'center'
+        alignSelf: 'center',
+        marginTop: 20
     },
     videoPlaceholder: {
         width: 240,

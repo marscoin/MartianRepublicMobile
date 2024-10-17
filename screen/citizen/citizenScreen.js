@@ -98,7 +98,7 @@ const CitizenScreen = () => {
     const fetchGeneralPublic = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/public?page=${publicPageRef.current}`)
-            //console.log('GENERAL PUBLIC', response.data) 
+            console.log('GENERAL PUBLIC', response.data) 
 
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedPublic.current) === JSON.stringify(response.data)) {
@@ -467,7 +467,7 @@ const CitizenScreen = () => {
                                     </View>}
                                 </TouchableOpacity>
                             )}
-                            keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                            keyExtractor={(item, index) => `${item.userid}-${index}`} // Use userid as the key
                             onEndReached={handleEndPublicReached}
                             onEndReachedThreshold={0.5} 
                             scrollEnabled={false}

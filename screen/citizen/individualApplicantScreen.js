@@ -90,7 +90,7 @@ const IndividualApplicantScreen = () => {
                     <Text numberOfLines={2} style={styles.displayname}>{userData.citizen.displayname}</Text>
                 }
 
-                <Text numberOfLines={1} style={styles.header}>Address</Text>
+                <Text numberOfLines={1} style={styles.header}>Civic address</Text>
                 <TouchableOpacity style={styles.txtCont} onLongPress={() => copyToClipboard(person.citizen.public_address)}>
                     <Text numberOfLines={2} style={styles.txt}>{person.citizen.public_address} </Text>
                 </TouchableOpacity>
