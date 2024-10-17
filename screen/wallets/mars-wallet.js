@@ -518,7 +518,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         ({ txid, vout }) => !this.getUTXOMetadata(txid, vout).frozen
       );
     }
-    // console.log("-- [getUtxo] " + JSON.stringify(ret));
+    console.log("-- [getUtxo] " + JSON.stringify(ret));
     return ret;
   }
 
@@ -1471,7 +1471,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         }
       }
     }
-
     return lastUsedIndex;
   }
 

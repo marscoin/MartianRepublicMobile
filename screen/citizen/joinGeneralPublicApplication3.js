@@ -28,7 +28,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   const styles = getStyles(colors, fonts);
 
   const [networkTransactionFees, setNetworkTransactionFees] = useState(new NetworkTransactionFee(3, 2, 1));
-  const { wallets} = useContext(BlueStorageContext);
+  const {wallets} = useContext(BlueStorageContext);
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -60,19 +60,20 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   //const {firstName, lastName, displayName, bio, photo, video} = route.params;
   //console.log('PARAMS',route.params )
+  const params = route.params;
+  //const params = {"bio": "TestNew", "address": 'MC1kMoACQZQwmR8tSSmSQzUBDUYhEKkbee', "displayName": "Test New", "firstName": "MobileTest New", "lastName": "test new", "photo": "https://ipfs.marscoin.org/ipfs/QmdGcEhQp862VDhxCHYo8vcAfMiQgwc8kYfkdM2F6vsdLT", "video": "https://ipfs.marscoin.org/ipfs/QmQ6ebHWPbhDpjrePbwV3PjUDxnMAMRHWDRhA56gU6BxxJ"}
+  console.log('PARAMS Check', params )
+  const [civic, setCivic] = useState('')
 
-  const params = {"bio": "TestNew", "address": 'MC1kMoACQZQwmR8tSSmSQzUBDUYhEKkbee', "displayName": "Test New", "firstName": "MobileTest New", "lastName": "test new", "photo": "https://ipfs.marscoin.org/ipfs/QmdGcEhQp862VDhxCHYo8vcAfMiQgwc8kYfkdM2F6vsdLT", "video": "https://ipfs.marscoin.org/ipfs/QmQ6ebHWPbhDpjrePbwV3PjUDxnMAMRHWDRhA56gU6BxxJ"}
-  //console.log('PARAMS',params )
   const [formData, setFormData] = useState({
     firstName: params.firstName,
     lastName: params.lastName,
     displayName: params.displayName,
     bio: params.bio,
     photo: params.photo,
-    video: params.video
+    video: params.video,
+    //civic: civic
   });
-
-  const [civic, setCivic] = useState(params.address)
 
   function getCivicWallet(wallets) {
     // Loop through the wallets array
@@ -81,6 +82,7 @@ const JoinGeneralPublicApplicationScreen = () => {
         if (wallet.civic) {
             console.log('CIVIC WALLET IS SET!' );
             setWallet(wallet)
+            setCivic(wallet._address)
             return wallet;
         }
     }
@@ -92,22 +94,6 @@ const JoinGeneralPublicApplicationScreen = () => {
   }, []);
 
   const toggleVerify = () => setIsVerified(!isVerified);
-  
- // if cutomFee is not set, we need to choose highest possible fee for wallet balance
-  // if there are no funds for even Slow option, use 1 sat/vbyte fee
-    // const feeRate = useMemo(() => {
-    //   if (customFee) return customFee;
-    //   if (feePrecalc.slowFee === null) return '1'; // wait for precalculated fees
-    //   let initialFee;
-    //   if (feePrecalc.fastestFee !== null) {
-    //     initialFee = String(networkTransactionFees.fastestFee);
-    //   } else if (feePrecalc.mediumFee !== null) {
-    //     initialFee = String(networkTransactionFees.mediumFee);
-    //   } else {
-    //     initialFee = String(networkTransactionFees.slowFee);
-    //   }
-    //   return initialFee;
-    // }, [customFee, feePrecalc, networkTransactionFees]);
 
   const broadcast = async transaction => {
     /////SENDING TX TO BLOCKCHAIN/////
@@ -121,15 +107,19 @@ const JoinGeneralPublicApplicationScreen = () => {
   };
 
   const sendMetadata = async (message) => {
-    console.log(' SEND METADATA!!! START')
+    console.log('SEND METADATA!!! START')
     setIsLoading(true);
     try {
-      //const utxos = wallet.fetchUtxo(); 
-      //const lutxo = wallet._utxo;
-      const lutxo = wallet._utxo.filter(utxo => utxo.address === civic);
-      console.log('wallet._utxo', lutxo)
+      const utxos = wallet.getUtxo(); 
+      //console.log('wallet._utxo!!!', wallet._utxo)
+      //console.log('civic', civic)
+      const civicTrimmed = civic.trim();
+      // const lutxo = wallet._utxo.filter(utxo => utxo.address.trim() === civicTrimmed);
+      const lutxo = utxos.filter(utxo => utxo.address.trim() === civicTrimmed);
+      console.log('Filtered UTXOs:', lutxo);
       const targets = [];
       targets.push({ address: civic, value: 0 });
+      // console.log('targets', targets)
       
       const feeRate = 50
       //const feeRate = String(networkTransactionFees.mediumFee);
@@ -171,7 +161,7 @@ const JoinGeneralPublicApplicationScreen = () => {
       return;
     }
     setIsPublishing(true);
-    Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
+    //Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
 
     try {
       const dataObject = { data: formData };
@@ -195,7 +185,6 @@ const JoinGeneralPublicApplicationScreen = () => {
         const message = "GP_" + cid;
         console.log('message: ', message)
         sendMetadata(message) 
-        //sendMetadata(null) 
       } else {
         throw new Error('Failed to pin data');
       }
@@ -293,9 +282,9 @@ const JoinGeneralPublicApplicationScreen = () => {
             <View style={styles.headerBox}>
               <Text style={styles.headerText}>Civic Address: </Text>
             </View>
-            <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(params.address)}>
-              <Text style={styles.contentText}>{params.address} </Text>
-            </TouchableOpacity>
+            {wallet && <TouchableOpacity style={styles.contentBox} onLongPress={() => copyToClipboard(params.address)}>
+              <Text style={styles.contentText}>{wallet._address} </Text>
+            </TouchableOpacity>}
         </View>
 
         {/* Checkbox for Verification */}

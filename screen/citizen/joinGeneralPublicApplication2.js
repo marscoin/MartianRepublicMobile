@@ -76,7 +76,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
 
         if (response.status === 200 && response.data) {
             console.log('Video pinned!!!! hash:', response.data.Hash);
-            setVideoIPFS(response.data.Hash); 
+            setVideoIPFS(`https://ipfs.marscoin.org/ipfs/${response.data.Hash}`); 
         } else {
             console.log('Failed to upload video, status:', response.status);
         }
@@ -104,7 +104,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         displayName,
         bio,
         photo,
-        video: videoIPFS
+        video: videoIPFS,
       });
     }
   }, [videoIPFS]); 

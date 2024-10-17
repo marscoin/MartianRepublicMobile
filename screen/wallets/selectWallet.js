@@ -196,23 +196,8 @@ const SelectWallet = () => {
         <View style={styles.itemRoot}>
           <Image style={styles.imageGold} source={require('../../img/gold3.jpeg')} />
           <View style={styles.gradient}>
-            {/* <Image
-              source={(() => {
-                switch (item.type) {
-                  case LightningLdkWallet.type:
-                  case LightningCustodianWallet.type:
-                    return I18nManager.isRTL ? require('../../img/lnd-shape-rtl.png') : require('../../img/lnd-shape.png');
-                  case MultisigHDWallet.type:
-                    return I18nManager.isRTL ? require('../../img/vault-shape-rtl.png') : require('../../img/vault-shape.png');
-                  default:
-                    return I18nManager.isRTL ? require('../../img/marscoin_transparent2.png') : require('../../img/marscoin_transparent2.png');
-                }
-              })()}
-              style={styles.image}
-            /> */}
-
             <Text style={styles.transparentText} />
-            <Text numberOfLines={1} style={styles.label}>
+            <Text style={styles.label}>
               {item.getLabel()}
             </Text>
             {item.hideBalance ? (
