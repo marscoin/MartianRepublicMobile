@@ -113,6 +113,7 @@ import PleaseBackupCivic from './screen/citizen/pleaseBackupCivic';
 import JoinGeneralPublicApplicationScreen from './screen/citizen/joinGeneralPublicApplication';
 import JoinGeneralPublicApplication2Screen from './screen/citizen/joinGeneralPublicApplication2';
 import JoinGeneralPublicApplication3Screen from './screen/citizen/joinGeneralPublicApplication3';
+import JoinGeneralPublicApplicationSuccessScreen from './screen/citizen/joinGeneralPublicApplicationSuccess';
 
 const WalletsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -293,6 +294,7 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="JoinGeneralPublicApplicationScreen" component={JoinGeneralPublicApplicationScreen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication2Screen" component={JoinGeneralPublicApplication2Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication3Screen" component={JoinGeneralPublicApplication3Screen}  options={{headerShown: false}} />
+      <CitizenStack.Screen name="JoinGeneralPublicApplicationSuccessScreen" component={JoinGeneralPublicApplicationSuccessScreen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="SendWithAddress" component={SendWithAddress} initialParams={SendWithAddress.initialParams}/>
       <CitizenStack.Screen name="PsbtMultisig" component={PsbtMultisig} options={PsbtMultisig.navigationOptions(theme)} />
       <CitizenStack.Screen name="SendConfirm" component={SendConfirm} options={Confirm.navigationOptions(theme)} />
