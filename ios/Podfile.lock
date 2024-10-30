@@ -20,7 +20,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.72.11)
   - hermes-engine/Pre-built (0.72.11)
   - libevent (2.1.12)
-  - lottie-ios (4.4.1)
+  - lottie-ios (4.4.3)
   - lottie-react-native (6.7.0):
     - lottie-ios (~> 4.4.1)
     - React-Core
@@ -340,10 +340,11 @@ PODS:
     - React-Core
   - react-native-camera/RN (4.2.1):
     - React-Core
-  - react-native-compressor (1.8.24):
+  - react-native-compressor (1.9.0):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
-  - react-native-document-picker (9.1.1):
+  - react-native-document-picker (9.3.1):
+    - RCT-Folly (= 2021.07.22.00)
     - React-Core
   - react-native-idle-timer (2.1.6):
     - React-Core
@@ -531,11 +532,11 @@ PODS:
     - React-Core
   - RNShare (10.0.2):
     - React-Core
-  - RNSnackbar (2.6.2):
+  - RNSnackbar (2.8.0):
     - React-Core
   - RNSVG (13.14.0):
     - React-Core
-  - RNVectorIcons (10.0.3):
+  - RNVectorIcons (10.2.0):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
   - RNWatch (1.1.0):
@@ -828,7 +829,7 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: c22b4cc0bb1d1603b9e4faf83732be227baa55bc
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  lottie-ios: e047b1d2e6239b787cc5e9755b988869cf190494
+  lottie-ios: fcb5e73e17ba4c983140b7d21095c834b3087418
   lottie-react-native: e3205322282d72e23efb3bff3287d0bd16fb1b01
   PasscodeAuth: 3e88093ff46c31a952d8b36c488240de980517be
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
@@ -850,8 +851,8 @@ SPEC CHECKSUMS:
   react-native-blue-crypto: 23f1558ad3d38d7a2edb7e2f6ed1bc520ed93e56
   react-native-bw-file-access: b232fd1d902521ca046f3fc5990ab1465e1878d7
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
-  react-native-compressor: d84e28c430c8022cc44a45ec9ec26071269992c3
-  react-native-document-picker: 3599b238843369026201d2ef466df53f77ae0452
+  react-native-compressor: b1854720950a395696e2ddcb3d3fde2f680fbfb0
+  react-native-document-picker: 52eab29bbc53f45399b475b7a3f4e503260f1134
   react-native-idle-timer: f7f651542b39dce9b9473e4578cb64a255075f17
   react-native-image-picker: 5e076db26cd81660cfb6db5bcf517cfa12054d45
   react-native-ios-context-menu: e529171ba760a1af7f2ef0729f5a7f4d226171c5
@@ -902,9 +903,9 @@ SPEC CHECKSUMS:
   RNReanimated: 5afba582037b0dae040a5f927dec7fdd18e430c3
   RNScreens: 3c5b9f4a9dcde752466854b6109b79c0e205dad3
   RNShare: 859ff710211285676b0bcedd156c12437ea1d564
-  RNSnackbar: 3727b42bf6c4314a53c18185b5203e915a4ab020
+  RNSnackbar: 37ce6daf19c8bd35cf6133db5797aa298c8782ac
   RNSVG: d00c8f91c3cbf6d476451313a18f04d220d4f396
-  RNVectorIcons: 64e6a523ac30a3241efa9baf1ffbcc5e76ff747a
+  RNVectorIcons: 084d874504f21a5452744e400537eb96b45060b6
   RNWatch: fd30ca40a5b5ef58dcbc195638e68219bc455236
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: 76b2d5677fc9694bae53c80d0cccfc55719064a3

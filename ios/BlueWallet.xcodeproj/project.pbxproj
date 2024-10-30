@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		2B2B129397ACA4E7FCCB4F6F /* libPods-BlueWallet-NoLDK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52FA0F1447D69747BD547E1E /* libPods-BlueWallet-NoLDK.a */; };
 		32B5A32A2334450100F8D608 /* Bridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B5A3292334450100F8D608 /* Bridge.swift */; };
 		32F0A29A2311DBB20095C559 /* ComplicationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32F0A2992311DBB20095C559 /* ComplicationController.swift */; };
 		399C65953BBD4E52ABD2C59D /* Orbitron-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 22CA96336FB74DC18E0CA699 /* Orbitron-SemiBold.ttf */; };
@@ -49,7 +48,6 @@
 		6DFC807024EA0B6C007B8700 /* EFQRCode in Frameworks */ = {isa = PBXBuildFile; productRef = 6DFC806F24EA0B6C007B8700 /* EFQRCode */; };
 		6DFC807224EA2FA9007B8700 /* ViewQRCodefaceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DFC807124EA2FA9007B8700 /* ViewQRCodefaceController.swift */; };
 		764B49B1420D4AEB8109BF62 /* libsqlite3.0.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B468CC34D5B41F3950078EF /* libsqlite3.0.tbd */; };
-		773E382FE62E836172AAB98B /* libPods-BlueWallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 95304AD151F1F531985AA341 /* libPods-BlueWallet.a */; };
 		782F075B5DD048449E2DECE9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = B9D9B3A7B2CB4255876B67AF /* libz.tbd */; };
 		849047CA2702A32A008EE567 /* Handoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = 849047C92702A32A008EE567 /* Handoff.swift */; };
 		84E05A842721191B001A0D3A /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 84E05A832721191B001A0D3A /* Settings.bundle */; };
@@ -97,11 +95,13 @@
 		B4AB225D2B02AD12001F4328 /* XMLParserDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4AB225C2B02AD12001F4328 /* XMLParserDelegate.swift */; };
 		B4AB225E2B02AD12001F4328 /* XMLParserDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4AB225C2B02AD12001F4328 /* XMLParserDelegate.swift */; };
 		B4EE583C226703320003363C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B40D4E35225841ED00428FCC /* Assets.xcassets */; };
-		C59F90CE0D04D3E4BB39BC5D /* libPods-BlueWalletUITests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F02C2F7CA3591E4E0B06EBA /* libPods-BlueWalletUITests.a */; };
-		C978A716948AB7DEC5B6F677 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		C173A252992413ADFE1355E1 /* libPods-BlueWallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B5E4046C199F79F5E278E59 /* libPods-BlueWallet.a */; };
+		C978A716948AB7DEC5B6F677 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		DFE7EB1CBBA24922BB8554FB /* Orbitron-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DA4EA8CC3F514C33A5B27B99 /* Orbitron-Bold.ttf */; };
+		E2EFFE6E86A9B9C9C2681A92 /* libPods-BlueWalletUITests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D72A016F953E944B05D966D4 /* libPods-BlueWalletUITests.a */; };
 		E5D4794B26781FC0007838C1 /* fiatUnits.json in Resources */ = {isa = PBXBuildFile; fileRef = 6DD410AD266CAF1F0087DE03 /* fiatUnits.json */; };
 		E5D4794C26781FC1007838C1 /* fiatUnits.json in Resources */ = {isa = PBXBuildFile; fileRef = 6DD410AD266CAF1F0087DE03 /* fiatUnits.json */; };
+		EE01FB881CCF5E5D7EF36783 /* libPods-BlueWallet-NoLDK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 923D64A98D5A472A8E437064 /* libPods-BlueWallet-NoLDK.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -248,14 +248,16 @@
 		008F07F21AC5B25A0029DE68 /* main.jsbundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = main.jsbundle; sourceTree = "<group>"; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		04466491BA2D4876A71222FC /* Foundation.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Foundation.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Foundation.ttf"; sourceTree = "<group>"; };
-		0C3D27CE367C0DD11F4B8772 /* Pods-BlueWalletUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWalletUITests.release.xcconfig"; path = "Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests.release.xcconfig"; sourceTree = "<group>"; };
 		0D8076C0608F4D5897ECAB20 /* Orbitron-VariableFont_wght.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Orbitron-VariableFont_wght.ttf"; path = "../assets/fonts/Orbitron-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* BlueWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlueWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = BlueWallet/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BlueWallet/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = BlueWallet/main.m; sourceTree = "<group>"; };
+		14378C024D85237B04F26196 /* Pods-BlueWallet-NoLDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWallet-NoLDK.debug.xcconfig"; path = "Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK.debug.xcconfig"; sourceTree = "<group>"; };
 		1DD63E4B5C8344BB9880C9EC /* libReactNativePermissions.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libReactNativePermissions.a; sourceTree = "<group>"; };
+		1E231D72D2A451468C5165AB /* Pods-BlueWallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWallet.release.xcconfig"; path = "Target Support Files/Pods-BlueWallet/Pods-BlueWallet.release.xcconfig"; sourceTree = "<group>"; };
 		22CA96336FB74DC18E0CA699 /* Orbitron-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Orbitron-SemiBold.ttf"; path = "../assets/fonts/Orbitron-SemiBold.ttf"; sourceTree = "<group>"; };
+		251DBE59BDD5F628D2C5C8A9 /* Pods-BlueWallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWallet.debug.xcconfig"; path = "Target Support Files/Pods-BlueWallet/Pods-BlueWallet.debug.xcconfig"; sourceTree = "<group>"; };
 		253243E162CE4822BF3A3B7D /* libRNRandomBytes-tvOS.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = "libRNRandomBytes-tvOS.a"; sourceTree = "<group>"; };
 		2654894D4DE44A4C8F71773D /* CoreData.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		2D16E6891FA4F8E400B85C8A /* libReact.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libReact.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -276,8 +278,8 @@
 		47C436B1EF23484B8181DBEA /* Zocial.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Zocial.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Zocial.ttf"; sourceTree = "<group>"; };
 		4D746BBE67E84684848246E2 /* SimpleLineIcons.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = SimpleLineIcons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/SimpleLineIcons.ttf"; sourceTree = "<group>"; };
 		4F12F501B686459183E0BE0D /* libRNVectorIcons.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNVectorIcons.a; sourceTree = "<group>"; };
-		52FA0F1447D69747BD547E1E /* libPods-BlueWallet-NoLDK.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BlueWallet-NoLDK.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A8F67CF29564E41882ECEF8 /* FontAwesome5_Brands.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome5_Brands.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome5_Brands.ttf"; sourceTree = "<group>"; };
+		5B5E4046C199F79F5E278E59 /* libPods-BlueWallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BlueWallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A65D81712444D37BA152B06 /* libRNRandomBytes.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNRandomBytes.a; sourceTree = "<group>"; };
 		6D203C2025D4ED2500493AD1 /* BlueWalletWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BlueWalletWatch.entitlements; sourceTree = "<group>"; };
 		6D294A7324D510AC0039E22B /* af */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = af; path = af.lproj/Interface.strings; sourceTree = "<group>"; };
@@ -334,11 +336,8 @@
 		6DEB4C3A254FBF4800E9F9AA /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		6DF25A9E249DB97E001D06F5 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6DFC807124EA2FA9007B8700 /* ViewQRCodefaceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewQRCodefaceController.swift; sourceTree = "<group>"; };
-		6E8A234AFCA1624321AE54F5 /* Pods-BlueWalletUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWalletUITests.debug.xcconfig"; path = "Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		6EB3338E347F4AFAA8C85C04 /* libRNDeviceInfo-tvOS.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = "libRNDeviceInfo-tvOS.a"; sourceTree = "<group>"; };
-		6F02C2F7CA3591E4E0B06EBA /* libPods-BlueWalletUITests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BlueWalletUITests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		70C9C17A3F52430B99582AF4 /* libRNCamera.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNCamera.a; sourceTree = "<group>"; };
-		77ED97C3CA4284744868B15D /* Pods-BlueWallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWallet.release.xcconfig"; path = "Target Support Files/Pods-BlueWallet/Pods-BlueWallet.release.xcconfig"; sourceTree = "<group>"; };
 		78A87E7251D94144A71A2F67 /* FontAwesome5_Solid.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome5_Solid.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome5_Solid.ttf"; sourceTree = "<group>"; };
 		7B468CC34D5B41F3950078EF /* libsqlite3.0.tbd */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		8448882949434D41A054C0B2 /* ToolTipMenuTests.xctest */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ToolTipMenuTests.xctest; sourceTree = "<group>"; };
@@ -346,14 +345,12 @@
 		84E05A832721191B001A0D3A /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		85127A0793F4410CA7015568 /* Orbitron-Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Orbitron-Black.ttf"; path = "../assets/fonts/Orbitron-Black.ttf"; sourceTree = "<group>"; };
 		8637D4B5E14D443A9031DA95 /* libRNFS.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNFS.a; sourceTree = "<group>"; };
-		8B160AC12BDAD72BB70BC175 /* Pods-BlueWallet-NoLDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWallet-NoLDK.release.xcconfig"; path = "Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK.release.xcconfig"; sourceTree = "<group>"; };
 		90F86BC5194548CA87D729A9 /* libToolTipMenu.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libToolTipMenu.a; sourceTree = "<group>"; };
+		923D64A98D5A472A8E437064 /* libPods-BlueWallet-NoLDK.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BlueWallet-NoLDK.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		94565BFC6A0C4235B3EC7B01 /* libRNSVG.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNSVG.a; sourceTree = "<group>"; };
 		95208B2A05884A76B5BB99C0 /* libRCTGoogleAnalyticsBridge.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRCTGoogleAnalyticsBridge.a; sourceTree = "<group>"; };
-		95304AD151F1F531985AA341 /* libPods-BlueWallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BlueWallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9DF4E6C040764E4BA1ACC1EB /* libTcpSockets.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libTcpSockets.a; sourceTree = "<group>"; };
 		9F1F51A83D044F3BB26A35FC /* libRNSVG-tvOS.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = "libRNSVG-tvOS.a"; sourceTree = "<group>"; };
-		A16A0CF8A3E6F577B90BF8A4 /* Pods-BlueWallet-NoLDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWallet-NoLDK.debug.xcconfig"; path = "Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK.debug.xcconfig"; sourceTree = "<group>"; };
 		A7C4B1FDAD264618BAF8C335 /* libRNCWebView.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNCWebView.a; sourceTree = "<group>"; };
 		A9166D490AEF4938BD6621CF /* Feather.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Feather.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Feather.ttf"; sourceTree = "<group>"; };
 		AB2325650CE04F018697ACFE /* libRNReactNativeHapticFeedback.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNReactNativeHapticFeedback.a; sourceTree = "<group>"; };
@@ -394,13 +391,15 @@
 		B4AB225C2B02AD12001F4328 /* XMLParserDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLParserDelegate.swift; sourceTree = "<group>"; };
 		B4D3235A177F4580BA52F2F9 /* libRNCSlider.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNCSlider.a; sourceTree = "<group>"; };
 		B642AFB13483418CAB6FF25E /* libRCTQRCodeLocalImage.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRCTQRCodeLocalImage.a; sourceTree = "<group>"; };
-		B68F8552DD4428F64B11DCFB /* Pods-BlueWallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWallet.debug.xcconfig"; path = "Target Support Files/Pods-BlueWallet/Pods-BlueWallet.debug.xcconfig"; sourceTree = "<group>"; };
 		B9D9B3A7B2CB4255876B67AF /* libz.tbd */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		BBA99996E6FA4B49ACE0BEFA /* libRNRate.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNRate.a; sourceTree = "<group>"; };
+		BEC620084C7A2C4170AD6E56 /* Pods-BlueWallet-NoLDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWallet-NoLDK.release.xcconfig"; path = "Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK.release.xcconfig"; sourceTree = "<group>"; };
 		C4496FB303574862B40A878A /* AntDesign.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = AntDesign.ttf; path = "../node_modules/react-native-vector-icons/Fonts/AntDesign.ttf"; sourceTree = "<group>"; };
 		CA741BA794714D3F80251AC9 /* Ionicons.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Ionicons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Ionicons.ttf"; sourceTree = "<group>"; };
 		CD746B955C55410793BB72C0 /* libRNGestureHandler.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNGestureHandler.a; sourceTree = "<group>"; };
 		CF4A4D7AAD974D67A2D62B3E /* MaterialIcons.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = MaterialIcons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/MaterialIcons.ttf"; sourceTree = "<group>"; };
+		D2E65AD40F230EB6CC89E289 /* Pods-BlueWalletUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWalletUITests.debug.xcconfig"; path = "Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		D72A016F953E944B05D966D4 /* libPods-BlueWalletUITests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BlueWalletUITests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA4EA8CC3F514C33A5B27B99 /* Orbitron-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Orbitron-Bold.ttf"; path = "../assets/fonts/Orbitron-Bold.ttf"; sourceTree = "<group>"; };
 		E55966DD48CC4398A7AD0991 /* Orbitron-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Orbitron-Medium.ttf"; path = "../assets/fonts/Orbitron-Medium.ttf"; sourceTree = "<group>"; };
 		E6B44173A8854B6D85D7F933 /* libRNVectorIcons-tvOS.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = "libRNVectorIcons-tvOS.a"; sourceTree = "<group>"; };
@@ -411,6 +410,7 @@
 		F6F53AFC25FB422485CB22D6 /* SystemConfiguration.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		FC63C7054F1C4FDFB7A830E5 /* libRCTPrivacySnapshot.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRCTPrivacySnapshot.a; sourceTree = "<group>"; };
 		FC98DC24A81A463AB8B2E6B1 /* libRNImagePicker.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNImagePicker.a; sourceTree = "<group>"; };
+		FD1262884AAEA1801B832905 /* Pods-BlueWalletUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BlueWalletUITests.release.xcconfig"; path = "Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests.release.xcconfig"; sourceTree = "<group>"; };
 		FD7977067E1A496F94D8B1B7 /* libRNDeviceInfo.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNDeviceInfo.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -421,8 +421,8 @@
 			files = (
 				782F075B5DD048449E2DECE9 /* libz.tbd in Frameworks */,
 				764B49B1420D4AEB8109BF62 /* libsqlite3.0.tbd in Frameworks */,
-				C978A716948AB7DEC5B6F677 /* (null) in Frameworks */,
-				773E382FE62E836172AAB98B /* libPods-BlueWallet.a in Frameworks */,
+				C978A716948AB7DEC5B6F677 /* BuildFile in Frameworks */,
+				C173A252992413ADFE1355E1 /* libPods-BlueWallet.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -463,7 +463,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C59F90CE0D04D3E4BB39BC5D /* libPods-BlueWalletUITests.a in Frameworks */,
+				E2EFFE6E86A9B9C9C2681A92 /* libPods-BlueWalletUITests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,7 +473,7 @@
 			files = (
 				B4A29A312B55C990002A67DF /* libz.tbd in Frameworks */,
 				B4A29A322B55C990002A67DF /* libsqlite3.0.tbd in Frameworks */,
-				2B2B129397ACA4E7FCCB4F6F /* libPods-BlueWallet-NoLDK.a in Frameworks */,
+				EE01FB881CCF5E5D7EF36783 /* libPods-BlueWallet-NoLDK.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -535,9 +535,9 @@
 				3271B0AA236E2E0700DA766F /* NotificationCenter.framework */,
 				6D333B3A252FE1A3004D72DF /* WidgetKit.framework */,
 				6D333B3C252FE1A3004D72DF /* SwiftUI.framework */,
-				52FA0F1447D69747BD547E1E /* libPods-BlueWallet-NoLDK.a */,
-				95304AD151F1F531985AA341 /* libPods-BlueWallet.a */,
-				6F02C2F7CA3591E4E0B06EBA /* libPods-BlueWalletUITests.a */,
+				5B5E4046C199F79F5E278E59 /* libPods-BlueWallet.a */,
+				923D64A98D5A472A8E437064 /* libPods-BlueWallet-NoLDK.a */,
+				D72A016F953E944B05D966D4 /* libPods-BlueWalletUITests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -809,12 +809,12 @@
 		FAA856B639C61E61D2CF90A8 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				B68F8552DD4428F64B11DCFB /* Pods-BlueWallet.debug.xcconfig */,
-				77ED97C3CA4284744868B15D /* Pods-BlueWallet.release.xcconfig */,
-				A16A0CF8A3E6F577B90BF8A4 /* Pods-BlueWallet-NoLDK.debug.xcconfig */,
-				8B160AC12BDAD72BB70BC175 /* Pods-BlueWallet-NoLDK.release.xcconfig */,
-				6E8A234AFCA1624321AE54F5 /* Pods-BlueWalletUITests.debug.xcconfig */,
-				0C3D27CE367C0DD11F4B8772 /* Pods-BlueWalletUITests.release.xcconfig */,
+				251DBE59BDD5F628D2C5C8A9 /* Pods-BlueWallet.debug.xcconfig */,
+				1E231D72D2A451468C5165AB /* Pods-BlueWallet.release.xcconfig */,
+				14378C024D85237B04F26196 /* Pods-BlueWallet-NoLDK.debug.xcconfig */,
+				BEC620084C7A2C4170AD6E56 /* Pods-BlueWallet-NoLDK.release.xcconfig */,
+				D2E65AD40F230EB6CC89E289 /* Pods-BlueWalletUITests.debug.xcconfig */,
+				FD1262884AAEA1801B832905 /* Pods-BlueWalletUITests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -826,7 +826,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "BlueWallet" */;
 			buildPhases = (
-				3018134BCE2C10C2242F4CA3 /* [CP] Check Pods Manifest.lock */,
+				81E51BC83DAC4F67894F9AE5 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
@@ -835,9 +835,9 @@
 				3271B0B6236E2E0700DA766F /* Embed Foundation Extensions */,
 				A8D9893AE3CD454A9094B651 /* Upload source maps to Bugsnag */,
 				4B36CFF6FE55027DCA5CB6E1 /* Upload Bugsnag dSYM */,
-				1D93562AB5DF61839917DB14 /* [CP] Embed Pods Frameworks */,
-				4D8F1D9E38ABBC60EA8546DF /* [CP] Copy Pods Resources */,
 				41F9FD2D2BC57CC300D3416A /* Run Script */,
+				0583C946CA187070CA61AB0E /* [CP] Embed Pods Frameworks */,
+				5A2D773AD30A49C1C230D1BC /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -930,12 +930,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B47B21F32B2128B8001F6690 /* Build configuration list for PBXNativeTarget "BlueWalletUITests" */;
 			buildPhases = (
-				6A7B5D072DAE0808347B48AA /* [CP] Check Pods Manifest.lock */,
+				F0EAEBD8185F1857896167A0 /* [CP] Check Pods Manifest.lock */,
 				B47B21E52B2128B8001F6690 /* Sources */,
 				B47B21E62B2128B8001F6690 /* Frameworks */,
 				B47B21E72B2128B8001F6690 /* Resources */,
-				5BF4F7E206022ECCBEE8C01A /* [CP] Embed Pods Frameworks */,
-				22A7683E080229A2C227229E /* [CP] Copy Pods Resources */,
+				CEE8BDEA5B2C5BE361690578 /* [CP] Embed Pods Frameworks */,
+				F3D2A3048F350EF1C4376F2C /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -952,7 +952,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B4A29A422B55C990002A67DF /* Build configuration list for PBXNativeTarget "BlueWallet-NoLDK" */;
 			buildPhases = (
-				B4A29A2A2B55C990002A67DF /* [CP] Check Pods Manifest.lock */,
+				64C424A1686A854980D9CE6D /* [CP] Check Pods Manifest.lock */,
 				B4A29A2B2B55C990002A67DF /* Sources */,
 				B4A29A302B55C990002A67DF /* Frameworks */,
 				B4A29A342B55C990002A67DF /* Resources */,
@@ -961,8 +961,8 @@
 				B4A29A3B2B55C990002A67DF /* Embed Foundation Extensions */,
 				B4A29A3E2B55C990002A67DF /* Upload source maps to Bugsnag */,
 				B4A29A3F2B55C990002A67DF /* Upload Bugsnag dSYM */,
-				B4A29A402B55C990002A67DF /* [CP] Embed Pods Frameworks */,
-				B4A29A412B55C990002A67DF /* [CP] Copy Pods Resources */,
+				8DEF21E6F438E1B0ED052D91 /* [CP] Embed Pods Frameworks */,
+				FF0ACFD395184D3DA2849FF0 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -1162,7 +1162,7 @@
 			shellPath = /bin/sh;
 			shellScript = "export EXTRA_PACKAGER_ARGS=\"--sourcemap-output $TMPDIR/$(md5 -qs \"$CONFIGURATION_BUILD_DIR\")-main.jsbundle.map\"\nexport NODE_BINARY=/Users/novalis78/.nvm/versions/node/v16.16.0/bin/node\n";
 		};
-		1D93562AB5DF61839917DB14 /* [CP] Embed Pods Frameworks */ = {
+		0583C946CA187070CA61AB0E /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1177,45 +1177,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWallet/Pods-BlueWallet-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		22A7683E080229A2C227229E /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		3018134BCE2C10C2242F4CA3 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-BlueWallet-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		41F9FD2D2BC57CC300D3416A /* Run Script */ = {
@@ -1257,7 +1218,7 @@
 			shellScript = "api_key = nil # Insert your key here to use it directly from this script\n\n# Attempt to get the API key from an environment variable\nunless api_key\n  api_key = ENV[\"BUGSNAG_API_KEY\"]\n\n  # If not present, attempt to lookup the value from the Info.plist\n  unless api_key\n    info_plist_path = \"#{ENV[\"BUILT_PRODUCTS_DIR\"]}/#{ENV[\"INFOPLIST_PATH\"]}\"\n    plist_buddy_response = `/usr/libexec/PlistBuddy -c \"print :bugsnag:apiKey\" \"#{info_plist_path}\"`\n    plist_buddy_response = `/usr/libexec/PlistBuddy -c \"print :BugsnagAPIKey\" \"#{info_plist_path}\"` if !$?.success?\n    api_key = plist_buddy_response if $?.success?\n  end\nend\n\nfail(\"No Bugsnag API key detected - add your key to your Info.plist, BUGSNAG_API_KEY environment variable or this Run Script phase\") unless api_key\n\nfork do\n  Process.setsid\n  STDIN.reopen(\"/dev/null\")\n  STDOUT.reopen(\"/dev/null\", \"a\")\n  STDERR.reopen(\"/dev/null\", \"a\")\n\n  require 'shellwords'\n\n  Dir[\"#{ENV[\"DWARF_DSYM_FOLDER_PATH\"]}/*/Contents/Resources/DWARF/*\"].each do |dsym|\n    curl_command = \"curl --http1.1 -F dsym=@#{Shellwords.escape(dsym)} -F projectRoot=#{Shellwords.escape(ENV[\"PROJECT_DIR\"])} \"\n    curl_command += \"-F apiKey=#{Shellwords.escape(api_key)} \"\n    curl_command += \"https://upload.bugsnag.com/\"\n    system(curl_command)\n  end\nend\n";
 			showEnvVarsInLog = 0;
 		};
-		4D8F1D9E38ABBC60EA8546DF /* [CP] Copy Pods Resources */ = {
+		5A2D773AD30A49C1C230D1BC /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1274,60 +1235,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWallet/Pods-BlueWallet-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		5BF4F7E206022ECCBEE8C01A /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		6A7B5D072DAE0808347B48AA /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-BlueWalletUITests-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A8D9893AE3CD454A9094B651 /* Upload source maps to Bugsnag */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Upload source maps to Bugsnag";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "SOURCE_MAP=\"$TMPDIR/$(md5 -qs \"$CONFIGURATION_BUILD_DIR\")-main.jsbundle.map\" ../node_modules/@bugsnag/react-native/bugsnag-react-native-xcode.sh";
-		};
-		B4A29A2A2B55C990002A67DF /* [CP] Check Pods Manifest.lock */ = {
+		64C424A1686A854980D9CE6D /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1348,6 +1256,59 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		81E51BC83DAC4F67894F9AE5 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-BlueWallet-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8DEF21E6F438E1B0ED052D91 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A8D9893AE3CD454A9094B651 /* Upload source maps to Bugsnag */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Upload source maps to Bugsnag";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SOURCE_MAP=\"$TMPDIR/$(md5 -qs \"$CONFIGURATION_BUILD_DIR\")-main.jsbundle.map\" ../node_modules/@bugsnag/react-native/bugsnag-react-native-xcode.sh";
 		};
 		B4A29A382B55C990002A67DF /* Bundle React Native code and images */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1398,38 +1359,21 @@
 			shellScript = "api_key = nil # Insert your key here to use it directly from this script\n\n# Attempt to get the API key from an environment variable\nunless api_key\n  api_key = ENV[\"BUGSNAG_API_KEY\"]\n\n  # If not present, attempt to lookup the value from the Info.plist\n  unless api_key\n    info_plist_path = \"#{ENV[\"BUILT_PRODUCTS_DIR\"]}/#{ENV[\"INFOPLIST_PATH\"]}\"\n    plist_buddy_response = `/usr/libexec/PlistBuddy -c \"print :bugsnag:apiKey\" \"#{info_plist_path}\"`\n    plist_buddy_response = `/usr/libexec/PlistBuddy -c \"print :BugsnagAPIKey\" \"#{info_plist_path}\"` if !$?.success?\n    api_key = plist_buddy_response if $?.success?\n  end\nend\n\nfail(\"No Bugsnag API key detected - add your key to your Info.plist, BUGSNAG_API_KEY environment variable or this Run Script phase\") unless api_key\n\nfork do\n  Process.setsid\n  STDIN.reopen(\"/dev/null\")\n  STDOUT.reopen(\"/dev/null\", \"a\")\n  STDERR.reopen(\"/dev/null\", \"a\")\n\n  require 'shellwords'\n\n  Dir[\"#{ENV[\"DWARF_DSYM_FOLDER_PATH\"]}/*/Contents/Resources/DWARF/*\"].each do |dsym|\n    curl_command = \"curl --http1.1 -F dsym=@#{Shellwords.escape(dsym)} -F projectRoot=#{Shellwords.escape(ENV[\"PROJECT_DIR\"])} \"\n    curl_command += \"-F apiKey=#{Shellwords.escape(api_key)} \"\n    curl_command += \"https://upload.bugsnag.com/\"\n    system(curl_command)\n  end\nend\n";
 			showEnvVarsInLog = 0;
 		};
-		B4A29A402B55C990002A67DF /* [CP] Embed Pods Frameworks */ = {
+		CEE8BDEA5B2C5BE361690578 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		B4A29A412B55C990002A67DF /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		CF0725821442A3000F20E874 /* Upload Bugsnag dSYM */ = {
@@ -1451,6 +1395,62 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env ruby";
 			shellScript = "api_key = nil # Insert your key here to use it directly from this script\n\n# Attempt to get the API key from an environment variable\nunless api_key\n  api_key = ENV[\"BUGSNAG_API_KEY\"]\n\n  # If not present, attempt to lookup the value from the Info.plist\n  unless api_key\n    info_plist_path = \"#{ENV[\"BUILT_PRODUCTS_DIR\"]}/#{ENV[\"INFOPLIST_PATH\"]}\"\n    plist_buddy_response = `/usr/libexec/PlistBuddy -c \"print :bugsnag:apiKey\" \"#{info_plist_path}\"`\n    plist_buddy_response = `/usr/libexec/PlistBuddy -c \"print :BugsnagAPIKey\" \"#{info_plist_path}\"` if !$?.success?\n    api_key = plist_buddy_response if $?.success?\n  end\nend\n\nfail(\"No Bugsnag API key detected - add your key to your Info.plist, BUGSNAG_API_KEY environment variable or this Run Script phase\") unless api_key\n\nfork do\n  Process.setsid\n  STDIN.reopen(\"/dev/null\")\n  STDOUT.reopen(\"/dev/null\", \"a\")\n  STDERR.reopen(\"/dev/null\", \"a\")\n\n  require 'shellwords'\n\n  Dir[\"#{ENV[\"DWARF_DSYM_FOLDER_PATH\"]}/*/Contents/Resources/DWARF/*\"].each do |dsym|\n    curl_command = \"curl --http1.1 -F dsym=@#{Shellwords.escape(dsym)} -F projectRoot=#{Shellwords.escape(ENV[\"PROJECT_DIR\"])} \"\n    curl_command += \"-F apiKey=#{Shellwords.escape(api_key)} \"\n    curl_command += \"https://upload.bugsnag.com/\"\n    system(curl_command)\n  end\nend\n";
+			showEnvVarsInLog = 0;
+		};
+		F0EAEBD8185F1857896167A0 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-BlueWalletUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F3D2A3048F350EF1C4376F2C /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWalletUITests/Pods-BlueWalletUITests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		FF0ACFD395184D3DA2849FF0 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BlueWallet-NoLDK/Pods-BlueWallet-NoLDK-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1643,7 +1643,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B68F8552DD4428F64B11DCFB /* Pods-BlueWallet.debug.xcconfig */;
+			baseConfigurationReference = 251DBE59BDD5F628D2C5C8A9 /* Pods-BlueWallet.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -1703,7 +1703,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 77ED97C3CA4284744868B15D /* Pods-BlueWallet.release.xcconfig */;
+			baseConfigurationReference = 1E231D72D2A451468C5165AB /* Pods-BlueWallet.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -2273,7 +2273,7 @@
 		};
 		B47B21F12B2128B8001F6690 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 6E8A234AFCA1624321AE54F5 /* Pods-BlueWalletUITests.debug.xcconfig */;
+			baseConfigurationReference = D2E65AD40F230EB6CC89E289 /* Pods-BlueWalletUITests.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -2324,7 +2324,7 @@
 		};
 		B47B21F22B2128B8001F6690 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0C3D27CE367C0DD11F4B8772 /* Pods-BlueWalletUITests.release.xcconfig */;
+			baseConfigurationReference = FD1262884AAEA1801B832905 /* Pods-BlueWalletUITests.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -2369,7 +2369,7 @@
 		};
 		B4A29A432B55C990002A67DF /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A16A0CF8A3E6F577B90BF8A4 /* Pods-BlueWallet-NoLDK.debug.xcconfig */;
+			baseConfigurationReference = 14378C024D85237B04F26196 /* Pods-BlueWallet-NoLDK.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -2423,7 +2423,7 @@
 		};
 		B4A29A442B55C990002A67DF /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8B160AC12BDAD72BB70BC175 /* Pods-BlueWallet-NoLDK.release.xcconfig */;
+			baseConfigurationReference = BEC620084C7A2C4170AD6E56 /* Pods-BlueWallet-NoLDK.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
