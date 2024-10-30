@@ -98,7 +98,7 @@ const CitizenScreen = () => {
     const fetchGeneralPublic = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/public?page=${publicPageRef.current}`)
-            console.log('GENERAL PUBLIC', response.data) 
+            console.log('GENERAL PUBLIC', response.data[1]) 
 
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedPublic.current) === JSON.stringify(response.data)) {
@@ -118,7 +118,7 @@ const CitizenScreen = () => {
     const fetchCitizens = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/citizen?page=${citizenPageRef.current}`);
-            //console.log('CITIZENS', response.data);
+            console.log('CITIZENS', response.data[8]);
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedCitizens.current) === JSON.stringify(response.data)) {
                 console.log("No new citizens data to fetch.");
@@ -285,41 +285,50 @@ const CitizenScreen = () => {
                     {userData.profile.citizen === 1 ? (
                         <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40, marginHorizontal: 20}}>    
                         
-                                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                                    <TouchableOpacity 
-                                        style={[styles.joinButton]}
-                                        onPress={() => navigation.navigate('CivicIDScreen', {user: userData})}
-                                    >
-                                        <Text style={[styles.noWalletText, {paddingHorizontal: 8}]}>OPEN CIVIC ID</Text>
-                                    </TouchableOpacity>
-                                </LinearGradient>
-                                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={[styles.joinButtonGradient, {marginTop: 20}]}>
-                                    <TouchableOpacity 
-                                        style={[styles.joinButton]}
-                                        onPress={() => navigation.navigate('ForumScreen')}
-                                    >
-                                        <Text style={styles.noWalletText}>CITIZEN FORUM</Text>
-                                    </TouchableOpacity>
-                                </LinearGradient>
+                            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                                <TouchableOpacity 
+                                    style={[styles.joinButton]}
+                                    onPress={() => navigation.navigate('CivicIDScreen', {user: userData})}
+                                >
+                                    <Text style={[styles.noWalletText, {paddingHorizontal: 8}]}>OPEN CIVIC ID</Text>
+                                </TouchableOpacity>
+                            </LinearGradient>
+                            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={[styles.joinButtonGradient, {marginTop: 20}]}>
+                                <TouchableOpacity 
+                                    style={[styles.joinButton]}
+                                    onPress={() => navigation.navigate('ForumScreen')}
+                                >
+                                    <Text style={styles.noWalletText}>CITIZEN FORUM</Text>
+                                </TouchableOpacity>
+                            </LinearGradient>
 
                         </View>
-                    /* ///////NEWCOMMERS//////// */
-                    ) : userData.profile.has_application === 0 ? (
-                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
-                            <View style={styles.noWallet}>
-                                <Text style={[styles.noWalletText, {marginBottom: 15}]}>SUBMIT YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
-                                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                                    <TouchableOpacity 
-                                        style={[styles.joinButton]}
-                                        onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
-                                    >
-                                        <Text style={styles.noWalletText}>JOIN MARS!</Text>
-                                    </TouchableOpacity>
-                                </LinearGradient>
-                            </View>  
+
+                    /* ///////GENERAL PUBLIC BLOCK//////// */
+                    ) : userData.profile.citizen === null && userData.profile.general_public === 1 ? (
+                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40, marginHorizontal: 20}}> 
+                        <View style ={{flexDirection:'row'}}>
+                            <Text style={[styles.noWalletText, {marginBottom: 15,}]}>Status: </Text> 
+                            <Text style={[styles.noWalletText, {marginBottom: 15, color: '#FF7400'}]}> PUBLIC MEMBER</Text>
+                        </View>  
+                        <View style ={{flexDirection:'row'}}>
+                            <Text style={[styles.noWalletText, {marginBottom: 15,}]}>Next Step: </Text> 
+                            <Text style={[styles.noWalletText, {marginBottom: 15, color: '#FF7400'}]}> GET ENDORSED!</Text>
+                        </View>  
+                        
+                            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={[styles.joinButtonGradient, {marginTop: 20}]}>
+                                <TouchableOpacity 
+                                    style={[styles.joinButton]}
+                                    onPress={() => navigation.navigate('ForumScreen')}
+                                >
+                                    <Text style={styles.noWalletText}>CITIZEN FORUM</Text>
+                                </TouchableOpacity>
+                            </LinearGradient>
+                            <Text style={[styles.noWalletText, {marginTop: 30, fontSize: 12}]}>Join the Citizen Forum, introduce yourself, and earn endorsements to become a full citizen.</Text> 
                         </View>
-                    ) : (
-                    /* ///////CONTINUE APPLICATION//////// */    
+
+                    /* ///////CONTINUE APPLICATION BLOCK//////// */
+                    ) : userData.profile.has_application === 1 && userData.profile.citizen === null && userData.profile.general_public === null ? (
                         <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
                             <View style={styles.noWallet}>
                                 <Text style={[styles.noWalletText, {marginBottom: 15}]}>CONTINUE YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
@@ -333,9 +342,26 @@ const CitizenScreen = () => {
                                 </LinearGradient>
                             </View>  
                         </View>
-                    )}
+
+                    /* ///////JOIN MARS BLOCK//////// */
+                    ) : userData.profile.has_application === 0 && userData.profile.citizen === null && userData.profile.general_public === null ? (
+                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40}}>    
+                            <View style={styles.noWallet}>
+                                <Text style={[styles.noWalletText, {marginBottom: 15}]}>SUBMIT YOUR APPLICATION TO JOIN THE GENERAL MARTIAN PUBLIC</Text>
+                                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                                    <TouchableOpacity 
+                                        style={[styles.joinButton]}
+                                        onPress={() => navigation.navigate('JoinGeneralPublicApplicationScreen')}
+                                    >
+                                        <Text style={styles.noWalletText}>JOIN MARS!</Text>
+                                    </TouchableOpacity>
+                                </LinearGradient>
+                            </View>  
+                        </View>
+                    ) : null}
                     </>
                 )}
+
 
                 <Image style={styles.imageLG} source={require('../../img/sunrise.png')} />
 
@@ -407,18 +433,22 @@ const CitizenScreen = () => {
                                         <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
                                         <Text numberOfLines={1} style={styles.citizenDate}>Citizen since: {new Date(item.mined).toLocaleDateString()}</Text>
                                     </View>
-                                    {item.user.profile.endorse_cnt && 
-                                        <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                            <Text numberOfLines={1} style={styles.endorsTxt1}>ENDORSEMENTS</Text>
-                                            <Text style={[styles.citizenName, {fontSize: 22, marginTop:5}]}>{item.user.profile.endorse_cnt}</Text>
-                                        </View>
+                                    {item.user.profile && item.user.profile.endorse_cnt 
+                                        ? (
+                                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
+                                                <Text numberOfLines={1} style={styles.endorsTxt1}>ENDORSEMENTS</Text>
+                                                <Text style={[styles.citizenName, { fontSize: 22, marginTop: 5 }]}>
+                                                    {String(item.user.profile.endorse_cnt)}
+                                                </Text>
+                                            </View>
+                                        ) : (
+                                            <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
+                                                <Text numberOfLines={1} style={[styles.endorsTxt1, { marginBottom: 8 }]}>FOUNDER</Text>
+                                                <Icon name="medal" type="material-community" color="#FF7400" />
+                                            </View>
+                                        )
                                     }
-                                    {!item.user.profile.endorse_cnt && 
-                                        <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'space-evenly' }}>
-                                            <Text numberOfLines={1} style={[styles.endorsTxt1, {marginBottom: 8}]}>FOUNDER</Text>
-                                            <Icon name="medal" type="material-community" color="#FF7400" />
-                                        </View>
-                                    }
+
                                 </TouchableOpacity>
                             )}
                             keyExtractor={(item) => item.userid.toString()} // Use userid as the key
@@ -444,7 +474,11 @@ const CitizenScreen = () => {
                                     onPress={() => navigation.navigate('IndividualCitizenScreen',{person: item})}
                                 >
                                     <Image    
-                                        source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : { uri: item.profile_image }}
+                                        source={
+                                            state.imageLoadErrors[item.id] || !item.user.citizen || !item.user.citizen.avatar_link
+                                                ? require('../../img/genericprofile.png')
+                                                : { uri: item.user.citizen.avatar_link }
+                                        }
                                         style={styles.citizenImage} 
                                         onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: item.id } })}
                                     />
@@ -453,15 +487,19 @@ const CitizenScreen = () => {
                                         <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
                                         <Text numberOfLines={1} style={styles.citizenDate}>Joined: {new Date(item.created_at).toLocaleDateString()}</Text>
                                     </View>
-                                    {item.user.profile.citizen === 0 &&  ////if user is a citizen - show ENDORSE button
-                                    <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
-                                        <View style ={styles.endorseButton}>
-                                            <Text style={styles.endorsTxt}>ENDORSE</Text>
+                                    {userData && userData.profile && userData.profile.citizen === 1 &&
+                                        <View style ={{alignItems:'center', justifyContent: 'center'}}>
+                                            {item.user.profile.citizen === null &&  ////if user is not a citizen - show ENDORSE button
+                                                <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignSelf: 'center', justifyContent: 'center' }}>
+                                                    <View style ={styles.endorseButton}>
+                                                        <Text style={styles.endorsTxt}>ENDORSE</Text>
+                                                    </View>  
+                                                    {/* <Text style={styles.endorsTxt}>{item.user.profile.endorse_cnt}</Text> */}
+                                                </View>
+                                            }
                                         </View>
-                                    
-                                        <Text style={[styles.citizenName, {fontSize: 20, marginTop: 10}]}>{item.user.profile.endorse_cnt}</Text>
-                                    </View>}
-                                    {item.user.profile.citizen === 1 && ////if user is not a citizen - show checkbox
+                                    }
+                                    {item.user.profile.citizen === 1 && ////if user is a citizen - show checkbox
                                     <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignItems: 'center', justifyContent: 'center' }}>
                                         <Icon name="check-circle" type="material-community" color="#FF7400" />
                                     </View>}
@@ -528,7 +566,7 @@ const CitizenScreen = () => {
                                     </TouchableOpacity>
                                 );
                             }}
-                            keyExtractor={(item) => item.userid.toString()}
+                            keyExtractor={(item, index) => `${item.userid}-${index}`}
                             onEndReached={handleEndApplicantsReached}
                             onEndReachedThreshold={0.5}
                             scrollEnabled={false}
