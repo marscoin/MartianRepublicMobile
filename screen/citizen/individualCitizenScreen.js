@@ -23,7 +23,7 @@ const IndividualCitizenScreen = () => {
     const { colors } = useTheme();
     const route = useRoute();
     const person = route.params.person;
-    console.log('PARAMS',person )
+    console.log('PARAMS person',person )
    
     const [userData, setUserData] = useState('');
     const [videoAvailable, setVideoAvailable] = useState(true);
@@ -105,13 +105,14 @@ const IndividualCitizenScreen = () => {
                 </>
                 }
 
-                {person.user && person.user.profile.endorse_cnt &&
+                {person.user && person.user.profile && typeof person.user.profile.endorse_cnt !== 'undefined' &&
                 <>
-                <Text numberOfLines={1} style={styles.header}>Endorsements </Text>
-                <View style={styles.txtCont} >
-                    <Text numberOfLines={1} style={styles.txt}>{person.user.profile.endorse_cnt} </Text>
-                </View>
-                </>}
+                    <Text numberOfLines={1} style={styles.header}>Endorsements</Text>
+                    <View style={styles.txtCont}>
+                    <Text numberOfLines={1} style={styles.txt}>{person.user.profile.endorse_cnt}</Text>
+                    </View>
+                </>
+                }
 
                 {userData.citizen && userData.citizen.shortbio &&
                 <>
