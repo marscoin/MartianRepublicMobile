@@ -38,11 +38,30 @@ const JoinGeneralPublicApplicationScreen = () => {
   const lastNameRef = useRef();
   const displayNameRef = useRef();
   const bioRef = useRef();
-
-  const handleImageCaptured = (uri) => {
-    setCapturedImage(uri);
-    setIsPhotoChanged(true); // Indicate that a new photo has been taken
-    console.log('Image saved', uri);
+  
+  const handleImageCaptured = async (uri) => {
+    try {
+      // Get the original file size
+      const originalFileInfo = await RNFS.stat(uri);
+      console.log('Original file size (in bytes):', originalFileInfo.size);
+  
+      // Compress the image
+      const compressedImage = await CompressorImage.compress(uri, {
+        maxWidth: 300, 
+        maxHeight: 300, 
+        quality: 0.1, 
+      });
+  
+      // Get the compressed file size
+      const compressedFileInfo = await RNFS.stat(compressedImage);
+      console.log('Compressed file size (in bytes):', compressedFileInfo.size);
+  
+      setCapturedImage(compressedImage); // Set the compressed image
+      setIsPhotoChanged(true); // Indicate that a new photo has been taken
+      setModalVisible(false)
+    } catch (error) {
+      console.error("Error compressing image:", error);
+    }
   };
 
   async function fetchUser() {
@@ -70,24 +89,11 @@ const JoinGeneralPublicApplicationScreen = () => {
       }
     }
   }
+
   useEffect(() => {
     fetchUser()
   }, []);  
   
-
-  async function compressImage(imageUri) {
-    try {
-      const ofileInfo = await RNFS.stat(imageUri);
-      console.log('Original file size in bytes:', ofileInfo.size);
-      const compressedImage = await CompressorImage.compress(imageUri);
-      console.log('Compressed image URI:', compressedImage);
-      const fileInfo = await RNFS.stat(compressedImage);   // Get file info
-      console.log('File size in bytes:', fileInfo.size);
-      return compressedImage
-    } catch (error) {
-      console.error('Error compressing image:', error);
-    }
-  }
   async function postName() {
     const token = await AsyncStorage.getItem('@auth_token');
     return axios.post("https://martianrepublic.org/api/scitizen", {
@@ -179,30 +185,28 @@ useEffect(() => {
 }, [buttonPressed, photoIPFS, videoIPFS]); // Include videoIPFS in the dependency array if it's relevant
 
 
-  
-
   const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
     const cameraRef = useRef(null);
     const [capturedUri, setCapturedUri] = useState(null);
   
     const takePicture = async () => {
       if (cameraRef.current) {
-        const options = { quality: 0.5, base64: true };
+        const options = { quality: 0.4, base64: true };
         const data = await cameraRef.current.takePictureAsync(options);
-        console.log('Path to image: ' + data.uri);
-        setCapturedUri(data.uri);
-        //onImageCaptured(data.uri); 
+        setCapturedUri(data.uri); // Set the captured image URI
       }
     };
-
+  
     const handleSave = () => {
-     // compressed = compressImage(capturedUri)
-      onImageCaptured(capturedUri);
-      setCapturedUri(null); // Reset after saving
-      onClose(); // Close the modal
+      if (capturedUri) {
+        onImageCaptured(capturedUri); // Pass captured URI to parent function
+        setCapturedUri(null); // Reset captured URI
+        onClose(); // Close the modal
+      }
     };
+  
     const handleRetake = () => {
-      setCapturedUri(null); // Reset the imageUri to go back to the camera screen
+      setCapturedUri(null); // Reset capturedUri to go back to the camera screen
     };
   
     return (
@@ -213,22 +217,22 @@ useEffect(() => {
         onRequestClose={onClose}
       >
         <View style={{ flex: 1 }}>
-        {capturedUri ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'black' }}>
-             <TouchableOpacity 
-                      style={{flexDirection:'row', justifyContent:'space-between', alignSelf:'flex-start', marginTop: 100, marginLeft: 20}}
-                      onPress={()=>onClose()}
-                    >
-                      <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
-                    </TouchableOpacity>
+          {capturedUri ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'black' }}>
+              <TouchableOpacity 
+                style={{ flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'flex-start', marginTop: 100, marginLeft: 20 }}
+                onPress={onClose}
+              >
+                <Icon name="chevron-left" size={20} type="font-awesome-5" color="white" />
+              </TouchableOpacity>
               <Image source={{ uri: capturedUri }} style={{ width: '70%', height: '40%', marginTop: 100, borderRadius: 20 }} />
-              <View style = {styles.buttonContainer1}>
-                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+              <View style={styles.buttonContainer1}>
+                <LinearGradient colors={['#FFB67D', '#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                   <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
                     <Text style={styles.buttonText}>Save</Text>
                   </TouchableOpacity>
                 </LinearGradient>
-                <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
+                <LinearGradient colors={['#FFB67D', '#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                   <TouchableOpacity onPress={handleRetake} style={styles.saveButton}>
                     <Text style={styles.buttonText}>Retake</Text>
                   </TouchableOpacity>
@@ -236,32 +240,29 @@ useEffect(() => {
               </View>
             </View>
           ) : (
-          <RNCamera
-            ref={cameraRef}
-            style={{ flex: 1 }}
-            type={RNCamera.Constants.Type.front}
-            flashMode={RNCamera.Constants.FlashMode.off}
-            captureAudio={false}
-          >
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity 
-                style={{flexDirection:'row', justifyContent:'space-between', marginTop: 90, marginLeft: 20}}
-                onPress={()=>setModalVisible(false)}
-              >
-                  <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={takePicture} 
-                style={[styles.capture]}
-              />
-            </View>
-          </RNCamera>
+            <RNCamera
+              ref={cameraRef}
+              style={{ flex: 1 }}
+              type={RNCamera.Constants.Type.front}
+              flashMode={RNCamera.Constants.FlashMode.off}
+              captureAudio={false}
+            >
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 90, marginLeft: 20 }}
+                  onPress={onClose}
+                >
+                  <Icon name="chevron-left" size={20} type="font-awesome-5" color="white" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={takePicture} style={[styles.capture]} />
+              </View>
+            </RNCamera>
           )}
         </View>
       </Modal>
     );
   };
-
+  
   useEffect(() => {
     const validateForm = () => {
       return firstName.length > 0 && lastName.length > 0 && displayName.length > 0 && bio.length > 0 && capturedImage != null;
