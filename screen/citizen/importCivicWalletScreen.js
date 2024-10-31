@@ -71,6 +71,7 @@ const ImportCivicWalletScreen = () => {
             fontWeight: '400',
             fontSize: 16,
             fontFamily: 'Orbitron-Regular', 
+            letterSpacing: 1.2,
             marginHorizontal: 60,
             textAlign:'center',
             writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',

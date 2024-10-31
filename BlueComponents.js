@@ -431,6 +431,7 @@ export const BlueFormMultiInput = props => {
         color: colors.foregroundColor,
         textAlignVertical: 'top',
         fontFamily: 'Orbitron-Regular', 
+        letterSpacing:1.2
       }}
       autoCorrect={false}
       autoCapitalize="none"

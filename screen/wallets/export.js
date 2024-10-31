@@ -110,6 +110,7 @@ const WalletExport = () => {
         <BlueSpacing20 />
         {secrets.map(s => (
           <React.Fragment key={s}>
+            {console.log('!!!!!!!', wallet.getSecret())}
             <QRCodeComponent isMenuAvailable={false} value={wallet.getSecret()} size={qrCodeSize} logoSize={70} />
             <BlueSpacing10 />
             {wallet.type !== WatchOnlyWallet.type && (

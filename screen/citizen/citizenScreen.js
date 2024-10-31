@@ -98,7 +98,7 @@ const CitizenScreen = () => {
     const fetchGeneralPublic = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/public?page=${publicPageRef.current}`)
-            console.log('GENERAL PUBLIC', response.data[1]) 
+            console.log('GENERAL PUBLIC', response.data[6]) 
 
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedPublic.current) === JSON.stringify(response.data)) {
