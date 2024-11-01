@@ -470,7 +470,6 @@ const CitizenScreen = () => {
                             renderItem={({ item }) => (
                                 <TouchableOpacity 
                                     style={[styles.citizenItem, {justifyContent:'flex-start'}]}
-                                    //onPress={() => navigation.navigate('IndividualPublicScreen',{person: item})}
                                     onPress={() => navigation.navigate('IndividualCitizenScreen',{person: item})}
                                 >
                                     <Image    
@@ -487,16 +486,17 @@ const CitizenScreen = () => {
                                         <Text numberOfLines={1} style={styles.citizenAddress}>Address: {item.address.slice(0,9)}</Text>
                                         <Text numberOfLines={1} style={styles.citizenDate}>Joined: {new Date(item.created_at).toLocaleDateString()}</Text>
                                     </View>
+                                    
                                     {userData && userData.profile && userData.profile.citizen === 1 &&
                                         <View style ={{alignItems:'center', justifyContent: 'center'}}>
                                             {item.user.profile.citizen === null &&  ////if user is not a citizen - show ENDORSE button
                                                 <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignSelf: 'center', justifyContent: 'center' }}>
-                                                    {/* <TouchableOpacity 
+                                                    <TouchableOpacity 
                                                         style ={styles.endorseButton}
                                                         onPress = {() => navigation.navigate('EndorseConfirmationScreen',{person: item})}
                                                     >
                                                         <Text style={styles.endorsTxt}>ENDORSE</Text>
-                                                    </TouchableOpacity>   */}
+                                                    </TouchableOpacity>  
                                                     {/* <Text style={styles.endorsTxt}>{item.user.profile.endorse_cnt}</Text> */}
                                                 </View>
                                             }

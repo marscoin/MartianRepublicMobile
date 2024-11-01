@@ -1,17 +1,25 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, StyleSheet, Dimensions, Image, Alert, ActivityIndicator } from 'react-native';
 import { Text } from 'react-native-elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import SafeArea from '../../components/SafeArea';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Clipboard from '@react-native-clipboard/clipboard';
+import Snackbar from 'react-native-snackbar';
+import sha256 from 'crypto-js/sha256';
+import axios from 'axios';
 
 const windowWidth = Dimensions.get('window').width;
+const BlueElectrum = require('../../blue_modules/BlueElectrum');
 
 const EndorseConfirmationScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const person = route.params.person;
   //console.log('PARAMS person',person )
@@ -43,9 +51,11 @@ const EndorseConfirmationScreen = () => {
     pubKeyHash: 0x32,
     scriptHash: 0x32,
     wif: 0x80,
-};
+  };
 
 const [civic, setCivic] = useState('')
+const [wallet, setWallet] = useState(null);
+
 const {wallets} = useContext(BlueStorageContext);
 function getCivicWallet(wallets) {
     // Loop through the wallets array
@@ -53,7 +63,7 @@ function getCivicWallet(wallets) {
         // Check if the wallet has the civic property set to true
         if (wallet.civic) {
             console.log('CIVIC WALLET IS SET!' );
-            //setWallet(wallet)
+            setWallet(wallet)
             setCivic(wallet._address)
             return wallet;
         }
@@ -82,11 +92,23 @@ function getCivicWallet(wallets) {
     try {
       const utxos = wallet.getUtxo(); 
       //console.log('wallet._utxo!!!', wallet._utxo)
-      //console.log('civic', civic)
       const civicTrimmed = civic.trim();
       // const lutxo = wallet._utxo.filter(utxo => utxo.address.trim() === civicTrimmed);
       const lutxo = utxos.filter(utxo => utxo.address.trim() === civicTrimmed);
-      console.log('Filtered UTXOs:', lutxo);
+
+      // Calculate the total balance for the civic address
+      const totalBalance = lutxo.reduce((sum, utxo) => sum + utxo.value, 0);
+      
+      // Check if the total balance is sufficient
+        if (totalBalance === 0 ) {
+        Alert.alert(
+            'Not enough balance',
+            `Your balance of your CIVIC address is too low for this transaction. Available: ${totalBalance} M. Please fund ${civic}.`
+        );
+        setIsLoading(false);
+        return;
+        }
+      //console.log('Filtered UTXOs:', lutxo);
       const targets = [];
       targets.push({ address: civic, value: 0 });
       // console.log('targets', targets)
@@ -98,26 +120,24 @@ function getCivicWallet(wallets) {
       console.log('requestedSatPerByte::::', requestedSatPerByte);
       const change = civic;
   
-    //   const { tx, outputs, psbt, fee } = await wallet.createTransaction(
-    //     lutxo,
-    //     targets,
-    //     requestedSatPerByte,
-    //     change,
-    //     undefined, // sequence
-    //     false,     // skipSigning
-    //     undefined, // masterFingerprint
-    //     message    // message
-    //   );
+      const { tx, outputs, psbt, fee } = await wallet.createTransaction(
+        lutxo,
+        targets,
+        requestedSatPerByte,
+        change,
+        undefined, // sequence
+        false,     // skipSigning
+        undefined, // masterFingerprint
+        message    // message
+      );
  
-    //   const txHex = tx.toHex();
-    //   broadcastResult = await broadcast(txHex);
-    //   console.log('Broadcast result:', broadcastResult);
+      const txHex = tx.toHex();
+      broadcastResult = await broadcast(txHex);
+      console.log('Broadcast result:', broadcastResult);
 
       // Snackbar.show({ text: 'Data published successfully!', duration: Snackbar.LENGTH_SHORT });
       setIsLoading(false);
-      // Navigate to success screen after the broadcast
-      //navigation.navigate('JoinGeneralPublicApplicationSuccessScreen');
-      navigation.navigate('EndorseSuccessScreen')
+      navigation.navigate('EndorseSuccessScreen', {person: person})
 
     } catch (error) {
       console.error("Failed to send metadata:", error);
@@ -127,46 +147,60 @@ function getCivicWallet(wallets) {
   };
 
   const validateAndSubmit = async () => {
+    setIsLoading(true); 
     const token = await AsyncStorage.getItem('@auth_token');
     yourAddress = civic;
-    console.log('yourAddress', yourAddress)
-   //userAddress = person.
+    userAddress = person.address
 
-    // const messageText = `Citizen ${yourAddress} herewith endorses ${userAddress}. May you live long and prosper!`;
-    // setIsPublishing(true);
-    // //Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
+    const messageText = `Citizen ${yourAddress} herewith endorses ${userAddress}. May you live long and prosper!`;
+    console.log('messageText', messageText)
+    setIsPublishing(true);
+    //Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
 
-    // try {
-    //   const dataObject = { data.message: m };
-    //   const jsonString = JSON.stringify(dataObject.data);
-    //   console.log('JSON:', jsonString)
-    //   const hash = sha256(jsonString).toString();
-    //   console.log('JSON hash:', hash)
-    //   dataObject.meta = { hash };
-    //   const completeData = JSON.stringify(dataObject);
-    //   console.log('completeData:', completeData)
-    //   const { data } = await axios.post('https://martianrepublic.org/api/permapinjson', {
-    //     type: 'data',
-    //     payload: completeData,
-    //     address: civic
-    //   }, {
-    //     headers: { 'Authorization': `Bearer ${token}` }
-    //   });
+    try {
+        const dataObject = {
+            data: {
+              message: messageText
+            }
+          };
+    
+    // Hash the data.message string
+    const jsonString = JSON.stringify(dataObject.data);
+    const hash = sha256(jsonString).toString();
+    dataObject.meta = { hash };
 
-    //   if (data.Hash) {
-    //     const cid = data.Hash;
-    //     const message = "GP_" + cid;
-    //     console.log('message: ', message)
-    //     //sendMetadata(message) 
-    //   } else {
-    //     throw new Error('Failed to pin data');
-    //   }
-    // } catch (error) {
-    //   Snackbar.show({ text: `Failed to publish: ${error.message}`, duration: Snackbar.LENGTH_SHORT });
-    //   console.error('Publishing failed:', error);
-    // } finally {
-    //   setIsPublishing(false);
-    // }
+    // Convert the entire object to JSON
+    const completeData = JSON.stringify(dataObject);
+    console.log('Complete Data:', completeData);
+
+    // Send to the IPFS and cache API
+    const { data } = await axios.post(
+      'https://martianrepublic.org/api/pinjson',
+      {
+        type: 'endorsement',
+        payload: completeData,
+        address: yourAddress
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    console.log('data', data)
+      if (data.Hash) {
+        const cid = data.Hash;
+        const message = "ED_" + cid;
+        console.log('Message:', message);
+        sendMetadata(message) 
+      } else {
+        throw new Error('Failed to pin data');
+      }
+    } catch (error) {
+      Snackbar.show({ text: `Failed to publish: ${error.message}`, duration: Snackbar.LENGTH_SHORT });
+      console.error('Publishing failed:', error);
+    } 
+    finally {
+      setIsPublishing(false);
+    }
   };
 
   return (
@@ -189,11 +223,20 @@ function getCivicWallet(wallets) {
                 </View>
             </View>
 
-      <View style={styles.buttonContainer}>
-        <Button onPress={validateAndSubmit}  title={'ENDORSE'} />
-        <View style={{width:20}}/>
-        <Button onPress={goBackPressed} title={'GO BACK'} />
-      </View>
+        <View style={styles.buttonContainer}>
+            {isLoading ? (
+                <ActivityIndicator size="large" color="white" />
+                ) : (
+                <Button onPress={validateAndSubmit} title={'ENDORSE'} />)
+            }
+            <View style={{ width: 20 }} />
+            <Button onPress={goBackPressed} title={'GO BACK'} />
+        </View>
+        {isLoading ? (
+            <Text textAlign='center' style={[styles.userAddress,{marginHorizontal:20, alignSelf:'center'}]}>Please wait! Endorsement transaction is in process.</Text>
+        ) : (
+            <></>
+        )}
     </SafeArea>
   );
 };

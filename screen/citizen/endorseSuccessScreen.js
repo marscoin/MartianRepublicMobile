@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import LottieView from 'lottie-react-native';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions, Image } from 'react-native';
 import { Text } from 'react-native-elements';
 import BigNumber from 'bignumber.js';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -13,15 +13,21 @@ import { useTheme } from '../../components/themes';
 import Button from '../../components/Button';
 import SafeArea from '../../components/SafeArea';
 
+const windowWidth = Dimensions.get('window').width;
+
 const EndorseSuccessScreen = () => {
-  console.log('SEND SUCCESS SCREEN')
   const navigation = useNavigation();
+  const route = useRoute();
+  const person = route.params.person;
+  console.log('PARAMS person',person )
+
+  const goBackPressed = () => {navigation.navigate('CitizenScreen')};
+
+  const { colors } = useTheme();
   const onDonePressed = () => {
     navigation.navigate('CitizenScreen');
   };
-  const { colors } = useTheme();
-  const { getParent } = useNavigation();
-  const { amount, fee, amountUnit = BitcoinUnit.BTC, invoiceDescription = '' } = useRoute().params;
+  
   const stylesHook = StyleSheet.create({
     root: {
       backgroundColor: colors.elevated,
@@ -33,191 +39,92 @@ const EndorseSuccessScreen = () => {
       color: colors.alternativeTextColor2,
     },
   });
-  useEffect(() => {
-    console.log('send/success - useEffect');
-  }, []);
+ 
 
   return (
     <SafeArea style={[styles.root, stylesHook.root]}>
-      {/* <SuccessView
-        amount={parseFloat(amount)}
-        amountUnit={amountUnit}
-        fee={parseFloat(fee)}
-        invoiceDescription={invoiceDescription}
-        onDonePressed={onDonePressed}
-      /> */}
-      <View style={styles.buttonContainer}>
-        <Button onPress={onDonePressed} title={loc.send.success_done} />
+      <Text style={[styles.mainText,{color:  '#FF7400'}]}>THANK YOU MARTIAN!</Text>
+      <Text style={styles.mainText}>THE USER:</Text>
+      <View style={styles.userContainer}>
+            <Image    
+                source={
+                     !person.user.citizen || !person.user.citizen.avatar_link
+                    ? require('../../img/genericprofile.png')
+                    : { uri: person.user.citizen.avatar_link }
+                }
+                style={styles.userImage} 
+                onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: item.id } })}
+            />
+            <View style={{ marginHorizontal: 10, width: windowWidth * 0.45 }}>
+                <Text numberOfLines={2} style={styles.userName}>{person.user.fullname}</Text>
+                <Text numberOfLines={1} style={styles.userAddress}>Address: {person.address.slice(0,9)}</Text>
+                <Text numberOfLines={1} style={styles.userDate}>Joined: {new Date(person.created_at).toLocaleDateString()}</Text>
+            </View>
+            
       </View>
+      <Text style={styles.mainText}>GOT YOUR ENDORSEMENT!</Text>
+      <Button style={{width:200, marginTop: 40, alignSelf:'center'}} onPress={goBackPressed} title={'DONE'} />
+        
     </SafeArea>
   );
 };
 
 export default EndorseSuccessScreen;
 
-// export const SuccessView = ({ amount, amountUnit, fee, invoiceDescription, shouldAnimate = true }) => {
-//   const animationRef = useRef();
-//   const { colors } = useTheme();
-
-//   const stylesHook = StyleSheet.create({
-//     amountValue: {
-//       color: colors.alternativeTextColor2,
-//     },
-//     amountUnit: {
-//       color: colors.alternativeTextColor2,
-//     },
-//   });
-
-//   useEffect(() => {
-//     if (shouldAnimate && animationRef.current) {
-//       /*
-//       https://github.com/lottie-react-native/lottie-react-native/issues/832#issuecomment-1008209732
-//       Temporary workaround until Lottie is fixed.
-//       */
-//       setTimeout(() => {
-//         animationRef.current?.reset();
-//         animationRef.current?.play();
-//       }, 100);
-//     }
-//   }, [colors, shouldAnimate]);
-
-//   const stylesM = StyleSheet.create({
-//     container: {
-//       height: 33,
-//     },
-//     text: {
-//       fontSize: 33,
-//       fontWeight: '700',
-//       fontFamily: 'Orbitron-Black', 
-//       color:'white'
-//     },
-//     line: {
-//       position: 'absolute',
-//       top: 3, 
-//       left: 2,
-//       right: 2,
-//       height: 4,
-//       backgroundColor: 'white',
-//     },
-//   });
-//   const MarscoinSymbol = () => (
-//     <View style={stylesM.container}>
-//       <Text style={stylesM.text}>M</Text>
-//       <View style={stylesM.line} />
-//     </View>
-//   );
-
-//   return (
-//     <View style={styles.root}>
-//       {amount || fee > 0 ? (
-//         <BlueCard style={styles.amount}>
-//           <View style={styles.view}>
-//             {amount ? (
-//               <>
-//                 <Text style={[styles.amountValue, stylesHook.amountValue]}>{amount} </Text>
-//                 <Text style={[styles.amountUnit, stylesHook.amountUnit]}>
-//                   <MarscoinSymbol/>
-//                 </Text>
-//               </>
-//             ) : null}
-//           </View>
-//           {fee > 0 && (
-//             <Text style={styles.feeText}>
-//               {loc.send.create_fee}: {new BigNumber(fee).toFixed()} 
-//             </Text>
-//           )}
-//           <Text numberOfLines={0} style={styles.feeText}>
-//             {invoiceDescription}
-//           </Text>
-//         </BlueCard>
-//       ) : null}
-
-//       <View style={styles.ready}>
-//         <LottieView
-//           style={styles.lottie}
-//           source={require('../../img/bluenice.json')}
-//           autoPlay={shouldAnimate}
-//           ref={animationRef}
-//           loop={false}
-//           progress={shouldAnimate ? 0 : 1}
-//           colorFilters={[
-//             {
-//               keypath: 'spark',
-//               color: colors.success,
-//             },
-//             {
-//               keypath: 'circle',
-//               color: colors.success,
-//             },
-//             {
-//               keypath: 'Oval',
-//               color: colors.successCheck,
-//             },
-//           ]}
-//           resizeMode="center"
-//         />
-//       </View>
-//     </View>
-//   );
-// };
-
-// SuccessView.propTypes = {
-//   amount: PropTypes.number,
-//   amountUnit: PropTypes.string,
-//   fee: PropTypes.number,
-//   invoiceDescription: PropTypes.string,
-//   shouldAnimate: PropTypes.bool,
-// };
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     paddingTop: 19,
   },
+  mainText: {
+    color:'white', 
+    textAlign: 'center',
+    fontSize: 24,
+    fontWeight:"600",
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.1, 
+    marginHorizontal:16,
+    marginTop: 16, 
+  },
   buttonContainer: {
-    paddingHorizontal: 58,
+    paddingHorizontal: 30,
     paddingBottom: 16,
-  },
-  amount: {
-    alignItems: 'center',
-  },
-  view: {
     flexDirection: 'row',
-    justifyContent: 'center',
   },
-  amountValue: {
-    fontSize: 36,
-    fontWeight: '600',
-    fontFamily: 'Orbitron-Black',
+  userContainer: {
+    padding: 16,
+    borderWidth: 0.5,
+    borderColor: '#FFF',
+    marginVertical: 10,
+    marginHorizontal: 20,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center'
   },
-  amountUnit: {
-    fontSize: 16,
-    marginHorizontal: 4,
-    paddingBottom: 6,
-    fontWeight: '600',
-    alignSelf: 'flex-end',
-    fontFamily: 'Orbitron-Black',
+  userImage: {
+    width: windowWidth * 0.3,
+    height: windowWidth * 0.3,
+    marginHorizontal: 5,
+    borderRadius: 10
   },
-  feeText: {
-    color: '#FF7400',
-    fontSize: 14,
-    marginHorizontal: 4,
-    paddingVertical: 6,
-    fontWeight: '500',
-    alignSelf: 'center',
-    fontFamily: 'Orbitron-Black',
-    letterSpacing: 1.2
+  userAddress: {
+    fontSize: 12,
+    color: '#FFF',
+    marginTop: 5,
+    fontFamily: 'Orbitron-Regular',
+    letterSpacing: 1.2,
   },
-  ready: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignSelf: 'center',
-    alignItems: 'center',
-    marginBottom: 53,
-  },
-  lottie: {
-    width: 200,
-    height: 200,
-  },
+userDate: {
+    fontSize: 12,
+    color: '#AAA',
+    marginTop: 5,
+    fontFamily: 'Orbitron-Regular',
+},
+userName: {
+    fontSize: 18,
+    color:  '#FF7400',
+    fontFamily: 'Orbitron-Regular',
+    fontWeight:"500",
+    letterSpacing: 1.1, 
+},
 });
