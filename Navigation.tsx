@@ -114,6 +114,8 @@ import JoinGeneralPublicApplicationScreen from './screen/citizen/joinGeneralPubl
 import JoinGeneralPublicApplication2Screen from './screen/citizen/joinGeneralPublicApplication2';
 import JoinGeneralPublicApplication3Screen from './screen/citizen/joinGeneralPublicApplication3';
 import JoinGeneralPublicApplicationSuccessScreen from './screen/citizen/joinGeneralPublicApplicationSuccess';
+import EndorseConfirmationScreen from './screen/citizen/endorseConfirmationScreen';
+import EndorseSuccessScreen from './screen/citizen/endorseSuccessScreen';
 
 const WalletsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -302,6 +304,8 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} />
       <CitizenStack.Screen name="SendSuccess" component={SendSuccess} options={{headerShown: false,gestureEnabled: false}}/>
       <CitizenStack.Screen name="SendDetailsRoot" component={SendDetailsRoot} options={NavigationDefaultOptions} />
+      <CitizenStack.Screen name="EndorseConfirmationScreen" component={EndorseConfirmationScreen} options={NavigationDefaultOptions} />
+      <CitizenStack.Screen name="EndorseSuccessScreen" component={EndorseSuccessScreen} options={NavigationDefaultOptions} />
     </CitizenStack.Navigator>
   );
 };

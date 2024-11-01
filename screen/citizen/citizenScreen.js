@@ -491,9 +491,12 @@ const CitizenScreen = () => {
                                         <View style ={{alignItems:'center', justifyContent: 'center'}}>
                                             {item.user.profile.citizen === null &&  ////if user is not a citizen - show ENDORSE button
                                                 <View style={{ marginHorizontal: 10, width: windowWidth * 0.20, alignSelf: 'center', justifyContent: 'center' }}>
-                                                    <View style ={styles.endorseButton}>
+                                                    {/* <TouchableOpacity 
+                                                        style ={styles.endorseButton}
+                                                        onPress = {() => navigation.navigate('EndorseConfirmationScreen',{person: item})}
+                                                    >
                                                         <Text style={styles.endorsTxt}>ENDORSE</Text>
-                                                    </View>  
+                                                    </TouchableOpacity>   */}
                                                     {/* <Text style={styles.endorsTxt}>{item.user.profile.endorse_cnt}</Text> */}
                                                 </View>
                                             }

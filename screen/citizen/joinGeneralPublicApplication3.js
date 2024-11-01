@@ -128,20 +128,20 @@ const JoinGeneralPublicApplicationScreen = () => {
       console.log('requestedSatPerByte::::', requestedSatPerByte);
       const change = civic;
   
-      // const { tx, outputs, psbt, fee } = await wallet.createTransaction(
-      //   lutxo,
-      //   targets,
-      //   requestedSatPerByte,
-      //   change,
-      //   undefined, // sequence
-      //   false,     // skipSigning
-      //   undefined, // masterFingerprint
-      //   message    // message
-      // );
+      const { tx, outputs, psbt, fee } = await wallet.createTransaction(
+        lutxo,
+        targets,
+        requestedSatPerByte,
+        change,
+        undefined, // sequence
+        false,     // skipSigning
+        undefined, // masterFingerprint
+        message    // message
+      );
  
-      // const txHex = tx.toHex();
-      // broadcastResult = await broadcast(txHex);
-      // console.log('Broadcast result:', broadcastResult);
+      const txHex = tx.toHex();
+      broadcastResult = await broadcast(txHex);
+      console.log('Broadcast result:', broadcastResult);
 
       // Snackbar.show({ text: 'Data published successfully!', duration: Snackbar.LENGTH_SHORT });
       setIsLoading(false);
