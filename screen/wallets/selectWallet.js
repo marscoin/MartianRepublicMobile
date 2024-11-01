@@ -197,7 +197,7 @@ const SelectWallet = () => {
           <Image style={styles.imageGold} source={require('../../img/gold3.jpeg')} />
           <View style={styles.gradient}>
             <Text style={styles.transparentText} />
-            <Text style={styles.label}>
+            <Text style={styles.label}> 
               {item.getLabel()}
             </Text>
             {item.hideBalance ? (

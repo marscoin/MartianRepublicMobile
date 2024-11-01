@@ -317,37 +317,22 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
 
     const CivicHeaderLayout = () => (
       <View style={styles.lineaderGradient}>
-      <Image style={styles.imageGold} source={require('../img/gold3.jpeg')} />
-
-          {/* <Image
-            source={(() => {
-              switch (wallet.type) {
-                case LightningLdkWallet.type:
-                case LightningCustodianWallet.type:
-                  return I18nManager.isRTL ? require('../img/lnd-shape-rtl.png') : require('../img/lnd-shape.png');
-                case MultisigHDWallet.type:
-                  return I18nManager.isRTL ? require('../img/vault-shape-rtl.png') : require('../img/vault-shape.png');
-                default:
-                  return wallet.civic ? require('../img/passport.png') : require('../img/marscoin_transparent2.png');
-              }
-            })()}
-            style={styles.chainIconCivic}
-          /> */}
+        <Image style={styles.imageGold} source={require('../img/gold3.jpeg')} />
   
-          <Text testID="WalletLabel" numberOfLines={1} style={styles.walletLabel}>
-            {wallet.getLabel()}
-          </Text>
-          <Text testID="WalletLabel" numberOfLines={1} style={styles.address}>
-            {wallet.getAddress()}
-          </Text>
-          <BlueSpacing20/>
+        <Text testID="WalletLabel" numberOfLines={1} style={styles.walletLabel}>
+          {wallet.getLabel()}
+        </Text>
+        <Text testID="WalletLabel" numberOfLines={1} style={styles.address}>
+          {wallet.getAddress()}
+        </Text>
+        <BlueSpacing20/>
         <TouchableOpacity onPress={toggleBalanceDisplay}>
             <Text style={styles.walletBalance}>
               {getDisplayBalance()}
             </Text>
-          </TouchableOpacity>
-          <BlueSpacing10/>
-          {wallet.type === LightningCustodianWallet.type && allowOnchainAddress && (
+        </TouchableOpacity>
+        <BlueSpacing10/>
+        {wallet.type === LightningCustodianWallet.type && allowOnchainAddress && (
             <ToolTipMenu
               isMenuPrimaryAction
               isButton
@@ -368,7 +353,7 @@ const TransactionsNavigationHeader: React.FC<TransactionsNavigationHeaderProps> 
             >
               <Text style={styles.manageFundsButtonText}>{loc.lnd.title}</Text>
             </ToolTipMenu>
-          )}
+        )}
   
           {wallet.allowBIP47() && wallet.isBIP47Enabled() && (
             <TouchableOpacity accessibilityRole="button" onPress={handleOnPaymentCodeButtonPressed}>

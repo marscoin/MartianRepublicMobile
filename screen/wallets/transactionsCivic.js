@@ -665,7 +665,7 @@ WalletTransactionsCivic.navigationOptions = navigationStyle({}, (options, { them
     ),
     title: '',
     headerStyle: {
-      //backgroundColor: 'red',
+      backgroundColor: '#f9ecce',
       //backgroundColor: wallet.civic ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['white','white', 'white'],
       borderBottomWidth: 0,
       elevation: 0,
