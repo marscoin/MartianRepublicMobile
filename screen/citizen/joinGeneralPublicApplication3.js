@@ -111,8 +111,6 @@ const JoinGeneralPublicApplicationScreen = () => {
     setIsLoading(true);
     try {
       const utxos = wallet.getUtxo(); 
-      //console.log('wallet._utxo!!!', wallet._utxo)
-      //console.log('civic', civic)
       const civicTrimmed = civic.trim();
       // const lutxo = wallet._utxo.filter(utxo => utxo.address.trim() === civicTrimmed);
       const lutxo = utxos.filter(utxo => utxo.address.trim() === civicTrimmed);
@@ -414,3 +412,4 @@ const getStyles = (colors, fonts) => StyleSheet.create({
   },
 });
 export default JoinGeneralPublicApplicationScreen;
+

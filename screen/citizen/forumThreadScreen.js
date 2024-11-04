@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, TextInput, KeyboardAvoidingView, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { ScrollView, TextInput, KeyboardAvoidingView, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useTheme } from '../../components/themes';
@@ -21,6 +21,7 @@ const ForumThreadScreen = () => {
     const [threadData, setThreadData] = useState('');
     const [replyToPostId, setReplyToPostId] = useState(null);
     const [isModalVisible, setModalVisible] = useState(false);
+    const [isReportModalVisible, setReportModalVisible] = useState(false);
     const [newCommentContent, setNewCommentContent] = useState('');
 
     const transformThreadData = (data) => {
@@ -75,21 +76,35 @@ const ForumThreadScreen = () => {
         fetchThreadData(); 
     }
 
+    const onReportSubmit = () => {
+        setReportModalVisible(false);
+        setNewCommentContent('');
+        Alert.alert("Report Sent", "Your report has been sent successfully.");
+    };
+
+
     const Comment = ({ comment }) => (
         <View style={styles.commentBlock}>
             <Text style={styles.threadAuthor}>{comment.fullname}</Text>
             <Text style={styles.threadDate}>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</Text>
             <Text style={styles.threadReplies}>{comment.content}</Text>
-            {/* <TouchableOpacity 
-                style={{alignSelf: 'flex-end', marginVertical: 5}}
-                hitSlop={20}
-                onPress={() => {
-                    setReplyToPostId(comment.id);
-                    setModalVisible(true);
-                }}
-            >
-                <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
-            </TouchableOpacity> */}
+            <View style={{ alignSelf: 'flex-end', marginVertical: 5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                {/* <TouchableOpacity
+                    hitSlop={20}
+                    onPress={() => {
+                        setReplyToPostId(comment.id);
+                        setModalVisible(true);
+                    }}
+                >
+                    <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
+                </TouchableOpacity> */}
+                <TouchableOpacity  
+                    style={{ marginHorizontal: 20 }}
+                    onPress={() => setReportModalVisible(true)}
+                >
+                   <Icon name="flag" size={20} type="material-community" color={'#FF7400'} />
+                </TouchableOpacity>
+            </View>
             {comment.comments.map(nestedComment => (
                 <Comment key={nestedComment.id} comment={nestedComment} />
             ))}
@@ -133,16 +148,28 @@ const ForumThreadScreen = () => {
                             {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                         </Text>
                         <Text style={styles.threadTxt}>{item.content}</Text>
-                        <TouchableOpacity
-                            style={{ alignSelf: 'flex-end', marginVertical: 5 }}
-                            hitSlop={20}
-                            onPress={() => {
-                                setReplyToPostId(item.id);
-                                setModalVisible(true);
-                            }}
-                        >
-                            <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
-                        </TouchableOpacity>
+                        {/* /////////BUTTON AREA//////// */}
+                        <View style={{ alignSelf: 'flex-end', marginVertical: 5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <TouchableOpacity
+                                // style={{ alignSelf: 'flex-end',  }}
+                                hitSlop={20}
+                                onPress={() => {
+                                    setReplyToPostId(item.id);
+                                    setModalVisible(true);
+                                }}
+                            >
+                                <Icon name="reply" size={28} type="material-community" color={'#FF7400'} />
+                            </TouchableOpacity>
+                            <TouchableOpacity  
+                                    style={{ marginHorizontal: 20 }}
+                                    onPress={() => {setReportModalVisible(true);}}
+                            >
+                                <Icon name="flag" size={20} type="material-community" color={'#FF7400'} />
+                            </TouchableOpacity>
+                            {/* <TouchableOpacity  style={{ marginHorizontal: 30, padding: 5,  borderWidth:1, borderColor:'#FF7400', borderRadius: 5 }}>
+                                <Text style={[styles.threadAuthor, {fontSize: 10}]}>report</Text>
+                            </TouchableOpacity> */}
+                        </View>
                         {item.comments.map(comment => (
                             <Comment key={comment.id} comment={comment} />
                         ))}
@@ -156,6 +183,7 @@ const ForumThreadScreen = () => {
                 visible={isModalVisible}
                 onRequestClose={() => {
                     setModalVisible(!isModalVisible);
+                    setNewCommentContent('');
                 }}
             >
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
@@ -164,7 +192,7 @@ const ForumThreadScreen = () => {
                             <TouchableOpacity
                                 style={{ alignSelf: 'flex-end' }}
                                 hitSlop={20}
-                                onPress={() => setModalVisible(false)}
+                                onPress={() => {setModalVisible(false), setNewCommentContent('')}}
                             >
                                 <Icon name="close" size={20} type="font-awesome" color={'white'} />
                             </TouchableOpacity>
@@ -189,6 +217,54 @@ const ForumThreadScreen = () => {
                                     disabled={!isFormValid}
                                 >
                                     <Text style={[styles.buttonText]}>Post Comment</Text>
+                                </TouchableOpacity>
+                            </LinearGradient>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            {/* ////////REPORT MODAL////// */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isReportModalVisible}
+                onRequestClose={() => {
+                    setReportModalVisible(!isReportModalVisible);
+                    setNewCommentContent('');
+                }}
+            >
+                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalView}>
+                            <TouchableOpacity
+                                style={{ alignSelf: 'flex-end' }}
+                                hitSlop={20}
+                                onPress={() => {setReportModalVisible(false), setNewCommentContent('')}}
+                            >
+                                <Icon name="close" size={20} type="font-awesome" color={'white'} />
+                            </TouchableOpacity>
+                            <Text style={styles.headerTxt}>What type of issue are you reporting?</Text>
+                            <TextInput
+                                style={[styles.input, styles.textArea]}
+                                placeholder="Text"
+                                placeholderTextColor="gray"
+                                value={newCommentContent}
+                                onChangeText={setNewCommentContent}
+                                multiline={true}
+                                maxLength={1000}
+                            />
+
+                            <LinearGradient
+                                colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
+                                style={[styles.orangeButtonGradient, { marginTop: 20 }]}
+                            >
+                                <TouchableOpacity
+                                    style={[styles.orangeButton]}
+                                    onPress={onReportSubmit}
+                                    disabled={!isFormValid}
+                                >
+                                    <Text style={[styles.buttonText]}>Send Report</Text>
                                 </TouchableOpacity>
                             </LinearGradient>
                         </View>

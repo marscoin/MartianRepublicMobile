@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler'; // should be on top
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import {AppState, NativeModules, NativeEventEmitter, Linking, Platform, StyleSheet, UIManager, useColorScheme,View,LogBox,} from 'react-native';
+import React, { useContext, useState, useCallback, useEffect, useRef } from 'react';
+import {AppState, NativeModules, NativeEventEmitter, Linking, Platform, StyleSheet, UIManager, useColorScheme,View,LogBox, Alert} from 'react-native';
 import { NavigationContainer, CommonActions } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { navigationRef } from './NavigationService';
@@ -8,6 +8,7 @@ import * as NavigationService from './NavigationService';
 import { Chain } from './models/bitcoinUnits';
 import DeeplinkSchemaMatch from './class/deeplink-schema-match';
 import loc from './loc';
+import RNRestart from 'react-native-restart'; 
 import { BlueDefaultTheme, BlueDarkTheme } from './components/themes';
 import InitRoot from './Navigation';
 import BlueClipboard from './blue_modules/clipboard';
@@ -22,6 +23,9 @@ import triggerHapticFeedback, { HapticFeedbackTypes } from './blue_modules/hapti
 import MenuElements from './components/MenuElements';
 import { updateExchangeRate } from './blue_modules/currency';
 import axios from "axios";
+
+
+const BlueApp = require('./BlueApp');
 const A = require('./blue_modules/analytics');
 const bitcoinMessage = require("bitcoinjs-message");
 const bitcoin = require("bitcoinjs-lib");
@@ -174,50 +178,99 @@ const App = () => {
     }
   };
 
+// async function getToken() {
+//   try {
+//     const address = getCivicAddress(wallets);
+//     const timestamp = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
+//     const message = `https://martianrepublic.org/api/token?a=${address}&t=${timestamp}`;
+
+//     mnemonic = getCivicMnemonic(wallets)
+//     const root = await generateRoot(mnemonic);
+//     let child = null;
+//     //let custom_key = "m/88888888'/0'";
+//     let custom_key =`m/44'/${MARSCOIN.bip44}'/0'/0/0` /////derives correct addresses
+//     child = root.derivePath(custom_key);
+//     const wif = child.toWIF();
+
+//     const keyPair = bitcoin.ECPair.fromWIF(wif);
+//     const privateKey = keyPair.privateKey;
+    
+//     ///////SIGNING THE MESSAGE/////////
+//     const signedMsg = bitcoinMessage
+//       .sign(message, privateKey, keyPair.compressed)
+//       .toString("base64");   
+
+//     console.log('signature:', signedMsg);
+//     console.log('CIVIC ADDRESS:', address);
+//     console.log('timestamp:', timestamp);
+//     console.log('message:', message);
+
+//     //Verify the signature
+//     const verified = bitcoinMessage.verify(message, address, signedMsg);
+//     console.log('Verification result:', verified);
+    
+//     const response = await axios.post("https://martianrepublic.org/api/token", {
+//       a: address,
+//       m: message,
+//       s: signedMsg, 
+//       t: timestamp,
+//     }).then(response => {
+//       console.log('Token retrieved:', response.data.token);
+//       storeToken(response.data.token); // Save the token once retrieved
+//     }).catch(error => {
+//       console.error('Failed to retrieve token:', error.response);
+//     });
+
+//     console.log('RESPONSE:', response);
+//   } catch (error) {
+//     console.error('Error fetching token:', error);
+//     return null;
+//   }
+// }
+
+const deleteAllWallets = useCallback(async () => {
+  await BlueApp.deleteAllWallets(); // Ensure this is awaited if asynchronous
+  console.log('All wallets have been deleted.');
+  RNRestart.Restart(); 
+}, []);
+
 async function getToken() {
   try {
     const address = getCivicAddress(wallets);
-    const timestamp = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
+    const timestamp = Math.floor(Date.now() / 1000);
     const message = `https://martianrepublic.org/api/token?a=${address}&t=${timestamp}`;
-
-    mnemonic = getCivicMnemonic(wallets)
+    const mnemonic = getCivicMnemonic(wallets);
     const root = await generateRoot(mnemonic);
-    let child = null;
-    //let custom_key = "m/88888888'/0'";
-    let custom_key =`m/44'/${MARSCOIN.bip44}'/0'/0/0` /////derives correct addresses
-    child = root.derivePath(custom_key);
+    const customKey = `m/44'/${MARSCOIN.bip44}'/0'/0/0`;
+    const child = root.derivePath(customKey);
     const wif = child.toWIF();
-
     const keyPair = bitcoin.ECPair.fromWIF(wif);
     const privateKey = keyPair.privateKey;
-    
-    ///////SIGNING THE MESSAGE/////////
-    const signedMsg = bitcoinMessage
-      .sign(message, privateKey, keyPair.compressed)
-      .toString("base64");   
+    const signedMsg = bitcoinMessage.sign(message, privateKey, keyPair.compressed).toString("base64");
 
-    console.log('signature:', signedMsg);
-    console.log('CIVIC ADDRESS:', address);
-    console.log('timestamp:', timestamp);
-    console.log('message:', message);
-
-    //Verify the signature
-    const verified = bitcoinMessage.verify(message, address, signedMsg);
-    console.log('Verification result:', verified);
-    
     const response = await axios.post("https://martianrepublic.org/api/token", {
       a: address,
       m: message,
-      s: signedMsg, 
+      s: signedMsg,
       t: timestamp,
-    }).then(response => {
-      console.log('Token retrieved:', response.data.token);
-      storeToken(response.data.token); // Save the token once retrieved
-    }).catch(error => {
-      console.error('Failed to retrieve token:', error.response);
     });
 
-    console.log('RESPONSE:', response);
+    if (response.data.token === 'inactive') {
+      Alert.alert(
+        "Account Status",
+        "Your account has been deleted.",
+        [
+          {
+            text: "OK",
+            onPress: deleteAllWallets, // Run deleteAllWallets when "OK" is pressed
+          },
+        ]
+      );
+    } else {
+      console.log('Token retrieved:', response.data.token);
+      storeToken(response.data.token);
+    }
+
   } catch (error) {
     console.error('Error fetching token:', error);
     return null;

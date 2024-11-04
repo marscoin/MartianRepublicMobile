@@ -59,21 +59,22 @@ const NetworkSettings = () => {
       <ListItem title={loc.is_it_my_address.title} onPress={navigateToIsItMyAddress} testID="IsItMyAddress" chevron />
       <ListItem title={loc.settings.network_broadcast} onPress={navigateToBroadcast} testID="Broadcast" chevron />
       <ListItem title={loc.autofill_word.title} onPress={navigateToGenerateWord} testID="GenerateWord" chevron />
-      <ListItem title={'Complete App Reset'} onPress={showDialog} testID="ResetApp" chevron />
+      {/* <ListItem title={'Complete App Reset'} onPress={showDialog} testID="ResetApp" chevron /> */}
     </ScrollView>
+
     <Dialog.Container visible={dialogVisible}>
-    <Dialog.Title>App Reset Confirmation</Dialog.Title>
-    <Dialog.Description>
-      This action will delete all wallets from this app. Before proceeding, please be aware that you will not be able to recover the funds without these wallets' seed phrases. Please type "Confirm" to proceed.
-    </Dialog.Description>
-    <Dialog.Input 
-      placeholder="Type here..."
-      value={confirmInput}
-      onChangeText={setConfirmInput}
-    />
-    <Dialog.Button label="Cancel" onPress={handleCancel} />
-    <Dialog.Button label="Confirm" onPress={handleConfirmReset} />
-  </Dialog.Container>
+        <Dialog.Title>App Reset Confirmation</Dialog.Title>
+        <Dialog.Description>
+          This action will delete all wallets from this app. Before proceeding, please be aware that you will not be able to recover the funds without these wallets' seed phrases. Please type "Confirm" to proceed.
+        </Dialog.Description>
+        <Dialog.Input 
+          placeholder="Type here..."
+          value={confirmInput}
+          onChangeText={setConfirmInput}
+        />
+        <Dialog.Button label="Cancel" onPress={handleCancel} />
+        <Dialog.Button label="Confirm" onPress={handleConfirmReset} />
+    </Dialog.Container>
   </>
   );
 };

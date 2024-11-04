@@ -554,7 +554,7 @@ const CitizenScreen = () => {
                                                     </View>
                                                 ))}
                                             </View>
-                                            {allFieldsPresent && (
+                                            {/* {allFieldsPresent && (
                                                     <TouchableOpacity 
                                                         style={styles.completeButton}
                                                         onPress={() => navigation.navigate('SendWithAddress',{address: item.address, name: item.fullname})}
@@ -564,7 +564,7 @@ const CitizenScreen = () => {
                                                         </Text>
                                                         <Image style={styles.marscoinStyle} source={require('../../img/marscoin.png')} accessible={false} />
                                                     </TouchableOpacity>
-                                                )}
+                                                )} */}
                                         </View>
                                     </TouchableOpacity>
                                 );
