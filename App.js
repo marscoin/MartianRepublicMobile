@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler'; // should be on top
 import React, { useContext, useState, useCallback, useEffect, useRef } from 'react';
-import {AppState, NativeModules, NativeEventEmitter, Linking, Platform, StyleSheet, UIManager, useColorScheme,View,LogBox, Alert} from 'react-native';
+import {AppState, NativeModules, NativeEventEmitter, Linking, Platform, StyleSheet, UIManager, useColorScheme,View,LogBox, Alert, Text, TextInput} from 'react-native';
 import { NavigationContainer, CommonActions } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { navigationRef } from './NavigationService';
@@ -62,6 +62,11 @@ if (Platform.OS === 'android') {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
 }
+
+Text.defaultProps = Text.defaultProps || {}
+Text.defaultProps.allowFontScaling = false
+TextInput.defaultProps = TextInput.defaultProps || {}
+TextInput.defaultProps.allowFontScaling = false
 
 const App = () => {
   const {
