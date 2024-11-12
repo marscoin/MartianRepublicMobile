@@ -46,10 +46,11 @@ const CitizenScreen = () => {
         })
         console.log('USER DATA', response.data);
         setUserData(response.data)
-      }
-      useEffect(() => {
+    }
+      
+    useEffect(() => {
         fetchUser()
-      }, []);  
+    }, []);  
 
     function martianReducer(state, action) {
         switch (action.type) {
@@ -417,9 +418,9 @@ const CitizenScreen = () => {
                             key={'citizens-list'}
                             data={state.citizens.data}
                             extradata={state.citizens.data}
-                            renderItem={({ item }) => (
+                            renderItem={({ item, index }) => (
                                 <TouchableOpacity 
-                                    key={item.userid} 
+                                    key={`${item.userid}-${index}`} 
                                     style={styles.citizenItem}
                                     onPress={() => navigation.navigate('IndividualCitizenScreen',{person: item})}
                                 >
@@ -451,7 +452,7 @@ const CitizenScreen = () => {
 
                                 </TouchableOpacity>
                             )}
-                            keyExtractor={(item) => item.userid.toString()} // Use userid as the key
+                            keyExtractor={(item, index) => `${item.userid}-${index}`}
                             onEndReached={handleEndCitizensReached}
                             onEndReachedThreshold={0.5} 
                             scrollEnabled={false}

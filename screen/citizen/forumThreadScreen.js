@@ -22,19 +22,28 @@ const ForumThreadScreen = () => {
     const [replyToPostId, setReplyToPostId] = useState(null);
     const [isModalVisible, setModalVisible] = useState(false);
     const [isReportModalVisible, setReportModalVisible] = useState(false);
+    const [isReportUserModalVisible, setReportUserModalVisible] = useState(false);
     const [newCommentContent, setNewCommentContent] = useState('');
+    const [userIdToBlock, setUserIdToBlock] = useState(null);
+    const [userNameToBlock, setUserNameToBlock] = useState('');
 
     const transformThreadData = (data) => {
         let messages = [];
         let messageMap = {};
         data.forEach(item => {
-            const comment = { ...item, comments: [] };
-            if (comment.pid === null) {
-                messages.push(comment);
-                messageMap[comment.id] = comment;
-            } else {
-                if (messageMap[comment.pid]) {
-                    messageMap[comment.pid].comments.push(comment);
+            // Only process unblocked comments
+            if (item.is_blocked === 0) {
+                const comment = { ...item, comments: [] };
+                if (comment.pid === null) {
+                    messages.push(comment);
+                    messageMap[comment.id] = comment;
+                } else {
+                    if (messageMap[comment.pid]) {
+                        // Filter nested comments as well
+                        if (item.is_blocked === 0) {
+                            messageMap[comment.pid].comments.push(comment);
+                        }
+                    }
                 }
             }
         });
@@ -51,14 +60,47 @@ const ForumThreadScreen = () => {
             const response = await axios.get(`https://martianrepublic.org/api/forum/thread/${threadId}/comments`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            const comments = response?.data?.comments?.original?.comments;
+            if (!comments) {
+                console.error("Comments data is undefined or not in the expected format.");
+                return;
+            }
+
+            // Filter out blocked comments from the main and nested comments
+            const filteredComments = comments
+                .filter(comment => comment.is_blocked === 0)
+                .map(comment => ({
+                    ...comment,
+                    comments: comment.comments ? comment.comments.filter(nestedComment => nestedComment.is_blocked === 0) : [],
+                }));
+
             const formattedData = transformThreadData(response.data.comments.original.comments);
             setThreadData(formattedData);
-            console.log('THREAD INDIVIDUAL DATA', response.data.comments.original)
+            console.log('THREAD INDIVIDUAL DATA', response.data.comments.original.comments)
         } catch (error) {
             console.error('Error fetching thread data:', error);
         }
     }
 
+    async function blockUser(userId) {
+        try {
+            const token = await AsyncStorage.getItem('@auth_token');
+            console.log('token', token);
+            const response = await axios.get(`https://martianrepublic.org/api/user/block/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            console.log('BLOCK USER RESPONSE', response.data);
+            // // Optionally refresh thread data to remove blocked user’s comments
+            // fetchThreadData();
+            setReportUserModalVisible(false); // Hide modal after blocking
+            Alert.alert("User Blocked", "User has been blocked.");
+            fetchThreadData();
+        } catch (error) {
+            console.error('Error blocking user:', error);
+        }
+    }
+      
     const isFormValid = newCommentContent !== '';
 
     async function createNewComment() {
@@ -78,6 +120,7 @@ const ForumThreadScreen = () => {
 
     const onReportSubmit = () => {
         setReportModalVisible(false);
+        setReportUserModalVisible(false);
         setNewCommentContent('');
         Alert.alert("Report Sent", "Your report has been sent successfully.");
     };
@@ -85,7 +128,19 @@ const ForumThreadScreen = () => {
 
     const Comment = ({ comment }) => (
         <View style={styles.commentBlock}>
-            <Text style={styles.threadAuthor}>{comment.fullname}</Text>
+            <View style={{flexDirection:'row'}}>
+                <Text style={styles.threadAuthor}>{comment.fullname}   </Text>
+                <TouchableOpacity 
+                    onPress={() => {
+                        //console.log('ITEM',item);
+                        setUserIdToBlock(comment.author_id); 
+                        setUserNameToBlock(comment.fullname);
+                        setReportUserModalVisible(true);
+                    }}
+                >
+                        <Icon name="cancel" size={18} type="material-community" color={'#FF7400'} />
+                </TouchableOpacity>
+            </View>
             <Text style={styles.threadDate}>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</Text>
             <Text style={styles.threadReplies}>{comment.content}</Text>
             <View style={{ alignSelf: 'flex-end', marginVertical: 5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -143,7 +198,19 @@ const ForumThreadScreen = () => {
                 keyExtractor={item => item.id.toString()}
                 renderItem={({ item }) => (
                     <View style={styles.threadBlock}>
-                        <Text style={styles.threadAuthor}>{item.fullname}</Text>
+                        <View style={{flexDirection:'row'}}>
+                            <Text style={styles.threadAuthor}>{item.fullname}   </Text>
+                            <TouchableOpacity 
+                                onPress={() => {
+                                    //console.log('ITEM',item);
+                                    setUserIdToBlock(item.author_id); 
+                                    setUserNameToBlock(item.fullname);
+                                    setReportUserModalVisible(true);
+                                }}
+                            >
+                                <Icon name="cancel" size={18} type="material-community" color={'#FF7400'} />
+                            </TouchableOpacity>
+                        </View>
                         <Text style={styles.threadDate}>
                             {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                         </Text>
@@ -162,7 +229,7 @@ const ForumThreadScreen = () => {
                             </TouchableOpacity>
                             <TouchableOpacity  
                                     style={{ marginHorizontal: 20 }}
-                                    onPress={() => {setReportModalVisible(true);}}
+                                    onPress={() => {setReportModalVisible(true)}}
                             >
                                 <Icon name="flag" size={20} type="material-community" color={'#FF7400'} />
                             </TouchableOpacity>
@@ -265,6 +332,52 @@ const ForumThreadScreen = () => {
                                     disabled={!isFormValid}
                                 >
                                     <Text style={[styles.buttonText]}>Send Report</Text>
+                                </TouchableOpacity>
+                            </LinearGradient>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            {/* ////////REPORT-BLOCK USER MODAL////// */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isReportUserModalVisible}
+                onRequestClose={() => {
+                    setReportModalVisible(!isReportUserModalVisible);
+                    setNewCommentContent('');
+                }}
+            >
+                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalView}>
+                            <TouchableOpacity
+                                style={{ alignSelf: 'flex-end' }}
+                                hitSlop={20}
+                                onPress={() => {setReportUserModalVisible(false), setNewCommentContent('')}}
+                            >
+                                <Icon name="close" size={20} type="font-awesome" color={'white'} />
+                            </TouchableOpacity>
+                            <View style ={{alignItems:"center", justifyContent: 'center'}}>
+                                <Text style={styles.headerTxt}>Block User</Text>
+                                <Text style={[styles.headerTxt, {alignSelf: 'center',marginTop: 40,  color: '#FF7400'}]}>Are you sure you want to block user {userNameToBlock}?</Text>
+                                <Text textAlign='center' style={[styles.threadTxt, { marginTop: 40}]}>Bloced user will be able to see your public posts, but will no longer be able to engage with them. You will not be able to see posts from blocked users. </Text>
+                            </View>
+                           
+                            <LinearGradient
+                                colors={ ['#FFB67D', '#FF8A3E', '#FF7400']}
+                                style={[styles.orangeButtonGradient, { marginTop: 20 }]}
+                            >
+                                <TouchableOpacity
+                                    style={[styles.orangeButton]}
+                                    onPress={() => {
+                                        console.log('userIdToBlock', userIdToBlock)
+                                        blockUser(userIdToBlock); 
+                                    }}
+                                    
+                                >
+                                    <Text style={[styles.buttonText]}>Block User</Text>
                                 </TouchableOpacity>
                             </LinearGradient>
                         </View>

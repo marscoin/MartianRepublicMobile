@@ -66,31 +66,37 @@ const ForumScreen = () => {
 
     async function fetchPublicSquareData() {
         const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.get(`https://martianrepublic.org/api/forum/category/1/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        console.log('PUBLIC SQUARE DATA', response.data);
-        dispatch({ type: 'SET_PUBLIC_SQUARE_DATA', payload: response.data.threads });
+        const response = await axios.get(`https://martianrepublic.org/api/forum/category/1/threads`, { headers: {'Authorization': `Bearer ${token}`}});
+        // Filter out blocked users' threads
+        const filteredData = response.data.threads.filter(thread => thread.is_blocked === 0);
+        console.log('PUBLIC SQUARE DATA', filteredData);
+        dispatch({ type: 'SET_PUBLIC_SQUARE_DATA', payload: filteredData });
     }
-
+    
     async function fetchProposalsData() {
         const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.get(`https://martianrepublic.org/api/forum/category/2/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        //console.log('PROPOSALS DATA', response.data);
-        dispatch({ type: 'SET_PROPOSALS_DATA', payload: response.data.threads });
+        const response = await axios.get(`https://martianrepublic.org/api/forum/category/2/threads`, { headers: {'Authorization': `Bearer ${token}`}});
+        // Filter out blocked users' threads
+        const filteredData = response.data.threads.filter(thread => thread.is_blocked === 0);
+        dispatch({ type: 'SET_PROPOSALS_DATA', payload: filteredData });
     }
-
+    
     async function fetchAmendmentData() {
         const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.get(`https://martianrepublic.org/api/forum/category/3/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        //console.log('AMENDMENT DATA', response.data);
-        dispatch({ type: 'SET_AMENDMENT_DATA', payload: response.data.threads });
+        const response = await axios.get(`https://martianrepublic.org/api/forum/category/3/threads`, { headers: {'Authorization': `Bearer ${token}`}});
+        // Filter out blocked users' threads
+        const filteredData = response.data.threads.filter(thread => thread.is_blocked === 0);
+        dispatch({ type: 'SET_AMENDMENT_DATA', payload: filteredData });
     }
-
+    
     async function fetchSupportData() {
         const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.get(`https://martianrepublic.org/api/forum/category/4/threads`, { headers: {'Authorization': `Bearer ${token}`}})
-        //console.log('SUPPORT DATA', response.data);
-        dispatch({ type: 'SET_SUPPORT_DATA', payload: response.data.threads });
+        const response = await axios.get(`https://martianrepublic.org/api/forum/category/4/threads`, { headers: {'Authorization': `Bearer ${token}`}});
+        // Filter out blocked users' threads
+        const filteredData = response.data.threads.filter(thread => thread.is_blocked === 0);
+        dispatch({ type: 'SET_SUPPORT_DATA', payload: filteredData });
     }
+    
 
     async function createNewPost() {
         const token = await AsyncStorage.getItem('@auth_token');
