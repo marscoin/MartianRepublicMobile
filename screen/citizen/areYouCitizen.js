@@ -43,8 +43,9 @@ const AreYouCitizenScreen = () => {
                         <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                             <TouchableOpacity
                                 onPress={() => {
-                                    setInitialChoice('ImportCivicWalletScreen');
-                                    setModalVisible(true);
+                                    //setInitialChoice('ImportCivicWalletScreen');
+                                    navigation.navigate('ImportCivicWalletScreen');
+                                    //setModalVisible(true);
                                 }}
                                 style={[styles.joinButton]}
                             >
@@ -54,8 +55,9 @@ const AreYouCitizenScreen = () => {
                         <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                         <TouchableOpacity
                             onPress={() => {
-                                setInitialChoice('WalletsCivicAdd');
-                                setModalVisible(true);
+                                //setInitialChoice('WalletsCivicAdd');
+                                navigation.navigate('WalletsCivicAdd');
+                                //setModalVisible(true);
                             }}
                             style={[styles.joinButton]}
                         >
