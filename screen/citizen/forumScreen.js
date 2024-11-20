@@ -21,6 +21,7 @@ const ForumScreen = () => {
     const navigation = useNavigation();
     const { colors } = useTheme();
     const route = useRoute();
+    const maxContentLength = 25000;
     const initialState = {
         filterPublicSquare: true,
         filterProposals: false,
@@ -63,6 +64,7 @@ const ForumScreen = () => {
     const [isModalVisible, setModalVisible] = useState(false);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
+    const [remainingChars, setRemainingChars] = useState(maxContentLength);
 
     async function fetchPublicSquareData() {
         const token = await AsyncStorage.getItem('@auth_token');
@@ -108,9 +110,7 @@ const ForumScreen = () => {
             },
             { headers: {'Authorization': `Bearer ${token}`}}
         );
-        setModalVisible(false);
-        setNewPostTitle('');
-        setNewPostContent('');
+        closeModal();
         // Fetch the updated data
         fetchPublicSquareData();
         fetchProposalsData();
@@ -126,6 +126,18 @@ const ForumScreen = () => {
     }, []);  
 
     const isFormValid = newPostTitle !== '' && newPostContent !== '';
+
+    const handleContentChange = (content) => {
+        setNewPostContent(content);
+        setRemainingChars(maxContentLength - content.length);
+    };
+
+    const closeModal = () => {
+        setModalVisible(false);
+        setNewPostTitle('');
+        setNewPostContent('');
+        setRemainingChars(maxContentLength); // Reset character count
+    };
       
   return (
     <SafeAreaView style={{flex: 1}}> 
@@ -300,7 +312,7 @@ const ForumScreen = () => {
                     <TouchableOpacity 
                         style={{alignSelf: 'flex-end'}}
                         hitSlop={20}
-                        onPress={() => setModalVisible(false)}
+                        onPress={closeModal}
                     >
                         <Icon name="close" size={20} type="font-awesome" color={'white'} />
                     </TouchableOpacity>
@@ -318,23 +330,27 @@ const ForumScreen = () => {
                             placeholder="Text"
                             placeholderTextColor= "gray"
                             value={newPostContent}
-                            onChangeText={setNewPostContent}
+                            onChangeText={handleContentChange}
                             multiline={true}
-                            maxLength={255}
+                            maxLength={maxContentLength}
                         />
+
+                        <Text style={styles.charCount}>
+                            {maxContentLength - remainingChars} / 25000
+                        </Text>
 
                         <LinearGradient 
                             colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
                             style={[styles.orangeButtonGradient, {marginTop: 20}]}
                         >
-                        <TouchableOpacity 
-                            style={[styles.orangeButton]}
-                            onPress={createNewPost}
-                            disabled={!isFormValid}
-                        >
-                            <Text style={[styles.buttonText]}>Post</Text>
-                        </TouchableOpacity>
-                    </LinearGradient>
+                            <TouchableOpacity 
+                                style={[styles.orangeButton]}
+                                onPress={createNewPost}
+                                disabled={!isFormValid}
+                            >
+                                <Text style={[styles.buttonText]}>Post</Text>
+                            </TouchableOpacity>
+                        </LinearGradient>
                     </View>
                 </View>
             </KeyboardAvoidingView>
@@ -493,6 +509,14 @@ const styles = StyleSheet.create({
     textArea: {
         height: 200,
         textAlignVertical: 'top'
+    },
+    charCount: {
+        color: 'white',
+        fontSize: 12,
+        fontFamily: 'Orbitron-Regular',
+        letterSpacing: 1.1,
+        marginTop: 5,
+        alignSelf: "flex-end"
     },
     
 });

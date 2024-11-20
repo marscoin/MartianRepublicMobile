@@ -16,6 +16,7 @@ const ForumThreadScreen = () => {
     const navigation = useNavigation();
     const { colors } = useTheme();
     const route = useRoute();
+    const maxContentLength = 25000;
     const threadTitle = route.params.thread.title;
     const threadId = route.params.thread.id;
     const [threadData, setThreadData] = useState('');
@@ -26,6 +27,14 @@ const ForumThreadScreen = () => {
     const [newCommentContent, setNewCommentContent] = useState('');
     const [userIdToBlock, setUserIdToBlock] = useState(null);
     const [userNameToBlock, setUserNameToBlock] = useState('');
+    const [remainingChars, setRemainingChars] = useState(maxContentLength);
+
+    const closeModal = () => {
+        setModalVisible(false);
+        setNewCommentContent('');
+        setRemainingChars(maxContentLength); // Reset character count
+        setReplyToPostId(null);
+    };
 
     const transformThreadData = (data) => {
         let messages = [];
@@ -112,9 +121,10 @@ const ForumThreadScreen = () => {
             },
             { headers: {'Authorization': `Bearer ${token}`}}
         );
-        setModalVisible(false);
-        setNewCommentContent('');
-        setReplyToPostId(null);
+        // setModalVisible(false);
+        // setNewCommentContent('');
+        // setReplyToPostId(null);
+        closeModal();
         fetchThreadData(); 
     }
 
@@ -125,6 +135,10 @@ const ForumThreadScreen = () => {
         Alert.alert("Report Sent", "Your report has been sent successfully.");
     };
 
+    const handleContentChange = (content) => {
+        setNewCommentContent(content);
+        setRemainingChars(maxContentLength - content.length);
+    };
 
     const Comment = ({ comment }) => (
         <View style={styles.commentBlock}>
@@ -259,7 +273,7 @@ const ForumThreadScreen = () => {
                             <TouchableOpacity
                                 style={{ alignSelf: 'flex-end' }}
                                 hitSlop={20}
-                                onPress={() => {setModalVisible(false), setNewCommentContent('')}}
+                                onPress={closeModal}
                             >
                                 <Icon name="close" size={20} type="font-awesome" color={'white'} />
                             </TouchableOpacity>
@@ -269,10 +283,13 @@ const ForumThreadScreen = () => {
                                 placeholder="Text"
                                 placeholderTextColor="gray"
                                 value={newCommentContent}
-                                onChangeText={setNewCommentContent}
+                                onChangeText={handleContentChange}
                                 multiline={true}
-                                maxLength={1000}
+                                maxLength={maxContentLength}
                             />
+                            <Text style={styles.charCount}>
+                                {maxContentLength - remainingChars} / 25000
+                            </Text>
 
                             <LinearGradient
                                 colors={isFormValid ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#A9A9A9']}
@@ -551,6 +568,14 @@ const styles = StyleSheet.create({
     textArea: {
         height: 200,
         textAlignVertical: 'top'
+    },
+    charCount: {
+        color: 'white',
+        fontSize: 12,
+        fontFamily: 'Orbitron-Regular',
+        letterSpacing: 1.1,
+        marginTop: 5,
+        alignSelf: "flex-end"
     },
 });
 
