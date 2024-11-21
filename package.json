@@ -200,7 +200,7 @@
     "react-native-video": "^5.2.1",
     "react-native-watch-connectivity": "1.1.0",
     "react-native-webview": "13.8.1",
-    "react-native-widget-center": "https://github.com/BlueWallet/react-native-widget-center#a128c38",
+    "react-native-widget-center": "^0.0.9",
     "readable-stream": "3.6.2",
     "realm": "12.6.2",
     "rn-ldk": "github:BlueWallet/rn-ldk#v0.8.4",

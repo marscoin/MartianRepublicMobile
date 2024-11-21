@@ -91,6 +91,7 @@ android {
         versionName "6.5.9"
         testBuildType System.getProperty('testBuildType', 'debug')
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        missingDimensionStrategy 'react-native-camera', 'general'
     }
     signingConfigs {
         release {
@@ -128,6 +129,8 @@ dependencies {
     androidTestImplementation('com.wix:detox:+')
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation(project(':react-native-camera'))
+    
 }
 apply plugin: 'com.google.gms.google-services'  // Google Services plugin
 
