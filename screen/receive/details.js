@@ -9,6 +9,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  Text
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import LottieView from "lottie-react-native"
@@ -101,6 +102,33 @@ const ReceiveDetails = () => {
       triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
     }
   }, [showConfirmedBalance]);
+
+  const MarscoinSymbol = () => (
+    <View style={stylesM.container}>
+      <Text style={stylesM.text}>M</Text>
+      <View style={stylesM.line} />
+    </View>
+  );
+  const stylesM = StyleSheet.create({
+    container: {
+      height: 36,
+      //backgroundColor: 'green'
+    },
+    text: {
+      fontSize: 36,
+      fontWeight: '700',
+      fontFamily: 'Orbitron-Black', 
+      color: 'white'
+    },
+    line: {
+      position: 'absolute',
+      top: 3, // Adjust top as needed
+      left: 2,
+      right: 2,
+      height: 4,
+      backgroundColor: 'white',
+    },
+  });
 
   // re-fetching address balance periodically
   useEffect(() => {
@@ -259,23 +287,27 @@ const ReceiveDetails = () => {
     return (
       <ScrollView contentContainerStyle={[styles.root, stylesHook.root]} keyboardShouldPersistTaps="always">
         <View style={styles.scrollBody}>
-          {isCustom && (
-            <>
-              {getDisplayAmount() && (
-                <BlueText testID="CustomAmountText" style={[styles.amount, stylesHook.amount]} numberOfLines={1}>
-                  {getDisplayAmount()}
-                </BlueText>
-              )}
-              {customLabel?.length > 0 && (
-                <BlueText testID="CustomAmountDescriptionText" style={[styles.label, stylesHook.label]} numberOfLines={1}>
-                  {customLabel}
-                </BlueText>
-              )}
-            </>
-          )}
+            {isCustom && (
+              <>
+                {getDisplayAmount() && (
+                  <View style ={{flexDirection:'row'}}>
+                  <BlueText testID="CustomAmountText" style={[styles.amount, stylesHook.amount]} numberOfLines={1}>
+                    {getDisplayAmount()}
+                  </BlueText>
+                  <MarscoinSymbol/>
+                  </View>
+                )}
+                {customLabel?.length > 0 && (
+                  <BlueText testID="CustomAmountDescriptionText" style={[styles.label, stylesHook.label]} numberOfLines={1}>
+                    {customLabel}
+                  </BlueText>
+                )}
+              </>
+            )}
+            <QRCodeComponent value={bip21encoded} />
+            {/* <BlueCopyTextToClipboard text={isCustom ? bip21encoded : address} /> */}
+            <BlueCopyTextToClipboard text={address} value={isCustom ? bip21encoded : address} />
 
-          <QRCodeComponent value={bip21encoded} />
-          <BlueCopyTextToClipboard text={isCustom ? bip21encoded : address} />
         </View>
         <View style={styles.share}>
           <BlueCard>
@@ -397,24 +429,23 @@ const ReceiveDetails = () => {
     setIsCustomModalVisible(false);
     let amount = customAmount;
     switch (customUnit) {
-      case BitcoinUnit.BTC:
-        // nop
+      case BitcoinUnit.MARS:
+        // Amount is already in MARS
         break;
-      case BitcoinUnit.SATS:
-        amount = satoshiToBTC(customAmount);
+      case BitcoinUnit.ZUBRINS:
+        amount = new BigNumber(customAmount).dividedBy(100000000).toFixed(8);
         break;
       case BitcoinUnit.LOCAL_CURRENCY:
-        if (AmountInput.conversionCache[amount + BitcoinUnit.LOCAL_CURRENCY]) {
-          // cache hit! we reuse old value that supposedly doesnt have rounding errors
-          amount = satoshiToBTC(AmountInput.conversionCache[amount + BitcoinUnit.LOCAL_CURRENCY]);
-        } else {
-          amount = fiatToBTC(customAmount);
-        }
+        amount = new BigNumber(customAmount).dividedBy(marsRate).toFixed(8);
+        break;
+      default:
+        // Handle other units if necessary
         break;
     }
     setBip21encoded(DeeplinkSchemaMatch.bip21encode(address, { amount, label: customLabel }));
     setShowAddress(true);
   };
+  
 
   const renderCustomAmountModal = () => {
     return (
@@ -460,19 +491,24 @@ const ReceiveDetails = () => {
   const getDisplayAmount = () => {
     if (Number(customAmount) > 0) {
       switch (customUnit) {
-        case BitcoinUnit.BTC:
-          return customAmount + ' BTC';
-        case BitcoinUnit.SATS:
-          return satoshiToBTC(customAmount) + ' BTC';
+        case BitcoinUnit.MARS:
+          return parseFloat(customAmount).toString() + ' MARS';
+        case BitcoinUnit.ZUBRINS:
+          const marsAmount = new BigNumber(customAmount).dividedBy(100000000).toFixed(8);
+          return marsAmount + ' MARS';
         case BitcoinUnit.LOCAL_CURRENCY:
-          return fiatToBTC(customAmount) + ' BTC';
+          // Assuming marsRate is available
+          const marsAmountFromFiat = new BigNumber(customAmount).dividedBy(marsRate).toFixed(8);
+          return marsAmountFromFiat + ' MARS';
+        default:
+          return parseFloat(customAmount).toString() + '  ' ;
       }
-      return customAmount + ' ' + customUnit;
     } else {
       return null;
     }
   };
-
+  
+  
   return (
     <View style={[styles.root, stylesHook.root]}>
       {address !== undefined && showAddress && (
@@ -518,10 +554,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   share: {
-    justifyContent: 'flex-end',
-    paddingVertical: 16,
+    //justifyContent: 'flex-end',
+    //paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 20,
   },
   link: {
     marginVertical: 16,
@@ -531,6 +567,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 36,
     textAlign: 'center',
+    marginBottom: 10
   },
   label: {
     fontWeight: '600',

@@ -42,6 +42,7 @@ const stylesM = StyleSheet.create({
     fontSize: 36,
     fontWeight: '700',
     fontFamily: 'Orbitron-Black', 
+    color: 'black'
   },
   line: {
     position: 'absolute',
@@ -422,18 +423,14 @@ const styles = StyleSheet.create({
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   walletBalance: {
-    fontWeight: 'bold',
-    // maxWidth: '60%',
     fontFamily: 'Orbitron-Black',
     fontSize: 36,
     color: 'black',
     marginTop: 5,
-    //marginBottom: 3,
   },
   balanceCont:{
     height: 45,
     alignItems: 'flex-start',
-    //maxWidth: '80%',
   },
   manageFundsButton: {
     marginTop: 14,

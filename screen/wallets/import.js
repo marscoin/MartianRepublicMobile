@@ -151,7 +151,7 @@ const WalletsImport = () => {
       <BlueSpacing20 />
       <TouchableWithoutFeedback accessibilityRole="button" onPress={speedBackdoorTap} testID="SpeedBackdoor">
         <BlueFormLabel>
-          Please enter your seed phrase, public key or WIF of your Marscoin Wallet.
+          Please enter seed phrase of your Marscoin Wallet.
         </BlueFormLabel>
       </TouchableWithoutFeedback>
       <BlueSpacing20 />

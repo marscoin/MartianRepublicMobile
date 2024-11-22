@@ -244,6 +244,7 @@ class AmountInput extends Component {
   render() {
     const { colors, disabled, unit } = this.props;
     const { marsRate } = this.state
+    console.log('MARS RATE!!!', marsRate)
     const amount = this.props.amount || 0;
     //let secondaryDisplayCurrency = formatBalanceWithoutSuffix(amount, BitcoinUnit.LOCAL_CURRENCY, false);
     let secondaryDisplayCurrency = `$ ${(amount*marsRate).toFixed(6)}`
@@ -251,21 +252,55 @@ class AmountInput extends Component {
     // if main display is sat or btc - secondary display is fiat
     // if main display is fiat - secondary dislay is btc
     let sat;
+    // switch (unit) {
+    //   case BitcoinUnit.BTC:
+    //     sat = new BigNumber(amount).multipliedBy(100000000).toString();
+    //     secondaryDisplayCurrency = formatBalanceWithoutSuffix(sat, BitcoinUnit.LOCAL_CURRENCY, false);
+    //     break;
+    //   case BitcoinUnit.SATS:
+    //     secondaryDisplayCurrency = formatBalanceWithoutSuffix((isNaN(amount) ? 0 : amount).toString(), BitcoinUnit.LOCAL_CURRENCY, false);
+    //     break;
+    //     case BitcoinUnit.SATS:
+    //       secondaryDisplayCurrency = formatBalanceWithoutSuffix((isNaN(amount) ? 0 : amount).toString(), BitcoinUnit.LOCAL_CURRENCY, false);
+    //       break;  
+    //   case BitcoinUnit.LOCAL_CURRENCY:
+    //     secondaryDisplayCurrency = fiatToBTC(parseFloat(isNaN(amount) ? 0 : amount));
+    //     if (AmountInput.conversionCache[isNaN(amount) ? 0 : amount + BitcoinUnit.LOCAL_CURRENCY]) {
+    //       // cache hit! we reuse old value that supposedly doesn't have rounding errors
+    //       const sats = AmountInput.conversionCache[isNaN(amount) ? 0 : amount + BitcoinUnit.LOCAL_CURRENCY];
+    //       secondaryDisplayCurrency = satoshiToBTC(sats);
+    //     }
+    //     break;
+    // }
     switch (unit) {
-      case BitcoinUnit.BTC:
-        sat = new BigNumber(amount).multipliedBy(100000000).toString();
-        secondaryDisplayCurrency = formatBalanceWithoutSuffix(sat, BitcoinUnit.LOCAL_CURRENCY, false);
-        break;
-      case BitcoinUnit.SATS:
-        secondaryDisplayCurrency = formatBalanceWithoutSuffix((isNaN(amount) ? 0 : amount).toString(), BitcoinUnit.LOCAL_CURRENCY, false);
-        break;
-      case BitcoinUnit.LOCAL_CURRENCY:
-        secondaryDisplayCurrency = fiatToBTC(parseFloat(isNaN(amount) ? 0 : amount));
-        if (AmountInput.conversionCache[isNaN(amount) ? 0 : amount + BitcoinUnit.LOCAL_CURRENCY]) {
-          // cache hit! we reuse old value that supposedly doesn't have rounding errors
-          const sats = AmountInput.conversionCache[isNaN(amount) ? 0 : amount + BitcoinUnit.LOCAL_CURRENCY];
-          secondaryDisplayCurrency = satoshiToBTC(sats);
+      case BitcoinUnit.MARS:
+        // Amount is in Marscoin, convert to USD
+        if (marsRate) {
+          const usdAmount = amount * marsRate;
+          secondaryDisplayCurrency = `$ ${usdAmount.toFixed(2)}`;
         }
+        break;
+  
+      case BitcoinUnit.ZUBRINS:
+        // Amount is in Zubrins, convert to Marscoin first, then to USD
+        if (marsRate) {
+          const marsAmount = amount / 100000000; // 1 MARS = 100,000,000 Zubrins
+          const usdAmount = marsAmount * marsRate;
+          secondaryDisplayCurrency = `$ ${usdAmount.toFixed(2)}`;
+        }
+        break;
+  
+      case BitcoinUnit.LOCAL_CURRENCY:
+        // Amount is in USD, convert to Marscoin
+        if (marsRate) {
+          const marsAmount = amount / marsRate;
+          secondaryDisplayCurrency = `${marsAmount.toFixed(8)} MARS`;
+        }
+        break;
+  
+      default:
+        // Handle other units or set secondaryDisplayCurrency to empty
+        //secondaryDisplayCurrency = '';
         break;
     }
 

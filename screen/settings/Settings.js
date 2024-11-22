@@ -1,5 +1,5 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react';
-import { ScrollView, StyleSheet, Platform, Linking } from 'react-native';
+import { ScrollView, StyleSheet, Platform, Linking, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Dialog from 'react-native-dialog';
 import RNRestart from 'react-native-restart'; 
@@ -109,6 +109,7 @@ const Settings = () => {
   return (
     <>
     <ScrollView style={styles.root} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>
+      {Platform.OS === 'android' ? <View style={{height: 24}}/> : <></>}
       {Platform.OS === 'android' ? <BlueHeaderDefaultSub leftText={loc.settings.header} /> : <></>}
       <ListItem title={'General'} onPress={() => navigate('GeneralSettings')} testID="GeneralSettings" chevron />
       <ListItem title={"Currency"} onPress={() => navigate('Currency')} testID="Currency" chevron />

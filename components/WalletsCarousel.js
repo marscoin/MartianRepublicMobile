@@ -189,17 +189,17 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'row',
-      alignItems: 'center',
-      height: 34,
+      height: Platform.OS === 'android' ? 30 : 36,
     },
     text: {
       fontSize: 30,
-      fontWeight: '900',
+      //fontWeight: '900',
       fontFamily: 'Orbitron-Black', 
+      color: 'black'
     },
     line: {
       position: 'absolute',
-      top: 3, // Adjust top as needed
+      top: 3, 
       left: 2,
       right: 2,
       height: 4,
