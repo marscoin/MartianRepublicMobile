@@ -1559,7 +1559,7 @@ const SendWithAddress = () => {
             <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
           </TouchableOpacity>
 
-          <Text style={stylesHook.donateText}>DONATION TO APPLICANT </Text>
+          <Text style={stylesHook.donateText}>SEND TO APPLICANT </Text>
           <Text style={stylesHook.donateNameText}>{routeParams.name} </Text>
             {/* /////////Currency and address//////// */}
             <FlatList

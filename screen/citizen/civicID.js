@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
         width: 120,
         borderRadius:10,  
         transform: [{ rotateZ: '90deg' }],
-        resizeMode: 'stretch', 
+        resizeMode: "cover", 
         position: 'absolute',
         top: 20, 
         right: 20, 
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
         transform: [{ rotateZ: '90deg' }],
     },
     userAddressLG: {
-        fontSize: 44,
+        fontSize: 34,
         color: 'black',
         fontFamily: 'Orbitron-Black',
         position: 'absolute',

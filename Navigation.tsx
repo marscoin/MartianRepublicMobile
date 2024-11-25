@@ -297,7 +297,7 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="JoinGeneralPublicApplication2Screen" component={JoinGeneralPublicApplication2Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplication3Screen" component={JoinGeneralPublicApplication3Screen}  options={{headerShown: false}} />
       <CitizenStack.Screen name="JoinGeneralPublicApplicationSuccessScreen" component={JoinGeneralPublicApplicationSuccessScreen}  options={{headerShown: false}} />
-      <CitizenStack.Screen name="SendWithAddress" component={SendWithAddress} initialParams={SendWithAddress.initialParams}/>
+      <CitizenStack.Screen name="SendWithAddress" component={SendWithAddress} initialParams={SendWithAddress.initialParams} options={{headerShown: false}}/>
       <CitizenStack.Screen name="PsbtMultisig" component={PsbtMultisig} options={PsbtMultisig.navigationOptions(theme)} />
       <CitizenStack.Screen name="SendConfirm" component={SendConfirm} options={Confirm.navigationOptions(theme)} />
       <CitizenStack.Screen name="CreateTransaction" component={SendCreate} options={SendCreate.navigationOptions(theme)} />

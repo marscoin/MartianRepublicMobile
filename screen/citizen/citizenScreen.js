@@ -614,17 +614,18 @@ const CitizenScreen = () => {
                                                     </View>
                                                 ))}
                                             </View>
-                                            {/* {allFieldsPresent && (
+                                            {allFieldsPresent && (
                                                     <TouchableOpacity 
                                                         style={styles.completeButton}
                                                         onPress={() => navigation.navigate('SendWithAddress',{address: item.address, name: item.fullname})}
                                                     >
-                                                        <Text style={styles.donateText}>
-                                                            DONATE
-                                                        </Text>
-                                                        <Image style={styles.marscoinStyle} source={require('../../img/marscoin.png')} accessible={false} />
+                                                        {/* <Text style={styles.donateText}>
+                                                            SEND
+                                                        </Text> */}
+                                                        <Icon name="arrow-right-bold-hexagon-outline" size={33} type="material-community" color={colors.outgoingForegroundColor} />
+                                                        {/* <Image style={styles.marscoinStyle} source={require('../../img/marscoin.png')} accessible={false} /> */}
                                                     </TouchableOpacity>
-                                                )} */}
+                                                )}
                                         </View>
                                     </TouchableOpacity>
                                 );
