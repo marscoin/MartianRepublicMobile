@@ -156,7 +156,7 @@
       [builder replaceMenuForIdentifier:UIMenuFile withMenu:newFileMenu];
   }
   
-  // BlueWallet -> Settings (Command + ,)
+  // Martian Republic -> Settings (Command + ,)
   UIKeyCommand *settingsCommand = [UIKeyCommand keyCommandWithInput:@"," modifierFlags:UIKeyModifierCommand action:@selector(openSettings:)];
   [settingsCommand setTitle:@"Settings..."];
   UIMenu *settings = [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[settingsCommand]];

@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.martianrepublic.app"
     xmlns:tools="http://schemas.android.com/tools"
     android:installLocation="auto">
 

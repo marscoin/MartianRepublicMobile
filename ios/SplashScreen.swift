@@ -1,10 +1,4 @@
-//
-//  SplashScreen.swift
-//  BlueWallet
-//
-//  Created by Marcos Rodriguez on 1/24/24.
-//  Copyright © 2024 BlueWallet. All rights reserved.
-//
+
 
 import Foundation
 import React

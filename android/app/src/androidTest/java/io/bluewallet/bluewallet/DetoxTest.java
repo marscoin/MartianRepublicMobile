@@ -28,8 +28,9 @@ public class DetoxTest {
         DetoxConfig detoxConfig = new DetoxConfig();
         detoxConfig.idlePolicyConfig.masterTimeoutSec = 90;
         detoxConfig.idlePolicyConfig.idleResourceTimeoutSec = 60;
-        detoxConfig.rnContextLoadTimeoutSec = (io.bluewallet.bluewallet.BuildConfig.DEBUG ? 180 : 60);
+        detoxConfig.rnContextLoadTimeoutSec = (com.martianrepublic.app.BuildConfig.DEBUG ? 180 : 60);
 
+// io.bluewallet.bluewallet
         Detox.runTests(mActivityRule, detoxConfig);
     }
 }

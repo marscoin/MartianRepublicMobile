@@ -184,7 +184,7 @@ const CitizenScreen = () => {
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`);
-            //console.log('APPLICANTS', response.data);
+            console.log('APPLICANTS', response.data);
             const sortedApplicants = response.data.data.sort((a, b) => {
                 const countA = countMissingFields(a);
                 const countB = countMissingFields(b);
@@ -620,7 +620,7 @@ const CitizenScreen = () => {
                                                         onPress={() => navigation.navigate('SendWithAddress',{address: item.address, name: item.fullname})}
                                                     >
                                                         {/* <Text style={styles.donateText}>
-                                                            SEND
+                                                            DONATE
                                                         </Text> */}
                                                         <Icon name="arrow-right-bold-hexagon-outline" size={33} type="material-community" color={colors.outgoingForegroundColor} />
                                                         {/* <Image style={styles.marscoinStyle} source={require('../../img/marscoin.png')} accessible={false} /> */}

@@ -82,13 +82,13 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "io.bluewallet.bluewallet"
+    namespace "com.martianrepublic.app"
     defaultConfig {
-        applicationId "io.bluewallet.bluewallet"
+        applicationId "com.martianrepublic.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "6.5.9"
+        versionName "1.0.1"
         testBuildType System.getProperty('testBuildType', 'debug')
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         missingDimensionStrategy 'react-native-camera', 'general'
