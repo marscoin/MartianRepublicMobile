@@ -14,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import com.facebook.react.modules.i18nmanager.I18nUtil;
 import java.util.List;
 import com.bugsnag.android.Bugsnag;
+import com.oblador.vectoricons.VectorIconsPackage;
 
 public class MainApplication extends Application implements ReactApplication {
 

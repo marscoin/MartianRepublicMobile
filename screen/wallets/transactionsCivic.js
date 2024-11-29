@@ -279,7 +279,9 @@ const WalletTransactionsCivic = ({ navigation }) => {
           </View>
         )}
         <View style={styles.listHeaderTextRow}>
-          <Text style={[styles.listHeaderText, stylesHook.listHeaderText]}>{loc.transactions.list_title}</Text>
+          <Text style={[styles.listHeaderText, stylesHook.listHeaderText, { fontFamily: 'Orbitron-Bold' }]}>
+            {loc.transactions.list_title}
+          </Text>
         </View>
       </View>
     );
@@ -724,7 +726,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: 'bold',
     fontSize: 24,
-    fontFamily: 'Orbitron-Black',
+    fontFamily: Platform.select({
+      ios: 'Orbitron-Bold',
+      android: 'Orbitron_Bold', // or the exact filename of your font
+    }),
   },
   browserButton2: {
     borderRadius: 9,

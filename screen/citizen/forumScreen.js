@@ -156,6 +156,7 @@ const ForumScreen = () => {
             <ScrollView 
                 style={styles.filterBlock}
                 horizontal={true}
+                showsHorizontalScrollIndicator={false}
             >
                     <TouchableOpacity
                         style={styles.filterButton}
@@ -379,6 +380,7 @@ const styles = StyleSheet.create({
     },
     filterBlock: {
         width:'100%',
+        height: 60,
         flexDirection:'row',
         padding: 10,
     },
@@ -429,8 +431,7 @@ const styles = StyleSheet.create({
     threadTitle: {
         fontSize: 17,
         color: 'white',
-        fontWeight: 'bold',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'Orbitron-Bold',
         marginBottom: 10,
         letterSpacing: 1.1
     },
@@ -474,8 +475,7 @@ const styles = StyleSheet.create({
         color:'white', 
         textAlign: 'center',
         fontSize: 15,
-        fontWeight:"600",
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'Orbitron-Bold',
         letterSpacing: 1.1, 
     },
     modalContainer: {

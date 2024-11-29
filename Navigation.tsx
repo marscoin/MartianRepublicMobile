@@ -503,15 +503,22 @@ const AddWalletRoot = () => {
       <AddWalletStack.Screen
         name="PleaseBackup"
         component={PleaseBackup}
-        options={navigationStyle({
+        options={{
           gestureEnabled: false,
           headerBackVisible: false,
           title: loc.pleasebackup.title,
-          headerStyle:{
-            backgroundColor:'black'
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: 'black',
+          },
+          headerTitleStyle: {
+            fontFamily: 'Orbitron-Black', 
+            fontSize: 20, 
+            color: 'white', 
           }
-        })(theme)}
+        }}
       />
+
       <AddWalletStack.Screen
         name="PleaseBackupLNDHub"
         component={PleaseBackupLNDHub}

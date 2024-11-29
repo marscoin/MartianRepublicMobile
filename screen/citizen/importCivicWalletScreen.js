@@ -60,8 +60,8 @@ const ImportCivicWalletScreen = () => {
             textAlign: 'center',
             justifyContent:'center',
             fontSize: 20,
-            fontWeight:'800',
-            fontFamily: 'Orbitron-SemiBold',
+            fontWeight:'600',
+            fontFamily: 'Orbitron-Bold',
             letterSpacing: 1.5, 
             marginHorizontal: 30,
             letterSpacing: 3

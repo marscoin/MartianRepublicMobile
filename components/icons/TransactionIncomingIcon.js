@@ -4,6 +4,7 @@ import { Icon } from 'react-native-elements';
 import { useTheme } from '../themes';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowRightFromBracket } from '@fortawesome/free-solid-svg-icons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const styles = StyleSheet.create({
   boxIncoming: {
@@ -29,7 +30,12 @@ const TransactionIncomingIcon = props => {
   return (
     <View style={styles.boxIncoming}>
       <View style={[styles.ballIncoming, stylesHooks.ballIncoming]}>
-        <Icon name="arrow-right-bold-hexagon-outline" size={33} type="material-community" color={colors.incomingForegroundColor} />
+      <MaterialCommunityIcons 
+          name="arrow-right-bold-hexagon-outline" 
+          size={33} 
+          color={colors.incomingForegroundColor} 
+        />
+        {/* <Icon name="arrow-right-bold-hexagon-outline" size={33} type="material-community" color={colors.incomingForegroundColor} /> */}
       </View>
     </View>
   );

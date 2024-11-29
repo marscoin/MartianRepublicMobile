@@ -183,7 +183,7 @@ export const VaultButton = props => {
             <Text
               style={{
                 color: colors.foregroundColor,
-                fontWeight: 'bold',
+                fontWeight: '300',
                 fontSize: 18,
                 fontFamily: 'Orbitron-Black', 
                 writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
@@ -459,9 +459,13 @@ export const BlueHeaderDefaultSub = props => {
           <Text
             adjustsFontSizeToFit
             style={{
-              fontWeight: 'bold',
+              //fontWeight: '800',
+              // ...Platform.select({
+              //   ios: {
+              //     fontWeight: '700', 
+              //   }}),
               fontSize: 30,
-              fontFamily: 'Orbitron-Black', 
+              fontFamily: 'Orbitron-Bold', 
               color: colors.foregroundColor,
             }}
           >
@@ -493,7 +497,13 @@ export const BlueHeaderDefaultMain = props => {
       <Text
         style={{
           textAlign: 'left',
-          fontWeight: 'bold',
+          ...Platform.select({
+            ios: {
+              fontWeight: '700', 
+            },
+            android: {
+              //fontWeight: '300', 
+            }}),
           fontFamily: 'Orbitron-Black', 
           fontSize: 34,
           color: colors.foregroundColor,

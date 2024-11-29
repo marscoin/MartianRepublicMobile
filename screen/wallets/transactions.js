@@ -66,7 +66,6 @@ const WalletTransactions = ({ navigation }) => {
   const stylesHook = StyleSheet.create({
     listHeaderText: {
       color: colors.foregroundColor,
-      
     },
     browserButton2: {
       backgroundColor: colors.lightButton,

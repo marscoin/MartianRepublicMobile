@@ -189,7 +189,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'row',
-      height: Platform.OS === 'android' ? 30 : 36,
+      height: Platform.OS === 'android' ? 36 : 36,
     },
     text: {
       fontSize: 30,
@@ -223,7 +223,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
   const MarscoinSymbol = () => (
     <View style={styles.container}>
       <Text style={styles.text}>M</Text>
-      <View style={styles.line} />
+      <View style={styles.line}/>
     </View>
   );
   

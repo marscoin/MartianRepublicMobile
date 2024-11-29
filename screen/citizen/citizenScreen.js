@@ -850,8 +850,7 @@ const styles = StyleSheet.create({
         color:'white', 
         textAlign: 'center',
         fontSize: 18,
-        fontWeight:"600",
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'Orbitron-Bold',
         letterSpacing: 1.1, 
     },
     filterButton: {

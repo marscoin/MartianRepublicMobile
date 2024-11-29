@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 
 import { View, ActivityIndicator, Text, TouchableOpacity, StyleSheet, Image, BackHandler } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
-
+//import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlueCard, BlueLoading, BlueSpacing10, BlueSpacing20, BlueText } from '../../BlueComponents';
 import TransactionIncomingIcon from '../../components/icons/TransactionIncomingIcon';
 import TransactionOutgoingIcon from '../../components/icons/TransactionOutgoingIcon';
@@ -455,7 +455,19 @@ const TransactionsStatus = () => {
                 } else if (tx.value < 0) {
                   return (
                     <View style={styles.icon}>
-                       <Icon name="arrow-left-bold-hexagon-outline" size={44} type="material-community" color={colors.outgoingForegroundColor} />
+                       {/* <Icon name="arrow-left-bold-hexagon-outline" size={44} type="material-community" color={colors.outgoingForegroundColor} /> */}
+                       {/* <MaterialCommunityIcons 
+                          name="arrow-left-bold-hexagon-outline" 
+                          size={44} 
+                          color={colors.outgoingForegroundColor} 
+                      /> */}
+                      <Icon 
+  name="arrow-left-bold-hexagon-outline" 
+  size={44} 
+  type="material-community"
+  color={colors.outgoingForegroundColor}
+  tvParallaxProperties={undefined}  // Add this for Android
+/>
                     </View>
                   );
                 } else {

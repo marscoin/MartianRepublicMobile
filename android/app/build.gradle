@@ -130,6 +130,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation(project(':react-native-camera'))
+    implementation project(':react-native-vector-icons')
     
 }
 apply plugin: 'com.google.gms.google-services'  // Google Services plugin
