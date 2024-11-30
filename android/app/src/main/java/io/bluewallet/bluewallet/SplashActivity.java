@@ -1,26 +1,21 @@
-package com.martianrepublic.app; // Replace with your package name
+package com.martianrepublic.app;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Use Splash Screen API
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.splash_screen); // Replace with your layout name
 
-        int SPLASH_DISPLAY_LENGTH = 1000; // Splash screen duration in milliseconds
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
-                SplashActivity.this.startActivity(mainIntent);
-                SplashActivity.this.finish();
-            }
-        }, SPLASH_DISPLAY_LENGTH);
+        // Start MainActivity
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 }
