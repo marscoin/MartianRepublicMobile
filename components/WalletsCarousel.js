@@ -128,6 +128,7 @@ const iStyles = StyleSheet.create({
     fontFamily: 'Orbitron-Black',
     fontSize: 34,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+    marginTop: 3
   },
   latestTx: {
     backgroundColor: 'transparent',
@@ -188,30 +189,28 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
 
   const styles = StyleSheet.create({
     container: {
-      flexDirection: 'row',
-      height: Platform.OS === 'android' ? 36 : 36,
+      //height: Platform.OS === 'android' ? 30 : 36,
+      justifyContent: 'flex-end'
     },
     text: {
-      fontSize: 30,
-      //fontWeight: '900',
+      fontSize: 34,
       fontFamily: 'Orbitron-Black', 
-      color: 'black'
+      color: 'black',
     },
     line: {
       position: 'absolute',
-      top: 3, 
+      top: 6, 
       left: 2,
       right: 2,
       height: 4,
       backgroundColor: 'black',
     },
     imageGold: {
-      position: 'absolute', // changed from 'relative' to 'absolute'
+      position: 'absolute', 
       top: 0,
       left: 0,
       right: 0,
       width: '108%',
-      // height: '100%',
       zIndex: -1,
       resizeMode:'stretch',
       padding: 12,
@@ -270,17 +269,23 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
             {item.hideBalance ? (
               <BluePrivateBalance />
             ) : (
-              <Text
-                numberOfLines={1}
-                key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
-                style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
-              >
+              // <Text
+              //   numberOfLines={1}
+              //   key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
+              //   style={[iStyles.balance, { color: colors.inverseForegroundColor, backgroundColor:'green', alignContent:'center', justifyContent: 'center' }]}
+              // >
+              //     <MarscoinSymbol />
+              //     {' '}
+              //     {balance}  
+              // </Text>
+              
+                <View style={{ flexDirection: 'row', marginBottom: 5 }}>
                   <MarscoinSymbol />
-                  {' '}
-                  {balance}  
-              </Text>
+                  <Text numberOfLines ={1} style={[iStyles.balance, { color: colors.inverseForegroundColor, marginLeft: 6 }]}>{balance}</Text>
+                </View>
+
             )}
-            <Text style={iStyles.br} />
+           
             <Text numberOfLines={1} style={[iStyles.latestTx, { color: colors.inverseForegroundColor }]}>
               {loc.wallets.list_latest_transaction}
             </Text>
@@ -324,17 +329,22 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
               {item.hideBalance ? (
                 <BluePrivateBalance />
               ) : (
-                <Text
-                  numberOfLines={1}
-                  key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
-                  style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
-                >
-                  <MarscoinSymbol />
-                  {' '}
-                  {balance}    
-                </Text>
+                // <Text
+                //   numberOfLines={1}
+                //   key={balance} // force component recreation on balance change. To fix right-to-left languages, like Farsi
+                //   style={[iStyles.balance, { color: colors.inverseForegroundColor }]}
+                // >
+                //   <MarscoinSymbol />
+                //   {' '}
+                //   {balance}    
+                // </Text>
+                <View style={{ flexDirection: 'row', marginBottom: 5 }}>
+                <MarscoinSymbol />
+                <Text numberOfLines ={1} style={[iStyles.balance, { color: colors.inverseForegroundColor, marginLeft: 6 }]}>{balance}</Text>
+              </View>
+
               )}
-              <Text style={iStyles.br} />
+
               <Text numberOfLines={1} style={[iStyles.latestTx, { color: colors.inverseForegroundColor }]}>
                 {loc.wallets.list_latest_transaction}
               </Text>

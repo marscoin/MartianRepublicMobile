@@ -40,7 +40,7 @@ const stylesM = StyleSheet.create({
   },
   text: {
     fontSize: 36,
-    fontWeight: '700',
+    //fontWeight: '700',
     fontFamily: 'Orbitron-Black', 
     color: 'black'
   },
