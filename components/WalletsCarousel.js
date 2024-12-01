@@ -279,7 +279,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
               //     {balance}  
               // </Text>
               
-                <View style={{ flexDirection: 'row', marginBottom: 5 }}>
+                <View style={{ flexDirection: 'row', marginBottom: 8 }}>
                   <MarscoinSymbol />
                   <Text numberOfLines ={1} style={[iStyles.balance, { color: colors.inverseForegroundColor, marginLeft: 6 }]}>{balance}</Text>
                 </View>
@@ -338,7 +338,7 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
                 //   {' '}
                 //   {balance}    
                 // </Text>
-                <View style={{ flexDirection: 'row', marginBottom: 5 }}>
+                <View style={{ flexDirection: 'row', marginBottom: 8 }}>
                 <MarscoinSymbol />
                 <Text numberOfLines ={1} style={[iStyles.balance, { color: colors.inverseForegroundColor, marginLeft: 6 }]}>{balance}</Text>
               </View>

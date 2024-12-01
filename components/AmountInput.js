@@ -309,7 +309,14 @@ class AmountInput extends Component {
     const stylesHook = StyleSheet.create({
       center: { padding: amount === BitcoinUnit.MAX ? 0 : 15 },
       localCurrency: { color: disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2 },
-      input: { color: disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2, fontSize: amount.length > 10 ? 20 : 36 },
+      input: { 
+        color: disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2, 
+        fontSize: amount.length > 10 ? 20 : 36,
+        fontFamily: Platform.select({
+          ios: 'Orbitron-Black',
+          android: 'Orbitron-Black'
+        }),
+      },
       cryptoCurrency: { color: disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2 },
     });
 
@@ -442,8 +449,6 @@ const styles = StyleSheet.create({
     //alignContent: 'space-between',
     justifyContent: 'center',
     paddingTop: 16,
-    //paddingBottom: 2,
-    //backgroundColor:'red'
   },
   localCurrency: {
     fontSize: 18,
@@ -456,7 +461,11 @@ const styles = StyleSheet.create({
   input: {
     fontWeight: 'bold',
     fontFamily: 'Orbitron-Black',
-    //fontSize: 40,
+    fontSize: 36, // Match the MarscoinSymbol size
+    height: 44, // Match the container1 height
+    padding: 0, // Remove default padding
+    marginRight: 8, // Add some space between input and symbol
+    textAlignVertical: 'center', // Center text vertically (Android)
   },
   cryptoCurrency: {
     fontSize: 15,
@@ -485,15 +494,16 @@ const styles = StyleSheet.create({
   },
   container1: {
     height: 44,
-    //backgroundColor: 'green',
     marginLeft: 8
   },
   text: {
     fontSize: 36,
     color: 'white',
     fontWeight: '600',
-    alignSelf: 'flex-end',
     fontFamily: 'Orbitron-Black',
+    lineHeight: 44, 
+    includeFontPadding: false, // Remove extra padding (Android)
+    textAlignVertical: 'center', 
   },
   line: {
     position: 'absolute',
