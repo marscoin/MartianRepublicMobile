@@ -1,9 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Icon } from 'react-native-elements';
 import { useTheme } from '../themes';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const styles = StyleSheet.create({
@@ -14,8 +11,8 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    // transform: [{ rotate: '-45deg' }],
     justifyContent: 'center',
+    alignItems: 'center', // Add this to center the icon
   },
 });
 
@@ -30,12 +27,11 @@ const TransactionIncomingIcon = props => {
   return (
     <View style={styles.boxIncoming}>
       <View style={[styles.ballIncoming, stylesHooks.ballIncoming]}>
-      <MaterialCommunityIcons 
-          name="arrow-right-bold-hexagon-outline" 
-          size={33} 
-          color={colors.incomingForegroundColor} 
+        <MaterialCommunityIcons
+          name="arrow-right-bold-hexagon-outline"
+          size={33}
+          color={colors.incomingForegroundColor}
         />
-        {/* <Icon name="arrow-right-bold-hexagon-outline" size={33} type="material-community" color={colors.incomingForegroundColor} /> */}
       </View>
     </View>
   );

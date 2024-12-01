@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
         alignSelf: 'center'
     },
     civicBG: {
-        marginTop: 30,
-        height:windowHeight * 0.6,
+        marginTop: 20,
+        height:windowHeight * 0.7,
         width: windowWidth * 0.8,
         borderRadius: 20,  
         justifyContent:'center',
