@@ -53,16 +53,21 @@ async function _getRealm() {
 }
 
 const storageKey = "ELECTRUM_PEERS";
-// const defaultPeer = { host: "147.182.177.23", ssl: "50002" };
+// const defaultPeer = { host: "147.182.177.23", ssl: "50002" }; ////Bytefederal
 // const hardcodedPeers = [
 //   { host: "147.182.177.23", tcp: "50001" },
 //   { host: "147.182.177.23", ssl: "50002" },
 // ];
-const defaultPeer = { host: "164.90.138.207", ssl: "50002" };
+const defaultPeer = { host: "164.90.138.207", ssl: "50002" }; /////MARS
 const hardcodedPeers = [
   { host: "164.90.138.207", tcp: "50001" },
   { host: "164.90.138.207", ssl: "50002" },
 ];
+// const defaultPeer = { host: "67.205.167.111", ssl: "50002" }; 
+// const hardcodedPeers = [
+//   { host: "67.205.167.111", tcp: "50001" },
+//   { host: "67.205.167.111", ssl: "50002" },
+// ];
 
 /** @type {ElectrumClient} */
 let mainClient;
