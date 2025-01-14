@@ -330,7 +330,7 @@ class AppStorage {
       try {
         realm = await this.getRealm();
       } catch (error) {
-        presentAlert({ message: error.message });
+        //presentAlert({ message: error.message });
       }
       data = JSON.parse(data);
       if (!data.wallets) return false;
@@ -431,7 +431,7 @@ class AppStorage {
         try {
           if (realm) this.inflateWalletFromRealm(realm, unserializedWallet);
         } catch (error) {
-          presentAlert({ message: error.message });
+          //presentAlert({ message: error.message });
         }
 
         // done
@@ -604,7 +604,7 @@ class AppStorage {
       try {
         realm = await this.getRealm();
       } catch (error) {
-        presentAlert({ message: error.message });
+        //presentAlert({ message: error.message });
       }
       for (const key of this.wallets) {
         if (typeof key === 'boolean') continue;
@@ -678,7 +678,7 @@ class AppStorage {
       realmkeyValue.close();
     } catch (error) {
       console.error('save to disk exception:', error.message);
-      presentAlert({ message: 'save to disk exception: ' + error.message });
+      //presentAlert({ message: 'save to disk exception: ' + error.message });
       if (error.message.includes('Realm file decryption failed')) {
         console.warn('purging realm key-value database file');
         this.purgeRealmKeyValueFile();

@@ -185,7 +185,7 @@ const WalletTransactionsCivic = ({ navigation }) => {
   const refreshTransactions = async () => {
     console.log('!!!!!!!!!!!REFRESH')
     // wallet.fetchTransactions()
-    console.log('isElectrumDisabled', isElectrumDisabled)
+    console.log('isElectrumDisabled', isElectrumDisabled);
     if (isElectrumDisabled) return setIsLoading(false);
     if (isLoading) return;
     setIsLoading(true);
@@ -218,6 +218,7 @@ const WalletTransactionsCivic = ({ navigation }) => {
       for (const tx of wallet.getTransactions()) {
         if (tx.confirmations < 7) immatureTxsConfs += tx.txid + ':' + tx.confirmations + ';';
       }
+      //presentAlert({ message: '!!!!!tx', tx });
       await wallet.fetchTransactions();
       if (wallet.fetchPendingTransactions) {
         await wallet.fetchPendingTransactions();
@@ -237,7 +238,10 @@ const WalletTransactionsCivic = ({ navigation }) => {
       console.log(wallet.getLabel(), 'fetch tx took', (end - start) / 1000, 'sec');
     } catch (err) {
       noErr = false;
-      presentAlert({ message: err.message });
+      //presentAlert({ message: err.message });
+      console.error("Electrum connection error:", err);
+      presentAlert({ message: `Electrum error: ${err.message}` });
+      //presentAlert({ message: '!!!!!!!!TX FETCHING ERR' });
       setIsLoading(false);
       setTimeElapsed(prev => prev + 1);
     }

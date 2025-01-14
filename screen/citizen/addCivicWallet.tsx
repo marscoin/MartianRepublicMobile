@@ -35,7 +35,6 @@ import {
 } from '../../class';
 
 import { MarsElectrumWallet } from '../wallets/mars-wallet';
-import presentAlert from '../../components/Alert';
 import Button from '../../components/Button';
 import { LdkButton } from '../../components/LdkButton';
 import ListItem from '../../components/ListItem';

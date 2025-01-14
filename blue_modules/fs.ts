@@ -16,7 +16,7 @@ const _shareOpen = async (filePath: string) => {
     saveToFiles: isDesktop,
   })
     .catch(error => {
-      presentAlert({ message: error.message });
+      //presentAlert({ message: error.message });
       console.log(error);
     })
     .finally(() => {
@@ -52,7 +52,7 @@ export const writeFileAndExport = async function (filename: string, contents: st
         await _shareOpen(filePath);
       } catch (e: any) {
         console.log(e);
-        presentAlert({ message: e.message });
+        //presentAlert({ message: e.message });
       }
     } else {
       console.log('Storage Permission: Denied');
@@ -84,7 +84,7 @@ export const openSignedTransaction = async function (): Promise<string | boolean
     return await _readPsbtFileIntoBase64(res.uri);
   } catch (err) {
     if (!DocumentPicker.isCancel(err)) {
-      presentAlert({ message: loc.send.details_no_signed_tx });
+      //spresentAlert({ message: loc.send.details_no_signed_tx });
     }
   }
 

@@ -16,3 +16,12 @@
 -keep enum com.sifir.** { *;}
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
+
+# Keep Electrum-related classes
+-keep class com.yourapp.BlueElectrum { *; }
+-keep class com.yourapp.MARSConnection { *; }
+-keepclassmembers class com.yourapp.** { *; }
+
+# Keep WebSocket related classes
+-keep class org.java_websocket.** { *; }
+-keep class com.neovisionaries.** { *; }
