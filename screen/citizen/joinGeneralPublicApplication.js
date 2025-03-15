@@ -32,6 +32,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [isFormValid, setIsFormValid] = useState(false);
   const {wallets} = useContext(BlueStorageContext);
   const [loading, setLoading] = useState(false);
+  const isIOS = (Platform.OS === 'ios');
 
   const scrollViewRef = useRef();
   const firstNameRef = useRef();
@@ -47,9 +48,9 @@ const JoinGeneralPublicApplicationScreen = () => {
   
       // Compress the image
       const compressedImage = await CompressorImage.compress(uri, {
-        maxWidth: 300, 
-        maxHeight: 300, 
-        quality: 0.1, 
+        maxWidth: 700, 
+        maxHeight: 700, 
+        quality: isIOS ? 0.1 : 0.9, 
       });
   
       // Get the compressed file size
@@ -191,7 +192,7 @@ useEffect(() => {
   
     const takePicture = async () => {
       if (cameraRef.current) {
-        const options = { quality: 0.4, base64: true };
+        const options = { quality: 0.5, base64: true };
         const data = await cameraRef.current.takePictureAsync(options);
         setCapturedUri(data.uri); // Set the captured image URI
       }

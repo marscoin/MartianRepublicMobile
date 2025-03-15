@@ -770,336 +770,580 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   async fetchTransactions() {
-    console.log("==== [MARS] fetchTransactions() ====");
+    console.log("==== [MARS] fetchTransactions() ====")
     // if txs are absent for some internal address in hierarchy - this is a sign
     // we should fetch txs for that address
     // OR if some address has unconfirmed balance - should fetch it's txs
     // OR some tx for address is unconfirmed
     // OR some tx has < 7 confirmations
-
+  
     // fetching transactions in batch: first, getting batch history for all addresses,
     // then batch fetching all involved txids
     // finally, batch fetching txids of all inputs (needed to see amounts & addresses of those inputs)
     // then we combine it all together
-
-    const addresses2fetch = [];
-
+  
+    const knownAddresses = []
+  
+    // Build list of known addresses
+    for (let c = 0; c < this.next_free_address_index + 1; c++) {
+      knownAddresses.push(this._getExternalAddressByIndex(c))
+    }
+    for (let c = 0; c < this.next_free_change_address_index + 1; c++) {
+      knownAddresses.push(this._getInternalAddressByIndex(c))
+    }
+    
+    console.log(`[DEBUG] Checking transaction history for ${knownAddresses.length} known addresses`)
+    
+    // Create an array of addresses to check
+    const addressesToFetch = []
+    
+    // Add some extra addresses beyond what we know we've used, to catch any we might have missed
     for (let c = 0; c < this.next_free_address_index + this.gap_limit; c++) {
-      // external addresses first
-      let hasUnconfirmed = false;
-      this._txs_by_external_index[c] = this._txs_by_external_index[c] || [];
-      for (const tx of this._txs_by_external_index[c])
-        hasUnconfirmed =
-          hasUnconfirmed || !tx.confirmations || tx.confirmations < 7;
-
-      if (
-        hasUnconfirmed ||
-        this._txs_by_external_index[c].length === 0 ||
-        this._balances_by_external_index[c].u !== 0
-      ) {
-        addresses2fetch.push(this._getExternalAddressByIndex(c));
+      addressesToFetch.push(this._getExternalAddressByIndex(c))
+    }
+    for (let c = 0; c < this.next_free_change_address_index + this.gap_limit; c++) {
+      addressesToFetch.push(this._getInternalAddressByIndex(c))
+    }
+  
+    // Create a new array with unique addresses instead of reassigning addresses2fetch
+    const uniqueAddresses = [...new Set(addressesToFetch)]
+    console.log(`[DEBUG] Fetching transaction history for ${uniqueAddresses.length} total addresses`)
+  
+    // Fetch transaction histories for all addresses
+    const histories = await MARSConnection.multiGetHistoryByAddress(uniqueAddresses)
+    
+    // Log how many transactions we found
+    let txCount = 0
+    for (const addr in histories) {
+      if (histories[addr] && histories[addr].length > 0) {
+        console.log(`[DEBUG] Address ${addr} has ${histories[addr].length} transactions`)
+        txCount += histories[addr].length
       }
     }
-
-    for (
-      let c = 0;
-      c < this.next_free_change_address_index + this.gap_limit;
-      c++
-    ) {
-      // next, internal addresses
-      let hasUnconfirmed = false;
-      this._txs_by_internal_index[c] = this._txs_by_internal_index[c] || [];
-      for (const tx of this._txs_by_internal_index[c])
-        hasUnconfirmed =
-          hasUnconfirmed || !tx.confirmations || tx.confirmations < 7;
-
-      if (
-        hasUnconfirmed ||
-        this._txs_by_internal_index[c].length === 0 ||
-        this._balances_by_internal_index[c].u !== 0
-      ) {
-        addresses2fetch.push(this._getInternalAddressByIndex(c));
-      }
-    }
-
-    // first: batch fetch for all addresses histories
-    const histories =
-      await MARSConnection.multiGetHistoryByAddress(addresses2fetch);
-    const txs = {};
+    console.log(`[DEBUG] Found ${txCount} total transactions in histories`)
+  
+    const txs = {}
     for (const history of Object.values(histories)) {
       for (const tx of history) {
-        txs[tx.tx_hash] = tx;
+        txs[tx.tx_hash] = tx
       }
     }
-
+  
     // next, batch fetching each txid we got
     const txdatas = await MARSConnection.multiGetTransactionByTxid(
-      //console.log('=)))))))))))', multiGetTransactionByTxid),
       Object.keys(txs)
-    );
-
+    )
+  
     // now, tricky part. we collect all transactions from inputs (vin), and batch fetch them too.
     // then we combine all this data (we need inputs to see source addresses and amounts)
-    const vinTxids = [];
+    const vinTxids = []
     for (const txdata of Object.values(txdatas)) {
       for (const vin of txdata.vin) {
-        vinTxids.push(vin.txid);
+        vinTxids.push(vin.txid)
       }
     }
-    const vintxdatas = await MARSConnection.multiGetTransactionByTxid(vinTxids);
-
+    const vintxdatas = await MARSConnection.multiGetTransactionByTxid(vinTxids)
+  
     // fetched all transactions from our inputs. now we need to combine it.
     // iterating all _our_ transactions:
-    for (const txid of Object.keys(txdatas)) {
-      // iterating all inputs our our single transaction:
-      for (let inpNum = 0; inpNum < txdatas[txid].vin.length; inpNum++) {
-        const inpTxid = txdatas[txid].vin[inpNum].txid;
-        const inpVout = txdatas[txid].vin[inpNum].vout;
-        // got txid and output number of _previous_ transaction we shoud look into
-        if (vintxdatas[inpTxid] && vintxdatas[inpTxid].vout[inpVout]) {
-          // extracting amount & addresses from previous output and adding it to _our_ input:
-          txdatas[txid].vin[inpNum].addresses =
-            vintxdatas[inpTxid].vout[inpVout].scriptPubKey.addresses;
-          txdatas[txid].vin[inpNum].value =
-            vintxdatas[inpTxid].vout[inpVout].value;
-        }
+    console.log(
+      "Starting transaction processing. txdatas keys:",
+      Object.keys(txdatas).length
+    )
+  
+    // Debug: Inspect transaction data structure
+    if (Object.keys(txdatas).length > 0) {
+      const sampleTxid = Object.keys(txdatas)[0]
+      console.log(
+        "Sample transaction structure:",
+        JSON.stringify(
+          {
+            txid: sampleTxid,
+            vin_structure:
+              txdatas[sampleTxid].vin.length > 0
+                ? Object.keys(txdatas[sampleTxid].vin[0])
+                : "empty vin",
+            vout_structure:
+              txdatas[sampleTxid].vout.length > 0
+                ? Object.keys(txdatas[sampleTxid].vout[0])
+                : "empty vout",
+            scriptPubKey_structure:
+              txdatas[sampleTxid].vout.length > 0 &&
+              txdatas[sampleTxid].vout[0].scriptPubKey
+                ? Object.keys(txdatas[sampleTxid].vout[0].scriptPubKey)
+                : "no scriptPubKey",
+          },
+          null,
+          2
+        )
+      )
+  
+      // Check vintxdatas structure
+      if (Object.keys(vintxdatas).length > 0) {
+        const sampleVinTxid = Object.keys(vintxdatas)[0]
+        console.log(
+          "Sample vintxdata structure:",
+          JSON.stringify(
+            {
+              txid: sampleVinTxid,
+              vout_structure:
+                vintxdatas[sampleVinTxid].vout &&
+                Object.keys(vintxdatas[sampleVinTxid].vout).length > 0
+                  ? Object.keys(
+                      vintxdatas[sampleVinTxid].vout[
+                        Object.keys(vintxdatas[sampleVinTxid].vout)[0]
+                      ]
+                    )
+                  : "empty vout",
+            },
+            null,
+            2
+          )
+        )
+      } else {
+        console.log("No vintxdatas available")
       }
     }
-
+  
+    // Helper function to safely access nested properties
+    const safeGet = (obj, path) => {
+      try {
+        return path.split(".").reduce((o, key) => o && o[key], obj)
+      } catch (e) {
+        return undefined
+      }
+    }
+  
+    for (const txid of Object.keys(txdatas)) {
+      try {
+        // iterating all inputs our our single transaction:
+        for (let inpNum = 0; inpNum < txdatas[txid].vin.length; inpNum++) {
+          try {
+            const input = txdatas[txid].vin[inpNum]
+            const inpTxid = input.txid
+            
+            // Handle potential change in vout property name (could be vout, n, or other)
+            const inpVout = input.vout !== undefined ? input.vout : 
+                            input.n !== undefined ? input.n : undefined
+    
+            // got txid and output number of _previous_ transaction we should look into
+            if (inpTxid && inpVout !== undefined && vintxdatas[inpTxid]) {
+              const vout = vintxdatas[inpTxid].vout
+              
+              // Check if vout exists and has the right index as a number or string
+              const voutIndex = String(inpVout)
+              const voutData = vout && (vout[inpVout] || vout[voutIndex])
+    
+              if (voutData) {
+                // Handle potential changes in scriptPubKey structure
+                const scriptPubKey = voutData.scriptPubKey
+                
+                if (scriptPubKey) {
+                  // Try different possible locations for addresses
+                  const addresses = scriptPubKey.addresses || 
+                                   (scriptPubKey.address ? [scriptPubKey.address] : null) ||
+                                   (scriptPubKey.addressHash ? [scriptPubKey.addressHash] : null)
+    
+                  if (addresses) {
+                    txdatas[txid].vin[inpNum].addresses = addresses
+                  }
+                }
+    
+                // Handle potential changes in value property
+                const value = voutData.value !== undefined ? voutData.value : voutData.amount
+                if (value !== undefined) {
+                  txdatas[txid].vin[inpNum].value = value
+                }
+              } else {
+                console.log(`Missing vout data for input: ${inpTxid}:${inpVout}`)
+              }
+            }
+          } catch (inputError) {
+            console.log(`Error processing input ${inpNum} of tx ${txid}:`, inputError.message)
+          }
+        }
+      } catch (txError) {
+        console.log(`Error processing transaction ${txid}:`, txError.message)
+      }
+    }
+  
+    console.log("Purging unconfirmed transactions")
     // now purge all unconfirmed txs from internal hashmaps, since some may be evicted from mempool because they became invalid
     // or replaced. hashmaps are going to be re-populated anyways, since we fetched TXs for addresses with unconfirmed TXs
     for (let c = 0; c < this.next_free_address_index + this.gap_limit; c++) {
-      this._txs_by_external_index[c] = this._txs_by_external_index[c].filter(
-        (tx) => !!tx.confirmations
-      );
+      if (Array.isArray(this._txs_by_external_index[c])) {
+        this._txs_by_external_index[c] = this._txs_by_external_index[c].filter(
+          (tx) => !!tx?.confirmations
+        )
+      }
     }
     for (
       let c = 0;
       c < this.next_free_change_address_index + this.gap_limit;
       c++
     ) {
-      this._txs_by_internal_index[c] = this._txs_by_internal_index[c].filter(
-        (tx) => !!tx.confirmations
-      );
+      if (Array.isArray(this._txs_by_internal_index[c])) {
+        this._txs_by_internal_index[c] = this._txs_by_internal_index[c].filter(
+          (tx) => !!tx?.confirmations
+        )
+      }
     }
-
+  
+    console.log("Populating transaction hashmaps")
     // now, we need to put transactions in all relevant `cells` of internal hashmaps: this._txs_by_internal_index && this._txs_by_external_index
-
-    for (let c = 0; c < this.next_free_address_index + this.gap_limit; c++) {
-      for (const tx of Object.values(txdatas)) {
-        for (const vin of tx.vin) {
-          if (
-            vin.addresses &&
-            vin.addresses.indexOf(this._getExternalAddressByIndex(c)) !== -1
-          ) {
-            // this TX is related to our address
-            this._txs_by_external_index[c] =
-              this._txs_by_external_index[c] || [];
-            const clonedTx = Object.assign({}, tx);
-            clonedTx.inputs = tx.vin.slice(0);
-            clonedTx.outputs = tx.vout.slice(0);
-            delete clonedTx.vin;
-            delete clonedTx.vout;
-
-            // trying to replace tx if it exists already (because it has lower confirmations, for example)
-            let replaced = false;
-            for (let cc = 0; cc < this._txs_by_external_index[c].length; cc++) {
-              if (this._txs_by_external_index[c][cc].txid === clonedTx.txid) {
-                replaced = true;
-                this._txs_by_external_index[c][cc] = clonedTx;
-              }
-            }
-            if (!replaced) this._txs_by_external_index[c].push(clonedTx);
+  
+    // Helper function to safely process transactions
+    const processTxForAddress = (tx, addressIndex, isInternal) => {
+      try {
+        const targetMap = isInternal
+          ? this._txs_by_internal_index
+          : this._txs_by_external_index
+        const getAddressFn = isInternal
+          ? this._getInternalAddressByIndex.bind(this)
+          : this._getExternalAddressByIndex.bind(this)
+        const address = getAddressFn(addressIndex)
+    
+        // Initialize the array if it doesn't exist
+        targetMap[addressIndex] = targetMap[addressIndex] || []
+    
+        // Create a standardized transaction object
+        const standardTx = {
+          txid: tx.txid,
+          hash: tx.hash || tx.txid,
+          version: tx.version,
+          size: tx.size,
+          locktime: tx.locktime,
+          blocktime: tx.blocktime,
+          blockhash: tx.blockhash,
+          confirmations: tx.confirmations || 0,
+          inputs: [], // Will populate with standardized inputs
+          outputs: [], // Will populate with standardized outputs
+          hex: tx.hex
+        }
+    
+        // Standardize inputs
+        if (Array.isArray(tx.vin)) {
+          standardTx.inputs = tx.vin.map(input => ({
+            txid: input.txid,
+            vout: input.vout !== undefined ? input.vout : input.n,
+            sequence: input.sequence,
+            addresses: input.addresses || [],
+            value: input.value || 0,
+          }))
+        }
+    
+        // Standardize outputs
+        if (Array.isArray(tx.vout)) {
+          standardTx.outputs = tx.vout.map(output => ({
+            n: output.n,
+            value: output.value,
+            scriptPubKey: output.scriptPubKey || {},
+          }))
+        }
+    
+        // Check if this transaction already exists
+        let replaced = false
+        for (let i = 0; i < targetMap[addressIndex].length; i++) {
+          if (targetMap[addressIndex][i].txid === standardTx.txid) {
+            replaced = true
+            targetMap[addressIndex][i] = standardTx
+            break
           }
         }
-        for (const vout of tx.vout) {
-          if (
-            vout.scriptPubKey.addresses &&
-            vout.scriptPubKey.addresses.indexOf(
-              this._getExternalAddressByIndex(c)
-            ) !== -1
-          ) {
-            // this TX is related to our address
-            this._txs_by_external_index[c] =
-              this._txs_by_external_index[c] || [];
-            const clonedTx = Object.assign({}, tx);
-            clonedTx.inputs = tx.vin.slice(0);
-            clonedTx.outputs = tx.vout.slice(0);
-            delete clonedTx.vin;
-            delete clonedTx.vout;
-
-            // trying to replace tx if it exists already (because it has lower confirmations, for example)
-            let replaced = false;
-            for (let cc = 0; cc < this._txs_by_external_index[c].length; cc++) {
-              if (this._txs_by_external_index[c][cc].txid === clonedTx.txid) {
-                replaced = true;
-                this._txs_by_external_index[c][cc] = clonedTx;
-              }
+    
+        // Add if not replaced
+        if (!replaced) {
+          targetMap[addressIndex].push(standardTx)
+        }
+      } catch (error) {
+        console.log(
+          `Error processing transaction for ${isInternal ? "internal" : "external"} address ${addressIndex}:`,
+          error.message
+        )
+      }
+    }
+  
+    // Process external addresses
+    for (let c = 0; c < this.next_free_address_index + this.gap_limit; c++) {
+      const externalAddress = this._getExternalAddressByIndex(c)
+  
+      for (const txid in txdatas) {
+        const tx = txdatas[txid]
+        let isRelevant = false
+  
+        // Check inputs
+        if (Array.isArray(tx.vin)) {
+          for (const vin of tx.vin) {
+            if (
+              vin.addresses &&
+              vin.addresses.indexOf(externalAddress) !== -1
+            ) {
+              isRelevant = true
+              break
             }
-            if (!replaced) this._txs_by_external_index[c].push(clonedTx);
           }
+        }
+  
+        // Check outputs
+        if (!isRelevant && Array.isArray(tx.vout)) {
+          for (const vout of tx.vout) {
+            const addresses =
+              vout.scriptPubKey &&
+              (vout.scriptPubKey.addresses ||
+                (vout.scriptPubKey.address
+                  ? [vout.scriptPubKey.address]
+                  : null))
+  
+            if (addresses && addresses.indexOf(externalAddress) !== -1) {
+              isRelevant = true
+              break
+            }
+          }
+        }
+  
+        if (isRelevant) {
+          processTxForAddress(tx, c, false)
         }
       }
     }
-
+  
+    console.log("Processing internal addresses")
+    // Process internal addresses
     for (
       let c = 0;
       c < this.next_free_change_address_index + this.gap_limit;
       c++
     ) {
-      for (const tx of Object.values(txdatas)) {
-        for (const vin of tx.vin) {
-          if (
-            vin.addresses &&
-            vin.addresses.indexOf(this._getInternalAddressByIndex(c)) !== -1
-          ) {
-            // this TX is related to our address
-            this._txs_by_internal_index[c] =
-              this._txs_by_internal_index[c] || [];
-            const clonedTx = Object.assign({}, tx);
-            clonedTx.inputs = tx.vin.slice(0);
-            clonedTx.outputs = tx.vout.slice(0);
-            delete clonedTx.vin;
-            delete clonedTx.vout;
-
-            // trying to replace tx if it exists already (because it has lower confirmations, for example)
-            let replaced = false;
-            for (let cc = 0; cc < this._txs_by_internal_index[c].length; cc++) {
-              if (this._txs_by_internal_index[c][cc].txid === clonedTx.txid) {
-                replaced = true;
-                this._txs_by_internal_index[c][cc] = clonedTx;
-              }
+      const internalAddress = this._getInternalAddressByIndex(c)
+  
+      for (const txid in txdatas) {
+        const tx = txdatas[txid]
+        let isRelevant = false
+  
+        // Check inputs
+        if (Array.isArray(tx.vin)) {
+          for (const vin of tx.vin) {
+            if (
+              vin.addresses &&
+              vin.addresses.indexOf(internalAddress) !== -1
+            ) {
+              isRelevant = true
+              break
             }
-            if (!replaced) this._txs_by_internal_index[c].push(clonedTx);
           }
         }
-        for (const vout of tx.vout) {
-          if (
-            vout.scriptPubKey.addresses &&
-            vout.scriptPubKey.addresses.indexOf(
-              this._getInternalAddressByIndex(c)
-            ) !== -1
-          ) {
-            // this TX is related to our address
-            this._txs_by_internal_index[c] =
-              this._txs_by_internal_index[c] || [];
-            const clonedTx = Object.assign({}, tx);
-            clonedTx.inputs = tx.vin.slice(0);
-            clonedTx.outputs = tx.vout.slice(0);
-            delete clonedTx.vin;
-            delete clonedTx.vout;
-
-            // trying to replace tx if it exists already (because it has lower confirmations, for example)
-            let replaced = false;
-            for (let cc = 0; cc < this._txs_by_internal_index[c].length; cc++) {
-              if (this._txs_by_internal_index[c][cc].txid === clonedTx.txid) {
-                replaced = true;
-                this._txs_by_internal_index[c][cc] = clonedTx;
-              }
+  
+        // Check outputs
+        if (!isRelevant && Array.isArray(tx.vout)) {
+          for (const vout of tx.vout) {
+            const addresses =
+              vout.scriptPubKey &&
+              (vout.scriptPubKey.addresses ||
+                (vout.scriptPubKey.address
+                  ? [vout.scriptPubKey.address]
+                  : null))
+  
+            if (addresses && addresses.indexOf(internalAddress) !== -1) {
+              isRelevant = true
+              break
             }
-            if (!replaced) this._txs_by_internal_index[c].push(clonedTx);
           }
+        }
+  
+        if (isRelevant) {
+          processTxForAddress(tx, c, true)
         }
       }
     }
-
-    //console.log(JSON.stringify(this._txs_by_external_index));
-    //console.log(JSON.stringify(this._txs_by_internal_index));
-
-    this._lastTxFetch = +new Date();
+    console.log("Transaction processing complete")
+  
+    this._lastTxFetch = +new Date()
   }
 
   getTransactions() {
-    // console.log("==== [MARS] getTransactions ====");
-    let txs = [];
-    //console.log("==== [MARS] getTransactions", this._address);
-    // console.log("Initial external transactions index:", JSON.stringify(this._txs_by_external_index));
-    // console.log("Initial internal transactions index:", JSON.stringify(this._txs_by_internal_index));
-
-    for (const [address, addressTxs] of Object.entries(this._txs_by_external_index)) {
-      //console.log(`Transactions for external address ${address}:`, JSON.stringify(addressTxs));
-      txs = txs.concat(addressTxs);
-    }
-    for (const [address, addressTxs] of Object.entries(this._txs_by_internal_index)) {
-      //console.log(`Transactions for internal address ${address}:`, JSON.stringify(addressTxs));
-      txs = txs.concat(addressTxs);
-    }
-
+    console.log("==== [MARS] getTransactions ====")
+    let txs = []
+  
     for (const addressTxs of Object.values(this._txs_by_external_index)) {
-      txs = txs.concat(addressTxs);
-      //console.log('txs_by_external_index',this._txs_by_external_index)
+      txs = txs.concat(addressTxs)
     }
     for (const addressTxs of Object.values(this._txs_by_internal_index)) {
-      txs = txs.concat(addressTxs);
-     // console.log('txs_by_internal_index')
+      txs = txs.concat(addressTxs)
     }
-    //console.log('!!!!!!  txs.length', txs.length)
-    if (txs.length === 0) return []; // guard clause; so we wont spend time calculating addresses
-    if (txs.length === 0) console.log('!!!!!!  txs.length === 0')
-    // its faster to pre-build hashmap of owned addresses than to query `this.weOwnAddress()`, which in turn
-    // iterates over all addresses in hierarchy
-    const ownedAddressesHashmap = {};
+  
+    // LOG: Show number of transactions found
+    console.log(`[DEBUG] Found ${txs.length} total transactions from indexes`)
+  
+    if (txs.length === 0) return [] // guard clause; so we wont spend time calculating addresses
+  
+    // LOG: Show raw transaction structure of first transaction if available
+    if (txs.length > 0) {
+      const sampleTx = txs[0]
+      console.log('[DEBUG] Sample transaction structure:')
+      console.log('- txid:', sampleTx.txid)
+      console.log('- hash:', sampleTx.hash)
+      console.log('- confirmations:', sampleTx.confirmations)
+      console.log('- blocktime:', sampleTx.blocktime)
+      console.log('- inputs property exists:', !!sampleTx.inputs)
+      console.log('- vin property exists:', !!sampleTx.vin)
+      
+      // Log input structure
+      const inputsArray = sampleTx.inputs || sampleTx.vin || []
+      if (inputsArray.length > 0) {
+        const sampleInput = inputsArray[0]
+        console.log('[DEBUG] Sample input structure:')
+        console.log('- Input keys:', Object.keys(sampleInput))
+        console.log('- txid:', sampleInput.txid)
+        console.log('- vout/n:', sampleInput.vout !== undefined ? sampleInput.vout : sampleInput.n)
+        console.log('- addresses property exists:', !!sampleInput.addresses)
+        console.log('- address property exists:', !!sampleInput.address)
+        console.log('- value property exists:', !!sampleInput.value)
+        console.log('- amount property exists:', !!sampleInput.amount)
+      }
+      
+      // Log output structure
+      const outputsArray = sampleTx.outputs || sampleTx.vout || []
+      if (outputsArray.length > 0) {
+        const sampleOutput = outputsArray[0]
+        console.log('[DEBUG] Sample output structure:')
+        console.log('- Output keys:', Object.keys(sampleOutput))
+        console.log('- n:', sampleOutput.n)
+        console.log('- value:', sampleOutput.value)
+        
+        // Check scriptPubKey structure
+        if (sampleOutput.scriptPubKey) {
+          console.log('- scriptPubKey keys:', Object.keys(sampleOutput.scriptPubKey))
+          console.log('- address property exists:', !!sampleOutput.scriptPubKey.address)
+          console.log('- addresses property exists:', !!sampleOutput.scriptPubKey.addresses)
+          if (sampleOutput.scriptPubKey.addresses) {
+            console.log('- addresses is array:', Array.isArray(sampleOutput.scriptPubKey.addresses))
+            console.log('- first address:', sampleOutput.scriptPubKey.addresses[0])
+          }
+        }
+      }
+    }
+  
+    // Build hashmap of owned addresses for faster lookup
+    const ownedAddressesHashmap = {}
     for (let c = 0; c < this.next_free_address_index + 1; c++) {
-      ownedAddressesHashmap[this._getExternalAddressByIndex(c)] = true;
+      ownedAddressesHashmap[this._getExternalAddressByIndex(c)] = true
     }
     for (let c = 0; c < this.next_free_change_address_index + 1; c++) {
-      ownedAddressesHashmap[this._getInternalAddressByIndex(c)] = true;
+      ownedAddressesHashmap[this._getInternalAddressByIndex(c)] = true
     }
     // hack: in case this code is called from LegacyWallet:
-    if (this.getAddress()) ownedAddressesHashmap[this.getAddress()] = true;
-
-    const ret = [];
+    if (this.getAddress()) ownedAddressesHashmap[this.getAddress()] = true
+  
+    // LOG: Show owned addresses
+    console.log(`[DEBUG] Wallet has ${Object.keys(ownedAddressesHashmap).length} owned addresses`)
+    
+    const ret = []
     for (const tx of txs) {
-      // console.log("-- [getTX] " + JSON.stringify(tx));
-      tx.received = tx.blocktime * 1000;
-      if (!tx.blocktime) tx.received = +new Date() - 30 * 1000; // unconfirmed
-      tx.confirmations = tx.confirmations || 0; // unconfirmed
-      tx.hash = tx.txid;
-      tx.value = 0;
-      tx.hex = tx.hex;
-
-      for (const vin of tx.inputs) {
-        // if input (spending) goes from our address - we are loosing!
-        if (
-          (vin.address && ownedAddressesHashmap[vin.address]) ||
-          (vin.addresses &&
-            vin.addresses[0] &&
-            ownedAddressesHashmap[vin.addresses[0]])
-        ) {
-          tx.value -= new BigNumber(vin.value)
-            .multipliedBy(100000000)
-            .toNumber();
+      // LOG: Process individual transaction
+      console.log(`[DEBUG] Processing tx: ${tx.txid} (${tx.confirmations || 0} confirmations)`)
+      
+      const processedTx = {
+        received: tx.blocktime ? tx.blocktime * 1000 : +new Date() - 30 * 1000, // unconfirmed
+        confirmations: tx?.confirmations || 0, // unconfirmed
+        hash: tx.txid,
+        txid: tx.txid,
+        value: 0,
+        hex: tx.hex,
+        inputs: tx.inputs || tx.vin || [],
+        outputs: tx.outputs || tx.vout || []
+      }
+  
+      // Calculate inputs and outputs amounts for this transaction
+      let totalInputsFromOurWallet = 0;
+      let totalOutputsToOurWallet = 0;
+      let totalExternalOutputs = 0;
+      
+      // Check inputs from our wallet
+      for (const input of processedTx.inputs) {
+        const inputAddresses = input.addresses || (input.address ? [input.address] : []);
+        if (inputAddresses.some(addr => ownedAddressesHashmap[addr])) {
+          const inputValue = parseFloat(input.value) || 0;
+          totalInputsFromOurWallet += inputValue;
+          console.log(`[DEBUG] Found owned input from address: ${inputAddresses[0]}, value: ${inputValue}`);
         }
       }
-
-      for (const vout of tx.outputs) {
-        // when output goes to our address - this means we are gaining!
-        if (
-          vout.scriptPubKey.addresses &&
-          vout.scriptPubKey.addresses[0] &&
-          ownedAddressesHashmap[vout.scriptPubKey.addresses[0]]
-        ) {
-          tx.value += new BigNumber(vout.value)
-            .multipliedBy(100000000)
-            .toNumber();
+      
+      // Check outputs to our wallet and external addresses
+      for (const output of processedTx.outputs) {
+        const scriptPubKey = output.scriptPubKey || {};
+        const outputAddress = scriptPubKey.address || 
+                             (scriptPubKey.addresses && scriptPubKey.addresses[0]);
+        
+        if (outputAddress) {
+          const outputValue = parseFloat(output.value) || 0;
+          
+          if (ownedAddressesHashmap[outputAddress]) {
+            // Output to our wallet (could be change)
+            totalOutputsToOurWallet += outputValue;
+            console.log(`[DEBUG] Found owned output to: ${outputAddress}, value: ${outputValue}`);
+          } else {
+            // Output to external address
+            totalExternalOutputs += outputValue;
+            console.log(`[DEBUG] Found external output to: ${outputAddress}, value: ${outputValue}`);
+          }
         }
       }
-      ret.push(tx);
+      
+      // Determine transaction type and value
+      if (totalInputsFromOurWallet > 0) {
+        // This is an outgoing transaction (we spent some coins)
+        // Calculate the total amount spent including fees
+        const totalSpent = totalInputsFromOurWallet - totalOutputsToOurWallet;
+        
+        // The network fee is the difference between inputs and all outputs
+        const networkFee = totalInputsFromOurWallet - (totalOutputsToOurWallet + totalExternalOutputs);
+        
+        console.log(`[DEBUG] Outgoing transaction - Total from our wallet: ${totalInputsFromOurWallet}`);
+        console.log(`[DEBUG] Outgoing transaction - Total back to our wallet: ${totalOutputsToOurWallet}`);
+        console.log(`[DEBUG] Outgoing transaction - Total to external: ${totalExternalOutputs}`);
+        console.log(`[DEBUG] Outgoing transaction - Network fee: ${networkFee}`);
+        console.log(`[DEBUG] Outgoing transaction - Total spent (with fees): ${totalSpent}`);
+        
+        // Set transaction value as negative (money sent)
+        // Multiply by 100000000 to match UI display expectations
+        processedTx.value = -totalSpent * 100000000;
+        console.log(`[DEBUG] This is a send transaction with total amount (incl. fees): ${totalSpent}, stored value: ${processedTx.value}`);
+      } else if (totalOutputsToOurWallet > 0) {
+        // This is an incoming transaction (we received coins)
+        // Multiply by 100000000 to match UI display expectations
+        processedTx.value = totalOutputsToOurWallet * 100000000;
+        console.log(`[DEBUG] This is a receive transaction with amount: ${totalOutputsToOurWallet}, stored value: ${processedTx.value}`);
+      }
+      
+      console.log(`[DEBUG] Final tx value: ${processedTx.value}`);
+      
+      ret.push(processedTx);
     }
-
-    // now, deduplication:
-    const usedTxIds = {};
-    const ret2 = [];
+  
+    // Deduplication
+    const usedTxIds = {}
+    const ret2 = []
     for (const tx of ret) {
-      if (!usedTxIds[tx.txid]) ret2.push(tx);
-      usedTxIds[tx.txid] = 1;
+      if (!usedTxIds[tx.txid]) ret2.push(tx)
+      usedTxIds[tx.txid] = 1
     }
-
-    // console.log("-- [getTx] " + JSON.stringify(ret2));
-
+  
+    console.log(`[DEBUG] Final transactions count after deduplication: ${ret2.length}`)
+    
+    if (ret2.length > 0) {
+      console.log('[DEBUG] Example of processed transaction:')
+      const exampleTx = ret2[0]
+      console.log(JSON.stringify({
+        txid: exampleTx.txid,
+        confirmations: exampleTx.confirmations,
+        received: exampleTx.received,
+        value: exampleTx.value,
+      }, null, 2))
+    }
+  
     return ret2.sort(function (a, b) {
-      return b.received - a.received;
-    });
+      return b.received - a.received
+    })
   }
 
   /**

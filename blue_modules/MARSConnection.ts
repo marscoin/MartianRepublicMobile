@@ -58,10 +58,16 @@ const storageKey = "ELECTRUM_PEERS";
 //   { host: "147.182.177.23", tcp: "50001" },
 //   { host: "147.182.177.23", ssl: "50002" },
 // ];
-const defaultPeer = { host: "164.90.138.207", ssl: "50002" }; /////MARS
+// const defaultPeer = { host: "164.90.138.207", ssl: "50002" }; /////MARS
+// const hardcodedPeers = [
+//   { host: "164.90.138.207", tcp: "50001" },
+//   { host: "164.90.138.207", ssl: "50002" },
+// ];
+
+const defaultPeer = { host: "161.35.136.251", ssl: "50002" }; /////MARS
 const hardcodedPeers = [
-  { host: "164.90.138.207", tcp: "50001" },
-  { host: "164.90.138.207", ssl: "50002" },
+  { host: "161.35.136.251", tcp: "50001" },
+  { host: "161.35.136.251", ssl: "50002" },
 ];
 // const defaultPeer = { host: "67.205.167.111", ssl: "50002" }; 
 // const hardcodedPeers = [
