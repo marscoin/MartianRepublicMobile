@@ -364,11 +364,11 @@ const CitizenScreen = () => {
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={{flex: 1, backgroundColor: '#1a1a1a', borderRadius: 16, paddingVertical: 20, alignItems: 'center', borderWidth: 1, borderColor: '#333'}}
-                                    onPress={() => navigation.navigate('ForumScreen')}
+                                    onPress={() => navigation.navigate('PublicSquare')}
                                 >
                                     <MaterialCommunityIcons name="forum" size={26} color="#FF7400" style={{marginBottom: 4}} />
                                     <Text style={{fontFamily: 'ChakraPetch-Bold', fontSize: 13, color: '#fff'}}>FORUM</Text>
-                                    <Text style={{fontFamily: 'ChakraPetch-Regular', fontSize: 11, color: '#666', marginTop: 2}}>Citizen Discussion</Text>
+                                    <Text style={{fontFamily: 'ChakraPetch-Regular', fontSize: 11, color: '#666', marginTop: 2}}>Public Feed</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>

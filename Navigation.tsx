@@ -118,17 +118,42 @@ import EndorseConfirmationScreen from './screen/citizen/endorseConfirmationScree
 import EndorseSuccessScreen from './screen/citizen/endorseSuccessScreen';
 import ProposalsScreen from './screen/congress/proposals';
 import ProposalDetail from './screen/congress/proposalDetail';
+import PublicSquare from './screen/square/PublicSquare';
 
 const WalletsStack = createNativeStackNavigator();
+const SquareStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+const SquareRoot = () => {
+  const theme = useTheme();
+  return (
+    <SquareStack.Navigator screenOptions={{ headerShown: false }}>
+      <SquareStack.Screen name="PublicSquare" component={PublicSquare} />
+      <SquareStack.Screen name="ProposalDetail" component={ProposalDetail} />
+      <SquareStack.Screen name="Proposals" component={ProposalsScreen} />
+      <SquareStack.Screen name="ForumScreen" component={ForumScreen} />
+      <SquareStack.Screen name="ForumThreadScreen" component={ForumThreadScreen} />
+      <SquareStack.Screen name="IndividualCitizenScreen" component={IndividualCitizenScreen} />
+      <SquareStack.Screen name="IndividualPublicScreen" component={IndividualPublicScreen} />
+      <SquareStack.Screen name="IndividualApplicantScreen" component={IndividualApplicantScreen} />
+      <SquareStack.Screen name="CivicIDScreen" component={CivicIDScreen} />
+      <SquareStack.Screen name="CitizenScreen" component={CitizenScreen} />
+      <SquareStack.Screen name="EndorseConfirmationScreen" component={EndorseConfirmationScreen} />
+      <SquareStack.Screen name="EndorseSuccessScreen" component={EndorseSuccessScreen} />
+      <SquareStack.Screen name="SendWithAddress" component={SendWithAddress} initialParams={SendWithAddress.initialParams} />
+      <SquareStack.Screen name="SendConfirm" component={SendConfirm} options={Confirm.navigationOptions(theme)} />
+      <SquareStack.Screen name="SendSuccess" component={SendSuccess} options={{headerShown: false, gestureEnabled: false}} />
+    </SquareStack.Navigator>
+  );
+};
 
 const BottomTabNavigator = () => {
   return (
-    <Tab.Navigator 
-      initialRouteName="Wallet"
+    <Tab.Navigator
+      initialRouteName="Citizen"
       screenOptions={{
         tabBarActiveTintColor: '#FF7400',
-        tabBarInactiveTintColor: 'white', 
+        tabBarInactiveTintColor: 'white',
         tabBarStyle: {
           backgroundColor: 'black',
         }}}
@@ -137,19 +162,18 @@ const BottomTabNavigator = () => {
         name="Citizen"
         component={CitizenRoot}
         options={{
-          tabBarIcon: () => null, 
+          tabBarIcon: () => null,
           tabBarLabel: 'Citizen',
           tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontFamily: 'ChakraPetch-Bold', letterSpacing: 1.1},
           headerShown: false,
         }}
       />
       <Tab.Screen
-        name="Send"
-        //component={ScanQRCodeRoot}
+        name="Scan"
         component={SendDetailsRoot}
         options={{
           tabBarLabel: '',
-           title: "Send", 
+           title: "Send",
            headerShown: false,
            tabBarIcon: ({focused}) => {
              return(
@@ -163,10 +187,7 @@ const BottomTabNavigator = () => {
                   top: Platform.OS == "ios" ? -20 : -20,
                   borderRadius: Platform.OS == "ios" ? 35 : 35,
                   shadowColor: "#000",
-                  shadowOffset: {
-                    width: 0,
-                    height: 3,
-                  },
+                  shadowOffset: { width: 0, height: 3 },
                   shadowOpacity: 0.35,
                   shadowRadius: 3.65,
                   elevation: 8,
@@ -174,13 +195,11 @@ const BottomTabNavigator = () => {
                 }}
               >
                 <LinearGradient
-                    colors={['#rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.5)']} 
+                    colors={['#rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.5)']}
                     style={{ flex: 1, width: '100%', borderRadius: 40 }}
                 >
                 <MaterialCommunityIcons
-                    // name="lightning-bolt"
                     name="line-scan"
-                    //name="rocket"
                     size={44}
                     color='black'
                     style={{ alignSelf: 'center', marginTop: 12}}
@@ -188,19 +207,19 @@ const BottomTabNavigator = () => {
                 </LinearGradient>
               </View>
              )
-           } 
+           }
          }}
       />
       <Tab.Screen
         name="Wallet"
         component={WalletsRoot}
         options={{
-          tabBarIcon: () => null, 
+          tabBarIcon: () => null,
           tabBarLabel: 'Wallet',
-          tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontFamily: 'ChakraPetch-Bold', letterSpacing: 1.1 },
+          tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontFamily: 'ChakraPetch-Bold', letterSpacing: 1.1},
           headerShown: false,
         }}
-      />    
+      />
     </Tab.Navigator>
   );
 };
@@ -310,6 +329,7 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="EndorseSuccessScreen" component={EndorseSuccessScreen} options={NavigationDefaultOptions} />
       <CitizenStack.Screen name="Proposals" component={ProposalsScreen} options={{headerShown: false}} />
       <CitizenStack.Screen name="ProposalDetail" component={ProposalDetail} options={{headerShown: false}} />
+      <CitizenStack.Screen name="PublicSquare" component={PublicSquare} options={{headerShown: false}} />
     </CitizenStack.Navigator>
   );
 };
