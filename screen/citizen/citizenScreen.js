@@ -12,6 +12,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckBox } from 'react-native-elements';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -357,7 +358,7 @@ const CitizenScreen = () => {
                                     style={{flex: 1, backgroundColor: '#1a1a1a', borderRadius: 16, paddingVertical: 20, alignItems: 'center', borderWidth: 1, borderColor: '#333'}}
                                     onPress={() => navigation.navigate('Proposals')}
                                 >
-                                    <Text style={{fontSize: 22, color: '#FF7400', marginBottom: 4}}>🏛</Text>
+                                    <MaterialCommunityIcons name="bank" size={26} color="#FF7400" style={{marginBottom: 4}} />
                                     <Text style={{fontFamily: 'ChakraPetch-Bold', fontSize: 13, color: '#fff'}}>CONGRESS</Text>
                                     <Text style={{fontFamily: 'ChakraPetch-Regular', fontSize: 11, color: '#666', marginTop: 2}}>Proposals & Voting</Text>
                                 </TouchableOpacity>
@@ -365,7 +366,7 @@ const CitizenScreen = () => {
                                     style={{flex: 1, backgroundColor: '#1a1a1a', borderRadius: 16, paddingVertical: 20, alignItems: 'center', borderWidth: 1, borderColor: '#333'}}
                                     onPress={() => navigation.navigate('ForumScreen')}
                                 >
-                                    <Text style={{fontSize: 22, color: '#FF7400', marginBottom: 4}}>💬</Text>
+                                    <MaterialCommunityIcons name="forum" size={26} color="#FF7400" style={{marginBottom: 4}} />
                                     <Text style={{fontFamily: 'ChakraPetch-Bold', fontSize: 13, color: '#fff'}}>FORUM</Text>
                                     <Text style={{fontFamily: 'ChakraPetch-Regular', fontSize: 11, color: '#666', marginTop: 2}}>Citizen Discussion</Text>
                                 </TouchableOpacity>
