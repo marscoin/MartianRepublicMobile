@@ -343,25 +343,33 @@ const CitizenScreen = () => {
                     <>
                     {/* ///////CITIZEN BLOCK//////// */}
                     {userData.profile.citizen === 1 ? (
-                        <View style={{flex:1, alignItems: 'center', justifyContent:'center', marginTop: 40, marginHorizontal: 20}}>    
-                        
+                        <View style={{flex:1, marginTop: 30, marginHorizontal: 16}}>
                             <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={[styles.joinButton]}
                                     onPress={() => navigation.navigate('CivicIDScreen', {user: userData})}
                                 >
                                     <Text style={[styles.noWalletText, {paddingHorizontal: 8}]}>OPEN CIVIC ID</Text>
                                 </TouchableOpacity>
                             </LinearGradient>
-                            <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={[styles.joinButtonGradient, {marginTop: 20}]}>
-                                <TouchableOpacity 
-                                    style={[styles.joinButton]}
+                            <View style={{flexDirection: 'row', marginTop: 16, gap: 12}}>
+                                <TouchableOpacity
+                                    style={{flex: 1, backgroundColor: '#1a1a1a', borderRadius: 16, paddingVertical: 20, alignItems: 'center', borderWidth: 1, borderColor: '#333'}}
+                                    onPress={() => navigation.navigate('Proposals')}
+                                >
+                                    <Text style={{fontSize: 22, color: '#FF7400', marginBottom: 4}}>🏛</Text>
+                                    <Text style={{fontFamily: 'ChakraPetch-Bold', fontSize: 13, color: '#fff'}}>CONGRESS</Text>
+                                    <Text style={{fontFamily: 'ChakraPetch-Regular', fontSize: 11, color: '#666', marginTop: 2}}>Proposals & Voting</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{flex: 1, backgroundColor: '#1a1a1a', borderRadius: 16, paddingVertical: 20, alignItems: 'center', borderWidth: 1, borderColor: '#333'}}
                                     onPress={() => navigation.navigate('ForumScreen')}
                                 >
-                                    <Text style={styles.noWalletText}>CITIZEN FORUM</Text>
+                                    <Text style={{fontSize: 22, color: '#FF7400', marginBottom: 4}}>💬</Text>
+                                    <Text style={{fontFamily: 'ChakraPetch-Bold', fontSize: 13, color: '#fff'}}>FORUM</Text>
+                                    <Text style={{fontFamily: 'ChakraPetch-Regular', fontSize: 11, color: '#666', marginTop: 2}}>Citizen Discussion</Text>
                                 </TouchableOpacity>
-                            </LinearGradient>
-
+                            </View>
                         </View>
 
                     /* ///////GENERAL PUBLIC BLOCK//////// */

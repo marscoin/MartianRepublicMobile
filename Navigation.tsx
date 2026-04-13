@@ -116,6 +116,8 @@ import JoinGeneralPublicApplication3Screen from './screen/citizen/joinGeneralPub
 import JoinGeneralPublicApplicationSuccessScreen from './screen/citizen/joinGeneralPublicApplicationSuccess';
 import EndorseConfirmationScreen from './screen/citizen/endorseConfirmationScreen';
 import EndorseSuccessScreen from './screen/citizen/endorseSuccessScreen';
+import ProposalsScreen from './screen/congress/proposals';
+import ProposalDetail from './screen/congress/proposalDetail';
 
 const WalletsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -306,6 +308,8 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="SendDetailsRoot" component={SendDetailsRoot} options={NavigationDefaultOptions} />
       <CitizenStack.Screen name="EndorseConfirmationScreen" component={EndorseConfirmationScreen} options={NavigationDefaultOptions} />
       <CitizenStack.Screen name="EndorseSuccessScreen" component={EndorseSuccessScreen} options={NavigationDefaultOptions} />
+      <CitizenStack.Screen name="Proposals" component={ProposalsScreen} options={{headerShown: false}} />
+      <CitizenStack.Screen name="ProposalDetail" component={ProposalDetail} options={{headerShown: false}} />
     </CitizenStack.Navigator>
   );
 };
