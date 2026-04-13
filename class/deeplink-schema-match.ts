@@ -467,11 +467,11 @@ class DeeplinkSchemaMatch {
       throw new Error('No URI provided');
     }
     let replacedUri = uri;
-    for (const replaceMe of ['BITCOIN://', 'bitcoin://', 'BITCOIN:']) {
-      replacedUri = replacedUri.replace(replaceMe, 'bitcoin:');
+    for (const replaceMe of ['MARSCOIN://', 'marscoin://', 'MARSCOIN:', 'BITCOIN://', 'bitcoin://', 'BITCOIN:']) {
+      replacedUri = replacedUri.replace(replaceMe, 'marscoin:');
     }
 
-    return bip21.decode(replacedUri);
+    return bip21.decode(replacedUri, 'marscoin');
   }
 
   static bip21encode(address: string, options: TOptions): string {
@@ -483,7 +483,7 @@ class DeeplinkSchemaMatch {
         delete options[key];
       }
     }
-    return bip21.encode(address, options);
+    return bip21.encode(address, options, 'marscoin');
   }
 
   static decodeBitcoinUri(uri: string) {

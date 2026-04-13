@@ -137,7 +137,7 @@ const BottomTabNavigator = () => {
         options={{
           tabBarIcon: () => null, 
           tabBarLabel: 'Citizen',
-          tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontFamily: 'Orbitron-Black', letterSpacing: 1.1},
+          tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontFamily: 'ChakraPetch-Bold', letterSpacing: 1.1},
           headerShown: false,
         }}
       />
@@ -195,7 +195,7 @@ const BottomTabNavigator = () => {
         options={{
           tabBarIcon: () => null, 
           tabBarLabel: 'Wallet',
-          tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontFamily: 'Orbitron-Black', letterSpacing: 1.1 },
+          tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontFamily: 'ChakraPetch-Bold', letterSpacing: 1.1 },
           headerShown: false,
         }}
       />    

@@ -2,6 +2,26 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "assets/fonts/ChakraPetch-Bold.ttf",
+      "sha1": "e33f2649210c04a493edb4e675bdc0b6a96fbef3"
+    },
+    {
+      "path": "assets/fonts/ChakraPetch-Light.ttf",
+      "sha1": "1ad1a39ec2166897502ee2846dc1d94bd332b155"
+    },
+    {
+      "path": "assets/fonts/ChakraPetch-Medium.ttf",
+      "sha1": "caa2a0ede0130901d13c9b744816b16acb042894"
+    },
+    {
+      "path": "assets/fonts/ChakraPetch-Regular.ttf",
+      "sha1": "6e7b04557307de97e10e040cb75647c81fc3b58b"
+    },
+    {
+      "path": "assets/fonts/ChakraPetch-SemiBold.ttf",
+      "sha1": "40951a87aedd57f4ef3b785c2b6cf0e7f4a5fb53"
+    },
+    {
       "path": "assets/fonts/Orbitron-Black.ttf",
       "sha1": "19c4f40df75add673845967c2991ea6801442b0b"
     },

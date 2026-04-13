@@ -27,5 +27,13 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>StickerBrowserViewController</string>
 	</dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>ChakraPetch-Regular.ttf</string>
+		<string>ChakraPetch-Bold.ttf</string>
+		<string>ChakraPetch-Light.ttf</string>
+		<string>ChakraPetch-SemiBold.ttf</string>
+		<string>ChakraPetch-Medium.ttf</string>
+	</array>
 </dict>
 </plist>

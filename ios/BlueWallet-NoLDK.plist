@@ -11,7 +11,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>BlueWallet</string>
+	<string>Martian Republic</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -104,11 +104,10 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>marscoin</string>
 				<string>bitcoin</string>
 				<string>lightning</string>
-				<string>bluewallet</string>
-				<string>lapp</string>
-				<string>blue</string>
+				<string>martianrepublic</string>
 			</array>
 		</dict>
 	</array>
@@ -193,6 +192,11 @@
 		<string>Octicons.ttf</string>
 		<string>SimpleLineIcons.ttf</string>
 		<string>Zocial.ttf</string>
+		<string>ChakraPetch-Light.ttf</string>
+		<string>ChakraPetch-Regular.ttf</string>
+		<string>ChakraPetch-Medium.ttf</string>
+		<string>ChakraPetch-SemiBold.ttf</string>
+		<string>ChakraPetch-Bold.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

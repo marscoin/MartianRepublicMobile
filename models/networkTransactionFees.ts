@@ -1,4 +1,4 @@
-const BlueElectrum = require('../blue_modules/BlueElectrum');
+const BlueElectrum = require('../blue_modules/MARSConnection');
 
 export const NetworkTransactionFeeType = Object.freeze({
   FAST: 'Fast',
@@ -24,14 +24,20 @@ export class NetworkTransactionFee {
 export default class NetworkTransactionFees {
   static async recommendedFees(): Promise<NetworkTransactionFee> {
     try {
-      const isDisabled = await BlueElectrum.isDisabled();
-      if (isDisabled) {
-        throw new Error('Electrum is disabled. Dont attempt to fetch fees');
+      if (BlueElectrum.isDisabled) {
+        const isDisabled = await BlueElectrum.isDisabled();
+        console.error('[MARSFees] isDisabled:', isDisabled);
+        if (isDisabled) {
+          throw new Error('Electrum is disabled. Dont attempt to fetch fees');
+        }
       }
       const response = await BlueElectrum.estimateFees();
-      return new NetworkTransactionFee(response.fast + 5, response.medium + 2, response.slow);
+      console.error('[MARSFees] estimateFees response:', JSON.stringify(response));
+      const result = new NetworkTransactionFee(response.fast + 5, response.medium + 2, response.slow);
+      console.error('[MARSFees] returning fees - fast:', response.fast + 5, 'medium:', response.medium + 2, 'slow:', response.slow);
+      return result;
     } catch (err) {
-      console.warn(err);
+      console.error('[MARSFees] ERROR fetching fees:', err.message || err);
       return new NetworkTransactionFee(2, 1, 1);
     }
   }

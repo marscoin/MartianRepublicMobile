@@ -504,7 +504,7 @@ export const BlueHeaderDefaultMain = props => {
             android: {
               //fontWeight: '300', 
             }}),
-          fontFamily: 'Orbitron-Black', 
+          fontFamily: 'ChakraPetch-Bold',
           fontSize: 34,
           color: colors.foregroundColor,
         }}

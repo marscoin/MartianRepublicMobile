@@ -1,5 +1,20 @@
 /* global __DEV__, localStorage */
 if (typeof Buffer === 'undefined') global.Buffer = require('buffer').Buffer;
+if (typeof TextEncoder === 'undefined') {
+  global.TextEncoder = class TextEncoder {
+    encode(str) {
+      const buf = Buffer.from(str, 'utf-8');
+      return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+    }
+  };
+}
+if (typeof TextDecoder === 'undefined') {
+  global.TextDecoder = class TextDecoder {
+    decode(buf) {
+      return Buffer.from(buf).toString('utf-8');
+    }
+  };
+}
 if (typeof __dirname === 'undefined') global.__dirname = '/';
 if (typeof __filename === 'undefined') global.__filename = '';
 if (typeof process === 'undefined') {

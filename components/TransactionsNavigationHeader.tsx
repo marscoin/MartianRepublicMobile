@@ -41,7 +41,7 @@ const stylesM = StyleSheet.create({
   text: {
     fontSize: 36,
     //fontWeight: '700',
-    fontFamily: 'Orbitron-Black', 
+    fontFamily: 'ChakraPetch-Bold', 
     color: 'black'
   },
   line: {
@@ -411,19 +411,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     fontSize: 19,
     color: 'black',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   address: {
     backgroundColor: 'transparent',
     fontSize: 14,
     color: 'black',
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     marginTop: 10,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   walletBalance: {
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     fontSize: 36,
     color: 'black',
     marginTop: 5,
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 14,
     color: '#FFFFFF',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     padding: 12,
   },
   imageGold: {

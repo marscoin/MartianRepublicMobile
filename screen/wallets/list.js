@@ -463,13 +463,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 16,
-    fontFamily: 'Orbitron-Black',
   },
   listHeaderText: {
     fontWeight: 'bold',
     fontSize: 24,
     marginVertical: 16,
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   footerRoot: {
     top: 0,

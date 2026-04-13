@@ -204,6 +204,11 @@
 		<string>Orbitron-Regular.ttf</string>
 		<string>Orbitron-SemiBold.ttf</string>
 		<string>Orbitron-VariableFont_wght.ttf</string>
+		<string>ChakraPetch-Regular.ttf</string>
+		<string>ChakraPetch-Bold.ttf</string>
+		<string>ChakraPetch-Light.ttf</string>
+		<string>ChakraPetch-SemiBold.ttf</string>
+		<string>ChakraPetch-Medium.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

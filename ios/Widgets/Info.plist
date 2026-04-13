@@ -30,5 +30,13 @@
 		<key>apiKey</key>
 		<string>17ba9059f676f1cc4f45d98182388b01</string>
 	</dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>ChakraPetch-Regular.ttf</string>
+		<string>ChakraPetch-Bold.ttf</string>
+		<string>ChakraPetch-Light.ttf</string>
+		<string>ChakraPetch-SemiBold.ttf</string>
+		<string>ChakraPetch-Medium.ttf</string>
+	</array>
 </dict>
 </plist>
