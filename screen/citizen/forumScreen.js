@@ -1,3 +1,4 @@
+import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
 import { ScrollView, Platform, KeyboardAvoidingView, TextInput, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -67,16 +68,16 @@ const ForumScreen = () => {
     const [remainingChars, setRemainingChars] = useState(maxContentLength);
 
     async function fetchPublicSquareData() {
-        const token = await AsyncStorage.getItem('@auth_token');
+        const token = await getCivicToken();
         const response = await axios.get(`https://martianrepublic.org/api/forum/category/1/threads`, { headers: {'Authorization': `Bearer ${token}`}});
         // Filter out blocked users' threads
         const filteredData = response.data.threads.filter(thread => thread.is_blocked === 0);
-        console.log('PUBLIC SQUARE DATA', filteredData);
+
         dispatch({ type: 'SET_PUBLIC_SQUARE_DATA', payload: filteredData });
     }
     
     async function fetchProposalsData() {
-        const token = await AsyncStorage.getItem('@auth_token');
+        const token = await getCivicToken();
         const response = await axios.get(`https://martianrepublic.org/api/forum/category/2/threads`, { headers: {'Authorization': `Bearer ${token}`}});
         // Filter out blocked users' threads
         const filteredData = response.data.threads.filter(thread => thread.is_blocked === 0);
@@ -84,7 +85,7 @@ const ForumScreen = () => {
     }
     
     async function fetchAmendmentData() {
-        const token = await AsyncStorage.getItem('@auth_token');
+        const token = await getCivicToken();
         const response = await axios.get(`https://martianrepublic.org/api/forum/category/3/threads`, { headers: {'Authorization': `Bearer ${token}`}});
         // Filter out blocked users' threads
         const filteredData = response.data.threads.filter(thread => thread.is_blocked === 0);
@@ -92,7 +93,7 @@ const ForumScreen = () => {
     }
     
     async function fetchSupportData() {
-        const token = await AsyncStorage.getItem('@auth_token');
+        const token = await getCivicToken();
         const response = await axios.get(`https://martianrepublic.org/api/forum/category/4/threads`, { headers: {'Authorization': `Bearer ${token}`}});
         // Filter out blocked users' threads
         const filteredData = response.data.threads.filter(thread => thread.is_blocked === 0);
@@ -101,8 +102,8 @@ const ForumScreen = () => {
     
 
     async function createNewPost() {
-        const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.post(`https://martianrepublic.org/api/forum/thread`, 
+        const token = await getCivicToken();
+        const response = await axios.post(`https://martianrepublic.org/api/forum/thread`,
             { 
                 "category_id": state.filterPublicSquare ? 1 : state.filterProposals ? 2 : state.filterAmendment ? 3 : 4,
                 "title": newPostTitle,

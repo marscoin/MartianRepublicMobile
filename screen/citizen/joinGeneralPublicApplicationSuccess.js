@@ -13,11 +13,11 @@ const JoinGeneralPublicApplicationSuccessScreen = () => {
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
         <View style={{ marginTop: 80, marginHorizontal: 20, alignItems:"center" }}>
-            <Text  style={styles.medText}>Your application was succesfully published!</Text>
+            <Text  style={styles.medText}>Application submitted</Text>
         </View>
 
         <View style={{ marginTop: 10, marginHorizontal: 20, alignSelf:"center" }}>
-            <Text  style={styles.smallText}>It might take some time before you'll see yourself in PUBLIC</Text>
+            <Text  style={styles.smallText}>Your application is awaiting blockchain confirmation. Your public profile will update once the record is confirmed.</Text>
         </View>
 
         <Image source={require('../../img/astronaut.png')} style={styles.imgBox}/>

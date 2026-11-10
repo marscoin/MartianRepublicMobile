@@ -1,61 +1,37 @@
 import 'react-native-gesture-handler'; // should be on top
-import React, { useContext, useState, useCallback, useEffect, useRef } from 'react';
-import {AppState, NativeModules, NativeEventEmitter, Linking, Platform, StyleSheet, UIManager, useColorScheme,View,LogBox, Alert, Text, TextInput} from 'react-native';
+import React, { useContext, useState, useEffect, useRef } from 'react';
+import {AppState, NativeModules, NativeEventEmitter, Linking, Platform, StyleSheet, UIManager, useColorScheme,View,LogBox, Text, TextInput} from 'react-native';
 import { NavigationContainer, CommonActions } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { navigationRef } from './NavigationService';
 import * as NavigationService from './NavigationService';
 import { Chain } from './models/bitcoinUnits';
 import DeeplinkSchemaMatch from './class/deeplink-schema-match';
-import loc from './loc';
-import RNRestart from 'react-native-restart'; 
+
 import { BlueDefaultTheme, BlueDarkTheme } from './components/themes';
 import InitRoot from './Navigation';
-import BlueClipboard from './blue_modules/clipboard';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
 import { BlueStorageContext } from './blue_modules/storage-context';
 import DeviceQuickActions from './class/quick-actions';
 import Notifications from './blue_modules/notifications';
 import Biometric from './class/biometrics';
-import ActionSheet from './screen/ActionSheet';
+
 import HandoffComponent from './components/handoff';
-import triggerHapticFeedback, { HapticFeedbackTypes } from './blue_modules/hapticFeedback';
+
 import MenuElements from './components/MenuElements';
 import { updateExchangeRate } from './blue_modules/currency';
-import axios from "axios";
+
+import { configureCivicWallet } from './blue_modules/civic-api';
 
 
-const BlueApp = require('./BlueApp');
+
 const A = require('./blue_modules/analytics');
-const bitcoinMessage = require("bitcoinjs-message");
-const bitcoin = require("bitcoinjs-lib");
-const bip39 = require("bip39");
-const { BIP32Factory } = require('bip32')
-const ecc = require('tiny-secp256k1')
-const bip32 = BIP32Factory(ecc)
-
-const MARSCOIN = {
-    messagePrefix: "\x19Marscoin Signed Message:\n",
-    bech32: "M",
-    bip44: 2,
-    bip32: {
-      public: 0x043587cf,
-      private: 0x04358394,
-    },
-    pubKeyHash: 0x32,
-    scriptHash: 0x32,
-    wif: 0x80,
-};
-
 const eventEmitter = Platform.OS === 'ios' ? new NativeEventEmitter(NativeModules.EventEmitter) : undefined;
 const { EventEmitter, SplashScreen } = NativeModules;
 
 LogBox.ignoreLogs(['Require cycle:', 'Battery state `unknown` and monitoring disabled, this is normal for simulators and tvOS.']);
 
-const ClipboardContentType = Object.freeze({
-  BITCOIN: 'BITCOIN',
-  LIGHTNING: 'LIGHTNING',
-});
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -80,15 +56,7 @@ const App = () => {
   } = useContext(BlueStorageContext);
 
   const appState = useRef(AppState.currentState);
-  const clipboardContent = useRef();
   const colorScheme = useColorScheme();
-
-  const generateRoot = async (mnemonic) => {
-    const seed = await bip39.mnemonicToSeed(mnemonic);
-    //const root = bitcoin.bip32.fromSeed(seed, MARSCOIN); 
-    const root = bip32.fromSeed(seed, MARSCOIN);
-    return root;
-  };
 
   const onNotificationReceived = async notification => {
     const payload = Object.assign({}, notification, notification.data);
@@ -130,164 +98,18 @@ const App = () => {
     }
   }, [walletsInitialized]);
 
-  const storeCivic = async (address) => {
-    try {
-      await AsyncStorage.setItem('civicAddress', address);
-      console.log('CivicAddress successfully saved', address);
-    } catch (error) {
-      console.error('Failed to save the civicAddress to storage', error);
-    }
-  };
-
-  const storeMnemonic = async (mnemonic) => {
-    try {
-      await AsyncStorage.setItem('civicMnemonic', mnemonic);
-      console.log('CivicMnemonic successfully saved!!!!!!!!', mnemonic);
-    } catch (error) {
-      console.error('Failed to save the civicMnemonic to storage', error);
-    }
-  };
-
-  function getCivicAddress(wallets) {
-    // Loop through the wallets array
-    for (let wallet of wallets) {
-        // Check if the wallet has the civic property set to true
-        if (wallet.civic) {
-            console.log('CIVIC ADDRESS:', wallet._address );
-            storeCivic(wallet._address)
-            return wallet._address;
-        }
-    }
-    return null;  // Return null if no civic wallet is found
-  }  
-  
-  function getCivicMnemonic(wallets) {
-    // Loop through the wallets array
-    for (let wallet of wallets) {
-        // Check if the wallet has the civic property set to true
-        if (wallet.civic) {
-            storeMnemonic(wallet.secret)
-            return wallet.secret;
-        }
-    }
-    return null; // Return null if no civic wallet is found
-  }  
-
-
-  const storeToken = async (token) => {
-    try {
-      await AsyncStorage.setItem('@auth_token', token);
-      console.log('Token successfully saved');
-    } catch (error) {
-      console.error('Failed to save the token to storage', error);
-    }
-  };
-
-// async function getToken() {
-//   try {
-//     const address = getCivicAddress(wallets);
-//     const timestamp = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
-//     const message = `https://martianrepublic.org/api/token?a=${address}&t=${timestamp}`;
-
-//     mnemonic = getCivicMnemonic(wallets)
-//     const root = await generateRoot(mnemonic);
-//     let child = null;
-//     //let custom_key = "m/88888888'/0'";
-//     let custom_key =`m/44'/${MARSCOIN.bip44}'/0'/0/0` /////derives correct addresses
-//     child = root.derivePath(custom_key);
-//     const wif = child.toWIF();
-
-//     const keyPair = bitcoin.ECPair.fromWIF(wif);
-//     const privateKey = keyPair.privateKey;
-    
-//     ///////SIGNING THE MESSAGE/////////
-//     const signedMsg = bitcoinMessage
-//       .sign(message, privateKey, keyPair.compressed)
-//       .toString("base64");   
-
-//     console.log('signature:', signedMsg);
-//     console.log('CIVIC ADDRESS:', address);
-//     console.log('timestamp:', timestamp);
-//     console.log('message:', message);
-
-//     //Verify the signature
-//     const verified = bitcoinMessage.verify(message, address, signedMsg);
-//     console.log('Verification result:', verified);
-    
-//     const response = await axios.post("https://martianrepublic.org/api/token", {
-//       a: address,
-//       m: message,
-//       s: signedMsg, 
-//       t: timestamp,
-//     }).then(response => {
-//       console.log('Token retrieved:', response.data.token);
-//       storeToken(response.data.token); // Save the token once retrieved
-//     }).catch(error => {
-//       console.error('Failed to retrieve token:', error.response);
-//     });
-
-//     console.log('RESPONSE:', response);
-//   } catch (error) {
-//     console.error('Error fetching token:', error);
-//     return null;
-//   }
-// }
-
-const deleteAllWallets = useCallback(async () => {
-  await BlueApp.deleteAllWallets(); // Ensure this is awaited if asynchronous
-  console.log('All wallets have been deleted.');
-  RNRestart.Restart(); 
-}, []);
-
-async function getToken() {
-  try {
-    const address = getCivicAddress(wallets);
-    const timestamp = Math.floor(Date.now() / 1000);
-    const message = `https://martianrepublic.org/api/token?a=${address}&t=${timestamp}`;
-    const mnemonic = getCivicMnemonic(wallets);
-    const root = await generateRoot(mnemonic);
-    const customKey = `m/44'/${MARSCOIN.bip44}'/0'/0/0`;
-    const child = root.derivePath(customKey);
-    const wif = child.toWIF();
-    const keyPair = bitcoin.ECPair.fromWIF(wif);
-    const privateKey = keyPair.privateKey;
-    const signedMsg = bitcoinMessage.sign(message, privateKey, keyPair.compressed).toString("base64");
-
-    const response = await axios.post("https://martianrepublic.org/api/token", {
-      a: address,
-      m: message,
-      s: signedMsg,
-      t: timestamp,
-    });
-
-    if (response.data.token === 'inactive') {
-      Alert.alert(
-        "Account Status",
-        "Your account has been deleted.",
-        [
-          {
-            text: "OK",
-            onPress: deleteAllWallets, // Run deleteAllWallets when "OK" is pressed
-          },
-        ]
-      );
-    } else {
-      console.log('Token retrieved:', response.data.token);
-      storeToken(response.data.token);
-    }
-
-  } catch (error) {
-    console.error('Error fetching token:', error);
-    return null;
-  }
-}
-  
+  const civicWallet = wallets.find(candidate => candidate.civic);
+  const civicWalletID = civicWallet?.getID();
   useEffect(() => {
     if (walletsInitialized) {
-      getToken();
+      configureCivicWallet(civicWallet).catch(() => {
+        // Citizen screens expose a retry; wallet ownership is independent.
+      });
     }
-  }, [wallets]);
-  
+    // Balance refreshes replace the array, but must not create new API tokens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletsInitialized, civicWalletID]);
+
   const addListeners = () => {
     Linking.addEventListener('url', handleOpenURL);
     AppState.addEventListener('change', handleAppStateChange);
@@ -384,37 +206,8 @@ async function getToken() {
     if ((appState.current.match(/background/) && nextAppState === 'active') || nextAppState === undefined) {
       setTimeout(() => A(A.ENUM.APP_UNSUSPENDED), 2000);
       updateExchangeRate();
-      const processed = await processPushNotifications();
-      if (processed) return;
-      const clipboard = await BlueClipboard().getClipboardContent();
-      const isAddressFromStoredWallet = wallets.some(wallet => {
-        if (wallet.chain === Chain.ONCHAIN) {
-          // checking address validity is faster than unwrapping hierarchy only to compare it to garbage
-          return wallet.isAddressValid && wallet.isAddressValid(clipboard) && wallet.weOwnAddress(clipboard);
-        } else {
-          return wallet.isInvoiceGeneratedByWallet(clipboard) || wallet.weOwnAddress(clipboard);
-        }
-      });
-      const isBitcoinAddress = DeeplinkSchemaMatch.isBitcoinAddress(clipboard);
-      const isLightningInvoice = DeeplinkSchemaMatch.isLightningInvoice(clipboard);
-      const isLNURL = DeeplinkSchemaMatch.isLnUrl(clipboard);
-      const isBothBitcoinAndLightning = DeeplinkSchemaMatch.isBothBitcoinAndLightning(clipboard);
-      if (
-        !isAddressFromStoredWallet &&
-        clipboardContent.current !== clipboard &&
-        (isBitcoinAddress || isLightningInvoice || isLNURL || isBothBitcoinAndLightning)
-      ) {
-        let contentType;
-        if (isBitcoinAddress) {
-          contentType = ClipboardContentType.BITCOIN;
-        } else if (isLightningInvoice || isLNURL) {
-          contentType = ClipboardContentType.LIGHTNING;
-        } else if (isBothBitcoinAndLightning) {
-          contentType = ClipboardContentType.BITCOIN;
-        }
-        showClipboardAlert({ contentType });
-      }
-      clipboardContent.current = clipboard;
+      await processPushNotifications();
+      // Read the clipboard only after an explicit Paste action.
     }
     if (nextAppState) {
       appState.current = nextAppState;
@@ -428,44 +221,6 @@ async function getToken() {
       saveToDisk,
       setSharedCosigner,
     });
-  };
-
-  const showClipboardAlert = ({ contentType }) => {
-    triggerHapticFeedback(HapticFeedbackTypes.ImpactLight);
-    BlueClipboard()
-      .getClipboardContent()
-      .then(clipboard => {
-        if (Platform.OS === 'ios' || Platform.OS === 'macos') {
-          ActionSheet.showActionSheetWithOptions(
-            {
-              options: [loc._.cancel, loc._.continue],
-              title: loc._.clipboard,
-              message: contentType === ClipboardContentType.BITCOIN ? loc.wallets.clipboard_bitcoin : loc.wallets.clipboard_lightning,
-              cancelButtonIndex: 0,
-            },
-            buttonIndex => {
-              if (buttonIndex === 1) {
-                handleOpenURL({ url: clipboard });
-              }
-            },
-          );
-        } else {
-          ActionSheet.showActionSheetWithOptions({
-            buttons: [
-              { text: loc._.cancel, style: 'cancel', onPress: () => {} },
-              {
-                text: loc._.continue,
-                style: 'default',
-                onPress: () => {
-                  handleOpenURL({ url: clipboard });
-                },
-              },
-            ],
-            title: loc._.clipboard,
-            message: contentType === ClipboardContentType.BITCOIN ? loc.wallets.clipboard_bitcoin : loc.wallets.clipboard_lightning,
-          });
-        }
-      });
   };
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import { TouchableOpacity, ScrollView, Linking, Image, View, Text, StyleSheet, u
 import { useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { getApplicationName, getVersion, getBundleId, getBuildNumber, getUniqueIdSync, hasGmsSync } from 'react-native-device-info';
-import Rate, { AndroidMarket } from 'react-native-rate';
+import { openStoreReview } from '../../blue_modules/app-review';
 import { BlueCard, BlueSpacing20, BlueTextCentered } from '../../BlueComponents';
 import navigationStyle from '../../components/navigationStyle';
 import loc, { formatStringAddTwoWhiteSpaces } from '../../loc';
@@ -108,21 +108,7 @@ const About = () => {
   const handleOnGithubPress = () => {
     Linking.openURL('https://github.com/BlueWallet/BlueWallet');
   };
-  const handleOnRatePress = () => {
-    const options = {
-      AppleAppID: '1376878040',
-      GooglePackageName: 'io.bluewallet.bluewallet',
-      preferredAndroidMarket: AndroidMarket.Google,
-      preferInApp: Platform.OS !== 'android',
-      openAppStoreIfInAppFails: true,
-      fallbackPlatformURL: 'https://bluewallet.io',
-    };
-    Rate.rate(options, success => {
-      if (success) {
-        console.log('User Rated.');
-      }
-    });
-  };
+  const handleOnRatePress = () => openStoreReview();
 
   return (
     <ScrollView testID="AboutScrollView" contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>

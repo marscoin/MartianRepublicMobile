@@ -6,6 +6,7 @@ import { Chain } from '../../models/bitcoinUnits';
 import { BlueAlertWalletExportReminder } from '../../BlueComponents';
 import WalletGradient from '../../class/wallet-gradient';
 import navigationStyle from '../../components/navigationStyle';
+import HeaderAction from '../../components/HeaderAction';
 import { LightningCustodianWallet, LightningLdkWallet, MultisigHDWallet, WatchOnlyWallet } from '../../class';
 import ActionSheet from '../ActionSheet';
 import loc from '../../loc';
@@ -502,12 +503,6 @@ const WalletTransactionsCivic = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    setOptions({ statusBarStyle: 'light', 
-      //barTintColor: WalletGradient.headerColorFor(wallet.type)  ///not effectin ganything
-    });
-  }, [setOptions, wallet.type]);
-
   const getItemLayout = (_, index) => ({
     length: 64,
     offset: 64 * index,
@@ -655,19 +650,17 @@ export default WalletTransactionsCivic;
 WalletTransactionsCivic.navigationOptions = navigationStyle({}, (options, { theme, navigation, route }) => {
   return {
     headerRight: () => (
-      <TouchableOpacity
-        accessibilityRole="button"
+      <HeaderAction
+        label={loc.wallets.details_title}
+        color="#000000"
         testID="WalletDetails"
         disabled={route.params.isLoading === true}
-        style={styles.walletDetails}
         onPress={() =>
           navigation.navigate('WalletDetails', {
             walletID: route.params.walletID,
           })
         }
-      >
-        <Icon name="more-horiz" type="material" size={22} color="black" />
-      </TouchableOpacity>
+      />
     ),
     title: '',
     headerStyle: {
@@ -679,6 +672,7 @@ WalletTransactionsCivic.navigationOptions = navigationStyle({}, (options, { them
       shadowOffset: { height: 0, width: 0 },
     },
     headerTintColor: 'black',
+    statusBarStyle: 'dark',
     headerBackTitleVisible: false,
   };
 });
@@ -702,10 +696,6 @@ const styles = StyleSheet.create({
   },
   marginBottom18: {
     marginBottom: 18,
-  },
-  walletDetails: {
-    justifyContent: 'center',
-    alignItems: 'flex-end',
   },
   activityIndicator: {
     marginVertical: 20,

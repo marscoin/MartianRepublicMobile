@@ -1,5 +1,8 @@
+import { saveCitizenshipDraft, ipfsURL } from '../../blue_modules/citizenship-draft';
+import { getCivicToken } from '../../blue_modules/civic-api';
+import { citizenshipVideoFile, citizenshipVideoUploadError, MAX_CITIZENSHIP_VIDEO_BYTES } from '../../blue_modules/citizenship-media';
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Alert, Platform, SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
 import { Icon } from 'react-native-elements';
@@ -18,7 +21,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
   const { colors, fonts } = useTheme();
   const route = useRoute();
   const {firstName, lastName, displayName, bio, photo, video} = route.params;
-  console.log('PARAMS',route.params )
+
   const [modalVisible, setModalVisible] = useState(false);
   const [capturedVideo, setCapturedVideo] = useState(route.params.video);
   const [isVideoPaused, setIsVideoPaused] = useState(true);
@@ -29,7 +32,8 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
   
   const onVideoCaptured = (videoUri) => {
     setCapturedVideo(videoUri);
-    console.log('Video URI:', videoUri);
+    setVideoIPFS(null);
+
   }; 
 
   async function requestPermissions() {
@@ -38,76 +42,61 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         PermissionsAndroid.PERMISSIONS.CAMERA,
         PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
       ]);
-      return result === PermissionsAndroid.RESULTS.GRANTED;
+      return Object.values(result).every(value => value === PermissionsAndroid.RESULTS.GRANTED);
     }
     return true;
   }
   
-  useEffect(() => {
-    requestPermissions();
-  }, []);
+  async function openVideoCamera() {
+    try {
+      if (!(await requestPermissions())) {
+        Alert.alert('Camera access needed', 'Allow camera and microphone access in Settings to record your citizenship video.');
+        return;
+      }
+      setModalVisible(true);
+    } catch {
+      Alert.alert('Camera unavailable', 'Camera and microphone access could not be checked. Please try again.');
+    }
+  }
 
   async function postVideo() {
-    console.log('POST VIDEO START');
-    const token = await AsyncStorage.getItem('@auth_token');
+    if (capturedVideo === video && video) return ipfsURL(video);
+    const token = await getCivicToken();
     const civicAddress = await AsyncStorage.getItem('civicAddress');
-
-    // Create an instance of FormData
     const formData = new FormData();
-    
-    // Add video file to the form data. 'file' is the field name the server expects
-    formData.append('file', {
-        uri: capturedVideo,
-        type: 'video/mp4', // MIME type of the file
-        name: 'upload.mp4' // Optional: file name if required by backend
-    });
-
-    // Add other data the server expects
+    let file;
+    try {
+      const info = await RNFS.stat(capturedVideo);
+      file = citizenshipVideoFile(capturedVideo, Number(info.size));
+    } catch (error) {
+      Alert.alert('Recording not ready', error.code ? 'The recording could not be read. Please record it again.' : error.message);
+      return null;
+    }
+    formData.append('file', file);
     formData.append('type', 'personal_video');
     formData.append('address', civicAddress);
-
-    try {
-        const response = await axios.post("https://martianrepublic.org/api/pinvideo", formData, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data', // Important: Axios handles the boundary
-            }
-        });
-
-        if (response.status === 200 && response.data) {
-            console.log('Video pinned!!!! hash:', response.data.Hash);
-            setVideoIPFS(`https://ipfs.marscoin.org/ipfs/${response.data.Hash}`); 
-        } else {
-            console.log('Failed to upload video, status:', response.status);
-        }
-    } catch (error) {
-        console.error('Error uploading video:', error.response ? error.response.data : error.message);
-    }
-}
+    const response = await axios.post('https://martianrepublic.org/api/pinvideo', formData, {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }, timeout: 120000,
+    });
+    const uploaded = ipfsURL(response.data.Hash);
+    await saveCitizenshipDraft(civicAddress, { video: uploaded });
+    setVideoIPFS(uploaded);
+    return uploaded;
+  }
 
   const handleSubmit = async () => {
+    if (loading || !capturedVideo) return;
     setLoading(true);
     try {
-        await postVideo();
+      const uploaded = videoIPFS || await postVideo();
+      if (!uploaded) return;
+      navigation.navigate('JoinGeneralPublicApplication3Screen', { firstName, lastName, displayName, bio, photo, video: uploaded });
     } catch (error) {
-        console.error("Error in submission video:", error);
+      Alert.alert('Video not uploaded', citizenshipVideoUploadError(error));
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (videoIPFS) {
-      navigation.navigate('JoinGeneralPublicApplication3Screen', {
-        firstName,
-        lastName,
-        displayName,
-        bio,
-        photo,
-        video: videoIPFS,
-      });
-    }
-  }, [videoIPFS]); 
 
   useEffect(() => {
     const validateForm = () => {
@@ -358,16 +347,17 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
     async function compressVideo(videoUri) {
       try {
         const options = {
-          compressionMethod: 'auto', // or 'manual' for more control
-          quality: 'low', // 'low', 'medium', 'high'
-          bitrateMultiplier: 0.5, // Reduces bitrate to 75% of the original
-          removeAudio: false,
+          compressionMethod: 'manual',
+          maxSize: 480,
+          bitrate: 450000,
         };
         const compressedVideoUri = await CompressorVideo.compress(videoUri, options);
-        console.log('Compressed video path:', compressedVideoUri);
+
         return compressedVideoUri;
       } catch (error) {
-        console.error('Error compressing video:', error);
+        // Keep the camera output if compression fails; the upload size check
+        // still runs before anything is sent.
+        return videoUri;
       }
     }
 
@@ -378,13 +368,17 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         try {
           const options = {
             quality: RNCamera.Constants.VideoQuality["480p"],
+            maxDuration: 60,
+            maxFileSize: MAX_CITIZENSHIP_VIDEO_BYTES,
           };
           const video = await cameraRef.current.recordAsync(options);
           const compressedVideoUri = await compressVideo(video.uri);
           onVideoCaptured(compressedVideoUri);
           setCapturedUri(compressedVideoUri);
         } catch (err) {
-          console.error('Video capture error', err);
+          Alert.alert('Recording failed', 'The video could not be recorded. Check camera and microphone access and try again.');
+        } finally {
+          setIsRecording(false);
         }
       } else if (isRecording) {
         stopRecording();
@@ -528,7 +522,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
           {!capturedVideo && 
             <TouchableOpacity 
               style={styles.cameraButton}
-              onPress={() => setModalVisible(true)}
+              onPress={openVideoCamera}
             >
               <Icon name="video" size={36} type="font-awesome-5" color={'lightgray'} />
             </TouchableOpacity>
@@ -536,7 +530,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
           {capturedVideo &&
             <TouchableOpacity 
               //style={styles.cameraButton}
-              onPress={() => setModalVisible(true)}
+              onPress={openVideoCamera}
             >
               <Video
                 source={{ uri: capturedVideo }}
@@ -552,7 +546,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
               <Text style={[styles.medText, {marginTop: 20 }]}>1. Hold your phone horizontally (landscape) during the recording.</Text>
               <Text style={[styles.medText, {marginTop: 20 }]}>2. Display your CIVIC ADDRESS clearly on a piece of paper within the video frame.</Text>
               <Text style={[styles.medText, {marginTop: 20 }]}>3. Describe your reasons for wanting to join the Martian Congressional Republic.</Text>
-              <Text style={[styles.medText, {marginTop: 20, color:'#FF7400' }]}>Note: Your recording should not exceed 60 seconds.</Text>
+              <Text style={[styles.medText, {marginTop: 20, color:'#FF7400' }]}>Keep your recording under 60 seconds and 5 MB.</Text>
           </View>
         </View>
 
@@ -561,7 +555,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
                 <TouchableOpacity 
                   style={styles.joinButton}
                   onPress={handleSubmit}
-                  disabled={!isFormValid}
+                  disabled={!isFormValid || loading}
                 >
                     {loading ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />

@@ -4,9 +4,7 @@ import { BitcoinUnit } from "../../models/bitcoinUnits";
 import { randomBytes } from "../../class/rng";
 import { AbstractHDElectrumWallet } from "../../class/wallets/abstract-hd-electrum-wallet";
 import { HDLegacyP2PKHWallet } from "../../class";
-import { getUniqueId } from "react-native-device-info";
 const ecc = require('tiny-secp256k1');
-const bip32 = require('bip32');
 const BIP32Factory = require('bip32').BIP32Factory;
 
 // Create a bip32 instance using the factory
@@ -18,10 +16,6 @@ const bip32Instance = BIP32Factory(ecc);
 const MARSConnection = require("../../blue_modules/MARSConnection");
 
 const bip39 = require("bip39");
-const bip84 = require("bip84");
-const HDNode = require("bip32");
-
-const litecore = require("litecore-lib");
 const coinSelect = require("coinselect");
 const coinSelectSplit = require("coinselect/split");
 const bitcoin = require("bitcoinjs-lib");
@@ -77,19 +71,19 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   async generate() {
-    console.log("GENERATING MARS WALLET NOW!!!");
     const buf = await randomBytes(16);
-    this.secret = bip39.entropyToMnemonic(buf.toString("hex"));
-    console.log('secret: ', this.secret);
+    this.setSecret(bip39.entropyToMnemonic(buf.toString("hex")));
   }
 
   getAddress() {
-    // console.log('==== [MARS] getAddress ====');
-    return this._address;
+    return this.civic ? this._getExternalAddressByIndex(0) : this._address || this._getExternalAddressByIndex(this.next_free_address_index);
   }
 
   async getAddressAsync() {
-    console.log(`==== [AHD] GetAddressAsync() ====`);
+    if (this.civic) {
+      this._address = this._getExternalAddressByIndex(0);
+      return this._address;
+    }
     // looking for free external address
     let freeAddress = "";
     let c;
@@ -99,13 +93,13 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         this.next_free_address_index + c
       );
       this.external_addresses_cache[this.next_free_address_index + c] = address; // updating cache just for any case
-      this._address=this.external_addresses_cache[0] ///taking 0 index as main address
-      console.log('this.external_addresses_cache[0]', this._address)
+
       let txs = [];
       try {
         txs = await MARSConnection.getTransactionsByAddress(address);
       } catch (Err) {
-        console.warn("MarsConnection.getTransactionsByAddress()", Err.message);
+        // A failed lookup does not establish that an address is unused.
+        throw new Error('Could not check the receiving address. Please reconnect and try again.');
       }
       if (txs.length === 0) {
         // found free address
@@ -122,7 +116,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       ); // we didnt check this one, maybe its free
       this.next_free_address_index += c; // now points to this one
     }
-    //this._address = freeAddress;
+    this._address = freeAddress;
     return freeAddress;
   }
 
@@ -165,7 +159,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   checkValidity() {
-    console.log(`==== [MARS] Checking Validity ====`);
+
   }
 
   validateMnemonic() {
@@ -174,12 +168,35 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   setSecret(newSecret) {
+    if (this.secret !== newSecret) this.clearDerivedData();
     this.secret = newSecret.trim().toLowerCase();
     this.secret = this.secret
       .replace(/[^a-zA-Z0-9]/g, " ")
       .replace(/\s+/g, " ");
     return this;
   }
+  setPassphrase(passphrase) {
+    if (this.passphrase !== passphrase) this.clearDerivedData();
+    this.passphrase = passphrase;
+  }
+
+  clearDerivedData() {
+    this._xpub = undefined;
+    this._node0 = undefined;
+    this._node1 = undefined;
+    this._address = undefined;
+    this.external_addresses_cache = {};
+    this.internal_addresses_cache = {};
+    this._address_to_wif_cache = {};
+    this.next_free_address_index = 0;
+    this.next_free_change_address_index = 0;
+    this._utxo = [];
+    this._balances_by_external_index = {};
+    this._balances_by_internal_index = {};
+    this._txs_by_external_index = {};
+    this._txs_by_internal_index = {};
+  }
+
   setCivic() {
     this.civic = true;
     return this;
@@ -195,15 +212,11 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   getXpub() {
-    console.log("==== [MARS] GetXPub()");
     // Cache
     if (this._xpub) {
-      console.log("this._xpub", this._xpub);
       return this._xpub; // cache hit
     }
     const seed = this._getSeed();
-    console.log("seed", seed);
-    console.log('SEEEEEEED!!!',seed)
     const root = bitcoin.bip32.fromSeed(seed, Marscoin.mainnet);
 
     const path = this.getDerivationPath();
@@ -252,9 +265,8 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     }
 
     if (node === 1 && !this._node1) {
-      console.log('Hnode === 1')
+
       const xpub = this.getXpub();
-      console.log('this.xpub!!!',xpub)
       const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
       this._node1 = hdNode.derive(node);
     }
@@ -278,12 +290,20 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   async getChangeAddressAsync() {
-    console.log("[MARS WALLET - getChangeAddressAsync] Not implemented");
-    throw new Error("Not implemented");
+    for (let offset = 0; offset <= this.gap_limit; offset++) {
+      const index = this.next_free_change_address_index + offset;
+      const address = this._getInternalAddressByIndex(index);
+      const history = await MARSConnection.getTransactionsByAddress(address);
+      if (history.length === 0) {
+        this.next_free_change_address_index = index;
+        return address;
+      }
+    }
+    throw new Error('Could not find an unused change address. Refresh this wallet and try again.');
   }
 
   async fetchBalance() {
-    console.log("==== [MARS] fetchBalance() ====");
+
     try {
       if (
         this.next_free_change_address_index === 0 &&
@@ -320,7 +340,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   async _fetchBalance() {
-    console.log('==== [MARS] _fetchBalance() ====');
+
     // probing future addressess in hierarchy whether they have any transactions, in case
     // our 'next free addr' pointers are lagging behind
     // for that we are gona batch fetch history for all addresses between last used and last used + gap_limit
@@ -474,11 +494,16 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   coinselect(utxos, targets, feeRate, changeAddress) {
-    // console.log('==== [MARS] coinSelect ====');
-    // console.log(
-    //   "coinSelect w/" + JSON.stringify(targets) + " " + changeAddress
-    // );
-    if (!changeAddress) throw new Error("No change address provided!");
+    if (!this.isAddressValid(changeAddress)) throw new Error('A valid Marscoin change address is required.');
+    if (!Number.isFinite(feeRate) || feeRate < 1) throw new Error('Enter a valid fee rate in zubrins per byte.');
+    if (!targets.length) throw new Error('No destination provided.');
+    for (const target of targets) {
+      if (!target.script && !this.isAddressValid(target.address)) throw new Error('The destination is not a valid Marscoin address.');
+      if ('value' in target && (!Number.isSafeInteger(target.value) || target.value < (target.script ? 0 : 1))) {
+        throw new Error('The transaction amount must be a whole number of zubrins.');
+      }
+    }
+    if (utxos.some(input => !Number.isSafeInteger(input.value) || input.value <= 0)) throw new Error('Refresh the wallet before sending.');
 
     let algo = coinSelect;
     if (targets.some((i) => !("value" in i))) {
@@ -486,10 +511,6 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     }
 
     const { inputs, outputs, fee } = algo(utxos, targets, feeRate);
-
-    console.log("INPUTS:", inputs)
-    console.log("OUTPUTS:", outputs)
-    console.log("FEE", fee)
 
     if (!inputs || !outputs) {
       throw new Error("Not enough balance");
@@ -505,7 +526,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   // ggetPassport() {}
 
   getUtxo(respectFrozen = false) {
-    console.log("==== [MARS] getUtxo ===");
+
     let ret = [];
 
     if (this._utxo.length === 0) {
@@ -518,7 +539,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         ({ txid, vout }) => !this.getUTXOMetadata(txid, vout).frozen
       );
     }
-    console.log("-- [getUtxo] " + JSON.stringify(ret));
+
     return ret;
   }
 
@@ -540,7 +561,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   getDerivedUtxoFromOurTransaction(returnSpentUtxoAsWell = false) {
-    console.log("==== [MARS] getDerivedUtxoFromOurTransaction ====");
+
     const utxos = [];
 
     // its faster to pre-build hashmap of owned addresses than to query `this.weOwnAddress()`, which in turn
@@ -555,7 +576,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
     for (const tx of this.getTransactions()) {
       for (const output of tx.outputs) {
-        console.log("hello:",output);
+
         let address = false;
         if (
           output.scriptPubKey &&
@@ -610,7 +631,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   _getExternalWIFByIndex(index) {
-    console.log("==== [AHD-Electrum] GetExternalWIFByIndex() ====");
+
     return this._getWIFByIndex(false, index);
   }
 
@@ -619,9 +640,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   _getWIFByIndex(internal, index) {
-    console.log(
-      "==== [MARS] GetWifByIndex() ==== index: " + index + " " + internal
-    );
+
     try {
       const seed = this._getSeed(); // Make sure this returns a Buffer
       const network = Marscoin.mainnet; // Using Marscoin network definitions
@@ -631,7 +650,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       const child = root.derivePath(path);
       return child.toWIF();
   } catch (error) {
-      console.error('Error deriving WIF:', error);
+      console.error('Could not derive the Marscoin signing key');
       return false;
   }
     // if (!this.secret) return false;
@@ -770,20 +789,20 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   async fetchTransactions() {
-    console.log("==== [MARS] fetchTransactions() ====")
+
     // if txs are absent for some internal address in hierarchy - this is a sign
     // we should fetch txs for that address
     // OR if some address has unconfirmed balance - should fetch it's txs
     // OR some tx for address is unconfirmed
     // OR some tx has < 7 confirmations
-  
+
     // fetching transactions in batch: first, getting batch history for all addresses,
     // then batch fetching all involved txids
     // finally, batch fetching txids of all inputs (needed to see amounts & addresses of those inputs)
     // then we combine it all together
-  
+
     const knownAddresses = []
-  
+
     // Build list of known addresses
     for (let c = 0; c < this.next_free_address_index + 1; c++) {
       knownAddresses.push(this._getExternalAddressByIndex(c))
@@ -791,12 +810,10 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     for (let c = 0; c < this.next_free_change_address_index + 1; c++) {
       knownAddresses.push(this._getInternalAddressByIndex(c))
     }
-    
-    console.log(`[DEBUG] Checking transaction history for ${knownAddresses.length} known addresses`)
-    
+
     // Create an array of addresses to check
     const addressesToFetch = []
-    
+
     // Add some extra addresses beyond what we know we've used, to catch any we might have missed
     for (let c = 0; c < this.next_free_address_index + this.gap_limit; c++) {
       addressesToFetch.push(this._getExternalAddressByIndex(c))
@@ -804,36 +821,34 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     for (let c = 0; c < this.next_free_change_address_index + this.gap_limit; c++) {
       addressesToFetch.push(this._getInternalAddressByIndex(c))
     }
-  
+
     // Create a new array with unique addresses instead of reassigning addresses2fetch
     const uniqueAddresses = [...new Set(addressesToFetch)]
-    console.log(`[DEBUG] Fetching transaction history for ${uniqueAddresses.length} total addresses`)
-  
+
     // Fetch transaction histories for all addresses
     const histories = await MARSConnection.multiGetHistoryByAddress(uniqueAddresses)
-    
+
     // Log how many transactions we found
     let txCount = 0
     for (const addr in histories) {
       if (histories[addr] && histories[addr].length > 0) {
-        console.log(`[DEBUG] Address ${addr} has ${histories[addr].length} transactions`)
+
         txCount += histories[addr].length
       }
     }
-    console.log(`[DEBUG] Found ${txCount} total transactions in histories`)
-  
+
     const txs = {}
     for (const history of Object.values(histories)) {
       for (const tx of history) {
         txs[tx.tx_hash] = tx
       }
     }
-  
+
     // next, batch fetching each txid we got
     const txdatas = await MARSConnection.multiGetTransactionByTxid(
       Object.keys(txs)
     )
-  
+
     // now, tricky part. we collect all transactions from inputs (vin), and batch fetch them too.
     // then we combine all this data (we need inputs to see source addresses and amounts)
     const vinTxids = []
@@ -843,68 +858,23 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       }
     }
     const vintxdatas = await MARSConnection.multiGetTransactionByTxid(vinTxids)
-  
+
     // fetched all transactions from our inputs. now we need to combine it.
     // iterating all _our_ transactions:
-    console.log(
-      "Starting transaction processing. txdatas keys:",
-      Object.keys(txdatas).length
-    )
-  
+
     // Debug: Inspect transaction data structure
     if (Object.keys(txdatas).length > 0) {
       const sampleTxid = Object.keys(txdatas)[0]
-      console.log(
-        "Sample transaction structure:",
-        JSON.stringify(
-          {
-            txid: sampleTxid,
-            vin_structure:
-              txdatas[sampleTxid].vin.length > 0
-                ? Object.keys(txdatas[sampleTxid].vin[0])
-                : "empty vin",
-            vout_structure:
-              txdatas[sampleTxid].vout.length > 0
-                ? Object.keys(txdatas[sampleTxid].vout[0])
-                : "empty vout",
-            scriptPubKey_structure:
-              txdatas[sampleTxid].vout.length > 0 &&
-              txdatas[sampleTxid].vout[0].scriptPubKey
-                ? Object.keys(txdatas[sampleTxid].vout[0].scriptPubKey)
-                : "no scriptPubKey",
-          },
-          null,
-          2
-        )
-      )
-  
+
       // Check vintxdatas structure
       if (Object.keys(vintxdatas).length > 0) {
         const sampleVinTxid = Object.keys(vintxdatas)[0]
-        console.log(
-          "Sample vintxdata structure:",
-          JSON.stringify(
-            {
-              txid: sampleVinTxid,
-              vout_structure:
-                vintxdatas[sampleVinTxid].vout &&
-                Object.keys(vintxdatas[sampleVinTxid].vout).length > 0
-                  ? Object.keys(
-                      vintxdatas[sampleVinTxid].vout[
-                        Object.keys(vintxdatas[sampleVinTxid].vout)[0]
-                      ]
-                    )
-                  : "empty vout",
-            },
-            null,
-            2
-          )
-        )
+
       } else {
-        console.log("No vintxdatas available")
+
       }
     }
-  
+
     // Helper function to safely access nested properties
     const safeGet = (obj, path) => {
       try {
@@ -913,7 +883,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         return undefined
       }
     }
-  
+
     for (const txid of Object.keys(txdatas)) {
       try {
         // iterating all inputs our our single transaction:
@@ -921,53 +891,52 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
           try {
             const input = txdatas[txid].vin[inpNum]
             const inpTxid = input.txid
-            
+
             // Handle potential change in vout property name (could be vout, n, or other)
             const inpVout = input.vout !== undefined ? input.vout : 
                             input.n !== undefined ? input.n : undefined
-    
+
             // got txid and output number of _previous_ transaction we should look into
             if (inpTxid && inpVout !== undefined && vintxdatas[inpTxid]) {
               const vout = vintxdatas[inpTxid].vout
-              
+
               // Check if vout exists and has the right index as a number or string
               const voutIndex = String(inpVout)
               const voutData = vout && (vout[inpVout] || vout[voutIndex])
-    
+
               if (voutData) {
                 // Handle potential changes in scriptPubKey structure
                 const scriptPubKey = voutData.scriptPubKey
-                
+
                 if (scriptPubKey) {
                   // Try different possible locations for addresses
                   const addresses = scriptPubKey.addresses || 
                                    (scriptPubKey.address ? [scriptPubKey.address] : null) ||
                                    (scriptPubKey.addressHash ? [scriptPubKey.addressHash] : null)
-    
+
                   if (addresses) {
                     txdatas[txid].vin[inpNum].addresses = addresses
                   }
                 }
-    
+
                 // Handle potential changes in value property
                 const value = voutData.value !== undefined ? voutData.value : voutData.amount
                 if (value !== undefined) {
                   txdatas[txid].vin[inpNum].value = value
                 }
               } else {
-                console.log(`Missing vout data for input: ${inpTxid}:${inpVout}`)
+
               }
             }
           } catch (inputError) {
-            console.log(`Error processing input ${inpNum} of tx ${txid}:`, inputError.message)
+
           }
         }
       } catch (txError) {
-        console.log(`Error processing transaction ${txid}:`, txError.message)
+
       }
     }
-  
-    console.log("Purging unconfirmed transactions")
+
     // now purge all unconfirmed txs from internal hashmaps, since some may be evicted from mempool because they became invalid
     // or replaced. hashmaps are going to be re-populated anyways, since we fetched TXs for addresses with unconfirmed TXs
     for (let c = 0; c < this.next_free_address_index + this.gap_limit; c++) {
@@ -988,10 +957,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         )
       }
     }
-  
-    console.log("Populating transaction hashmaps")
+
     // now, we need to put transactions in all relevant `cells` of internal hashmaps: this._txs_by_internal_index && this._txs_by_external_index
-  
+
     // Helper function to safely process transactions
     const processTxForAddress = (tx, addressIndex, isInternal) => {
       try {
@@ -1002,10 +970,10 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
           ? this._getInternalAddressByIndex.bind(this)
           : this._getExternalAddressByIndex.bind(this)
         const address = getAddressFn(addressIndex)
-    
+
         // Initialize the array if it doesn't exist
         targetMap[addressIndex] = targetMap[addressIndex] || []
-    
+
         // Create a standardized transaction object
         const standardTx = {
           txid: tx.txid,
@@ -1020,7 +988,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
           outputs: [], // Will populate with standardized outputs
           hex: tx.hex
         }
-    
+
         // Standardize inputs
         if (Array.isArray(tx.vin)) {
           standardTx.inputs = tx.vin.map(input => ({
@@ -1031,7 +999,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
             value: input.value || 0,
           }))
         }
-    
+
         // Standardize outputs
         if (Array.isArray(tx.vout)) {
           standardTx.outputs = tx.vout.map(output => ({
@@ -1040,7 +1008,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
             scriptPubKey: output.scriptPubKey || {},
           }))
         }
-    
+
         // Check if this transaction already exists
         let replaced = false
         for (let i = 0; i < targetMap[addressIndex].length; i++) {
@@ -1050,27 +1018,24 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
             break
           }
         }
-    
+
         // Add if not replaced
         if (!replaced) {
           targetMap[addressIndex].push(standardTx)
         }
       } catch (error) {
-        console.log(
-          `Error processing transaction for ${isInternal ? "internal" : "external"} address ${addressIndex}:`,
-          error.message
-        )
+
       }
     }
-  
+
     // Process external addresses
     for (let c = 0; c < this.next_free_address_index + this.gap_limit; c++) {
       const externalAddress = this._getExternalAddressByIndex(c)
-  
+
       for (const txid in txdatas) {
         const tx = txdatas[txid]
         let isRelevant = false
-  
+
         // Check inputs
         if (Array.isArray(tx.vin)) {
           for (const vin of tx.vin) {
@@ -1083,7 +1048,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
             }
           }
         }
-  
+
         // Check outputs
         if (!isRelevant && Array.isArray(tx.vout)) {
           for (const vout of tx.vout) {
@@ -1093,21 +1058,20 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
                 (vout.scriptPubKey.address
                   ? [vout.scriptPubKey.address]
                   : null))
-  
+
             if (addresses && addresses.indexOf(externalAddress) !== -1) {
               isRelevant = true
               break
             }
           }
         }
-  
+
         if (isRelevant) {
           processTxForAddress(tx, c, false)
         }
       }
     }
-  
-    console.log("Processing internal addresses")
+
     // Process internal addresses
     for (
       let c = 0;
@@ -1115,11 +1079,11 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       c++
     ) {
       const internalAddress = this._getInternalAddressByIndex(c)
-  
+
       for (const txid in txdatas) {
         const tx = txdatas[txid]
         let isRelevant = false
-  
+
         // Check inputs
         if (Array.isArray(tx.vin)) {
           for (const vin of tx.vin) {
@@ -1132,7 +1096,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
             }
           }
         }
-  
+
         // Check outputs
         if (!isRelevant && Array.isArray(tx.vout)) {
           for (const vout of tx.vout) {
@@ -1142,87 +1106,36 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
                 (vout.scriptPubKey.address
                   ? [vout.scriptPubKey.address]
                   : null))
-  
+
             if (addresses && addresses.indexOf(internalAddress) !== -1) {
               isRelevant = true
               break
             }
           }
         }
-  
+
         if (isRelevant) {
           processTxForAddress(tx, c, true)
         }
       }
     }
-    console.log("Transaction processing complete")
-  
+
     this._lastTxFetch = +new Date()
   }
 
   getTransactions() {
-    console.log("==== [MARS] getTransactions ====")
+
     let txs = []
-  
+
     for (const addressTxs of Object.values(this._txs_by_external_index)) {
       txs = txs.concat(addressTxs)
     }
     for (const addressTxs of Object.values(this._txs_by_internal_index)) {
       txs = txs.concat(addressTxs)
     }
-  
-    // LOG: Show number of transactions found
-    console.log(`[DEBUG] Found ${txs.length} total transactions from indexes`)
-  
+
     if (txs.length === 0) return [] // guard clause; so we wont spend time calculating addresses
-  
-    // LOG: Show raw transaction structure of first transaction if available
-    if (txs.length > 0) {
-      const sampleTx = txs[0]
-      console.log('[DEBUG] Sample transaction structure:')
-      console.log('- txid:', sampleTx.txid)
-      console.log('- hash:', sampleTx.hash)
-      console.log('- confirmations:', sampleTx.confirmations)
-      console.log('- blocktime:', sampleTx.blocktime)
-      console.log('- inputs property exists:', !!sampleTx.inputs)
-      console.log('- vin property exists:', !!sampleTx.vin)
-      
-      // Log input structure
-      const inputsArray = sampleTx.inputs || sampleTx.vin || []
-      if (inputsArray.length > 0) {
-        const sampleInput = inputsArray[0]
-        console.log('[DEBUG] Sample input structure:')
-        console.log('- Input keys:', Object.keys(sampleInput))
-        console.log('- txid:', sampleInput.txid)
-        console.log('- vout/n:', sampleInput.vout !== undefined ? sampleInput.vout : sampleInput.n)
-        console.log('- addresses property exists:', !!sampleInput.addresses)
-        console.log('- address property exists:', !!sampleInput.address)
-        console.log('- value property exists:', !!sampleInput.value)
-        console.log('- amount property exists:', !!sampleInput.amount)
-      }
-      
-      // Log output structure
-      const outputsArray = sampleTx.outputs || sampleTx.vout || []
-      if (outputsArray.length > 0) {
-        const sampleOutput = outputsArray[0]
-        console.log('[DEBUG] Sample output structure:')
-        console.log('- Output keys:', Object.keys(sampleOutput))
-        console.log('- n:', sampleOutput.n)
-        console.log('- value:', sampleOutput.value)
-        
-        // Check scriptPubKey structure
-        if (sampleOutput.scriptPubKey) {
-          console.log('- scriptPubKey keys:', Object.keys(sampleOutput.scriptPubKey))
-          console.log('- address property exists:', !!sampleOutput.scriptPubKey.address)
-          console.log('- addresses property exists:', !!sampleOutput.scriptPubKey.addresses)
-          if (sampleOutput.scriptPubKey.addresses) {
-            console.log('- addresses is array:', Array.isArray(sampleOutput.scriptPubKey.addresses))
-            console.log('- first address:', sampleOutput.scriptPubKey.addresses[0])
-          }
-        }
-      }
-    }
-  
+
     // Build hashmap of owned addresses for faster lookup
     const ownedAddressesHashmap = {}
     for (let c = 0; c < this.next_free_address_index + 1; c++) {
@@ -1233,15 +1146,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     }
     // hack: in case this code is called from LegacyWallet:
     if (this.getAddress()) ownedAddressesHashmap[this.getAddress()] = true
-  
-    // LOG: Show owned addresses
-    console.log(`[DEBUG] Wallet has ${Object.keys(ownedAddressesHashmap).length} owned addresses`)
-    
+
     const ret = []
     for (const tx of txs) {
-      // LOG: Process individual transaction
-      console.log(`[DEBUG] Processing tx: ${tx.txid} (${tx.confirmations || 0} confirmations)`)
-      
       const processedTx = {
         received: tx.blocktime ? tx.blocktime * 1000 : +new Date() - 30 * 1000, // unconfirmed
         confirmations: tx?.confirmations || 0, // unconfirmed
@@ -1252,74 +1159,66 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         inputs: tx.inputs || tx.vin || [],
         outputs: tx.outputs || tx.vout || []
       }
-  
+
       // Calculate inputs and outputs amounts for this transaction
       let totalInputsFromOurWallet = 0;
       let totalOutputsToOurWallet = 0;
       let totalExternalOutputs = 0;
-      
+
       // Check inputs from our wallet
       for (const input of processedTx.inputs) {
         const inputAddresses = input.addresses || (input.address ? [input.address] : []);
         if (inputAddresses.some(addr => ownedAddressesHashmap[addr])) {
           const inputValue = parseFloat(input.value) || 0;
           totalInputsFromOurWallet += inputValue;
-          console.log(`[DEBUG] Found owned input from address: ${inputAddresses[0]}, value: ${inputValue}`);
+
         }
       }
-      
+
       // Check outputs to our wallet and external addresses
       for (const output of processedTx.outputs) {
         const scriptPubKey = output.scriptPubKey || {};
         const outputAddress = scriptPubKey.address || 
                              (scriptPubKey.addresses && scriptPubKey.addresses[0]);
-        
+
         if (outputAddress) {
           const outputValue = parseFloat(output.value) || 0;
-          
+
           if (ownedAddressesHashmap[outputAddress]) {
             // Output to our wallet (could be change)
             totalOutputsToOurWallet += outputValue;
-            console.log(`[DEBUG] Found owned output to: ${outputAddress}, value: ${outputValue}`);
+
           } else {
             // Output to external address
             totalExternalOutputs += outputValue;
-            console.log(`[DEBUG] Found external output to: ${outputAddress}, value: ${outputValue}`);
+
           }
         }
       }
-      
+
       // Determine transaction type and value
       if (totalInputsFromOurWallet > 0) {
         // This is an outgoing transaction (we spent some coins)
         // Calculate the total amount spent including fees
         const totalSpent = totalInputsFromOurWallet - totalOutputsToOurWallet;
-        
+
         // The network fee is the difference between inputs and all outputs
         const networkFee = totalInputsFromOurWallet - (totalOutputsToOurWallet + totalExternalOutputs);
-        
-        console.log(`[DEBUG] Outgoing transaction - Total from our wallet: ${totalInputsFromOurWallet}`);
-        console.log(`[DEBUG] Outgoing transaction - Total back to our wallet: ${totalOutputsToOurWallet}`);
-        console.log(`[DEBUG] Outgoing transaction - Total to external: ${totalExternalOutputs}`);
-        console.log(`[DEBUG] Outgoing transaction - Network fee: ${networkFee}`);
-        console.log(`[DEBUG] Outgoing transaction - Total spent (with fees): ${totalSpent}`);
-        
+
         // Set transaction value as negative (money sent)
         // Multiply by 100000000 to match UI display expectations
         processedTx.value = -totalSpent * 100000000;
-        console.log(`[DEBUG] This is a send transaction with total amount (incl. fees): ${totalSpent}, stored value: ${processedTx.value}`);
+
       } else if (totalOutputsToOurWallet > 0) {
         // This is an incoming transaction (we received coins)
         // Multiply by 100000000 to match UI display expectations
         processedTx.value = totalOutputsToOurWallet * 100000000;
-        console.log(`[DEBUG] This is a receive transaction with amount: ${totalOutputsToOurWallet}, stored value: ${processedTx.value}`);
+
       }
-      
-      console.log(`[DEBUG] Final tx value: ${processedTx.value}`);
-      
+
       ret.push(processedTx);
     }
-  
+
     // Deduplication
     const usedTxIds = {}
     const ret2 = []
@@ -1327,20 +1226,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       if (!usedTxIds[tx.txid]) ret2.push(tx)
       usedTxIds[tx.txid] = 1
     }
-  
-    console.log(`[DEBUG] Final transactions count after deduplication: ${ret2.length}`)
-    
-    if (ret2.length > 0) {
-      console.log('[DEBUG] Example of processed transaction:')
-      const exampleTx = ret2[0]
-      console.log(JSON.stringify({
-        txid: exampleTx.txid,
-        confirmations: exampleTx.confirmations,
-        received: exampleTx.received,
-        value: exampleTx.value,
-      }, null, 2))
-    }
-  
+
     return ret2.sort(function (a, b) {
       return b.received - a.received
     })
@@ -1388,22 +1274,18 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   _getNodePubkeyByIndex(node, index) {
-    console.log("==== [MARS] GetNodePubKeyByIndex()");
+
     //const xpub = this.constructor._zpubToXpub(this.getXpub());
     index = index * 1; // cast to int
-    console.log("this wallet", this.constructor);
-    console.log("this wallet xpub", this.xpub);
-    console.log("node =", node);
+
     // if (node === 0 && !this._node0) {
     if (node === 0) {
       //const xpub = this.constructor._zpubToXpub(this.getXpub());
       const xpub = this.getXpub();
-      console.log("XPUB =", xpub);
       const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
       //const hdNode = bip32Instance.fromBase58(this.xpub, Marscoin.mainnet);
       //const hdNode = bip32.fromBase58(xpub);
       //const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet);
-      console.log("Node:", hdNode);
       this._node0 = hdNode.derive(node);
     }
 
@@ -1411,10 +1293,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     if (node === 1) {
       //const xpub = this.constructor._zpubToXpu
       const xpub = this.getXpub();
-      console.log("XPUB =", xpub);
       const hdNode = bip32Instance.fromBase58(xpub, Marscoin.mainnet);
       // const hdNode = HDNode.fromBase58(xpub, Marscoin.mainnet)
-      
+
       this._node1 = hdNode.derive(node);
     }
 
@@ -1436,7 +1317,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       const network = Marscoin.mainnet;
       const node = bip32Instance.fromBase58(xpubString, network);
       const child = node.derive(index);
-   
+
       return child.publicKey.toString('hex');
     } catch (error) {
       console.error("Failed to derive public key:", error.message);
@@ -1455,10 +1336,15 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     masterFingerprint,
     message = null
   ) {
-    console.log("\n\n\n=== Generating Transaction === ");
 
-    console.log("Fee: " + feeRate);
-    feeRate = feeRate * 100;
+    // Fee estimates and the preview already use atomic units (zubrins) per
+    // byte. Keep those units through selection and signing.
+    if (message) {
+      const data = Buffer.from(message, 'utf8');
+      if (data.length > 80) throw new Error('The citizenship record is too large for a transaction.');
+      const embed = bitcoin.payments.embed({ data: [data] });
+      targets = [...targets, { script: embed.output, value: 0 }];
+    }
 
     if (targets.length === 0) throw new Error("No destination provided");
     const { inputs, outputs, fee } = this.coinselect(
@@ -1496,16 +1382,15 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     }
 
     inputs.forEach((input) => {
-      console.log("=== Creating individual input ===");
+
       let keyPair;
       if (!skipSigning) {
         // maybe change keyPair gen to v2
-        console.log("-- Fetching keypair for: " + input.address);
+
         keyPair = bitcoin.ECPair.fromWIF(
           this._getWifForAddress(input.address),
           Marscoin.mainnet
         );
-        console.log("Found keypair: " + JSON.stringify(keyPair));
         keypairs[c] = keyPair;
       }
       values[c] = input.value;
@@ -1522,7 +1407,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         if (masterFingerprintHex.length < 8)
           masterFingerprintHex = "0" + masterFingerprintHex; // conversion without explicit zero might result in lost byte
         const hexBuffer = Buffer.from(masterFingerprintHex, "hex");
-        masterFingerprintBuffer = Buffer.from(reverse(hexBuffer));
+        masterFingerprintBuffer = Buffer.from(hexBuffer).reverse();
       } else {
         masterFingerprintBuffer = Buffer.from([0x00, 0x00, 0x00, 0x00]);
       }
@@ -1537,64 +1422,35 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
         masterFingerprintBuffer
       );
       c++;
-      console.log("=== Finished Creating Individual Input ===\n");
+
     });
 
     // Succesfully creates inputs but outputs are invalid
-    console.log("\n\n\n === CREATED ALL INPUTS ===\n\n\n");
 
-    outputs.forEach((output) => {
-      console.log("=== Creating individual output");
-      // if output has no address - this is change output
-      let change = false;
-      if (!output.address) {
-        console.log(" -- Adding change address");
-        change = true;
-        output.address = changeAddress;
+    outputs.forEach(output => {
+      if (output.script) {
+        psbt.addOutput({ script: output.script, value: output.value });
+      } else {
+        // Coin selection leaves the change output's destination unspecified.
+        if (!output.address) output.address = changeAddress;
+        psbt.addOutput({ address: output.address, value: output.value });
       }
-
-      const outputData = {
-        address: output.address,
-        value: output.value,
-      };
-
-      psbt.addOutput(outputData);
-      console.log("--- Finished creating individual output ---");
     });
-    
-    if(message)
-      {
-        const data = Buffer.from(message);
-        const embed = bitcoin.payments.embed({ data: [data] });
-        psbt.addOutput({
-          script: embed.output,
-          value: 0,
-        });
-      }
 
-    console.log("\n\n\n=== CREATED ALL OUTPUTS ===\n\n\n");
-    console.log("skip signing: ", skipSigning);
     if (!skipSigning) {
       // skiping signing related stuff
-      console.log(`--- Signing Inputs for ` + keypairs.length + "keys");
+
       for (let cc = 0; cc < c; cc++) {
-        console.log("--- Signing input @ index: " + cc);
+
         psbt.signInput(cc, keypairs[cc]);
       }
     }
-
-    console.log('psbt.validateSignaturesOfAllInputs()', psbt.validateSignaturesOfAllInputs());
 
     let tx;
     if (!skipSigning) {
       tx = psbt.finalizeAllInputs().extractTransaction();
     }
-    console.log("=== RETURNING FROM CREATETX() ===\n\n\n");
-    console.log("tx !!!!!!", tx);
-    console.log("inputs !!!!!",  inputs);
-    console.log(" outputs !!!!!", outputs);
-    console.log("fee", fee);
-    console.log("psbt", psbt);
+
     return { tx, inputs, outputs, fee, psbt };
   }
 
@@ -1605,10 +1461,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   }
 
   _addPsbtInput = (psbt, input, txHex, sequence, masterFingerprintBuffer) => {
-    console.log("==== [MARS] _addPsbtInput ====");
-    console.log(input);
+
     const pubkey = this._getPubkeyByAddress(input.address);
-    console.log('pubkey',pubkey);
+
     const path = this._getDerivationPathByAddress(input.address);
 
     const p2wpkh = bitcoin.payments.p2pkh({
@@ -1616,18 +1471,10 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       network: Marscoin.mainnet,
     });
 
-    console.log(p2wpkh);
-
-    console.log("-- Adding input --");
-    console.log("hash: " + input.txId);
-    console.log("index: " + input.vout);
-    console.log("hex: " + txHex);
-    console.log("\n\n\n");
-
     psbt.addInput({
       hash: input.txId,
       index: input.vout,
-      // sequence,
+      sequence,
       // bip32Derivation: [
       //   {
       //     masterFingerprint: masterFingerprintBuffer,
@@ -1637,7 +1484,7 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       // ],
       nonWitnessUtxo: Buffer.from(txHex, "hex"),
     });
-    console.log("RETURNING FROM addPsbtInput");
+
     return psbt;
   };
 
@@ -1648,10 +1495,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
    * @returns {Promise<boolean>}
    */
   async broadcastTx(txhex) {
-    console.log("==== [MARS] broadcastTx ==== ");
+
     const broadcast = await MARSConnection.broadcastV2(txhex);
-    console.log("==== [MARS] broadcastTx ==== ", broadcast);
-    console.log({ broadcast });
+
     if (broadcast.indexOf("successfully") !== -1) return true;
     return broadcast.length === 64; // this means return string is txid (precise length), so it was broadcasted ok
   }

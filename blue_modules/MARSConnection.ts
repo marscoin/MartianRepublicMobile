@@ -6,6 +6,7 @@ import DefaultPreference from "react-native-default-preference";
 import loc from "../loc";
 import { isTorCapable } from "./environment";
 import { Marscoin } from "./constants";
+import { assertMarsMainnet, defaultMarsElectrumPeer, selectMarsElectrumPeer } from "./mars-electrum-peer";
 const bitcoin = require("bitcoinjs-lib");
 const ElectrumClient = require("electrum-client");
 const reverse = require("buffer-reverse");
@@ -53,27 +54,8 @@ async function _getRealm() {
 }
 
 const storageKey = "ELECTRUM_PEERS";
-// const defaultPeer = { host: "147.182.177.23", ssl: "50002" }; ////Bytefederal
-// const hardcodedPeers = [
-//   { host: "147.182.177.23", tcp: "50001" },
-//   { host: "147.182.177.23", ssl: "50002" },
-// ];
-// const defaultPeer = { host: "164.90.138.207", ssl: "50002" }; /////MARS
-// const hardcodedPeers = [
-//   { host: "164.90.138.207", tcp: "50001" },
-//   { host: "164.90.138.207", ssl: "50002" },
-// ];
-
-const defaultPeer = { host: "161.35.136.251", ssl: "50002" }; /////MARS
-const hardcodedPeers = [
-  { host: "161.35.136.251", tcp: "50001" },
-  { host: "161.35.136.251", ssl: "50002" },
-];
-// const defaultPeer = { host: "67.205.167.111", ssl: "50002" }; 
-// const hardcodedPeers = [
-//   { host: "67.205.167.111", tcp: "50001" },
-//   { host: "67.205.167.111", ssl: "50002" },
-// ];
+const defaultPeer = defaultMarsElectrumPeer;
+const hardcodedPeers = [defaultPeer];
 
 /** @type {ElectrumClient} */
 let mainClient;
@@ -89,11 +71,7 @@ let latestBlockheightTimestamp = false;
 const txhashHeightCache = {};
 
 async function connectMain() {
-  let usingPeer = await getRandomHardcodedPeer();
-  const savedPeer = await getSavedPeer();
-  if (savedPeer && savedPeer.host && (savedPeer.tcp || savedPeer.ssl)) {
-    usingPeer = savedPeer;
-  }
+  const usingPeer = selectMarsElectrumPeer(await getSavedPeer(), connectionAttempt);
 
   await DefaultPreference.setName("group.io.bluewallet.bluewallet");
   try {
@@ -143,10 +121,13 @@ async function connectMain() {
       client: "bluewallet",
       version: "1.4",
     });
+    // Check the chain before requesting addresses, balances or broadcasting.
+    assertMarsMainnet(await mainClient.server_features());
     if (ver && ver[0]) {
       console.log("Connected to ElectrumMARS", ver);
       serverName = ver[0];
       mainConnected = true;
+      connectionAttempt = 0;
       wasConnectedAtLeastOnce = true;
       if (
         ver[0].startsWith("ElectrumPersonalServer") ||
@@ -171,7 +152,7 @@ async function connectMain() {
   if (!mainConnected) {
     console.log("retry");
     connectionAttempt = connectionAttempt + 1;
-    mainClient.close && mainClient.close();
+    mainClient?.close?.();
     if (connectionAttempt >= 5) {
       presentNetworkErrorAlert(usingPeer);
     } else {
@@ -240,7 +221,7 @@ async function getRandomDynamicPeer() {
  * @returns {Promise<Object>}
  */
 module.exports.getBalanceByAddress = async function (address) {
-  if (!mainClient) {
+  if (!mainClient || !mainConnected) {
     console.log("NO MAIN CLIENT :(");
     throw new Error("Electrum client is not connected");
   }
@@ -255,7 +236,7 @@ module.exports.getBalanceByAddress = async function (address) {
 };
 
 module.exports.getConfig = async function () {
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   return {
     host: mainClient.host,
     port: mainClient.port,
@@ -276,7 +257,7 @@ module.exports.getSecondsSinceLastRequest = function () {
  * @returns {Promise<Array>}
  */
 module.exports.getTransactionsByAddress = async function (address) {
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   const script = bitcoin.address.toOutputScript(address, Marscoin.mainnet);
   const hash = bitcoin.crypto.sha256(script);
   const reversedHash = Buffer.from(reverse(hash));
@@ -353,7 +334,7 @@ module.exports.multiGetBalanceByAddress = async function (
   batchsize
 ) {
   batchsize = batchsize || 200;
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   const ret = { balance: 0, unconfirmed_balance: 0, addresses: {} };
   // console.log("[MARSBALANCE] " + addresses);
   const chunks = splitIntoChunks(addresses, batchsize);
@@ -414,7 +395,7 @@ module.exports.multiGetBalanceByAddress = async function (
 
 module.exports.multiGetUtxoByAddress = async function (addresses, batchsize) {
   batchsize = batchsize || 100;
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   const ret = {};
 
   const chunks = splitIntoChunks(addresses, batchsize);
@@ -463,7 +444,7 @@ module.exports.multiGetUtxoByAddress = async function (addresses, batchsize) {
  * @returns {Promise<Array>}
  */
 module.exports.getMempoolTransactionsByAddress = async function (address) {
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   const script = bitcoin.address.toOutputScript(address, Marscoin.mainnet);
   const hash = bitcoin.crypto.sha256(script);
   const reversedHash = Buffer.from(reverse(hash));
@@ -477,7 +458,7 @@ module.exports.multiGetHistoryByAddress = async function (
   batchsize
 ) {
   batchsize = batchsize || 100;
-  if (!mainClient) {
+  if (!mainClient || !mainConnected) {
     throw new Error("Electrum client is not connected");
   }
 
@@ -557,7 +538,7 @@ module.exports.multiGetTransactionByTxid = async function (
   batchsize = batchsize || 45;
   // this value is fine-tuned so althrough wallets in test suite will occasionally
   // throw 'response too large (over 1,000,000 bytes', test suite will pass
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   const ret = {};
   txids = [...new Set(txids)]; // deduplicate just for any case
 
@@ -680,39 +661,14 @@ module.exports.multiGetTransactionByTxid = async function (
 };
 
 // Need to catch hex from here
-module.exports.getTxHex = async function (txid, batchsize, verbose = true) {
-  console.log("==== [MARS-Connect] getTxHex ====");
-  batchsize = batchsize || 45;
-  // this value is fine-tuned so althrough wallets in test suite will occasionally
-  // throw 'response too large (over 1,000,000 bytes', test suite will pass
-  if (!mainClient) throw new Error("Electrum client is not connected");
-  try {
-    var tx = await mainClient.blockchainTransaction_get(txid, verbose);
-    if (typeof tx === "string" && verbose) {
-      // apparently electrum server (EPS?) didnt recognize VERBOSE parameter, and  sent us plain txhex instead of decoded tx.
-      // lets decode it manually on our end then:
-      tx = txhexToElectrumTransaction(tx);
-    }
-  } catch (e) {
-    //console.log(e);
-    //console.log("OH NO :(");
-    // fallback. pretty sure we are connected to EPS.  we try getting transactions one-by-one. this way we wont
-    // fail and only non-tracked by EPS transactions will be omitted
-
-    // for (const txid of chunk) {
-    //   try {
-    //     let tx = await mainClient.blockchainTransaction_get(txid, verbose);
-    //     if (typeof tx === "string" && verbose) {
-    //       // apparently electrum server (EPS?) didnt recognize VERBOSE parameter, and  sent us plain txhex instead of decoded tx.
-    //       // lets decode it manually on our end then:
-    //       tx = txhexToElectrumTransaction(tx);
-    //     }
-    //     results.push({ result: tx, param: txid });
-    //   } catch (_) {}
-    // }
+module.exports.getTxHex = async function (txid) {
+  if (!mainClient || !mainConnected) throw new Error('Connect to the Marscoin network before preparing a transaction.');
+  const result = await mainClient.blockchainTransaction_get(txid, false);
+  const hex = typeof result === 'string' ? result : result?.hex;
+  if (typeof hex !== 'string' || bitcoin.Transaction.fromHex(hex).getId() !== txid) {
+    throw new Error('The network returned an invalid previous transaction. Refresh the wallet and try again.');
   }
-
-  return tx.hex;
+  return hex;
 };
 
 /**
@@ -732,15 +688,7 @@ module.exports.waitTillConnected = async function () {
         return resolve(true);
       }
 
-      if (wasConnectedAtLeastOnce && mainClient.status === 1) {
-        clearInterval(waitTillConnectedInterval);
-        mainConnected = true;
-        return resolve(true);
-      }
-
-      if (wasConnectedAtLeastOnce && retriesCounter++ >= 30) {
-        // `wasConnectedAtLeastOnce` needed otherwise theres gona be a race condition with the code that connects
-        // electrum during app startup
+      if (retriesCounter++ >= 60) {
         clearInterval(waitTillConnectedInterval);
         presentNetworkErrorAlert();
         reject(new Error("Waiting for Electrum connection timeout"));
@@ -845,7 +793,7 @@ module.exports.estimateFees = async function () {
  * @returns {Promise<number>} Satoshis per byte
  */
 module.exports.estimateFee = async function (numberOfBlocks) {
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   numberOfBlocks = numberOfBlocks || 1;
   const coinUnitsPerKilobyte = await mainClient.blockchainEstimatefee(
     numberOfBlocks
@@ -853,19 +801,19 @@ module.exports.estimateFee = async function (numberOfBlocks) {
   if (coinUnitsPerKilobyte === -1) return 1;
   return Math.round(
     new BigNumber(coinUnitsPerKilobyte)
-      .dividedBy(1024)
+      .dividedBy(1000)
       .multipliedBy(100000000)
       .toNumber()
   );
 };
 
 module.exports.serverFeatures = async function () {
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   return mainClient.server_features();
 };
 
 module.exports.broadcast = async function (hex) {
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   try {
     const broadcast = await mainClient.blockchainTransaction_broadcast(hex);
     return broadcast;
@@ -875,7 +823,7 @@ module.exports.broadcast = async function (hex) {
 };
 
 module.exports.broadcastV2 = async function (hex) {
-  if (!mainClient) throw new Error("Electrum client is not connected");
+  if (!mainClient || !mainConnected) throw new Error("Electrum client is not connected");
   return mainClient.blockchainTransaction_broadcast(hex);
 };
 

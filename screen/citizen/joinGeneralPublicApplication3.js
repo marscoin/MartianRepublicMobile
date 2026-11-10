@@ -1,3 +1,6 @@
+import { readCitizenshipDraft, saveCitizenshipDraft } from '../../blue_modules/citizenship-draft';
+import { prepareCitizenshipPublication, publishCitizenshipTransaction } from '../../blue_modules/citizenship-publication';
+import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import { Platform, Alert, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -18,7 +21,7 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import BigNumber from 'bignumber.js';
 import NetworkTransactionFees, { NetworkTransactionFee } from '../../models/networkTransactionFees';
 
-const BlueElectrum = require('../../blue_modules/BlueElectrum');
+const MARSConnection = require('../../blue_modules/MARSConnection');
 
 const JoinGeneralPublicApplicationScreen = () => {
   const navigation = useNavigation();
@@ -62,7 +65,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   //console.log('PARAMS',route.params )
   const params = route.params;
   //const params = {"bio": "TestNew", "address": 'MC1kMoACQZQwmR8tSSmSQzUBDUYhEKkbee', "displayName": "Test New", "firstName": "MobileTest New", "lastName": "test new", "photo": "https://ipfs.marscoin.org/ipfs/QmdGcEhQp862VDhxCHYo8vcAfMiQgwc8kYfkdM2F6vsdLT", "video": "https://ipfs.marscoin.org/ipfs/QmQ6ebHWPbhDpjrePbwV3PjUDxnMAMRHWDRhA56gU6BxxJ"}
-  console.log('PARAMS Check', params )
+
   const [civic, setCivic] = useState('')
 
   const [formData, setFormData] = useState({
@@ -80,9 +83,9 @@ const JoinGeneralPublicApplicationScreen = () => {
     for (let wallet of wallets) {
         // Check if the wallet has the civic property set to true
         if (wallet.civic) {
-            console.log('CIVIC WALLET IS SET!' );
+
             setWallet(wallet)
-            setCivic(wallet._address)
+            setCivic(wallet._getExternalAddressByIndex(0))
             return wallet;
         }
     }
@@ -95,103 +98,46 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   const toggleVerify = () => setIsVerified(!isVerified);
 
-  const broadcast = async transaction => {
-    /////SENDING TX TO BLOCKCHAIN/////
-    await BlueElectrum.ping();
-    await BlueElectrum.waitTillConnected();
-    const result = await wallet.broadcastTx(transaction);
-    if (!result) {
-      throw new Error(loc.errors.broadcast);
-    }
-    return result;
-  };
-
-  const sendMetadata = async (message) => {
-    console.log('SEND METADATA!!! START')
-    setIsLoading(true);
+  const publishApplication = async publication => {
+    setIsPublishing(true);
     try {
-      const utxos = wallet.getUtxo(); 
-      const civicTrimmed = civic.trim();
-      // const lutxo = wallet._utxo.filter(utxo => utxo.address.trim() === civicTrimmed);
-      const lutxo = utxos.filter(utxo => utxo.address.trim() === civicTrimmed);
-      console.log('Filtered UTXOs:', lutxo);
-      const targets = [];
-      targets.push({ address: civic, value: 0 });
-      // console.log('targets', targets)
-      
-      const feeRate = 50
-      //const feeRate = String(networkTransactionFees.mediumFee);
-      console.log('FEEEEEEE::::', feeRate);
-      const requestedSatPerByte = Number(feeRate);
-      console.log('requestedSatPerByte::::', requestedSatPerByte);
-      const change = civic;
-  
-      const { tx, outputs, psbt, fee } = await wallet.createTransaction(
-        lutxo,
-        targets,
-        requestedSatPerByte,
-        change,
-        undefined, // sequence
-        false,     // skipSigning
-        undefined, // masterFingerprint
-        message    // message
-      );
- 
-      const txHex = tx.toHex();
-      broadcastResult = await broadcast(txHex);
-      console.log('Broadcast result:', broadcastResult);
-
-      // Snackbar.show({ text: 'Data published successfully!', duration: Snackbar.LENGTH_SHORT });
-      setIsLoading(false);
-      // Navigate to success screen after the broadcast
-      navigation.navigate('JoinGeneralPublicApplicationSuccessScreen');
-
+      await MARSConnection.waitTillConnected();
+      const submitted = await publishCitizenshipTransaction({
+        wallet, publication, saveDraft: saveCitizenshipDraft, findTransaction: MARSConnection.getTxHex,
+      });
+      navigation.navigate('JoinGeneralPublicApplicationSuccessScreen', { txid: submitted.txid });
     } catch (error) {
-      console.error("Failed to send metadata:", error);
-      Snackbar.show({ text: `Error: ${error.message}`, duration: Snackbar.LENGTH_LONG });
-      setIsLoading(false);
+      Alert.alert('Submission pending', error.message);
+    } finally {
+      setIsPublishing(false);
     }
   };
 
   const validateAndSubmit = async () => {
-    const { firstName, lastName, displayName, bio, photo, video, civic } = formData;
-    const token = await AsyncStorage.getItem('@auth_token');
-
-    if (!firstName || !lastName || !displayName || !bio || !photo || !video) {
-      Alert.alert('Error', 'All fields are required.');
-      return;
-    }
+    if (!isVerified || isPublishing) return;
     setIsPublishing(true);
-    //Snackbar.show({ text: 'Publishing...', duration: Snackbar.LENGTH_INDEFINITE });
-
     try {
-      const dataObject = { data: formData };
-      const jsonString = JSON.stringify(dataObject.data);
-      console.log('JSON:', jsonString)
-      const hash = sha256(jsonString).toString();
-      console.log('JSON hash:', hash)
-      dataObject.meta = { hash };
-      const completeData = JSON.stringify(dataObject);
-      console.log('completeData:', completeData)
-      const { data } = await axios.post('https://martianrepublic.org/api/pinjson', {
-        type: 'data',
-        payload: completeData,
-        address: civic
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      await MARSConnection.waitTillConnected();
+      const fees = await NetworkTransactionFees.recommendedFees();
+      const publication = await prepareCitizenshipPublication({
+        wallet, form: formData, feeRate: Number(fees.mediumFee), readDraft: readCitizenshipDraft, saveDraft: saveCitizenshipDraft,
+        pin: async (payload, address) => {
+          const token = await getCivicToken();
+          const response = await axios.post('https://martianrepublic.org/api/pinjson', {
+            type: 'data', payload: JSON.stringify(payload), address,
+          }, { headers: { Authorization: `Bearer ${token}` }, timeout: 90000 });
+          return response.data.Hash;
+        },
       });
-
-      if (data.Hash) {
-        const cid = data.Hash;
-        const message = "GP_" + cid;
-        console.log('message: ', message)
-        sendMetadata(message) 
-      } else {
-        throw new Error('Failed to pin data');
+      if (publication.status === 'submitted') {
+        navigation.navigate('JoinGeneralPublicApplicationSuccessScreen', { txid: publication.txid });
+        return;
       }
+      Alert.alert('Publish your application',
+        `Network fee: ${new BigNumber(publication.fee).dividedBy(100000000).toFixed(8)} MARS. Your application will be public. Blockchain confirmation may take time.`,
+        [{ text: 'Review later', style: 'cancel' }, { text: publication.status === 'pending' ? 'Retry submission' : 'Confirm publication', onPress: () => publishApplication(publication) }]);
     } catch (error) {
-      Snackbar.show({ text: `Failed to publish: ${error.message}`, duration: Snackbar.LENGTH_SHORT });
-      console.error('Publishing failed:', error);
+      Alert.alert('Application not published', error.message || 'Please check your connection and try again.');
     } finally {
       setIsPublishing(false);
     }
@@ -199,7 +145,7 @@ const JoinGeneralPublicApplicationScreen = () => {
 
   const copyToClipboard = (text) => {
     Clipboard.setString(text);
-    console.log('copied to clipboard', text)
+
     Snackbar.show({
       text: `${text} copied to clipboard!`,
       duration: Snackbar.LENGTH_SHORT,
@@ -301,9 +247,9 @@ const JoinGeneralPublicApplicationScreen = () => {
             <TouchableOpacity 
               style={styles.joinButton}
               onPress={validateAndSubmit} 
-              disabled={isPublishing}
+              disabled={!isVerified || isPublishing}
             >
-                <Text style={styles.buttonText}>PUBLISH APPLICATION</Text>
+                <Text style={styles.buttonText}>{isPublishing ? 'PLEASE WAIT…' : 'REVIEW PUBLICATION FEE'}</Text>
             </TouchableOpacity>  
           </LinearGradient>
 
@@ -412,4 +358,3 @@ const getStyles = (colors, fonts) => StyleSheet.create({
   },
 });
 export default JoinGeneralPublicApplicationScreen;
-

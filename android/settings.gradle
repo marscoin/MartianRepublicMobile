@@ -1,3 +1,17 @@
+pluginManagement {
+    buildscript {
+        repositories {
+            google()
+            mavenCentral()
+        }
+        dependencies {
+            // AGP 7.4's bundled D8 crashes on AppCompat 1.7 bytecode.
+            // Remove this override when upgrading the Android build stack.
+            classpath 'com.android.tools:r8:8.3.37'
+        }
+    }
+}
+
 rootProject.name = 'Martian Republic'
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
 include ':app'

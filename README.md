@@ -1,133 +1,58 @@
-# BlueWallet - A Bitcoin & Lightning Wallet
+# Martian Republic mobile
 
-[![GitHub tag](https://img.shields.io/badge/dynamic/json.svg?url=https://raw.githubusercontent.com/BlueWallet/BlueWallet/master/package.json&query=$.version&label=Version)](https://github.com/BlueWallet/BlueWallet)
-[![CircleCI](https://circleci.com/gh/BlueWallet/BlueWallet.svg?style=svg)](https://circleci.com/gh/BlueWallet/BlueWallet)
-[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
-![](https://img.shields.io/github/license/BlueWallet/BlueWallet.svg)
+The Marscoin wallet and citizenship app for [Martian Republic](https://martianrepublic.org), built on BlueWallet with React Native.
 
-Thin Bitcoin Wallet.
-Built with React Native and Electrum.
+The active repository is [marscoin/MartianRepublicMobile](https://github.com/marscoin/MartianRepublicMobile), branch **MARS_NEW**. The original `YaninaLopin/MarsWallet` fork stops in May 2024; the continuation includes Yanina's later citizenship work and April 2026 updates.
 
-[![Appstore](https://bluewallet.io/uploads/app-store-badge-blue.svg)](https://itunes.apple.com/us/app/bluewallet-bitcoin-wallet/id1376878040?l=ru&ls=1&mt=8)
-[![Playstore](https://bluewallet.io/uploads/play-store-badge-blue.svg)](https://play.google.com/store/apps/details?id=io.bluewallet.bluewallet)
+[Download the published iOS app](https://apps.apple.com/us/app/martian-republic/id6480416861).
 
-Website: [bluewallet.io](https://bluewallet.io)
+## Development
 
-Community: [telegram group](https://t.me/bluewallet)
+The current revival preserves Yanina's Expanse-inspired design and prioritizes **wallet and citizenship**, followed by Congress and broader website features. See [the revival notes](docs/REVIVAL.md) for source history, design references, verified API contracts, known issues and validation results.
 
-* Private keys never leave your device
-* Lightning Network supported
-* SegWit-first. Replace-By-Fee support
-* Encryption. Plausible deniability
-* And many more [features...](https://bluewallet.io/features)
+The code currently uses React Native 0.72.11 and React 18.2.0. iOS builds use Xcode and CocoaPods; Android builds require the Android SDK. This branch is development work, not a release-ready upgrade.
 
-
-<img src="https://i.imgur.com/hHYJnMj.png" width="100%">
-
-
-## BUILD & RUN IT
-
-Please refer to the engines field in package.json file for the minimum required versions of Node and npm. It is preferred that you use an even-numbered version of Node as these are LTS versions.
-
-To view the version of Node and npm in your environment, run the following in your console:
-
-```
-node --version && npm --version
-```
-
-* In your console:
-
-```
-git clone https://github.com/BlueWallet/BlueWallet.git
-cd BlueWallet
-npm install
-```
-
-Please make sure that your console is running the most stable versions of npm and node (even-numbered versions).
-
-* To run on Android:
-
-You will now need to either connect an Android device to your computer or run an emulated Android device using AVD Manager which comes shipped with Android Studio. To run an emulator using AVD Manager:
-
-1. Download and run Android Studio
-2. Click on "Open an existing Android Studio Project"
-3. Open `build.gradle` file under `BlueWallet/android/` folder
-4. Android Studio will take some time to set things up. Once everything is set up, go to `Tools` -> `AVD Manager`.
-    * 📝 This option [may take some time to appear in the menu](https://stackoverflow.com/questions/47173708/why-avd-manager-options-are-not-showing-in-android-studio) if you're opening the project in a freshly-installed version of Android Studio.
-5. Click on "Create Virtual Device..." and go through the steps to create a virtual device
-6. Launch your newly created virtual device by clicking the `Play` button under `Actions` column
-
-Once you connected an Android device or launched an emulator, run this:
-
-```
-npx react-native run-android
-```
-
-The above command will build the app and install it. Once you launch the app it will take some time for all of the dependencies to load. Once everything loads up, you should have the built app running.
-
-* To run on iOS:
-
-```
-npx pod-install
+```sh
+git clone --branch MARS_NEW https://github.com/marscoin/MartianRepublicMobile.git
+cd MartianRepublicMobile
+npm ci --ignore-scripts
+npm run postinstall
+cd ios
+pod install
+cd ..
 npm start
 ```
 
-In another terminal window within the BlueWallet folder:
-```
-npx react-native run-ios
-```
-**To debug BlueWallet on the iOS Simulator, you must choose a Rosetta-compatible iOS Simulator. This can be done by navigating to the Product menu in Xcode, selecting Destination Architectures, and then opting for "Show Both." This action will reveal the simulators that support Rosetta.
-**
+In a second terminal:
 
-* To run on macOS using Mac Catalyst:
-
-```
-npx pod-install
+```sh
+npx react-native run-ios --scheme BlueWallet-NoLDK --simulator "iPhone 16 Pro" --extra-params "ARCHS=x86_64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=YES"
 ```
 
-Open ios/BlueWallet.xcworkspace. Once the project loads, select the scheme/target BlueWallet-NoLDK. Click Run.
+`BlueWallet-NoLDK` is the native target name; the installed app is **Martian Republic**, bundle ID `org.martianrepublic`. JavaScript's inherited package version and iOS's marketing version are separate. The old release-notes script may report that no Git tags exist in this fork.
 
-## TESTS
+## Checks
 
-```bash
-npm run test
+```sh
+# Offline Marscoin recovery, signing, session and server-selection regression checks
+npm run test:wallet
+
+# Full inherited BlueWallet checks; known existing failures are tracked in revival notes
+npm test
 ```
 
+The focused wallet suite mocks native UI/storage dependencies and network access. It uses real wallet derivation and cryptography with public test vectors. Do not use those vectors for funds.
 
-## LICENSE
+For Android development:
 
-MIT
+```sh
+npm run android
+```
 
-## WANT TO CONTRIBUTE?
+## Design references
 
-Grab an issue from [the backlog](https://github.com/BlueWallet/BlueWallet/projects/1), try to start or submit a PR, any doubts we will try to guide you. Contributors have a private telegram group, request access by email bluewallet@bluewallet.io
+Published iPhone and iPad images are saved locally under `artifacts/revival/design/app-store/`, with their source URLs. Local review artifacts are ignored by Git. The revival notes distinguish published screenshots from simulator captures.
 
-## Translations
+## Upstream and license
 
-We accept translations via [Transifex](https://www.transifex.com/bluewallet/bluewallet/)
-
-To participate you need to:
-1. Sign up to Transifex
-2. Find BlueWallet project
-3. Send join request
-4. After we accept your request you will be able to start translating! That's it!
-
-Please note the values in curly braces should not be translated. These are the names of the variables that will be inserted into the translated string. For example, the original string `"{number} of {total}"` in Russian will be `"{number} из {total}"`.
-
-Transifex automatically creates Pull Request when language reaches 100% translation. We also trigger this by hand before each release, so don't worry if you can't translate everything, every word counts.
-
-## Q&A
-
-Builds automated and tested with BrowserStack
-
-<a href="https://www.browserstack.com/"><img src="https://i.imgur.com/syscHCN.png" width="160px"></a>
-
-Bugs reported via BugSnag
-
-<a href="https://www.bugsnag.com"><img src="https://images.typeform.com/images/QKuaAssrFCq7/image/default" width="160px"></a>
-
-
-## RESPONSIBLE DISCLOSURE
-
-Found critical bugs/vulnerabilities? Please email them bluewallet@bluewallet.io
-Thanks!
+Originally forked from [BlueWallet](https://github.com/BlueWallet/BlueWallet). BlueWallet's Bitcoin/Lightning features and test coverage do not automatically establish Marscoin compatibility. Retain upstream attribution and the [MIT license](LICENSE).

@@ -9,9 +9,8 @@ import {
   Image,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import axios from 'axios';
-
-const GOVERNANCE_API = 'https://martianrepublic.org/api/congress';
+import { fetchProposal, isVotingOpen, tally, timeLeft } from '../../blue_modules/voting/congress';
+import { CivicButton } from '../../components/CivicUi';
 
 const tierColors = {
   signal: '#34d399',
@@ -51,17 +50,14 @@ const ProposalDetail = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await axios.get(`${GOVERNANCE_API}/proposals/${proposalId}`);
-        setData(res.data);
-      } catch (e) {
-        console.error('[Congress] Error fetching proposal:', e.message);
-      } finally {
-        setLoading(false);
-      }
+    let current = true;
+    fetchProposal(proposalId)
+      .then(result => current && setData(result))
+      .catch(() => {})
+      .finally(() => current && setLoading(false));
+    return () => {
+      current = false;
     };
-    fetch();
   }, [proposalId]);
 
   if (loading) {
@@ -84,9 +80,11 @@ const ProposalDetail = () => {
   const tierColor = tierColors[proposal.tier] || '#888';
   const tierConfig = proposal.tier_config || {};
   const phase = phaseLabels[proposal.phase] || proposal.phase;
-  const totalVotes = proposal.total_votes || 0;
-  const yayPct = totalVotes > 0 ? Math.round((proposal.yays / totalVotes) * 100) : 0;
-  const nayPct = totalVotes > 0 ? Math.round((proposal.nays / totalVotes) * 100) : 0;
+  const count = tally(proposal);
+  const totalVotes = count.total;
+  const yayPct = count.yesPercent;
+  const nayPct = count.noPercent;
+  const votingOpen = isVotingOpen(proposal);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -139,6 +137,13 @@ const ProposalDetail = () => {
           </Text>
         </View>
       </View>
+
+      {votingOpen && (
+        <View style={styles.section}>
+          <CivicButton title="Vote on this proposal" icon="shield" onPress={() => navigation.navigate('Ballot', { proposalId: proposal.id })} />
+          <Text style={styles.thresholdText}>Anonymous ballot · voting {timeLeft(proposal.voting_ends_at) || 'open'}</Text>
+        </View>
+      )}
 
       {/* Timeline */}
       <View style={styles.section}>

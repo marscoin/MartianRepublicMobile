@@ -1,3 +1,4 @@
+import { celebrate } from '../../blue_modules/app-review';
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import LottieView from 'lottie-react-native';
@@ -34,6 +35,7 @@ const Success = () => {
   });
   useEffect(() => {
     console.log('send/success - useEffect');
+    celebrate();
   }, []);
 
   return (

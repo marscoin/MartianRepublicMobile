@@ -1,278 +1,214 @@
-import React, { useRef, useState, useEffect, useContext} from 'react';
-import { ScrollView, Platform, Keyboard, TouchableWithoutFeedback, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import React, { useLayoutEffect, useEffect, useRef, useState } from 'react';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import navigationStyle from '../../components/navigationStyle';
-import { useTheme } from '../../components/themes';
-import {
-    BlueButtonLink,
-    BlueDoneAndDismissKeyboardInputAccessory,
-    BlueFormLabel,
-    BlueFormMultiInput,
-    BlueSpacing20,
-    BlueText,
-  } from '../../BlueComponents';
-import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import loc from '../../loc';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
+import { Icon } from 'react-native-elements';
+import { RESULTS } from 'react-native-permissions';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
-import Button from '../../components/Button';
-import SafeArea from '../../components/SafeArea';
+import { validateMarsRecoveryInput } from '../../blue_modules/mars-recovery-input';
+import { CivicBack, CivicBrand, CivicButton, civicColors as c, civicStyles as ui } from '../../components/CivicUi';
 import usePrivacy from '../../hooks/usePrivacy';
 
-const windowWidth = Dimensions.get('window').width;
-const windowHeight = Dimensions.get('window').height;
-
 const ImportCivicWalletScreen = () => {
-    const navigation = useNavigation();  
-    const { colors } = useTheme();
-    const route = useRoute();
-    const imageLoadError = useRef({});
-    const label = route?.params?.label ?? '';
-    const triggerImport = route?.params?.triggerImport ?? false;
-    const { isAdvancedModeEnabled } = useContext(BlueStorageContext);
-    const [importText, setImportText] = useState(label);
-    const [isToolbarVisibleForAndroid, setIsToolbarVisibleForAndroid] = useState(false);
-    const [, setSpeedBackdoor] = useState(0);
-    const [isAdvancedModeEnabledRender, setIsAdvancedModeEnabledRender] = useState(false);
-    const [searchAccounts, setSearchAccounts] = useState(false);
-    const [askPassphrase, setAskPassphrase] = useState(false);
-    const { enableBlur, disableBlur } = usePrivacy();
-    const styles = StyleSheet.create({
-        root: {
-            flex:1,
-            marginTop: 30
-        },
-        center: {
-            flex: 1,
-            marginHorizontal: 16,
-            backgroundColor: colors.elevated,
-          },
-          row: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginHorizontal: 16,
-            marginTop: 10,
-            justifyContent: 'space-between',
-          },
-        largeText: {
-            color:'white', 
-            textAlign: 'center',
-            justifyContent:'center',
-            fontSize: 20,
-            fontWeight:'600',
-            fontFamily: 'Orbitron-Bold',
-            letterSpacing: 1.5, 
-            marginHorizontal: 30,
-            letterSpacing: 3
-        },
-        smallText: {
-            color: colors.foregroundColor,
-            fontWeight: '400',
-            fontSize: 16,
-            fontFamily: 'Orbitron-Regular', 
-            letterSpacing: 1.2,
-            marginHorizontal: 60,
-            textAlign:'center',
-            writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-        },
-        buttonText: {
-            color:'white', 
-            textAlign: 'center',
-            fontSize: 12,
-            fontFamily: 'Orbitron-Regular',
-            letterSpacing: 1.5, 
-            textAlign:'center'
-        },
-        backButton: {
-            height: 60,
-            width: 100,
-            borderRadius: 20,
-            marginHorizontal: 20,
-            marginTop: 10,
-            justifyContent:'center',
-            alignSelf:'center'
-        },
-        joinButtonGradient: {
-            height: 60,
-            borderRadius: 20,
-            marginHorizontal: 20,
-        },
-        imageLG: {
-            position: 'absolute', // changed from 'relative' to 'absolute'
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: -1,
-            resizeMode: 'stretch'
-        },
-    });
+  const navigation = useNavigation();
+  useLayoutEffect(() => navigation.setOptions({ statusBarStyle: 'light' }), [navigation]);
+  const route = useRoute();
+  const [importText, setImportText] = useState(route.params?.label ?? '');
+  const [askPassphrase, setAskPassphrase] = useState(false);
+  const [error, setError] = useState('');
+  const [scanReady, setScanReady] = useState(false);
+  const { enableBlur, disableBlur } = usePrivacy();
+  const triggered = useRef(false);
 
-    const importButtonPressed = () => {
-        console.log('Import pressed')
-        const textToImport = onBlur();
-        if (textToImport.trim().length === 0) {
-          return;
-        }
-        importMnemonic(textToImport);
-    };
-    
-    const importMnemonic = text => {
-        navigation.navigate('ImportCivicWalletDiscovery', { importText: text, askPassphrase, searchAccounts });
-    };
-    
-    const onBarScanned = value => {
-        if (value && value.data) value = value.data + ''; // no objects here, only strings
-        setImportText(value);
-        setTimeout(() => importMnemonic(value), 500);
-    };
-    
-    const importScan = () => {
-        console.log('Import scan pressed')
-        requestCameraAuthorization().then(() =>
-          navigation.navigate( 
-            'ScanQRCode',
-           {
-              launchedBy: route.name,
-              onBarScanned,
-              showFileImportButton: true,
-            },
-          ),
-        );
-    };
-      
-    const speedBackdoorTap = () => {
-        setSpeedBackdoor(v => {
-          v += 1;
-          if (v < 5) return v;
-          navigation.navigate('ImportSpeed');
-          return 0;
-        });
-      };
-    const onBlur = () => {
-        const valueWithSingleWhitespace = importText.replace(/^\s+|\s+$|\s+(?=\s)/g, '');
-        setImportText(valueWithSingleWhitespace);
-        return valueWithSingleWhitespace;
-    };
-    const renderOptionsAndImportButton = (
-        <>
-          {isAdvancedModeEnabledRender && (
-            <>
-              <View style={styles.row}>
-                <BlueText>{loc.wallets.import_passphrase}</BlueText>
-                <Switch testID="AskPassphrase" value={askPassphrase} onValueChange={setAskPassphrase} />
-              </View>
-              <View style={styles.row}>
-                <BlueText>{loc.wallets.import_search_accounts}</BlueText>
-                <Switch testID="SearchAccounts" value={searchAccounts} onValueChange={setSearchAccounts} />
-              </View>
-            </>
-          )}
-    
-          <BlueSpacing20 />
-          <View style={styles.center}>
-            <>
-            {/* //////IMPORT BUTTON////// */}
-              <Button
-                disabled={importText.trim().length === 0}
-                title={loc.wallets.import_do_import}
-                testID="DoImport"
-                onPress={importButtonPressed}
-              />
-              <BlueSpacing20 />
-              {/* //////SCAN BUTTON////// */}
-              <BlueButtonLink title={'Scan civic private key'} onPress={importScan} testID="ScanImport" />
-            </>
-          </View>
-        </>
-      );  
-    useEffect(() => {
-        enableBlur();
-        Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setIsToolbarVisibleForAndroid(true));
-        Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setIsToolbarVisibleForAndroid(false));
-        return () => {
-          Keyboard.removeAllListeners(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow');
-          Keyboard.removeAllListeners(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide');
-          disableBlur();
-        };
-      }, [disableBlur, enableBlur]);
-    
-      useEffect(() => {
-        isAdvancedModeEnabled().then(setIsAdvancedModeEnabledRender);
-        if (triggerImport) importButtonPressed();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, []);
-      useEffect(() => {
-        console.log('ImportText', importText)
-      }, [importText]);
+  const restore = text => {
+    const result = validateMarsRecoveryInput(text);
+    if (!result.valid) {
+      setError(result.message);
+      return;
+    }
+    setError('');
+    Keyboard.dismiss();
+    navigation.navigate('ImportCivicWalletDiscovery', {
+      importText: result.phrase,
+      askPassphrase,
+      searchAccounts: false,
+    });
+  };
+
+  const onBarScanned = value => {
+    const text = typeof value === 'string' ? value : typeof value?.data === 'string' ? value.data : '';
+    const result = validateMarsRecoveryInput(text);
+    // Keep public keys and unrelated QR contents out of the phrase field.
+    setImportText(result.valid ? result.phrase : '');
+    setScanReady(result.valid);
+    setError(result.valid ? '' : result.message);
+  };
+
+  const scan = async () => {
+    try {
+      if ((await requestCameraAuthorization()) !== RESULTS.GRANTED) {
+        setError('Enable camera access in Settings to scan, or enter your recovery phrase below.');
+        return;
+      }
+      navigation.navigate('ScanQRCode', {
+        launchedBy: route.name,
+        onBarScanned,
+        showFileImportButton: true,
+      });
+    } catch (_) {
+      setError('Camera access is unavailable. Enable it in Settings, or enter your recovery phrase below.');
+    }
+  };
+
+  useEffect(() => {
+    enableBlur();
+    return disableBlur;
+  }, [enableBlur, disableBlur]);
+  useEffect(() => {
+    if (route.params?.triggerImport && !triggered.current) {
+      triggered.current = true;
+      restore(route.params?.label ?? '');
+    }
+    // Only a caller explicitly requesting an import skips the input step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <SafeAreaView style={{flex: 1}}> 
-    {/* ////margin -80 sticks screen to the tabbar///// */}
-        <Image style={styles.imageLG} source={require('../../img/dashboard_bg1.png')} />
-        <ScrollView 
-            style={styles.root}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 0 }}
-        >
-        <View style={styles.root}>    
-            <Text style={styles.largeText}>Let's import your</Text>
-            <Text style={[styles.largeText, {color: '#FF7400'}]}>CIVIC WALLET</Text>
-            <Text style={[styles.largeText, {fontSize: 10}]}>(proof of citizenship)</Text>
-            <BlueSpacing20 />
-            <TouchableWithoutFeedback accessibilityRole="button" onPress={speedBackdoorTap} testID="SpeedBackdoor">
-                <Text style ={styles.smallText}>
-                     Please enter secret seed phrase of your Civic Marscoin Wallet.
-                </Text>
-            </TouchableWithoutFeedback>
-            <BlueSpacing20 />
-            <BlueFormMultiInput
-                value={importText}
-                onBlur={onBlur}
-                onChangeText={setImportText}
-                testID="MnemonicInput"
-                inputAccessoryViewID={BlueDoneAndDismissKeyboardInputAccessory.InputAccessoryViewID}
-             />
-             {Platform.select({ android: !isToolbarVisibleForAndroid && renderOptionsAndImportButton, default: renderOptionsAndImportButton })}
-            {/* {Platform.select({
-                ios: (
-                <BlueDoneAndDismissKeyboardInputAccessory
-                    onClearTapped={() => {
-                    setImportText('');
-                    }}
-                    onPasteTapped={text => {
-                    setImportText(text);
-                    Keyboard.dismiss();
-                    }}
-                />
-                ),
-                android: isToolbarVisibleForAndroid && (
-                <BlueDoneAndDismissKeyboardInputAccessory
-                    onClearTapped={() => {
-                    setImportText('');
-                    Keyboard.dismiss();
-                    }}
-                    onPasteTapped={text => {
-                    setImportText(text);
-                    Keyboard.dismiss();
-                    }}
-                />
-                )
-            })} */}
-            <TouchableOpacity 
-                style={[styles.backButton]}
-                onPress={() => navigation.goBack()}
-            >
-                <Text style={styles.buttonText}>back</Text>
-            </TouchableOpacity>
-        </View>
+    <SafeAreaView style={ui.screen}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={ui.screen}>
+        <ScrollView contentContainerStyle={ui.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={styles.top}>
+            <CivicBack onPress={() => navigation.goBack()} />
+            <CivicBrand subtitle="WALLET RECOVERY" />
+          </View>
+          <Text style={ui.title}>Welcome back{'\n'}to the Republic.</Text>
+          <Text style={styles.intro}>Restore your civic wallet with the recovery phrase you saved when you created it.</Text>
+          <View style={styles.scan}>
+            <CivicButton title="Scan recovery phrase" icon="maximize" secondary onPress={scan} testID="ScanImport" />
+          </View>
+          <View style={styles.separator}>
+            <View style={styles.line} />
+            <Text style={styles.or}>OR ENTER YOUR WORDS</Text>
+            <View style={styles.line} />
+          </View>
+          <Text style={styles.label}>Recovery phrase</Text>
+          <TextInput
+            value={importText}
+            onChangeText={value => {
+              setImportText(value);
+              setError('');
+              setScanReady(false);
+            }}
+            style={[styles.input, !!error && styles.inputError]}
+            multiline
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            textContentType="none"
+            importantForAutofill="no"
+            placeholder="Your 12 or 24 words, in order"
+            placeholderTextColor="#7D858F"
+            accessibilityLabel="Recovery phrase"
+            testID="ImportSecret"
+            textAlignVertical="top"
+          />
+          {!!error && (
+            <View style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="polite">
+              <Icon name="alert-circle" type="feather" size={19} color="#FFAE79" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+          {scanReady && <Text style={styles.scanReady}>Recovery phrase scanned. Tap Restore to continue.</Text>}
+          <View style={styles.passphrase}>
+            <View style={styles.optionCopy}>
+              <Text style={styles.label}>Use a passphrase</Text>
+              <Text style={styles.optionHint}>Only if you added one to this backup.</Text>
+            </View>
+            <Switch
+              value={askPassphrase}
+              onValueChange={setAskPassphrase}
+              accessibilityLabel="Use a recovery passphrase"
+              testID="AskPassphrase"
+              trackColor={{ true: c.orange }}
+            />
+          </View>
+          <CivicButton
+            title="Restore civic wallet"
+            icon="arrow-right"
+            onPress={() => restore(importText)}
+            disabled={!importText.trim()}
+            testID="DoImport"
+          />
+          <View style={styles.privacy}>
+            <Icon name="lock" type="feather" size={14} color={c.muted} />
+            <Text style={styles.privacyText}>Your recovery phrase stays on this device.</Text>
+          </View>
         </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
-
   );
 };
 
-ImportCivicWalletScreen.navigationOptions = navigationStyle({}, opts => ({ ...opts, title: loc.wallets.import_title }));
-
+const styles = StyleSheet.create({
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+    marginBottom: 32,
+  },
+  intro: { ...ui.body, marginTop: 14 },
+  scan: { marginTop: 28 },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 24,
+  },
+  line: { flex: 1, height: 1, backgroundColor: c.border },
+  or: { ...ui.eyebrow, fontSize: 10, letterSpacing: 1 },
+  label: {
+    fontFamily: 'ChakraPetch-SemiBold',
+    color: c.text,
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: c.panel,
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: 14,
+    padding: 18,
+    minHeight: 138,
+    color: c.text,
+    fontSize: 17,
+    lineHeight: 26,
+  },
+  inputError: { borderColor: '#B75C30' },
+  error: {
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: '#2A1B14',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 12,
+  },
+  errorText: { flex: 1, fontSize: 14, lineHeight: 21, color: '#FFBE94' },
+  scanReady: { color: c.orange, fontSize: 14, lineHeight: 21, marginTop: 12 },
+  passphrase: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 24,
+  },
+  optionCopy: { flex: 1 },
+  optionHint: { fontSize: 12, lineHeight: 18, color: c.muted },
+  privacy: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  privacyText: { flexShrink: 1, color: c.muted, fontSize: 12, lineHeight: 17 },
+});
 export default ImportCivicWalletScreen;

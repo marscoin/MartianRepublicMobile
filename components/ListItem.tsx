@@ -23,6 +23,7 @@ interface ListItemProps {
   subtitleNumberOfLines?: number;
   rightTitle?: string;
   rightTitleStyle?: object;
+  rightTitleNumberOfLines?: number;
   isLoading?: boolean;
   chevron?: boolean;
   checkmark?: boolean;
@@ -49,7 +50,7 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
       fontWeight: '500',
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
       fontFamily: 'Orbitron-Regular',
-      letterSpacing: 1.1
+      letterSpacing: 1.1,
     },
     subtitle: {
       flexWrap: 'wrap',
@@ -84,7 +85,7 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
       {props.leftAvatar && props.leftAvatar}
       <RNElementsListItem.Content>
         <RNElementsListItem.Title style={stylesHook.title} numberOfLines={0} accessible={props.switch === undefined}>
-          {props.title} 
+          {props.title}
         </RNElementsListItem.Title>
         {props.subtitle && (
           <RNElementsListItem.Subtitle
@@ -98,7 +99,13 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
       </RNElementsListItem.Content>
       {props.rightTitle && (
         <RNElementsListItem.Content right>
-          <RNElementsListItem.Title style={props.rightTitleStyle} numberOfLines={0} right>
+          <RNElementsListItem.Title
+            style={props.rightTitleStyle}
+            numberOfLines={props.rightTitleNumberOfLines ?? 0}
+            adjustsFontSizeToFit={props.rightTitleNumberOfLines === 1}
+            minimumFontScale={0.7}
+            right
+          >
             {props.rightTitle}
           </RNElementsListItem.Title>
         </RNElementsListItem.Content>
@@ -107,7 +114,13 @@ const ListItem: React.FC<ListItemProps> = React.memo(props => {
         <ActivityIndicator />
       ) : (
         <>
-          {props.chevron && <RNElementsListItem.Chevron iconStyle={{ transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] }} />}
+          {props.chevron && (
+            <RNElementsListItem.Chevron
+              iconStyle={{
+                transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }],
+              }}
+            />
+          )}
           {props.rightIcon && <Avatar icon={props.rightIcon} />}
           {props.switch && <Switch {...memoizedSwitchProps} accessibilityLabel={props.title} accessible accessibilityRole="switch" />}
           {props.checkmark && <RNElementsListItem.CheckBox iconType="octaicon" checkedColor="#0070FF" checkedIcon="check" checked />}

@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, TextInput, KeyboardAvoidingView, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -65,14 +67,14 @@ const ForumThreadScreen = () => {
 
     async function fetchThreadData() {
         try {
-            const token = await AsyncStorage.getItem('@auth_token');
+            const token = await getCivicToken();
             const response = await axios.get(`https://martianrepublic.org/api/forum/thread/${threadId}/comments`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
             const comments = response?.data?.comments?.original?.comments;
             if (!comments) {
-                console.error("Comments data is undefined or not in the expected format.");
+
                 return;
             }
 
@@ -86,34 +88,33 @@ const ForumThreadScreen = () => {
 
             const formattedData = transformThreadData(response.data.comments.original.comments);
             setThreadData(formattedData);
-            console.log('THREAD INDIVIDUAL DATA', response.data.comments.original.comments)
+
         } catch (error) {
-            console.error('Error fetching thread data:', error);
+
         }
     }
 
     async function blockUser(userId) {
         try {
-            const token = await AsyncStorage.getItem('@auth_token');
-            console.log('token', token);
-            const response = await axios.get(`https://martianrepublic.org/api/user/block/${userId}`, {
+            const token = await getCivicToken();
+            const response = await axios.post(`https://martianrepublic.org/api/user/block/${userId}`, {}, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            console.log('BLOCK USER RESPONSE', response.data);
+
             // // Optionally refresh thread data to remove blocked user’s comments
             // fetchThreadData();
             setReportUserModalVisible(false); // Hide modal after blocking
             Alert.alert("User Blocked", "User has been blocked.");
             fetchThreadData();
         } catch (error) {
-            console.error('Error blocking user:', error);
+
         }
     }
       
     const isFormValid = newCommentContent !== '';
 
     async function createNewComment() {
-        const token = await AsyncStorage.getItem('@auth_token');
+        const token = await getCivicToken();
         await axios.post(`https://martianrepublic.org/api/forum/thread/${threadId}/comment`, 
             { 
                 "content": newCommentContent,
@@ -389,7 +390,7 @@ const ForumThreadScreen = () => {
                                 <TouchableOpacity
                                     style={[styles.orangeButton]}
                                     onPress={() => {
-                                        console.log('userIdToBlock', userIdToBlock)
+
                                         blockUser(userIdToBlock); 
                                     }}
                                     
