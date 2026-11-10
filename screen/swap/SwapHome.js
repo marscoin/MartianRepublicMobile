@@ -56,7 +56,7 @@ export default function SwapHome() {
   const take = offer => {
     marsAlert(
       `Swap ${formatSats(offer.btcAmount)} for ${formatMars(offer.marsAmount)}?`,
-      'The maker locks the Marscoin first. You pay Bitcoin only after this app has verified that lock, and your Bitcoin returns automatically if the swap does not complete.\n\nOnce you have paid, the swap is handed to the network’s watchtower and completes even if your phone is off.',
+      'The seller locks the Marscoin first. You pay Bitcoin only after this app has verified that lock, and your Bitcoin returns automatically if the swap does not complete.\n\nOnce you have paid, the swap is handed to the network’s watchtower and completes even if your phone is off.',
       [
         { text: 'Not now', style: 'cancel' },
         {
@@ -206,8 +206,8 @@ export default function SwapHome() {
 }
 
 const HOW =
-  '1. You reserve an offer. The maker locks the Marscoin on the Marscoin chain so that only you can collect it, using a secret only the maker knows.\n\n' +
+  '1. You reserve an offer. The seller locks the Marscoin on the Marscoin chain so that only you can collect it, using a secret only the seller knows.\n\n' +
   '2. This app verifies that lock with two independent Marscoin nodes.\n\n' +
-  '3. You lock Bitcoin so that only the maker can collect it, and only by revealing that same secret.\n\n' +
-  '4. When the maker collects the Bitcoin, the secret appears on the Bitcoin chain and this app uses it to collect your Marscoin.\n\n' +
-  'If the maker never collects, your Bitcoin unlocks back to you after about four hours. The only cost beyond the offer price is network fees.';
+  '3. You lock Bitcoin so that only the seller can collect it, and only by revealing that same secret.\n\n' +
+  '4. When the seller collects the Bitcoin, the secret appears on the Bitcoin chain and this app uses it to collect your Marscoin.\n\n' +
+  'If the seller never collects, your Bitcoin unlocks back to you after about four hours. The only cost beyond the offer price is network fees.';
