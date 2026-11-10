@@ -34,7 +34,9 @@ export const INTRO_PAGES = [
     art: 'key',
     eyebrow: 'YOUR KEY',
     title: 'Twelve words. Guard them.',
-    body: ['Your wallet and your civic identity are sealed with twelve ordinary words. Whoever holds them is you, as far as Mars is concerned.'],
+    body: [
+      'Your wallet and your civic identity are sealed with twelve ordinary words. Whoever holds them is you, as far as Mars is concerned.',
+    ],
     rules: [
       'Write them on paper, in order.',
       'Show them to no one. The Republic will never ask for them.',

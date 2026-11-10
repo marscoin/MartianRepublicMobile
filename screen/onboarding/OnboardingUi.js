@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, ScrollView, StatusBar, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CivicBack, CivicButton, civicColors as c } from '../../components/CivicUi';
@@ -26,7 +26,6 @@ export function OnboardingFrame({
   const artHeight = Math.round(Math.min(360, Math.max(170, height * 0.34)));
   return (
     <View style={styles.screen} testID={testID}>
-      <StatusBar barStyle="light-content" backgroundColor={c.background} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={[styles.art, { height: artHeight }]}>
           {art ? <Image source={onboardingArt[art]} style={styles.image} /> : null}

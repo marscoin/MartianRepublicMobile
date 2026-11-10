@@ -5,9 +5,9 @@
 export const onboardingArt = {
   horizon: require('../../img/mars1.png'),
   vault: require('../../img/dashboard_bg1.png'),
-  key: require('../../img/astronaut.png'),
+  key: require('../../img/sunrise.png'),
   words: require('../../img/sunrise.png'),
   check: require('../../img/sunrise.png'),
-  ready: require('../../img/passport.png'),
+  ready: require('../../img/dashboard_bg1.png'),
   next: require('../../img/mars1.png'),
 };
