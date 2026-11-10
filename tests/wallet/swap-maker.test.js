@@ -213,7 +213,7 @@ describe('offers', () => {
       btc_amount_sat: 9000,
       maker_pubkey: record.pubkey,
       payment_hash160: record.paymentHash,
-      mars_locktime: state.marsHeight + 234,
+      mars_locktime: state.marsHeight + 480,
       maker_address: '',
     });
     expect(offer.expires_at).toBe(Math.floor(state.time / 1000) + 900);
@@ -308,7 +308,7 @@ describe('acceptances', () => {
       [{ takerPubkey: 'zz' }, 'no valid key'],
       [{ btcLocktime: 0 }, 'no valid refund time'],
       [{ btcLocktime: 975000 + 5 }, 'Too little time'],
-      [{ btcLocktime: 975000 + 60 }, 'too close to its Marscoin deadline'],
+      [{ btcLocktime: 975000 + 80 }, 'too close to its Marscoin deadline'],
     ];
     for (const [overrides, reason] of cases) {
       const { post, engine, accept, one, state } = world();
@@ -502,7 +502,7 @@ describe('taking the Marscoin back', () => {
     const [record] = await w.post();
     w.accept(record);
     await w.engine.tick();
-    w.mineMars(233);
+    w.mineMars(479);
     await w.engine.tick();
     expect((await w.one()).state).toBe(MakerState.MARS_LOCKED);
     expect(w.state.marsBroadcasts).toHaveLength(1);
@@ -533,7 +533,7 @@ describe('taking the Marscoin back', () => {
     await w.engine.tick();
     w.payBtc(await w.one());
     await w.engine.tick();
-    w.mineMars(234);
+    w.mineMars(480);
     await w.engine.tick();
     expect((await w.one()).state).toBe(MakerState.REFUNDING);
     expect(w.state.reports).toEqual([]);
@@ -651,7 +651,7 @@ describe('interruptions', () => {
       network: MARS_NETWORK,
     });
     await w.chain.broadcast(takerClaim.toHex());
-    w.mineMars(234);
+    w.mineMars(480);
     await w.engine.tick();
     now = await w.one();
     expect(now.state).toBe(MakerState.LOST);
@@ -705,7 +705,7 @@ describe('hostile or failing services', () => {
     expect(w.state.btcBroadcasts).toEqual([]);
     expect(now.note).toContain('could not be collected in time');
     // The Marscoin comes back at its own timelock.
-    w.mineMars(234);
+    w.mineMars(480);
     await w.engine.tick();
     expect((await w.one()).state).toBe(MakerState.REFUNDING);
     w.mineMars(1);
@@ -731,14 +731,14 @@ describe('hostile or failing services', () => {
     w.btc.tipHeight = async () => {
       throw new Error('down');
     };
-    w.mineMars(234);
+    w.mineMars(480);
     await w.engine.tick();
     expect((await w.one()).state).toBe(MakerState.REFUNDING);
   });
 
   it('does not call its own unconfirmed refund a sale', async () => {
     const w = await locked();
-    w.mineMars(234);
+    w.mineMars(480);
     await w.engine.tick();
     await w.engine.tick();
     await w.engine.tick();
@@ -753,7 +753,7 @@ describe('hostile or failing services', () => {
     w.state.time += 3 * 3600 * 1000;
     await w.engine.tick();
     expect((await w.one()).away).toBe(true);
-    w.mineMars(234);
+    w.mineMars(480);
     await w.engine.tick();
     expect((await w.one()).state).toBe(MakerState.REFUNDING);
     expect(w.state.reports).toEqual([]);

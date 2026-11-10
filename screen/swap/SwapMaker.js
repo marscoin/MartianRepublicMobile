@@ -86,7 +86,7 @@ export default function SwapMaker() {
     marsAlert(
       'Start offering Marscoin?',
       '1. The app posts offers at your spread over the market price and renews them every few minutes.\n\n' +
-        '2. When a buyer accepts, the app locks that Marscoin for them. It returns to you after about eight hours if they do not pay.\n\n' +
+        '2. When a buyer accepts, the app locks that Marscoin for them. It returns to you after about sixteen hours if they do not pay.\n\n' +
         '3. When their Bitcoin is confirmed, the app collects it into your Bitcoin wallet here.\n\n' +
         'Offers are live only while this app is open. Keep it open after a buyer accepts, until the Bitcoin is collected.',
       [
@@ -242,7 +242,7 @@ export default function SwapMaker() {
         onPress={() =>
           marsAlert(
             'What to know before selling',
-            '1. A buyer who accepts and never pays ties up that Marscoin for about eight hours. The relay limits how often one person can do this.\n\n' +
+            '1. A buyer who accepts and never pays ties up that Marscoin for about sixteen hours. The relay limits how often one person can do this.\n\n' +
               '2. The app collects Bitcoin only after two confirmations, and never in the last half hour before the buyer could take it back.\n\n' +
               '3. If you close the app after a buyer accepts, the sale unwinds: they get their Bitcoin back and you get your Marscoin back, each after its time lock.\n\n' +
               'Your price comes from public price feeds. Set a lowest price if you want a hard limit.',

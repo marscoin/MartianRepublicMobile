@@ -5,7 +5,7 @@ import { useRoute } from '@react-navigation/native';
 import { celebrate } from '../../blue_modules/app-review';
 import { advanceSwaps, esplora, getSwapServices, swapChain, useSwaps } from '../../blue_modules/swap';
 import { SwapState, isSwapFinished } from '../../blue_modules/swap/engine';
-import { describeSwap, formatBtc, formatMars, formatSats, timeUntil } from '../../blue_modules/swap/present';
+import { describeSwap, formatBtc, formatMars, formatSats, timeUntil, swapSubsteps } from '../../blue_modules/swap/present';
 import { BTC_BLOCK_SECONDS, MARS_BLOCK_SECONDS, MARS_SPEND_FEE } from '../../blue_modules/swap/safety';
 import { CivicButton } from '../../components/CivicUi';
 import QRCodeComponent from '../../components/QRCodeComponent';
@@ -140,7 +140,7 @@ export default function SwapDetail() {
         <Text style={styles.caption}>Last check could not finish: {swap.lastProblem}</Text>
       ) : null}
 
-      <Steps steps={view.steps} current={view.step} tone={view.tone} />
+      <Steps steps={view.steps} current={view.step} tone={view.tone} substeps={swapSubsteps(swap)} />
 
       {view.payNext ? (
         <>

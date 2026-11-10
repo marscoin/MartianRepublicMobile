@@ -95,32 +95,62 @@ function Halo({ size }) {
   );
 }
 
-export function Steps({ steps, current, tone }) {
+// The numbered steps of a swap. Under the current step, `substeps` spell out
+// what is happening right now: done, in progress (with a spinner) and to come.
+export function Steps({ steps, current, tone, substeps = [] }) {
   return (
     <View style={swapStyles.steps}>
       {steps.map((label, index) => {
         const done = index < current;
         const active = index === current && tone === 'active';
         return (
-          <View key={label} style={swapStyles.step}>
-            <View style={swapStyles.stepSlot}>
-              {active ? <Halo size={30} /> : null}
-              <View style={[swapStyles.stepMark, done && swapStyles.stepDone, active && swapStyles.stepActive]}>
-                {done ? (
-                  <Icon name="check" type="feather" size={14} color={civicColors.background} />
-                ) : (
-                  <Text style={[swapStyles.stepNumber, active && swapStyles.stepNumberOn]}>{index + 1}</Text>
-                )}
+          <View key={label}>
+            <View style={swapStyles.step}>
+              <View style={swapStyles.stepSlot}>
+                {active ? <Halo size={30} /> : null}
+                <View style={[swapStyles.stepMark, done && swapStyles.stepDone, active && swapStyles.stepActive]}>
+                  {done ? (
+                    <Icon name="check" type="feather" size={14} color={civicColors.background} />
+                  ) : (
+                    <Text style={[swapStyles.stepNumber, active && swapStyles.stepNumberOn]}>{index + 1}</Text>
+                  )}
+                </View>
               </View>
+              <Text style={[swapStyles.stepLabel, (done || active) && swapStyles.stepLabelOn]}>{label}</Text>
             </View>
-            <Text style={[swapStyles.stepLabel, (done || active) && swapStyles.stepLabelOn]}>{label}</Text>
-            {active ? <ActivityIndicator size="small" color={civicColors.orange} style={swapStyles.stepSpinner} /> : null}
+            {active && substeps.length ? (
+              <View style={swapStyles.substeps} testID="SwapSubsteps">
+                {substeps.map(part => (
+                  <View key={part.label} style={swapStyles.substep} accessibilityLabel={`${part.label}: ${SUBSTEP_WORD[part.state]}`}>
+                    <View style={swapStyles.substepMark}>
+                      {part.state === 'done' ? (
+                        <Icon name="check" type="feather" size={14} color="#8FCEAB" />
+                      ) : part.state === 'active' ? (
+                        <ActivityIndicator size="small" color={civicColors.orange} />
+                      ) : (
+                        <View style={swapStyles.substepDot} />
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        swapStyles.substepLabel,
+                        part.state === 'active' && swapStyles.substepLabelOn,
+                        part.state === 'done' && swapStyles.substepLabelDone,
+                      ]}
+                    >
+                      {part.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
         );
       })}
     </View>
   );
 }
+const SUBSTEP_WORD = { done: 'done', active: 'in progress', todo: 'to come' };
 
 // The name of the screen now showing, kept current as the user moves about.
 function useCurrentRouteName() {
@@ -238,7 +268,13 @@ export const swapStyles = StyleSheet.create({
   },
   stepSlot: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
   halo: { position: 'absolute', borderWidth: 2, borderColor: civicColors.orange },
-  stepSpinner: { marginLeft: 'auto' },
+  substeps: { marginLeft: 14, paddingLeft: 26, borderLeftWidth: 1, borderLeftColor: civicColors.border, marginTop: 2, marginBottom: 8 },
+  substep: { flexDirection: 'row', alignItems: 'center', minHeight: 30 },
+  substepMark: { width: 24, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
+  substepDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: civicColors.border },
+  substepLabel: { flex: 1, color: '#6B7178', fontSize: 14, lineHeight: 19 },
+  substepLabelOn: { color: civicColors.text },
+  substepLabelDone: { color: civicColors.muted },
   stepNumberOn: { color: civicColors.orange },
   banner: {
     position: 'absolute',

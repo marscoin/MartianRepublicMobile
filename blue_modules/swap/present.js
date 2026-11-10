@@ -21,6 +21,57 @@ export const satsPerMars = offer => ((offer.btcAmount / offer.marsAmount) * 1000
 
 const STEPS = ['Reserve offer', 'Marscoin locked for you', 'Pay Bitcoin', 'Receive Marscoin'];
 
+// The parts of the current step, in order: [label, done]. The first part not
+// yet done is the one in progress.
+function parts(swap) {
+  const lock = swap.lockProgress || { seen: false, confirmations: 0 };
+  switch (swap.state) {
+    case SwapState.ACCEPTING:
+      return [['Reserving the offer with the swap relay', false]];
+    case SwapState.WAITING_MARS:
+      return [
+        ['Seller locks the Marscoin for you', lock.seen],
+        ['First confirmation on the Marscoin chain', lock.confirmations >= 1],
+        ['Second confirmation', lock.confirmations >= 2],
+        ['Checked against a second, independent node', false],
+      ];
+    case SwapState.READY_TO_PAY:
+      return [
+        ['Marscoin lock verified', true],
+        [swap.btcPayment ? 'Sending your Bitcoin' : 'Your turn: pay the Bitcoin', false],
+      ];
+    case SwapState.BTC_SENT:
+      return [
+        ['Your Bitcoin is locked for the seller', true],
+        ['Seller collects it, once it has confirmed', false],
+      ];
+    case SwapState.CLAIMING:
+      return [
+        ['Secret read from the Bitcoin chain', true],
+        ['Marscoin claim sent to the network', !!swap.marsClaim],
+        ['Claim confirmed', false],
+      ];
+    case SwapState.REFUNDING:
+      return [
+        ['Refund sent to the Bitcoin network', swap.btcRefunds?.length > 0],
+        ['Refund confirmed', false],
+      ];
+    default:
+      return [];
+  }
+}
+
+// [{ label, state }] with state 'done', 'active' or 'todo'.
+export function swapSubsteps(swap) {
+  let active = false;
+  return parts(swap).map(([label, done]) => {
+    if (done) return { label, state: 'done' };
+    if (active) return { label, state: 'todo' };
+    active = true;
+    return { label, state: 'active' };
+  });
+}
+
 // What to show for a swap: a title, an explanation, which of the four steps is
 // current, and which actions make sense.
 export function describeSwap(swap) {

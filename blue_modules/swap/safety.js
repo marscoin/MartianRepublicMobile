@@ -3,6 +3,11 @@
 // which offers are safe to take.
 export const MARS_TIMELOCK_BLOCKS = 234;
 export const BTC_TIMELOCK_BLOCKS = 24;
+// What this app's own offers lock for: about sixteen hours. Marscoin blocks
+// arrive in bursts (234 blocks have passed in under four hours), and a
+// seller's refund must never open before the buyer's Bitcoin refund has.
+// Longer is always safe for the buyer; other wallets accept it as is.
+export const MAKER_MARS_TIMELOCK_BLOCKS = 480;
 export const MARS_MIN_CONFIRMATIONS = 2;
 export const MARS_BLOCK_SECONDS = 123;
 export const BTC_BLOCK_SECONDS = 600;

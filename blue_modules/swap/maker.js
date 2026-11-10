@@ -3,7 +3,7 @@
 //   1. We publish an offer carrying the hash of a secret only we know.
 //   2. A taker accepts and names the Bitcoin contract they will pay into.
 //   3. We lock the Marscoin so that the taker can collect it with the secret,
-//      and we can take it back after `marsLocktime`.
+//      and we can take it back after `marsLocktime` (about sixteen hours).
 //   4. The taker pays Bitcoin into a contract we can collect from with the
 //      secret, and they can take back after `btcLocktime`.
 //   5. We collect the Bitcoin. That publishes the secret, and the taker uses it
@@ -32,7 +32,7 @@ import {
   DUST,
   MAKER_BTC_CONFIRMATIONS,
   MARS_SPEND_FEE,
-  MARS_TIMELOCK_BLOCKS,
+  MAKER_MARS_TIMELOCK_BLOCKS,
   btcFeeProblem,
   btcWindowProblem,
   makerClaimProblem,
@@ -212,7 +212,7 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
         keyPath,
         pubkey: bitcoin.ECPair.fromPrivateKey(privateKey).publicKey.toString('hex'),
         paymentHash: bitcoin.crypto.hash160(secretFor(privateKey)).toString('hex'),
-        marsLocktime: marsHeight + MARS_TIMELOCK_BLOCKS,
+        marsLocktime: marsHeight + MAKER_MARS_TIMELOCK_BLOCKS,
         expiresAt: seconds() + lifetime,
         btcDestination,
         acceptedAt: 0,
