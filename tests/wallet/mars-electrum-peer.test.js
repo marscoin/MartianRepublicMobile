@@ -25,6 +25,24 @@ describe('Marscoin server selection', () => {
     expect(selectMarsElectrumPeer({ host, ssl: '50002' })).toEqual(defaultMarsElectrumPeer);
   });
 
+  it('tries the second bundled server after a failed connection, and comes back round', () => {
+    expect(selectMarsElectrumPeer(null, 0)).toEqual({ host: 'electrum.marscoin.org', ssl: '50002' });
+    expect(selectMarsElectrumPeer(null, 1)).toEqual({ host: 'electrum2.marscoin.org', ssl: '50002' });
+    expect(selectMarsElectrumPeer(null, 2)).toEqual({ host: 'electrum.marscoin.org', ssl: '50002' });
+    // A retired address migrates into the same rotation.
+    expect(selectMarsElectrumPeer({ host: '147.182.177.23', ssl: '50002' }, 1).host).toBe('electrum2.marscoin.org');
+    // The server last connected to is stored like a custom one, but still rotates.
+    expect(selectMarsElectrumPeer({ host: 'electrum.marscoin.org', ssl: '50002' }, 1).host).toBe('electrum2.marscoin.org');
+    expect(selectMarsElectrumPeer({ host: 'electrum2.marscoin.org', ssl: '50002' }, 0).host).toBe('electrum.marscoin.org');
+  });
+
+  it('never rotates away from a server the person configured', () => {
+    for (const attempt of [0, 1, 2, 7]) {
+      expect(selectMarsElectrumPeer({ host: 'my-server.example', ssl: '443' }, attempt)).toEqual({ host: 'my-server.example', ssl: '443' });
+      expect(selectMarsElectrumPeer({ host: 'electrum.marscoin.org', ssl: '60002' }, attempt).ssl).toBe('60002');
+    }
+  });
+
   it('defaults to a named host so the certificate can be validated', () => {
     expect(defaultMarsElectrumPeer).toEqual({ host: 'electrum.marscoin.org', ssl: '50002' });
   });

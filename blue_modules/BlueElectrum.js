@@ -92,7 +92,7 @@ async function connectMain() {
     console.log('Electrum connection disabled by user. Skipping connectMain call');
     return;
   }
-  const usingPeer = selectMarsElectrumPeer(await getSavedPeer());
+  const usingPeer = selectMarsElectrumPeer(await getSavedPeer(), connectionAttempt);
 
   await DefaultPreference.setName('group.io.bluewallet.bluewallet');
   try {

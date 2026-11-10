@@ -71,7 +71,7 @@ let latestBlockheightTimestamp = false;
 const txhashHeightCache = {};
 
 async function connectMain() {
-  const usingPeer = selectMarsElectrumPeer(await getSavedPeer());
+  const usingPeer = selectMarsElectrumPeer(await getSavedPeer(), connectionAttempt);
 
   await DefaultPreference.setName("group.io.bluewallet.bluewallet");
   try {
