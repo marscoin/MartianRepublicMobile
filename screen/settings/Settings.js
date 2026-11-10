@@ -1,6 +1,8 @@
 import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useContext, useState, useCallback, useEffect } from 'react';
-import { ScrollView, StyleSheet, Platform, Linking, View } from 'react-native';
+import { ScrollView, StyleSheet, Platform, Linking, Text, TouchableOpacity, View } from 'react-native';
+import { Icon } from 'react-native-elements';
+import { marsAlert } from '../../components/MarsDialog';
 import { useNavigation } from '@react-navigation/native';
 import Dialog from 'react-native-dialog';
 import RNRestart from 'react-native-restart'; 
@@ -11,13 +13,52 @@ import navigationStyle from '../../components/navigationStyle';
 import { BlueHeaderDefaultSub } from '../../BlueComponents';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
-import ListItem from '../../components/ListItem';
 const BlueApp = require('../../BlueApp');
 
+function Row({ icon, title, note, onPress, testID, danger = false, last = false }) {
+  const color = danger ? '#F4A38A' : '#FF812D';
+  return (
+    <TouchableOpacity accessibilityRole="button" onPress={onPress} testID={testID} style={[styles.row, last && styles.rowLast]}>
+      <View style={styles.rowIcon}>
+        <Icon name={icon} type="feather" size={18} color={color} />
+      </View>
+      <View style={styles.flex}>
+        <Text style={[styles.rowTitle, danger && styles.danger]}>{title}</Text>
+        {note ? <Text style={styles.note}>{note}</Text> : null}
+      </View>
+      <Icon name="chevron-right" type="feather" size={20} color="#6B7178" />
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
+  root: { flex: 1, backgroundColor: '#080A0C' },
+  content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 150 },
+  androidTop: { height: 24 },
+  flex: { flex: 1 },
+  eyebrowRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  tick: { width: 3, height: 13, backgroundColor: '#FF812D', marginRight: 9 },
+  eyebrow: { color: '#ADB3BA', fontFamily: 'ChakraPetch-SemiBold', fontSize: 11, letterSpacing: 2 },
+  title: { color: '#F5F1EB', fontFamily: 'ChakraPetch-Bold', fontSize: 30, marginBottom: 18 },
+  feature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#14171B',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#FF812D',
+    padding: 16,
   },
+  featureIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#1D2126', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  featureTitle: { color: '#F5F1EB', fontFamily: 'ChakraPetch-Bold', fontSize: 18 },
+  section: { color: '#8A9098', fontFamily: 'ChakraPetch-SemiBold', fontSize: 11, letterSpacing: 2, marginTop: 26, marginBottom: 10 },
+  panel: { backgroundColor: '#14171B', borderRadius: 18, borderWidth: 1, borderColor: '#30353B', paddingHorizontal: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#30353B' },
+  rowLast: { borderBottomWidth: 0 },
+  rowIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#1D2126', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  rowTitle: { color: '#F5F1EB', fontFamily: 'ChakraPetch-SemiBold', fontSize: 16 },
+  note: { color: '#8A9098', fontSize: 13, lineHeight: 18, marginTop: 2 },
+  danger: { color: '#F4A38A' },
 });
 
 const Settings = () => {
@@ -69,7 +110,7 @@ const Settings = () => {
       deleteAllWallets()
 
     } else {
-      alert('The confirmation text does not match. Please type "Confirm" to proceed.');
+      marsAlert('Not confirmed', 'The text did not match. Type "Confirm" to proceed.');
       setConfirmInput(''); // Reset input
     }
     setDialogVisible(false); // Close dialog regardless of input after attempt
@@ -84,10 +125,10 @@ const Settings = () => {
             })
             .catch(error => {
 
-                alert('There was an error deleting the user. Please try again.');
+                marsAlert('Account not deleted', 'Something went wrong. Please try again.');
             });
     } else {
-        alert('The confirmation text does not match. Please type "Confirm" to proceed.');
+        marsAlert('Not confirmed', 'The text did not match. Type "Confirm" to proceed.');
         setConfirmInput(''); // Reset input
     }
     setDialogVisible(false); // Close dialog regardless of input after attempt
@@ -109,19 +150,48 @@ const Settings = () => {
 
   return (
     <>
-    <ScrollView style={styles.root} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>
-      {Platform.OS === 'android' ? <View style={{height: 24}}/> : <></>}
-      {Platform.OS === 'android' ? <BlueHeaderDefaultSub leftText={loc.settings.header} /> : <></>}
-      <ListItem title={'General'} onPress={() => navigate('GeneralSettings')} testID="GeneralSettings" chevron />
-      <ListItem title={"Currency"} onPress={() => navigate('Currency')} testID="Currency" chevron />
-      {/* <ListItem title={loc.settings.language} onPress={() => navigate('Language')} testID="Language" chevron /> */}
-      <ListItem title={'Security'} onPress={() => navigate('EncryptStorage')} testID="SecurityButton" chevron />
-      <ListItem title={'Network'} onPress={() => navigate('NetworkSettings')} testID="NetworkSettings" chevron />
-      <ListItem title={"Tools"} onPress={() => navigate('Tools')} testID="Tools" chevron />
-      <ListItem title={"Terms of service"} onPress={openTermsOfService} testID="TermsOfService" chevron />
-      <ListItem title={'Complete App Reset'} onPress={showDialog} testID="ResetApp" chevron />
-      <ListItem title={'Delete account'} onPress={showDialogDelete} testID="DeleteApp" chevron />
-      {/* <ListItem title={loc.settings.about} onPress={() => navigate('About')} testID="AboutButton" chevron /> */}
+    <ScrollView style={styles.root} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>
+      {Platform.OS === 'android' ? <View style={styles.androidTop} /> : null}
+      {Platform.OS === 'android' ? <BlueHeaderDefaultSub leftText={loc.settings.header} /> : null}
+
+      <View style={styles.eyebrowRow}>
+        <View style={styles.tick} />
+        <Text style={styles.eyebrow}>MCR / SETTINGS</Text>
+      </View>
+      <Text accessibilityRole="header" style={styles.title}>
+        Settings
+      </Text>
+
+      <TouchableOpacity accessibilityRole="button" style={styles.feature} onPress={() => navigate('NetworkLive')} testID="NetworkLive">
+        <View style={styles.featureIcon}>
+          <Icon name="activity" type="feather" size={22} color="#FF812D" />
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.featureTitle}>The network, live</Text>
+          <Text style={styles.note}>See every service your phone is talking to, and how fast each one answers.</Text>
+        </View>
+        <Icon name="chevron-right" type="feather" size={20} color="#6B7178" />
+      </TouchableOpacity>
+
+      <Text style={styles.section}>THIS APP</Text>
+      <View style={styles.panel}>
+        <Row icon="sliders" title="General" note="Start screen, advanced mode and other preferences." onPress={() => navigate('GeneralSettings')} testID="GeneralSettings" />
+        <Row icon="dollar-sign" title="Currency" note="The currency amounts are also shown in." onPress={() => navigate('Currency')} testID="Currency" />
+        <Row icon="lock" title="Security" note="Password, Face ID and encrypted storage." onPress={() => navigate('EncryptStorage')} testID="SecurityButton" />
+        <Row icon="server" title="Network" note="Choose the Marscoin server your wallet uses." onPress={() => navigate('NetworkSettings')} testID="NetworkSettings" />
+        <Row icon="tool" title="Tools" note="Broadcast a transaction, check an address and more." onPress={() => navigate('Tools')} testID="Tools" last />
+      </View>
+
+      <Text style={styles.section}>THE REPUBLIC</Text>
+      <View style={styles.panel}>
+        <Row icon="file-text" title="Terms of service" note="Opens martianrepublic.org." onPress={openTermsOfService} testID="TermsOfService" last />
+      </View>
+
+      <Text style={styles.section}>START OVER</Text>
+      <View style={styles.panel}>
+        <Row icon="refresh-ccw" title="Reset this app" note="Removes every wallet from this phone. Your coins stay on the chain; you need your twelve words to get back to them." onPress={showDialog} testID="ResetApp" danger />
+        <Row icon="user-x" title="Delete account" note="Deletes your Republic account and removes every wallet from this phone." onPress={showDialogDelete} testID="DeleteApp" danger last />
+      </View>
     </ScrollView>
 
     <Dialog.Container visible={dialogVisible}>
@@ -159,6 +229,5 @@ const Settings = () => {
 export default Settings;
 Settings.navigationOptions = navigationStyle({
   headerTransparent: true,
-  headerTitle: Platform.select({ ios: loc.settings.header, default: '' }),
-  headerLargeTitle: true,
+  headerTitle: '',
 });

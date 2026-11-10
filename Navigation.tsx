@@ -130,6 +130,7 @@ import SwapHome from './screen/swap/SwapHome';
 import SwapDetail from './screen/swap/SwapDetail';
 import BtcWallet from './screen/swap/BtcWallet';
 import SwapMaker from './screen/swap/SwapMaker';
+import NetworkLive from './screen/network/NetworkLive';
 import { SwapBanner, SwapWatcher } from './screen/swap/SwapUi';
 import OnboardingIntro from './screen/onboarding/OnboardingIntro';
 import OnboardingWords from './screen/onboarding/OnboardingWords';
@@ -366,6 +367,7 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="SwapDetail" component={SwapDetail} options={{headerShown: false}} />
       <CitizenStack.Screen name="BtcWallet" component={BtcWallet} options={{headerShown: false}} />
       <CitizenStack.Screen name="SwapMaker" component={SwapMaker} options={{headerShown: false}} />
+      <CitizenStack.Screen name="NetworkLive" component={NetworkLive} options={{headerShown: false}} />
     </CitizenStack.Navigator>
   );
 };
@@ -392,6 +394,7 @@ const WalletsRoot = () => {
       <WalletsStack.Screen name="SwapDetail" component={SwapDetail} options={{headerShown: false}} />
       <WalletsStack.Screen name="BtcWallet" component={BtcWallet} options={{headerShown: false}} />
       <WalletsStack.Screen name="SwapMaker" component={SwapMaker} options={{headerShown: false}} />
+      <WalletsStack.Screen name="NetworkLive" component={NetworkLive} options={{headerShown: false}} />
       <WalletsStack.Screen name="LdkOpenChannel" component={LdkOpenChannel} options={LdkOpenChannel.navigationOptions(theme)} />
       <WalletsStack.Screen name="LdkInfo" component={LdkInfo} options={LdkInfo.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletDetails" component={WalletDetails} options={WalletDetails.navigationOptions(theme)} />

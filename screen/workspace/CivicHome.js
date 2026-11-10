@@ -138,6 +138,49 @@ export default function CivicHome() {
             }
           : null;
 
+  // Where to go in the Republic. Shown ahead of organizations: it is what most people come for.
+  const around = (
+    <>
+      <SectionHeading title="Around the Republic" />
+      <View style={home.grid}>
+        {AROUND.map(place => (
+          <TouchableOpacity
+            key={place.route}
+            accessibilityRole="button"
+            accessibilityLabel={`${place.title}. ${place.note}`}
+            onPress={() => navigation.navigate(place.route)}
+            style={home.tile}
+            testID={`Around-${place.route}`}
+          >
+            <View style={home.tileTop}>
+              <View style={home.tileIcon}>
+                <Icon name={place.icon} type="feather" size={20} color={civicColors.orange} />
+              </View>
+              <Icon name="arrow-up-right" type="feather" size={18} color="#6B7178" />
+            </View>
+            <Text style={home.tileTitle}>{place.title}</Text>
+            <Text style={home.tileNote}>{place.note}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <TouchableOpacity
+        accessibilityRole="button"
+        style={home.wide}
+        onPress={() => navigation.navigate('NetworkLive')}
+        testID="Around-NetworkLive"
+      >
+        <View style={home.tileIcon}>
+          <Icon name="activity" type="feather" size={20} color={civicColors.orange} />
+        </View>
+        <View style={home.wideText}>
+          <Text style={home.tileTitle}>The network, live</Text>
+          <Text style={home.tileNote}>Watch your phone talk to the Marscoin and Bitcoin networks.</Text>
+        </View>
+        <Icon name="arrow-up-right" type="feather" size={18} color="#6B7178" />
+      </TouchableOpacity>
+    </>
+  );
+
   return (
     <WorkspaceScreen
       title="At home in the Republic."
@@ -228,54 +271,45 @@ export default function CivicHome() {
               ))}
             </>
           )}
-          <SectionHeading title="Your organizations" action="See all" onPress={() => navigation.navigate('WorkspaceOrganizations')} />
-          {(data?.organizations || []).slice(0, 3).map(group => (
-            <OrganizationCard
-              key={group.id}
-              organization={group}
-              onPress={() =>
-                navigation.navigate('WorkspaceOrganization', {
-                  organizationId: group.id,
-                })
-              }
-            />
-          ))}
-          {data && !data.organizations.length && (
-            <View style={styles.empty}>
-              <Text style={styles.body}>Start with the people and work that matter to you.</Text>
-              <Text style={styles.secondaryText}>Create a group, share tasks, and keep a record of what you accomplish together.</Text>
-            </View>
-          )}
-          <CivicButton
-            title="Create an organization"
-            icon="plus"
-            secondary={!!data?.organizations?.length}
-            onPress={() => navigation.navigate('WorkspaceCompose', { kind: 'organization' })}
-          />
+          {around}
+          {data?.organizations?.length ? (
+            <>
+              <SectionHeading title="Your organizations" action="See all" onPress={() => navigation.navigate('WorkspaceOrganizations')} />
+              {data.organizations.slice(0, 3).map(group => (
+                <OrganizationCard
+                  key={group.id}
+                  organization={group}
+                  onPress={() =>
+                    navigation.navigate('WorkspaceOrganization', {
+                      organizationId: group.id,
+                    })
+                  }
+                />
+              ))}
+              <SmallAction
+                title="Create another organization"
+                icon="plus"
+                onPress={() => navigation.navigate('WorkspaceCompose', { kind: 'organization' })}
+              />
+            </>
+          ) : data ? (
+            <>
+              <SectionHeading title="Organizations" />
+              <View style={styles.card}>
+                <Text style={styles.secondaryText}>
+                  Groups for shared work: tasks, members and a record of what you accomplish together.
+                </Text>
+                <SmallAction
+                  title="Create an organization"
+                  icon="plus"
+                  onPress={() => navigation.navigate('WorkspaceCompose', { kind: 'organization' })}
+                />
+              </View>
+            </>
+          ) : null}
         </>
       )}
-      <SectionHeading title="Around the Republic" />
-      <View style={home.grid}>
-        {AROUND.map(place => (
-          <TouchableOpacity
-            key={place.route}
-            accessibilityRole="button"
-            accessibilityLabel={`${place.title}. ${place.note}`}
-            onPress={() => navigation.navigate(place.route)}
-            style={home.tile}
-            testID={`Around-${place.route}`}
-          >
-            <View style={home.tileTop}>
-              <View style={home.tileIcon}>
-                <Icon name={place.icon} type="feather" size={20} color={civicColors.orange} />
-              </View>
-              <Icon name="arrow-up-right" type="feather" size={18} color="#6B7178" />
-            </View>
-            <Text style={home.tileTitle}>{place.title}</Text>
-            <Text style={home.tileNote}>{place.note}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {!address ? around : null}
     </WorkspaceScreen>
   );
 }
@@ -299,6 +333,17 @@ const home = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
+  wide: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: civicColors.panel,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: civicColors.border,
+    padding: 16,
+    marginBottom: 12,
+  },
+  wideText: { flex: 1, marginLeft: 14 },
   tileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 },
   tileIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#1D2126', alignItems: 'center', justifyContent: 'center' },
   tileTitle: { color: civicColors.text, fontFamily: 'ChakraPetch-Bold', fontSize: 17, marginBottom: 4 },
