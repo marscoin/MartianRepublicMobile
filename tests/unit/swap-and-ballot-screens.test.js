@@ -446,7 +446,7 @@ describe('swap banner', () => {
 
   it('shows the current step of a swap under way', () => {
     expect(bannerFor([swap('waiting_mars')])).toMatchObject({ swapId: 's1', step: 1, count: 4, attention: false });
-    expect(bannerFor([swap('waiting_mars')]).detail).toBe('Swap · step 2 of 4 · Marscoin locked for you');
+    expect(bannerFor([swap('waiting_mars')]).detail).toBe('Swap · step 2 of 4 · Confirming the Marscoin lock');
     expect(bannerFor([swap('btc_sent')]).detail).toContain('step 3 of 4');
     expect(bannerFor([swap('claiming')]).detail).toContain('Receive Marscoin');
   });

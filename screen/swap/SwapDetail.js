@@ -73,10 +73,7 @@ export default function SwapDetail() {
       await action(await record());
     } catch (error) {
       if (error.shortfall) {
-        marsAlert(
-          'Not enough Bitcoin',
-          `Add at least ${formatSats(error.shortfall)} to your Bitcoin wallet, or pay from another wallet.`,
-        );
+        marsAlert('Not enough Bitcoin', `Add at least ${formatSats(error.shortfall)} to your Bitcoin wallet, or pay from another wallet.`);
       } else {
         marsAlert(failureTitle, error.message);
       }
@@ -145,6 +142,15 @@ export default function SwapDetail() {
 
       <Steps steps={view.steps} current={view.step} tone={view.tone} />
 
+      {view.payNext ? (
+        <>
+          <CivicButton title={`Pay ${formatSats(swap.btcAmount)} · waiting for the lock`} disabled onPress={() => {}} testID="PayWaiting" />
+          <Text style={styles.caption}>
+            This button unlocks as soon as the Marscoin lock has two confirmations. Marscoin blocks usually take a couple of minutes,
+            sometimes much longer. You do not need to keep this screen open.
+          </Text>
+        </>
+      ) : null}
       {view.canPay ? (
         <>
           <CivicButton

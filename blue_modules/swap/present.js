@@ -32,6 +32,9 @@ export function describeSwap(swap) {
       return {
         ...base,
         step: 1,
+        // While this step is the current one it is not yet done: say so.
+        steps: ['Reserve offer', 'Confirming the Marscoin lock', 'Pay Bitcoin', 'Receive Marscoin'],
+        payNext: true,
         title: 'Waiting for the Marscoin lock',
         body: `${swap.error || 'Waiting for the maker to lock Marscoin.'} Nothing has been paid. Do not send Bitcoin yet.`,
         canCancel: true,
