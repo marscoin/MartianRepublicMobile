@@ -4,19 +4,23 @@ import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { Icon } from 'react-native-elements';
 import { networkNodes, networkSummary, probeNode, pulseDuration, ringPositions } from '../../blue_modules/network-status';
+import { MARSQNET, probePeer } from '../../blue_modules/p2p-probe';
 import { swapChain } from '../../blue_modules/swap';
+import { randomBytes } from '../../class/rng';
 import { parseHeader } from '../../blue_modules/swap/mars-headers';
 import { civicColors } from '../../components/CivicUi';
 import { marsAlert } from '../../components/MarsDialog';
 import { SectionHeading, WorkspaceScreen, styles } from '../workspace/WorkspaceUi';
 
 const MARSConnection = require('../../blue_modules/MARSConnection');
+const net = require('net');
 
 const REFRESH_SECONDS = 20;
 const CHAIN = {
   mars: { color: civicColors.orange, icon: 'hexagon', label: 'Marscoin' },
   btc: { color: '#E8C27A', icon: 'box', label: 'Bitcoin' },
   republic: { color: '#8FCEAB', icon: 'flag', label: 'Republic' },
+  quantum: { color: '#B39DFF', icon: 'cpu', label: 'Quantum net' },
 };
 const DOWN = '#E0705A';
 const group = value => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -25,6 +29,13 @@ const nodes = networkNodes({
   fetch: (...args) => fetch(...args),
   relayTip: () => swapChain.tipHeight(),
   walletServer: () => MARSConnection.getConfig(),
+  // A greeting to each marsqnet node; null for one that does not answer.
+  quantumPeers: async () => {
+    const nonce = await randomBytes(8);
+    return Promise.all(
+      MARSQNET.peers.map(peer => probePeer({ net, ...peer, magic: MARSQNET.magic, protocol: MARSQNET.protocol, nonce }).catch(() => null)),
+    );
+  },
 });
 
 // A dot that runs along a link, out from the phone and back, at the speed the
@@ -138,6 +149,7 @@ export default function NetworkLive() {
   const summary = networkSummary(known);
   const marsHeight = Math.max(0, ...known.map(result => result?.marsHeight || 0));
   const btcHeight = Math.max(0, ...known.map(result => result?.btcHeight || 0));
+  const quantumHeight = Math.max(0, ...known.map(result => result?.quantumHeight || 0));
   const minutes = lastBlock ? Math.max(0, Math.round((Date.now() / 1000 - lastBlock.time) / 60)) : null;
   const toneColor = { good: '#8FCEAB', warn: civicColors.orange, bad: DOWN, idle: civicColors.muted }[summary.tone];
 
@@ -268,6 +280,11 @@ export default function NetworkLive() {
             <Text style={map.height}>{btcHeight ? group(btcHeight) : '—'}</Text>
             <Text style={styles.caption}> </Text>
           </View>
+          <View style={styles.flex}>
+            <Text style={styles.caption}>QUANTUM NET</Text>
+            <Text style={[map.height, map.quantum]}>{quantumHeight ? group(quantumHeight) : '—'}</Text>
+            <Text style={styles.caption}>test network</Text>
+          </View>
         </View>
       </View>
 
@@ -322,12 +339,13 @@ const map = StyleSheet.create({
   nodeLabel: { color: civicColors.text, fontFamily: 'ChakraPetch-SemiBold', fontSize: 11, marginTop: 3 },
   nodeMs: { color: civicColors.muted, fontSize: 10 },
   legend: { flexDirection: 'row', justifyContent: 'center', marginBottom: 6 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 10 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 7 },
   legendDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   summary: { flexDirection: 'row', alignItems: 'center' },
   summaryDot: { width: 10, height: 10, borderRadius: 5, marginRight: 10 },
   chains: { flexDirection: 'row', marginTop: 6 },
-  height: { color: civicColors.text, fontFamily: 'ChakraPetch-Bold', fontSize: 22, marginVertical: 2 },
+  height: { color: civicColors.text, fontFamily: 'ChakraPetch-Bold', fontSize: 20, marginVertical: 2 },
+  quantum: { color: '#B39DFF' },
   row: { flexDirection: 'row', alignItems: 'center' },
   rowDot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
   ms: { color: civicColors.muted, fontFamily: 'ChakraPetch-SemiBold', fontSize: 13 },
