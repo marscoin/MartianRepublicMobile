@@ -1,5 +1,5 @@
 import { marsAlert } from '../../components/MarsDialog';
-import { hasUnfinishedSwaps } from '../../blue_modules/swap';
+import { hasUnfinishedMakerSwaps, hasUnfinishedSwaps } from '../../blue_modules/swap';
 import React, { useEffect, useState, useCallback, useContext, useRef, useMemo, useLayoutEffect } from 'react';
 import {
   View,
@@ -368,7 +368,10 @@ const WalletDetails = (navigation) => {
   const handleDeleteButtonTapped = async () => {
     triggerHapticFeedback(HapticFeedbackTypes.NotificationWarning);
     // A swap in progress is claimed or refunded with keys from this wallet.
-    if (await hasUnfinishedSwaps(wallet.getID()).catch(() => false)) {
+    if (
+      (await hasUnfinishedSwaps(wallet.getID()).catch(() => false)) ||
+      (await hasUnfinishedMakerSwaps(wallet.getID()).catch(() => false))
+    ) {
       marsAlert('Swap in progress', 'This wallet has a Bitcoin swap that has not finished. Wait until it completes or is refunded before deleting the wallet.');
       return;
     }

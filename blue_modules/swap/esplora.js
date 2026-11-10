@@ -126,6 +126,15 @@ export function createEsplora({ fetch, sources = ESPLORA_SOURCES, timeout = 1500
       });
     },
 
+    // Block height of a transaction, or 0 while unconfirmed. Every source
+    // that answers must agree, so one service cannot vouch for a payment the
+    // rest of the network has not seen.
+    async confirmedHeight(txid) {
+      const answers = await all(`/tx/${txid}/status`, JSON.parse);
+      const heights = answers.map(answer => (answer?.confirmed && Number.isSafeInteger(answer.block_height) ? answer.block_height : 0));
+      return heights.every(value => value > 0 && value === heights[0]) ? heights[0] : 0;
+    },
+
     // Whether one output has been spent, asking every source. A spend seen by
     // either is reported; the caller must still verify the spending transaction.
     async outspend(txid, vout) {

@@ -187,6 +187,19 @@ export default function SwapHome() {
           ))}
         </>
       ) : null}
+      <SectionHeading title="Have Marscoin to sell?" />
+      <TouchableOpacity
+        accessibilityRole="button"
+        style={styles.card}
+        onPress={() => navigation.navigate('SwapMaker')}
+        testID="OpenSwapMaker"
+      >
+        <Text style={styles.cardTitle}>Offer Marscoin for Bitcoin</Text>
+        <Text style={styles.secondaryText}>
+          Set your price and limits. The app keeps your offers on the market and completes each sale.
+        </Text>
+        <Text style={styles.actionText}>Set up</Text>
+      </TouchableOpacity>
       <SmallAction title="How swaps keep both sides safe" icon="info" onPress={() => marsAlert('How a swap works', HOW)} />
     </WorkspaceScreen>
   );

@@ -97,3 +97,69 @@ export function timeUntil(blocks, secondsPerBlock) {
   const rest = Math.round((minutes % 60) / 10) * 10;
   return rest ? `about ${hours} h ${rest} min` : `about ${hours} h`;
 }
+
+// ---- Offering Marscoin (maker side) ------------------------------------------
+
+const MAKER_STEPS = ['Buyer accepted', 'Marscoin locked', 'Bitcoin received', 'Bitcoin collected'];
+
+// What to show for one of our own offers or sales.
+export function describeMakerSwap(record) {
+  const base = { steps: MAKER_STEPS, tone: 'active' };
+  const pair = `${formatMars(record.marsAmount)} for ${formatSats(record.btcAmount)}`;
+  switch (record.state) {
+    case 'offered':
+      return { ...base, step: 0, tone: 'idle', title: 'On offer', body: pair };
+    case 'accepted':
+    case 'locking':
+      return { ...base, step: 1, title: 'Locking Marscoin for a buyer', body: record.error || pair };
+    case 'mars_locked':
+      return { ...base, step: 2, title: 'Waiting for the buyer’s Bitcoin', body: record.error || record.note || pair };
+    case 'claiming':
+      return {
+        ...base,
+        step: 3,
+        title: 'Collecting the Bitcoin',
+        body: record.error || 'Your claim is on the Bitcoin network, awaiting confirmation.',
+      };
+    case 'completed':
+      return {
+        ...base,
+        step: 4,
+        tone: 'done',
+        title: 'Sold',
+        body: `${formatSats(record.btcAmount)} received for ${formatMars(record.marsAmount)}.`,
+      };
+    case 'refunding':
+      return {
+        ...base,
+        step: 2,
+        title: 'Taking the Marscoin back',
+        body: 'The buyer did not pay in time. Your Marscoin is returning to your wallet.',
+      };
+    case 'refunded':
+      return {
+        ...base,
+        step: 2,
+        tone: 'ended',
+        title: 'Marscoin returned',
+        body: 'The buyer did not pay. Your Marscoin is back in your wallet, less the network fee.',
+      };
+    case 'lost':
+      return {
+        ...base,
+        step: 3,
+        tone: 'error',
+        title: 'Sale lost',
+        body: 'The buyer recovered the Bitcoin before your claim confirmed, and collected the Marscoin. Contact the Republic with this record.',
+      };
+    default:
+      return { ...base, step: 0, tone: 'ended', title: 'Acceptance declined', body: record.error || 'Nothing was locked.' };
+  }
+}
+
+// "12.5" -> 1250000000, or null when it is not an amount.
+export function parseCoins(text) {
+  const match = /^\s*(\d{1,9})(?:[.,](\d{1,8}))?\s*$/.exec(String(text));
+  if (!match) return null;
+  return Number(match[1]) * 100000000 + Number((match[2] || '').padEnd(8, '0'));
+}

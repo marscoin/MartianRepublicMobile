@@ -128,6 +128,44 @@ export function createMarsSwapChain({ request, fetch, explorer = MARS_EXPLORER, 
       return accepted.value;
     },
 
+    // ---- Offering (maker side) ----------------------------------------------
+
+    async postOffer(offer) {
+      if ((await request('atomicswap.post_offer', [offer])) !== true) throw new Error('The swap relay did not take the offer.');
+      return true;
+    },
+
+    // Best effort: only the connection that posted an offer may cancel it, and
+    // a phone's address changes. An offer that cannot be cancelled expires.
+    async cancelOffer(offerId) {
+      try {
+        return (await request('atomicswap.cancel_offer', [offerId])) === true;
+      } catch {
+        return false;
+      }
+    },
+
+    // The taker's acceptance of one of our offers, or null. Unauthenticated:
+    // every field must be checked before acting on it.
+    async acceptance(offerId) {
+      const found = await request('atomicswap.get_acceptance', [offerId]);
+      return found && typeof found === 'object' && !Array.isArray(found) ? found : null;
+    },
+
+    async reportAbandoned(offerId) {
+      try {
+        return (await request('atomicswap.report_abandoned', [offerId])) === true;
+      } catch {
+        return false;
+      }
+    },
+
+    // The relay's unfiltered list, for telling our own offers from others'.
+    async rawOffers() {
+      const offers = await request('atomicswap.get_offers', []);
+      return Array.isArray(offers) ? offers : [];
+    },
+
     // ---- Watchtower ---------------------------------------------------------
     // The relay can finish a swap for a phone that is switched off. It is given
     // transactions that are already signed and can only pay our own addresses:
