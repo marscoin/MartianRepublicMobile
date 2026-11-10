@@ -12,6 +12,14 @@ Updated 2026-10-09. First milestone: wallet and citizenship. Preserve Yanina's v
 - Chain tracker: it had been idle since 2026-06-03 after a lost database connection (last block 3,486,514). Fixed, and now a single systemd service (`track_blockchain`) replacing two hand-started processes. It is replaying about 112,000 blocks; civic records published since June appear as it catches up.
 - `pebas` (the site's chain-data service) was hung and was restarted. Its Electrum fallback still points at `147.182.177.23`, whose certificate has expired, so it may hang again.
 
+Later the same evening:
+
+- The tracker finished its replay and is at the chain tip. It found no civic records published between June and November. It now decodes each transaction in one node call, so large transactions are no longer skipped ([PR #21](https://github.com/marscoin/martianrepublic/pull/21), deployed).
+- `pebas` now connects to `electrum.marscoin.org` on demand with a deadline on every request, and reads the node's RPC credentials from its private `.env` ([pebas PR #1](https://github.com/marscoin/pebas/pull/1), deployed). The old RPC password remains in that public repository's history and should be rotated; the RPC port listens on localhost only.
+- Both martianrepublic.org and marscoin.org link to swaps.marscoin.org from their footers.
+- The watchtower is [electrumx PR #2](https://github.com/marscoin/electrumx/pull/2), open and not deployed.
+- `147.182.177.23` could not be reached over SSH with the configured key, so its certificate is unchanged. `164.90.138.207` is retired.
+
 **Wallet.**
 
 - Watchtower client: once the agreed Bitcoin payment is in the contract, the phone registers a Marscoin claim signed except for the secret, and three Bitcoin refunds at rising fees valid only from the timelock. All pay only the wallet's own addresses. With the server side deployed, a swap completes with the phone off.
