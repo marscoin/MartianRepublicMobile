@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useCallback, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCivicSession } from '../../blue_modules/civic-api';
 import { workspaceStore } from '../../blue_modules/workspace-api';
@@ -35,14 +36,14 @@ export default function WorkspaceDrafts() {
     try {
       await workspaceStore.submit(address, key);
     } catch (error) {
-      Alert.alert('Saved change', error.message);
+      marsAlert('Saved change', error.message);
     } finally {
       setBusy('');
       refresh();
     }
   };
   const discard = (key, fields) =>
-    Alert.alert('Discard this saved draft?', 'Its text and local photos will be removed from this phone.', [
+    marsAlert('Discard this saved draft?', 'Its text and local photos will be removed from this phone.', [
       { text: 'Keep draft', style: 'cancel' },
       {
         text: 'Discard',
@@ -53,7 +54,7 @@ export default function WorkspaceDrafts() {
             await removeWorkspacePhotos(address, fields?.photos);
             refresh();
           } catch (error) {
-            Alert.alert('Draft kept', error.message);
+            marsAlert('Draft kept', error.message);
           }
         },
       },
@@ -64,7 +65,7 @@ export default function WorkspaceDrafts() {
       if (fields) openWorkspaceDraft(navigation, fields, address);
       else refresh();
     } catch (error) {
-      Alert.alert('Saved change', error.message);
+      marsAlert('Saved change', error.message);
     }
   };
   return (

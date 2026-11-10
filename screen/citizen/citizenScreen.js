@@ -1,7 +1,8 @@
+import { marsAlert } from '../../components/MarsDialog';
 import { uniqueCitizens } from '../../blue_modules/citizen-directory';
 import { getCivicToken, useCivicSession } from '../../blue_modules/civic-api';
 import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
-import { Alert, ScrollView, Platform,ActivityIndicator, Modal, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import { ScrollView, Platform,ActivityIndicator, Modal, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -288,7 +289,7 @@ const CitizenScreen = () => {
             setTermsRequired(false);
             setModalVisible(false);
         } catch {
-            Alert.alert('Terms not saved', 'We could not save your acceptance. Please check your connection and try again.');
+            marsAlert('Terms not saved', 'We could not save your acceptance. Please check your connection and try again.');
         } finally {
             setAcceptingTerms(false);
         }

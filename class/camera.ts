@@ -1,4 +1,5 @@
-import { Linking, Alert } from 'react-native';
+import { marsAlert } from '../blue_modules/mars-alert';
+import { Linking } from 'react-native';
 import { getSystemName } from 'react-native-device-info';
 import loc from '../loc';
 
@@ -13,7 +14,7 @@ export const openPrivacyDesktopSettings = () => {
 };
 
 export const presentCameraNotAuthorizedAlert = (error: string) => {
-  Alert.alert(
+  marsAlert(
     loc.errors.error,
     error,
     [

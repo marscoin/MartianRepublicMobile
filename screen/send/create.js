@@ -1,6 +1,7 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { TextInput, FlatList, Linking, TouchableOpacity, StyleSheet, Text, View, Platform, Alert } from 'react-native';
+import { TextInput, FlatList, Linking, TouchableOpacity, StyleSheet, Text, View, Platform } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Icon } from 'react-native-elements';
 import Share from 'react-native-share';
@@ -83,7 +84,7 @@ const SendCreate = () => {
         }
       } else {
         console.log('Storage Permission: Denied');
-        Alert.alert(loc.send.permission_storage_title, loc.send.permission_storage_denied_message, [
+        marsAlert(loc.send.permission_storage_title, loc.send.permission_storage_denied_message, [
           {
             text: loc.send.open_settings,
             onPress: () => {

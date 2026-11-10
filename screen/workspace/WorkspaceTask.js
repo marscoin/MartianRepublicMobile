@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useCivicSession } from '../../blue_modules/civic-api';
 import { assertWorkspaceIdentity, workspaceStore } from '../../blue_modules/workspace-api';
@@ -86,7 +87,7 @@ export default function WorkspaceTask() {
           merge: true,
         });
     } catch (error) {
-      if (current()) Alert.alert('Could not update task', error.message);
+      if (current()) marsAlert('Could not update task', error.message);
       await draft.reload();
     } finally {
       if (lock.current === marker) {
@@ -100,7 +101,7 @@ export default function WorkspaceTask() {
       await workspaceStore.reviewRejected(address, key);
       await Promise.all([draft.reload(), resource.refresh(), groupResource.refresh()]);
     } catch (error) {
-      Alert.alert('Update kept', error.message);
+      marsAlert('Update kept', error.message);
     }
   };
   const action = () => {
@@ -108,7 +109,7 @@ export default function WorkspaceTask() {
       submit('done');
       return;
     }
-    Alert.alert(
+    marsAlert(
       'Reopen this task?',
       'The task will return to the open list. Its completed work and earlier records will remain in the activity log.',
       [
@@ -118,7 +119,7 @@ export default function WorkspaceTask() {
     );
   };
   const discard = () =>
-    Alert.alert('Discard this update draft?', 'The task and its existing records will stay as they are.', [
+    marsAlert('Discard this update draft?', 'The task and its existing records will stay as they are.', [
       { text: 'Keep draft', style: 'cancel' },
       {
         text: 'Discard',
@@ -129,7 +130,7 @@ export default function WorkspaceTask() {
             await removeWorkspacePhotos(address, draft.fields.photos);
             await draft.reload();
           } catch (error) {
-            Alert.alert('Draft kept', error.message);
+            marsAlert('Draft kept', error.message);
           }
         },
       },

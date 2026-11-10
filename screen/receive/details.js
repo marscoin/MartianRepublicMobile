@@ -1,7 +1,7 @@
+import { marsAlert } from '../../components/MarsDialog';
 import BigNumber from 'bignumber.js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EXCHANGE_RATES_STORAGE_KEY } from '../../blue_modules/currency';
-import { Alert } from 'react-native';
 import { encodeMarsPaymentURI } from '../../blue_modules/mars-payment-uri';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
@@ -452,7 +452,7 @@ const ReceiveDetails = () => {
       setIsCustomModalVisible(false);
       setShowAddress(true);
     } catch (error) {
-      Alert.alert('Payment request', error.message);
+      marsAlert('Payment request', error.message);
     }
   };
 

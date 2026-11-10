@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import * as bitcoin from 'bitcoinjs-lib';
 import { Marscoin } from '../../blue_modules/constants';
@@ -178,7 +179,7 @@ export default function WorkspaceCompose() {
           merge: true,
         });
     } catch (error) {
-      if (focused.current && scope.current.address === address && scope.current.key === key) Alert.alert('Could not submit', error.message);
+      if (focused.current && scope.current.address === address && scope.current.key === key) marsAlert('Could not submit', error.message);
       await draft.reload();
     } finally {
       if (lock.current === marker) {
@@ -192,11 +193,11 @@ export default function WorkspaceCompose() {
       await workspaceStore.reviewRejected(address, key);
       await draft.reload();
     } catch (error) {
-      Alert.alert('Draft unavailable', error.message);
+      marsAlert('Draft unavailable', error.message);
     }
   };
   const discard = () =>
-    Alert.alert('Discard this draft?', 'This removes its saved text and local photos from this phone.', [
+    marsAlert('Discard this draft?', 'This removes its saved text and local photos from this phone.', [
       { text: 'Keep draft', style: 'cancel' },
       {
         text: 'Discard',
@@ -207,7 +208,7 @@ export default function WorkspaceCompose() {
             await removeWorkspacePhotos(address, fields.photos);
             navigation.goBack();
           } catch (error) {
-            Alert.alert('Draft kept', error.message);
+            marsAlert('Draft kept', error.message);
           }
         },
       },

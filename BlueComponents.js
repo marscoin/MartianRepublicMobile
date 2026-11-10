@@ -1,10 +1,10 @@
 /* eslint react/prop-types: "off", react-native/no-inline-styles: "off" */
+import { marsAlert } from './components/MarsDialog';
 import React, { Component, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { Icon, Text, Header } from 'react-native-elements';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Image,
@@ -277,7 +277,7 @@ export const BlueButtonLink = forwardRef((props, ref) => {
 });
 
 export const BlueAlertWalletExportReminder = ({ onSuccess = () => {}, onFailure }) => {
-  Alert.alert(
+  marsAlert(
     loc.wallets.details_title,
     loc.pleasebackup.ask,
     [

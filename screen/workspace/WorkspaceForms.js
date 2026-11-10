@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useState } from 'react';
-import { Alert, FlatList, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from 'react-native-elements';
 import { CivicButton, civicColors } from '../../components/CivicUi';
@@ -76,14 +77,14 @@ export function DraftPhotos({ address, photos = [], onChange, disabled, onBusy }
         if (saved === false) throw new Error('The photo could not be saved with this draft. Try again.');
       }
     } catch (error) {
-      Alert.alert('Photo not added', error.message);
+      marsAlert('Photo not added', error.message);
     } finally {
       setPicking(false);
       onBusy?.(false);
     }
   };
   const add = () =>
-    Alert.alert('Add a photo', 'It will be shared with organization members when you save this record.', [
+    marsAlert('Add a photo', 'It will be shared with organization members when you save this record.', [
       { text: 'Take photo', onPress: () => choose('camera') },
       { text: 'Choose from library', onPress: () => choose('library') },
       { text: 'Cancel', style: 'cancel' },

@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useContext } from 'react';
-import { TouchableOpacity, ScrollView, Linking, Image, View, Text, StyleSheet, useWindowDimensions, Platform, Alert } from 'react-native';
+import { TouchableOpacity, ScrollView, Linking, Image, View, Text, StyleSheet, useWindowDimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { getApplicationName, getVersion, getBundleId, getBuildNumber, getUniqueIdSync, hasGmsSync } from 'react-native-device-info';
@@ -219,7 +220,7 @@ const About = () => {
             }
           }
 
-          Alert.alert(loc.formatString(loc.settings.performance_score, { num }));
+          marsAlert(loc.formatString(loc.settings.performance_score, { num }));
         }}
         title={loc.settings.run_performance_test}
       />

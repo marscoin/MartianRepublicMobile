@@ -1,5 +1,6 @@
+import { marsAlert } from './mars-alert';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import Frisbee from 'frisbee';
 import { getApplicationName, getVersion, getSystemName, getSystemVersion, hasGmsSync, hasHmsSync } from 'react-native-device-info';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -142,7 +143,7 @@ function Notifications(props) {
     }
 
     return new Promise(function (resolve) {
-      Alert.alert(
+      marsAlert(
         loc.settings.notifications,
         loc.notifications.would_you_like_to_receive_notifications,
         [

@@ -1,7 +1,8 @@
+import { marsAlert } from '../../components/MarsDialog';
 import { readCitizenshipDraft, saveCitizenshipDraft, ipfsURL } from '../../blue_modules/citizenship-draft';
 import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, StyleSheet, View, TouchableWithoutFeedback, ActivityIndicator, Keyboard, Text,Image, KeyboardAvoidingView, TouchableOpacity, TextInput, I18nManager, Modal, Alert } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, View, TouchableWithoutFeedback, ActivityIndicator, Keyboard, Text,Image, KeyboardAvoidingView, TouchableOpacity, TextInput, I18nManager, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -115,7 +116,7 @@ const JoinGeneralPublicApplicationScreen = () => {
       } finally {
         if (!cancelled) setDraftReady(true);
       }
-    })().catch(() => Alert.alert('Application draft', 'Your saved progress could not be loaded.'));
+    })().catch(() => marsAlert('Application draft', 'Your saved progress could not be loaded.'));
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [civicAddress]);
@@ -151,7 +152,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   const handleSubmit = async () => {
     if (loading) return;
     if (!isFormValid || !firstName.trim() || !lastName.trim() || !displayName.trim() || !bio.trim()) {
-      Alert.alert('Application incomplete', 'Complete each field and take your photo before continuing.');
+      marsAlert('Application incomplete', 'Complete each field and take your photo before continuing.');
       return;
     }
     setLoading(true);
@@ -162,7 +163,7 @@ const JoinGeneralPublicApplicationScreen = () => {
       await saveCitizenshipDraft(civicAddress, { photo, video: videoIPFS });
       navigation.navigate('JoinGeneralPublicApplication2Screen', { firstName, lastName, displayName, bio, photo, video: videoIPFS });
     } catch {
-      Alert.alert('Application not sent', 'Your progress stays on this device. Check your connection and try again. If the photo is unavailable, take it again.');
+      marsAlert('Application not sent', 'Your progress stays on this device. Check your connection and try again. If the photo is unavailable, take it again.');
     } finally {
       setLoading(false);
     }

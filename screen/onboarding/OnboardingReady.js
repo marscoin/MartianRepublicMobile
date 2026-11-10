@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useContext, useRef, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { TOTAL_STEPS } from '../../blue_modules/onboarding';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -73,7 +74,7 @@ export default function OnboardingReady() {
       await saveToDisk();
       navigation.navigate('BottomTabs');
     } catch {
-      Alert.alert('Not saved yet', 'Your wallet is safe, but this last step could not be saved. Please try again.');
+      marsAlert('Not saved yet', 'Your wallet is safe, but this last step could not be saved. Please try again.');
     } finally {
       busy.current = false;
       setEntering(false);

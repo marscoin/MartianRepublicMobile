@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useCivicSession } from '../../blue_modules/civic-api';
 import { assertWorkspaceIdentity, workspaceRequest } from '../../blue_modules/workspace-api';
@@ -35,7 +36,7 @@ export default function WorkspaceOrganizations() {
         nextPage: result.next_page,
       }));
     } catch (error) {
-      Alert.alert('Could not load more', error.message);
+      marsAlert('Could not load more', error.message);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
+import { marsAlert } from '../blue_modules/mars-alert';
 import { useContext } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import ReactNativeBiometrics, { BiometryTypes as RNBiometryTypes } from 'react-native-biometrics';
 import PasscodeAuth from 'react-native-passcode-auth';
 import RNSecureKeyStore, { ACCESSIBLE } from 'react-native-secure-key-store';
@@ -132,7 +133,7 @@ const Biometric = function () {
       if (isDevicePasscodeSupported) {
         const isAuthenticated = await PasscodeAuth.authenticate();
         if (isAuthenticated) {
-          Alert.alert(
+          marsAlert(
             loc.settings.encrypt_tstorage,
             loc.settings.biom_remove_decrypt,
             [
@@ -157,7 +158,7 @@ const Biometric = function () {
 
   Biometric.showKeychainWipeAlert = () => {
     if (Platform.OS === 'ios') {
-      Alert.alert(
+      marsAlert(
         loc.settings.encrypt_tstorage,
         loc.settings.biom_10times,
         [

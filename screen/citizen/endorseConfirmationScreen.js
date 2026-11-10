@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
@@ -44,7 +45,7 @@ export default function EndorseConfirmationScreen() {
           if (active) setPublication(draft.publication || null);
         })
         .catch(() => {
-          if (active) Alert.alert('Draft unavailable', 'Your saved endorsement could not be read. Try again before publishing.');
+          if (active) marsAlert('Draft unavailable', 'Your saved endorsement could not be read. Try again before publishing.');
         });
     }
     return () => {
@@ -99,7 +100,7 @@ export default function EndorseConfirmationScreen() {
         if (identity.current === address) setPublication(prepared);
       }
     } catch (error) {
-      Alert.alert(submit ? 'Submission pending' : 'Endorsement not prepared', error.message || 'Check your connection and try again.');
+      marsAlert(submit ? 'Submission pending' : 'Endorsement not prepared', error.message || 'Check your connection and try again.');
       if (submit) {
         const draft = await readDraft(address).catch(() => ({}));
         if (identity.current === address && draft.publication) setPublication(draft.publication);

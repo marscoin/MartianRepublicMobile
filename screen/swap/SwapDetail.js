@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { celebrate } from '../../blue_modules/app-review';
 import { advanceSwaps, esplora, getSwapServices, swapChain, useSwaps } from '../../blue_modules/swap';
@@ -72,12 +73,12 @@ export default function SwapDetail() {
       await action(await record());
     } catch (error) {
       if (error.shortfall) {
-        Alert.alert(
+        marsAlert(
           'Not enough Bitcoin',
           `Add at least ${formatSats(error.shortfall)} to your Bitcoin wallet, or pay from another wallet.`,
         );
       } else {
-        Alert.alert(failureTitle, error.message);
+        marsAlert(failureTitle, error.message);
       }
     } finally {
       working.current = false;
@@ -90,7 +91,7 @@ export default function SwapDetail() {
     // Show what the network will charge before asking.
     const feeRate = await esplora.feeRate().catch(() => null);
     const fee = feeRate ? `\n\nBitcoin network fee: about ${formatSats(Math.ceil(feeRate * 155))} (${feeRate} sat/vB).` : '';
-    Alert.alert(
+    marsAlert(
       `Pay ${formatSats(swap.btcAmount)}?`,
       `Your Bitcoin is locked for the maker and returns to you automatically if the swap does not complete.${fee}`,
       [
@@ -101,7 +102,7 @@ export default function SwapDetail() {
   };
 
   const cancel = () =>
-    Alert.alert(
+    marsAlert(
       'Cancel this swap?',
       'Nothing has been paid. After cancelling, never send Bitcoin to this swap’s address.\n\nThe maker may already have locked Marscoin for you. Cancelling repeatedly can get you blocked from swapping for a day.',
       [

@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCivicSession } from '../../blue_modules/civic-api';
 import { assertWorkspaceIdentity, workspaceRequest, workspaceStore } from '../../blue_modules/workspace-api';
@@ -86,7 +87,7 @@ export default function WorkspaceOrganization() {
         };
       });
     } catch (error) {
-      Alert.alert('Could not load more', error.message);
+      marsAlert('Could not load more', error.message);
     } finally {
       setBusy('');
     }
@@ -105,13 +106,13 @@ export default function WorkspaceOrganization() {
       if (key.startsWith('leave:')) navigation.goBack();
       else await refresh();
     } catch (error) {
-      Alert.alert('Could not save change', error.message);
+      marsAlert('Could not save change', error.message);
     } finally {
       setBusy('');
     }
   };
   const remove = member =>
-    Alert.alert(
+    marsAlert(
       member.status === 'invited' ? 'Cancel this invitation?' : `Remove ${member.name}?`,
       'They will no longer have access to this organization. Open tasks assigned to them will become unassigned.',
       [
@@ -129,7 +130,7 @@ export default function WorkspaceOrganization() {
       ],
     );
   const archive = () =>
-    Alert.alert('Archive this organization?', 'Members will still be able to read its records. New tasks and records will be paused.', [
+    marsAlert('Archive this organization?', 'Members will still be able to read its records. New tasks and records will be paused.', [
       { text: 'Keep active', style: 'cancel' },
       {
         text: 'Archive',
@@ -137,7 +138,7 @@ export default function WorkspaceOrganization() {
       },
     ]);
   const leave = () =>
-    Alert.alert('Leave this organization?', 'You will lose access to its tasks and records until you are invited again.', [
+    marsAlert('Leave this organization?', 'You will lose access to its tasks and records until you are invited again.', [
       { text: 'Stay', style: 'cancel' },
       {
         text: 'Leave',

@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useState, useCallback, useContext } from 'react';
-import { View, ScrollView, Alert, TouchableOpacity, TouchableWithoutFeedback, Text, StyleSheet, Platform } from 'react-native';
+import { View, ScrollView, TouchableOpacity, TouchableWithoutFeedback, Text, StyleSheet, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import navigationStyle from '../../components/navigationStyle';
 import { BlueLoading, BlueSpacing20, BlueCard, BlueText } from '../../BlueComponents';
@@ -87,7 +88,7 @@ const EncryptStorage = () => {
         presentAlert({ message: loc.settings.passwords_do_not_match });
       }
     } else {
-      Alert.alert(
+      marsAlert(
         loc.settings.encrypt_decrypt,
         loc.settings.encrypt_decrypt_q,
         [

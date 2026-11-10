@@ -1,9 +1,9 @@
+import { marsAlert } from '../../components/MarsDialog';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   InteractionManager,
   Keyboard,
@@ -149,7 +149,7 @@ const ViewEditMultisigCosigners = ({ route }: Props) => {
             },
           );
         } else {
-          Alert.alert(loc._.discard_changes, loc._.discard_changes_explain, [
+          marsAlert(loc._.discard_changes, loc._.discard_changes_explain, [
             { text: loc._.cancel, style: 'cancel', onPress: () => {} },
             {
               text: loc._.ok,

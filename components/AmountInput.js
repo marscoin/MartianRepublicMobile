@@ -1,5 +1,5 @@
+import { marsAlert } from './MarsDialog';
 import { parseMarsAmount, formatMarsAmount } from '../blue_modules/mars-amount';
-import { Alert } from 'react-native';
 import React, { Component} from 'react';
 import PropTypes from 'prop-types';
 import BigNumber from 'bignumber.js';
@@ -114,7 +114,7 @@ class AmountInput extends Component {
       this.props.onChangeText(next);
       this.props.onAmountUnitChange(newUnit, atomic);
     } catch (error) {
-      Alert.alert('Amount', error.message);
+      marsAlert('Amount', error.message);
     }
   }
 

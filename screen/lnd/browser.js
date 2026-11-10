@@ -1,7 +1,8 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { ActivityIndicator, Alert, BackHandler, Keyboard, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Keyboard, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import navigationStyle from '../../components/navigationStyle';
@@ -339,7 +340,7 @@ export default class Browser extends Component {
               processedInvoices[json.sendPayment] = 1;
             }
 
-            Alert.alert(
+            marsAlert(
               'Page',
               'This page asks for permission to pay an invoice',
               [
@@ -369,7 +370,7 @@ export default class Browser extends Component {
               json.makeInvoice.defaultAmount || 0,
               json.makeInvoice.amount || 0,
             );
-            Alert.alert(
+            marsAlert(
               'Page',
               'This page wants to pay you ' + amount + ' sats (' + json.makeInvoice.defaultMemo + ')',
               [

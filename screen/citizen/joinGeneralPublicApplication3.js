@@ -1,8 +1,9 @@
+import { marsAlert } from '../../components/MarsDialog';
 import { readCitizenshipDraft, saveCitizenshipDraft } from '../../blue_modules/citizenship-draft';
 import { prepareCitizenshipPublication, publishCitizenshipTransaction } from '../../blue_modules/citizenship-publication';
 import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
-import { Platform, Alert, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useTheme } from '../../components/themes';
@@ -107,7 +108,7 @@ const JoinGeneralPublicApplicationScreen = () => {
       });
       navigation.navigate('JoinGeneralPublicApplicationSuccessScreen', { txid: submitted.txid });
     } catch (error) {
-      Alert.alert('Submission pending', error.message);
+      marsAlert('Submission pending', error.message);
     } finally {
       setIsPublishing(false);
     }
@@ -133,11 +134,11 @@ const JoinGeneralPublicApplicationScreen = () => {
         navigation.navigate('JoinGeneralPublicApplicationSuccessScreen', { txid: publication.txid });
         return;
       }
-      Alert.alert('Publish your application',
+      marsAlert('Publish your application',
         `Network fee: ${new BigNumber(publication.fee).dividedBy(100000000).toFixed(8)} MARS. Your application will be public. Blockchain confirmation may take time.`,
         [{ text: 'Review later', style: 'cancel' }, { text: publication.status === 'pending' ? 'Retry submission' : 'Confirm publication', onPress: () => publishApplication(publication) }]);
     } catch (error) {
-      Alert.alert('Application not published', error.message || 'Please check your connection and try again.');
+      marsAlert('Application not published', error.message || 'Please check your connection and try again.');
     } finally {
       setIsPublishing(false);
     }

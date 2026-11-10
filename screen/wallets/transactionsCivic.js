@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useState, useCallback, useContext, useRef } from 'react';
-import {ActivityIndicator,Alert,Dimensions,FlatList,InteractionManager,PixelRatio,Platform,ScrollView,StyleSheet,Text,findNodeHandle,TouchableOpacity,View,I18nManager, RefreshControl} from 'react-native';
+import {ActivityIndicator,Dimensions,FlatList,InteractionManager,PixelRatio,Platform,ScrollView,StyleSheet,Text,findNodeHandle,TouchableOpacity,View,I18nManager, RefreshControl} from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Chain } from '../../models/bitcoinUnits';
@@ -384,7 +385,7 @@ const WalletTransactionsCivic = ({ navigation }) => {
     }
 
     if (wallet.type === WatchOnlyWallet.type && wallet.isHd() && !wallet.useWithHardwareWalletEnabled()) {
-      return Alert.alert(
+      return marsAlert(
         loc.wallets.details_title,
         loc.transactions.enable_offline_signing,
         [

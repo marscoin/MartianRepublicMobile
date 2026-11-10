@@ -203,7 +203,10 @@ const PublicSquare = () => {
         axios.get(`${API_BASE}/congress/proposals?per_page=10`).catch(() => ({ data: { data: [] } })),
       ]);
 
-      const threads = (forumRes.data || []).map(t => ({
+      // The API answers { threads: [...] }; without a session it redirects to a
+      // login page. Neither may take the proposals down with it.
+      const threadList = Array.isArray(forumRes.data?.threads) ? forumRes.data.threads : Array.isArray(forumRes.data) ? forumRes.data : [];
+      const threads = threadList.map(t => ({
         ...t,
         _type: 'thread',
         _sortDate: new Date(t.created_at),

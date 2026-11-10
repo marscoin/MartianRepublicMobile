@@ -1,7 +1,8 @@
+import { marsAlert } from '../../components/MarsDialog';
 import { parseMarsAmount } from '../../blue_modules/mars-amount';
 import { parseMarsPaymentURI } from '../../blue_modules/mars-payment-uri';
 import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, useLayoutEffect } from 'react';
-import {ActivityIndicator,Alert,Dimensions,FlatList,Keyboard,KeyboardAvoidingView,LayoutAnimation,Platform,StyleSheet,Text,TextInput,TouchableOpacity,TouchableWithoutFeedback,View} from 'react-native';
+import {ActivityIndicator,Dimensions,FlatList,Keyboard,KeyboardAvoidingView,LayoutAnimation,Platform,StyleSheet,Text,TextInput,TouchableOpacity,TouchableWithoutFeedback,View} from 'react-native';
 import { useNavigation, useRoute, useFocusEffect, useIsFocused  } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -719,7 +720,7 @@ useFocusEffect(
 
   const askCosignThisTransaction = async () => {
     return new Promise(resolve => {
-      Alert.alert(
+      marsAlert(
         '',
         loc.multisig.cosign_this_transaction,
         [
@@ -1010,7 +1011,7 @@ useFocusEffect(
   const onUseAllPressed = () => {
     triggerHapticFeedback(HapticFeedbackTypes.NotificationWarning);
     const message = frozenBalance > 0 ? loc.send.details_adv_full_sure_frozen : loc.send.details_adv_full_sure;
-    Alert.alert(
+    marsAlert(
       loc.send.details_adv_full,
       message,
       [
