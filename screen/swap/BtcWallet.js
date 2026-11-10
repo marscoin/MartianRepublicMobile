@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useCallback, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { esplora, getSwapServices } from '../../blue_modules/swap';
 import { isBitcoinAddress } from '../../blue_modules/swap/btc-wallet';
@@ -58,10 +59,10 @@ export default function BtcWallet() {
   const everything = amount.trim() === '';
   const send = async () => {
     const address = to.trim();
-    if (!isBitcoinAddress(address)) return Alert.alert('Check the address', 'That is not a valid Bitcoin address.');
+    if (!isBitcoinAddress(address)) return marsAlert('Check the address', 'That is not a valid Bitcoin address.');
     const sats = everything ? null : Number(amount.trim());
     if (!everything && (!/^\d+$/.test(amount.trim()) || sats <= 0))
-      return Alert.alert('Check the amount', 'Enter a whole number of sats, or leave it empty to send everything.');
+      return marsAlert('Check the amount', 'Enter a whole number of sats, or leave it empty to send everything.');
     setSending(true);
     try {
       const { btcWallet } = getSwapServices(wallet);
@@ -74,7 +75,7 @@ export default function BtcWallet() {
         changeAddress: fresh.changeAddress,
         sweep: everything,
       });
-      Alert.alert(`Send ${formatSats(payment.amount)}?`, `To ${address}\nNetwork fee ${formatSats(payment.fee)}`, [
+      marsAlert(`Send ${formatSats(payment.amount)}?`, `To ${address}\nNetwork fee ${formatSats(payment.fee)}`, [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Send',
@@ -84,10 +85,10 @@ export default function BtcWallet() {
               await esplora.broadcast(payment.hex);
               setTo('');
               setAmount('');
-              Alert.alert('Bitcoin sent', payment.txid);
+              marsAlert('Bitcoin sent', payment.txid);
               refresh();
             } catch (failure) {
-              Alert.alert('Not sent', failure.message);
+              marsAlert('Not sent', failure.message);
             } finally {
               setSending(false);
             }
@@ -95,7 +96,7 @@ export default function BtcWallet() {
         },
       ]);
     } catch (failure) {
-      Alert.alert('Not sent', failure.message);
+      marsAlert('Not sent', failure.message);
     } finally {
       setSending(false);
     }

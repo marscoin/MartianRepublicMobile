@@ -1,4 +1,5 @@
-import { Alert, Linking, PermissionsAndroid, Platform } from 'react-native';
+import { marsAlert } from './mars-alert';
+import { Linking, PermissionsAndroid, Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import loc from '../loc';
@@ -56,7 +57,7 @@ export const writeFileAndExport = async function (filename: string, contents: st
       }
     } else {
       console.log('Storage Permission: Denied');
-      Alert.alert(loc.send.permission_storage_title, loc.send.permission_storage_denied_message, [
+      marsAlert(loc.send.permission_storage_title, loc.send.permission_storage_denied_message, [
         {
           text: loc.send.open_settings,
           onPress: () => {

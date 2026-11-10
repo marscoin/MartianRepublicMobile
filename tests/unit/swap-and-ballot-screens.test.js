@@ -17,7 +17,13 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: effect => useEffect(() => effect(), [effect]),
   };
 });
-jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: ({ children }) => children }));
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+jest.mock('../../NavigationService', () => ({
+  navigationRef: { isReady: () => true, getCurrentRoute: () => ({ name: 'CivicHome' }), addListener: () => () => {} },
+}));
 jest.mock('react-native-elements', () => ({ Icon: () => null }));
 jest.mock('../../components/QRCodeComponent', () => () => null);
 jest.mock('../../blue_modules/app-review', () => ({ celebrate: jest.fn(), noteAppOpened: jest.fn(), openStoreReview: jest.fn() }));
@@ -51,6 +57,10 @@ jest.mock('../../blue_modules/swap', () => ({
   useSwaps: () => mockSwaps,
   useSwapOwnerId: () => mockOwnerId,
   useSwapWatcher: jest.fn(),
+  useMakerRunner: jest.fn(),
+  useMaker: () => ({ config: {}, status: {}, records: [] }),
+  runMaker: jest.fn(),
+  saveMakerConfig: jest.fn(),
   advanceSwaps: jest.fn(async () => {}),
   esplora: { tipHeight: jest.fn(async () => 975010), feeRate: jest.fn(async () => 3), broadcast: jest.fn() },
   swapChain: { tipHeight: jest.fn(async () => 3598300) },
@@ -427,5 +437,61 @@ describe('Ballot screen', () => {
     expect(text(await render(Ballot))).toContain('Voting on this proposal is not open');
     mockWallets = [{ ...mockWallet, civic: false }];
     expect(text(await render(Ballot))).toContain('Restore your civic wallet to vote');
+  });
+});
+
+describe('swap banner', () => {
+  const { bannerFor } = require('../../screen/swap/SwapUi');
+  const swap = (state, extra = {}) => ({ id: 's1', state, btcAmount: 6322, marsAmount: 7050000000, error: null, btcPayment: null, ...extra });
+
+  it('shows the current step of a swap under way', () => {
+    expect(bannerFor([swap('waiting_mars')])).toMatchObject({ swapId: 's1', step: 1, count: 4, attention: false });
+    expect(bannerFor([swap('waiting_mars')]).detail).toBe('Swap · step 2 of 4 · Confirming the Marscoin lock');
+    expect(bannerFor([swap('btc_sent')]).detail).toContain('step 3 of 4');
+    expect(bannerFor([swap('claiming')]).detail).toContain('Receive Marscoin');
+  });
+
+  it('asks for attention when it is time to pay', () => {
+    const banner = bannerFor([swap('ready_to_pay')]);
+    expect(banner.attention).toBe(true);
+    expect(banner.title).toContain('Pay to continue');
+  });
+
+  it('shows nothing once every swap is settled', () => {
+    expect(bannerFor([])).toBeNull();
+    expect(bannerFor([swap('completed'), swap('refunded'), swap('failed')])).toBeNull();
+  });
+});
+
+describe('maker settings form', () => {
+  const { readMakerForm } = require('../../screen/swap/SwapMaker');
+  const form = { feePercent: '5', dailyLimit: '1000', maxSwap: '500', minSwap: '10', reservePercent: '20', offers: '3', floorSatsPerMars: '' };
+
+  it('reads valid terms into exact amounts', () => {
+    expect(readMakerForm(form).config).toEqual({
+      feePercent: 5,
+      reservePercent: 20,
+      offers: 3,
+      dailyLimit: 100000000000,
+      maxSwap: 50000000000,
+      minSwap: 1000000000,
+      floorSatsPerMars: 0,
+    });
+    expect(readMakerForm({ ...form, feePercent: '7,5', minSwap: '12.5', floorSatsPerMars: '95' }).config).toMatchObject({
+      feePercent: 7.5,
+      minSwap: 1250000000,
+      floorSatsPerMars: 95,
+    });
+  });
+
+  it('names what to correct', () => {
+    expect(readMakerForm({ ...form, feePercent: '80' }).problem).toContain('spread');
+    expect(readMakerForm({ ...form, feePercent: 'abc' }).problem).toContain('spread');
+    expect(readMakerForm({ ...form, reservePercent: '99' }).problem).toContain('reserve');
+    expect(readMakerForm({ ...form, offers: '2.5' }).problem).toContain('offers');
+    expect(readMakerForm({ ...form, minSwap: '0.5' }).problem).toContain('at least 1 MARS');
+    expect(readMakerForm({ ...form, maxSwap: '5' }).problem).toContain('largest');
+    expect(readMakerForm({ ...form, dailyLimit: '5' }).problem).toContain('daily limit');
+    expect(readMakerForm({ ...form, floorSatsPerMars: 'x' }).problem).toContain('lowest price');
   });
 });

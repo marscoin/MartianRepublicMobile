@@ -1,5 +1,6 @@
 // ActionSheet.ts
-import { Alert, InteractionManager } from 'react-native';
+import { marsAlert } from '../components/MarsDialog';
+import { InteractionManager } from 'react-native';
 import { ActionSheetOptions, CompletionCallback } from './ActionSheet.common';
 
 export default class ActionSheet {
@@ -20,7 +21,7 @@ export default class ActionSheet {
         };
       });
 
-      Alert.alert(options.title || '', options.message || '', alertOptions, { cancelable: !!options.cancelButtonIndex });
+      marsAlert(options.title || '', options.message || '', alertOptions, { cancelable: !!options.cancelButtonIndex });
     });
   }
 }

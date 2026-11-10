@@ -21,6 +21,57 @@ export const satsPerMars = offer => ((offer.btcAmount / offer.marsAmount) * 1000
 
 const STEPS = ['Reserve offer', 'Marscoin locked for you', 'Pay Bitcoin', 'Receive Marscoin'];
 
+// The parts of the current step, in order: [label, done]. The first part not
+// yet done is the one in progress.
+function parts(swap) {
+  const lock = swap.lockProgress || { seen: false, confirmations: 0 };
+  switch (swap.state) {
+    case SwapState.ACCEPTING:
+      return [['Reserving the offer with the swap relay', false]];
+    case SwapState.WAITING_MARS:
+      return [
+        ['Seller locks the Marscoin for you', lock.seen],
+        ['First confirmation on the Marscoin chain', lock.confirmations >= 1],
+        ['Second confirmation', lock.confirmations >= 2],
+        ['Checked against a second, independent node', false],
+      ];
+    case SwapState.READY_TO_PAY:
+      return [
+        ['Marscoin lock verified', true],
+        [swap.btcPayment ? 'Sending your Bitcoin' : 'Your turn: pay the Bitcoin', false],
+      ];
+    case SwapState.BTC_SENT:
+      return [
+        ['Your Bitcoin is locked for the seller', true],
+        ['Seller collects it, once it has confirmed', false],
+      ];
+    case SwapState.CLAIMING:
+      return [
+        ['Secret read from the Bitcoin chain', true],
+        ['Marscoin claim sent to the network', !!swap.marsClaim],
+        ['Claim confirmed', false],
+      ];
+    case SwapState.REFUNDING:
+      return [
+        ['Refund sent to the Bitcoin network', swap.btcRefunds?.length > 0],
+        ['Refund confirmed', false],
+      ];
+    default:
+      return [];
+  }
+}
+
+// [{ label, state }] with state 'done', 'active' or 'todo'.
+export function swapSubsteps(swap) {
+  let active = false;
+  return parts(swap).map(([label, done]) => {
+    if (done) return { label, state: 'done' };
+    if (active) return { label, state: 'todo' };
+    active = true;
+    return { label, state: 'active' };
+  });
+}
+
 // What to show for a swap: a title, an explanation, which of the four steps is
 // current, and which actions make sense.
 export function describeSwap(swap) {
@@ -32,6 +83,9 @@ export function describeSwap(swap) {
       return {
         ...base,
         step: 1,
+        // While this step is the current one it is not yet done: say so.
+        steps: ['Reserve offer', 'Confirming the Marscoin lock', 'Pay Bitcoin', 'Receive Marscoin'],
+        payNext: true,
         title: 'Waiting for the Marscoin lock',
         body: `${swap.error || 'Waiting for the maker to lock Marscoin.'} Nothing has been paid. Do not send Bitcoin yet.`,
         canCancel: true,
@@ -96,4 +150,70 @@ export function timeUntil(blocks, secondsPerBlock) {
   const hours = Math.floor(minutes / 60);
   const rest = Math.round((minutes % 60) / 10) * 10;
   return rest ? `about ${hours} h ${rest} min` : `about ${hours} h`;
+}
+
+// ---- Offering Marscoin (maker side) ------------------------------------------
+
+const MAKER_STEPS = ['Buyer accepted', 'Marscoin locked', 'Bitcoin received', 'Bitcoin collected'];
+
+// What to show for one of our own offers or sales.
+export function describeMakerSwap(record) {
+  const base = { steps: MAKER_STEPS, tone: 'active' };
+  const pair = `${formatMars(record.marsAmount)} for ${formatSats(record.btcAmount)}`;
+  switch (record.state) {
+    case 'offered':
+      return { ...base, step: 0, tone: 'idle', title: 'On offer', body: pair };
+    case 'accepted':
+    case 'locking':
+      return { ...base, step: 1, title: 'Locking Marscoin for a buyer', body: record.error || pair };
+    case 'mars_locked':
+      return { ...base, step: 2, title: 'Waiting for the buyer’s Bitcoin', body: record.error || record.note || pair };
+    case 'claiming':
+      return {
+        ...base,
+        step: 3,
+        title: 'Collecting the Bitcoin',
+        body: record.error || 'Your claim is on the Bitcoin network, awaiting confirmation.',
+      };
+    case 'completed':
+      return {
+        ...base,
+        step: 4,
+        tone: 'done',
+        title: 'Sold',
+        body: `${formatSats(record.btcAmount)} received for ${formatMars(record.marsAmount)}.`,
+      };
+    case 'refunding':
+      return {
+        ...base,
+        step: 2,
+        title: 'Taking the Marscoin back',
+        body: 'The buyer did not pay in time. Your Marscoin is returning to your wallet.',
+      };
+    case 'refunded':
+      return {
+        ...base,
+        step: 2,
+        tone: 'ended',
+        title: 'Marscoin returned',
+        body: 'The buyer did not pay. Your Marscoin is back in your wallet, less the network fee.',
+      };
+    case 'lost':
+      return {
+        ...base,
+        step: 3,
+        tone: 'error',
+        title: 'Sale lost',
+        body: 'The buyer recovered the Bitcoin before your claim confirmed, and collected the Marscoin. Contact the Republic with this record.',
+      };
+    default:
+      return { ...base, step: 0, tone: 'ended', title: 'Acceptance declined', body: record.error || 'Nothing was locked.' };
+  }
+}
+
+// "12.5" -> 1250000000, or null when it is not an amount.
+export function parseCoins(text) {
+  const match = /^\s*(\d{1,9})(?:[.,](\d{1,8}))?\s*$/.exec(String(text));
+  if (!match) return null;
+  return Number(match[1]) * 100000000 + Number((match[2] || '').padEnd(8, '0'));
 }

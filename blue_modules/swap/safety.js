@@ -3,6 +3,11 @@
 // which offers are safe to take.
 export const MARS_TIMELOCK_BLOCKS = 234;
 export const BTC_TIMELOCK_BLOCKS = 24;
+// What this app's own offers lock for: about sixteen hours. Marscoin blocks
+// arrive in bursts (234 blocks have passed in under four hours), and a
+// seller's refund must never open before the buyer's Bitcoin refund has.
+// Longer is always safe for the buyer; other wallets accept it as is.
+export const MAKER_MARS_TIMELOCK_BLOCKS = 480;
 export const MARS_MIN_CONFIRMATIONS = 2;
 export const MARS_BLOCK_SECONDS = 123;
 export const BTC_BLOCK_SECONDS = 600;
@@ -16,6 +21,11 @@ export const MARS_SPEND_FEE = 100000;
 // Virtual size of a one-input contract spend, rounded up.
 export const BTC_SPEND_VBYTES = 150;
 export const DUST = 546;
+// A maker claims Bitcoin only when the claim can confirm before the taker's
+// refund opens: the claim reveals the secret.
+export const MAKER_CLAIM_MARGIN_BLOCKS = 3;
+// Confirmations of the taker's Bitcoin before a maker reveals the secret.
+export const MAKER_BTC_CONFIRMATIONS = 2;
 
 const height = value => Number.isSafeInteger(value) && value > 0;
 
@@ -41,6 +51,12 @@ export function btcWindowProblem({ btcHeight, btcLocktime }) {
   if ((btcLocktime - btcHeight) * BTC_BLOCK_SECONDS < MIN_BTC_WINDOW_SECONDS) {
     return 'Too little time is left to pay Bitcoin safely.';
   }
+  return null;
+}
+
+export function makerClaimProblem({ btcHeight, btcLocktime }) {
+  if (!height(btcHeight) || !height(btcLocktime)) return 'The current Bitcoin block height is unavailable.';
+  if (btcLocktime - btcHeight < MAKER_CLAIM_MARGIN_BLOCKS) return 'Too close to the Bitcoin refund time to collect safely.';
   return null;
 }
 

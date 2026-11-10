@@ -126,6 +126,24 @@ export function createEsplora({ fetch, sources = ESPLORA_SOURCES, timeout = 1500
       });
     },
 
+    // Block height of a transaction, or 0 unless every configured source
+    // answers and reports it in the same block. A source that is silent or
+    // does not know the transaction counts against it: one service alone must
+    // never be able to vouch for a payment.
+    async confirmedHeight(txid) {
+      const answers = await all(`/tx/${txid}/status`, JSON.parse).catch(() => []);
+      if (answers.length < sources.length) return 0;
+      const heights = answers.map(answer => (answer?.confirmed && Number.isSafeInteger(answer.block_height) ? answer.block_height : 0));
+      return heights.every(value => value > 0 && value === heights[0]) ? heights[0] : 0;
+    },
+
+    // True only when every configured source answers that the output exists
+    // and is unspent.
+    async unspentEverywhere(txid, vout) {
+      const answers = await all(`/tx/${txid}/outspend/${vout}`, JSON.parse).catch(() => []);
+      return answers.length === sources.length && answers.every(answer => answer && answer.spent === false);
+    },
+
     // Whether one output has been spent, asking every source. A spend seen by
     // either is reported; the caller must still verify the spending transaction.
     async outspend(txid, vout) {
@@ -139,7 +157,11 @@ export function createEsplora({ fetch, sources = ESPLORA_SOURCES, timeout = 1500
     // Satoshis per virtual byte for confirmation within roughly three blocks.
     // When both services answer the lower figure is used, so neither alone can
     // inflate what we pay; the result is kept within plausible bounds.
-    async feeRate() {
+    //
+    // `highest` is for a transaction racing a deadline, where paying too
+    // little is the danger: then no source can talk the fee down. The caller
+    // must cap what it is willing to pay.
+    async feeRate({ highest = false } = {}) {
       const estimate = base =>
         call(base, '/fee-estimates').then(text => {
           const estimates = JSON.parse(text);
@@ -154,7 +176,8 @@ export function createEsplora({ fetch, sources = ESPLORA_SOURCES, timeout = 1500
       );
       const rates = (await Promise.all(asks.map(ask => ask.catch(() => null)))).filter(rate => Number.isFinite(rate) && rate > 0);
       if (!rates.length) throw new Error('The Bitcoin network fee is unavailable.');
-      return Math.min(MAX_FEE_RATE, Math.max(MIN_FEE_RATE, Math.ceil(Math.min(...rates))));
+      const pick = highest ? Math.max : Math.min;
+      return Math.min(MAX_FEE_RATE, Math.max(MIN_FEE_RATE, Math.ceil(pick(...rates))));
     },
 
     // Send to every source. One acceptance is enough; a transaction a service

@@ -1,10 +1,15 @@
-import React, { useContext } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Icon } from 'react-native-elements';
 import { noteAppOpened } from '../../blue_modules/app-review';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
-import { useSwapOwnerId, useSwapWatcher } from '../../blue_modules/swap';
+import { useMakerRunner, useSwapOwnerId, useSwapWatcher, useSwaps } from '../../blue_modules/swap';
+import { isSwapFinished } from '../../blue_modules/swap/engine';
+import { describeSwap } from '../../blue_modules/swap/present';
+import { navigationRef } from '../../NavigationService';
 import { civicColors } from '../../components/CivicUi';
 import { styles as shared } from '../workspace/WorkspaceUi';
 
@@ -22,6 +27,8 @@ export function useSwapWallet() {
 export function SwapWatcher() {
   const { wallets } = useContext(BlueStorageContext);
   useSwapWatcher(wallets);
+  // Offers of Marscoin are answered from the same wallet.
+  useMakerRunner(useSwapWallet(), wallets);
   // Mounted once near the root, so this also counts app starts.
   React.useEffect(() => {
     noteAppOpened();
@@ -59,26 +66,172 @@ export function Copyable({ label, value }) {
   );
 }
 
-export function Steps({ steps, current, tone }) {
+// A value that runs 0 -> 1 over and over while mounted.
+function useLoop(duration) {
+  const value = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.timing(value, { toValue: 1, duration, easing: Easing.out(Easing.quad), useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [value, duration]);
+  return value;
+}
+
+// A soft ring that spreads out from whatever it surrounds: "this is live".
+function Halo({ size }) {
+  const beat = useLoop(1600);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        swapStyles.halo,
+        { width: size, height: size, borderRadius: size / 2 },
+        {
+          opacity: beat.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] }),
+          transform: [{ scale: beat.interpolate({ inputRange: [0, 1], outputRange: [1, 1.9] }) }],
+        },
+      ]}
+    />
+  );
+}
+
+// The numbered steps of a swap. Under the current step, `substeps` spell out
+// what is happening right now: done, in progress (with a spinner) and to come.
+export function Steps({ steps, current, tone, substeps = [] }) {
   return (
     <View style={swapStyles.steps}>
       {steps.map((label, index) => {
         const done = index < current;
         const active = index === current && tone === 'active';
         return (
-          <View key={label} style={swapStyles.step}>
-            <View style={[swapStyles.stepMark, done && swapStyles.stepDone, active && swapStyles.stepActive]}>
-              {done ? (
-                <Icon name="check" type="feather" size={14} color={civicColors.background} />
-              ) : (
-                <Text style={swapStyles.stepNumber}>{index + 1}</Text>
-              )}
+          <View key={label}>
+            <View style={swapStyles.step}>
+              <View style={swapStyles.stepSlot}>
+                {active ? <Halo size={30} /> : null}
+                <View style={[swapStyles.stepMark, done && swapStyles.stepDone, active && swapStyles.stepActive]}>
+                  {done ? (
+                    <Icon name="check" type="feather" size={14} color={civicColors.background} />
+                  ) : (
+                    <Text style={[swapStyles.stepNumber, active && swapStyles.stepNumberOn]}>{index + 1}</Text>
+                  )}
+                </View>
+              </View>
+              <Text style={[swapStyles.stepLabel, (done || active) && swapStyles.stepLabelOn]}>{label}</Text>
             </View>
-            <Text style={[swapStyles.stepLabel, (done || active) && swapStyles.stepLabelOn]}>{label}</Text>
+            {active && substeps.length ? (
+              <View style={swapStyles.substeps} testID="SwapSubsteps">
+                {substeps.map(part => (
+                  <View key={part.label} style={swapStyles.substep} accessibilityLabel={`${part.label}: ${SUBSTEP_WORD[part.state]}`}>
+                    <View style={swapStyles.substepMark}>
+                      {part.state === 'done' ? (
+                        <Icon name="check" type="feather" size={14} color="#8FCEAB" />
+                      ) : part.state === 'active' ? (
+                        <ActivityIndicator size="small" color={civicColors.orange} />
+                      ) : (
+                        <View style={swapStyles.substepDot} />
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        swapStyles.substepLabel,
+                        part.state === 'active' && swapStyles.substepLabelOn,
+                        part.state === 'done' && swapStyles.substepLabelDone,
+                      ]}
+                    >
+                      {part.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
         );
       })}
     </View>
+  );
+}
+const SUBSTEP_WORD = { done: 'done', active: 'in progress', todo: 'to come' };
+
+// The name of the screen now showing, kept current as the user moves about.
+function useCurrentRouteName() {
+  const [name, setName] = useState(() => (navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined));
+  useEffect(() => {
+    const read = () => setName(navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined);
+    read();
+    return navigationRef.addListener('state', read);
+  }, []);
+  return name;
+}
+
+// What the banner says for a swap, or null when it has nothing to show.
+export function bannerFor(swaps) {
+  const swap = swaps.find(item => !isSwapFinished(item));
+  if (!swap) return null;
+  const view = describeSwap(swap);
+  if (view.tone !== 'active') return null;
+  const step = Math.min(view.step, view.steps.length - 1);
+  return {
+    swapId: swap.id,
+    step,
+    count: view.steps.length,
+    title: view.canPay ? 'Your Marscoin is locked. Pay to continue.' : view.title,
+    detail: `Swap · step ${step + 1} of ${view.steps.length} · ${view.steps[step]}`,
+    attention: view.canPay,
+  };
+}
+
+// A live strip above the tab bar while a swap is under way, on every tab.
+// Tapping it opens the swap.
+export function SwapBanner() {
+  const wallet = useSwapWallet();
+  const swaps = useSwaps(wallet);
+  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const route = useCurrentRouteName();
+  const banner = bannerFor(swaps);
+  if (!banner || route === 'SwapDetail') return null;
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={`${banner.title} ${banner.detail}. Open the swap.`}
+      activeOpacity={0.9}
+      onPress={() => navigation.navigate('Citizen', { screen: 'SwapDetail', params: { swapId: banner.swapId } })}
+      style={[swapStyles.banner, banner.attention && swapStyles.bannerAttention, { bottom: insets.bottom + 49 + 30 }]}
+      testID="SwapBanner"
+    >
+      <View style={swapStyles.bannerDot}>
+        <Halo size={12} />
+        <View style={swapStyles.bannerDotCore} />
+      </View>
+      <View style={swapStyles.bannerText}>
+        <Text style={swapStyles.bannerTitle} numberOfLines={1}>
+          {banner.title}
+        </Text>
+        <Text style={swapStyles.bannerDetail} numberOfLines={1}>
+          {banner.detail}
+        </Text>
+        <View style={swapStyles.bannerTrack}>
+          {Array.from({ length: banner.count }, (_, index) => (
+            <BannerSegment key={index} state={index < banner.step ? 'done' : index === banner.step ? 'live' : 'ahead'} />
+          ))}
+        </View>
+      </View>
+      <Icon name="chevron-right" type="feather" size={20} color={civicColors.muted} />
+    </TouchableOpacity>
+  );
+}
+
+function BannerSegment({ state }) {
+  const beat = useLoop(1100);
+  if (state !== 'live') return <View style={[swapStyles.bannerSegment, state === 'done' && swapStyles.bannerSegmentDone]} />;
+  return (
+    <Animated.View
+      style={[
+        swapStyles.bannerSegment,
+        swapStyles.bannerSegmentLive,
+        { opacity: beat.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0.35, 1] }) },
+      ]}
+    />
   );
 }
 
@@ -113,6 +266,44 @@ export const swapStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  stepSlot: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
+  halo: { position: 'absolute', borderWidth: 2, borderColor: civicColors.orange },
+  substeps: { marginLeft: 14, paddingLeft: 26, borderLeftWidth: 1, borderLeftColor: civicColors.border, marginTop: 2, marginBottom: 8 },
+  substep: { flexDirection: 'row', alignItems: 'center', minHeight: 30 },
+  substepMark: { width: 24, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
+  substepDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: civicColors.border },
+  substepLabel: { flex: 1, color: '#6B7178', fontSize: 14, lineHeight: 19 },
+  substepLabelOn: { color: civicColors.text },
+  substepLabelDone: { color: civicColors.muted },
+  stepNumberOn: { color: civicColors.orange },
+  banner: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#14171B',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: civicColors.border,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+  },
+  bannerAttention: { borderColor: civicColors.orange },
+  bannerDot: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  bannerDotCore: { width: 10, height: 10, borderRadius: 5, backgroundColor: civicColors.orange },
+  bannerText: { flex: 1 },
+  bannerTitle: { color: civicColors.text, fontFamily: 'ChakraPetch-SemiBold', fontSize: 15 },
+  bannerDetail: { color: civicColors.muted, fontSize: 12, marginTop: 2 },
+  bannerTrack: { flexDirection: 'row', marginTop: 8 },
+  bannerSegment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: civicColors.border, marginRight: 4 },
+  bannerSegmentDone: { backgroundColor: '#8FCEAB' },
+  bannerSegmentLive: { backgroundColor: civicColors.orange },
   stepDone: { backgroundColor: '#8FCEAB', borderColor: '#8FCEAB' },
   stepActive: { borderColor: civicColors.orange, borderWidth: 2 },
   stepNumber: { color: civicColors.muted, fontFamily: 'ChakraPetch-SemiBold', fontSize: 13 },

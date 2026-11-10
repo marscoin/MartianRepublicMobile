@@ -73,7 +73,7 @@ const PostCard = ({ item, onPress, onProfile, type }) => {
           {/* Header: name + handle + time */}
           <View style={styles.postHeader}>
             <Text style={styles.postName} numberOfLines={1}>
-              {item.displayname || item.fullname || 'Citizen'}
+              {item.displayname || item.fullname || item.author_name || item.author || 'Citizen'}
             </Text>
             {item.citizen === 1 && (
               <MaterialCommunityIcons name="check-decagram" size={14} color="#FF7400" style={{ marginLeft: 3 }} />
@@ -203,7 +203,10 @@ const PublicSquare = () => {
         axios.get(`${API_BASE}/congress/proposals?per_page=10`).catch(() => ({ data: { data: [] } })),
       ]);
 
-      const threads = (forumRes.data || []).map(t => ({
+      // The API answers { threads: [...] }; without a session it redirects to a
+      // login page. Neither may take the proposals down with it.
+      const threadList = Array.isArray(forumRes.data?.threads) ? forumRes.data.threads : Array.isArray(forumRes.data) ? forumRes.data : [];
+      const threads = threadList.map(t => ({
         ...t,
         _type: 'thread',
         _sortDate: new Date(t.created_at),

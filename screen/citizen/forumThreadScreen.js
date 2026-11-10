@@ -1,7 +1,8 @@
+import { marsAlert } from '../../components/MarsDialog';
 import { Platform } from 'react-native';
 import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, TextInput, KeyboardAvoidingView, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { ScrollView, TextInput, KeyboardAvoidingView, Dimensions, Modal, StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useTheme } from '../../components/themes';
@@ -104,7 +105,7 @@ const ForumThreadScreen = () => {
             // // Optionally refresh thread data to remove blocked user’s comments
             // fetchThreadData();
             setReportUserModalVisible(false); // Hide modal after blocking
-            Alert.alert("User Blocked", "User has been blocked.");
+            marsAlert("User Blocked", "User has been blocked.");
             fetchThreadData();
         } catch (error) {
 
@@ -133,7 +134,7 @@ const ForumThreadScreen = () => {
         setReportModalVisible(false);
         setReportUserModalVisible(false);
         setNewCommentContent('');
-        Alert.alert("Report Sent", "Your report has been sent successfully.");
+        marsAlert("Report Sent", "Your report has been sent successfully.");
     };
 
     const handleContentChange = (content) => {

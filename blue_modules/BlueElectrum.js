@@ -1,5 +1,5 @@
+import { marsAlert } from './mars-alert';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
 import { LegacyWallet, SegwitBech32Wallet, SegwitP2SHWallet, TaprootWallet } from '../class';
 import DefaultPreference from 'react-native-default-preference';
 import loc from '../loc';
@@ -197,7 +197,7 @@ async function presentNetworkErrorAlert(usingPeer) {
     );
     return;
   }
-  Alert.alert(
+  marsAlert(
     loc.errors.network,
     loc.formatString(
       usingPeer ? loc.settings.electrum_unable_to_connect : loc.settings.electrum_error_connect,
@@ -216,7 +216,7 @@ async function presentNetworkErrorAlert(usingPeer) {
       {
         text: loc.settings.electrum_reset,
         onPress: () => {
-          Alert.alert(
+          marsAlert(
             loc.settings.electrum_reset,
             loc.settings.electrum_reset_to_default,
             [

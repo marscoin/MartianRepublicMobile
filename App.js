@@ -1,3 +1,4 @@
+import { MarsDialogHost } from './components/MarsDialog';
 import 'react-native-gesture-handler'; // should be on top
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import {AppState, NativeModules, NativeEventEmitter, Linking, Platform, StyleSheet, UIManager, useColorScheme,View,LogBox, Text, TextInput} from 'react-native';
@@ -241,6 +242,7 @@ const App = () => {
         </NavigationContainer>
       </View>
       <Biometric />
+      <MarsDialogHost />
     </SafeAreaProvider>
   );
 };

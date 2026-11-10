@@ -3,11 +3,11 @@
 // Portrait or square art works best, at least 1200 px wide, with the subject
 // in the upper two thirds: the lower third fades into the page.
 export const onboardingArt = {
-  horizon: require('../../img/mars1.png'),
-  vault: require('../../img/dashboard_bg1.png'),
-  key: require('../../img/sunrise.png'),
-  words: require('../../img/sunrise.png'),
-  check: require('../../img/sunrise.png'),
-  ready: require('../../img/dashboard_bg1.png'),
-  next: require('../../img/mars1.png'),
+  horizon: require('../../img/onboarding/horizon.jpg'),
+  vault: require('../../img/onboarding/vault.jpg'),
+  key: require('../../img/onboarding/key.jpg'),
+  words: require('../../img/onboarding/words.jpg'),
+  check: require('../../img/onboarding/check.jpg'),
+  ready: require('../../img/onboarding/ready.jpg'),
+  next: require('../../img/onboarding/next.jpg'),
 };

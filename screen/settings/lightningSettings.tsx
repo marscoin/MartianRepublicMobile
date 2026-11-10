@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, TextInput, Linking, StyleSheet, Alert, I18nManager, ScrollView } from 'react-native';
+import { View, TextInput, Linking, StyleSheet, I18nManager, ScrollView } from 'react-native';
 import { Button as ButtonRNElements } from 'react-native-elements';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -70,7 +71,7 @@ const LightningSettings: React.FC & { navigationOptions: NavigationOptionsGetter
       .catch(() => setIsLoading(false));
 
     if (params?.url) {
-      Alert.alert(
+      marsAlert(
         loc.formatString(loc.settings.set_lndhub_as_default, { url: params.url }) as string,
         '',
         [

@@ -8,6 +8,10 @@ import { createBtcWallet } from './btc-wallet';
 import { createSwapEngine, isSwapFinished } from './engine';
 import { createEsplora } from './esplora';
 import { createMarsSwapChain, SWAP_RELAY } from './mars-chain';
+import { DEFAULT_MAKER_CONFIG, OFFER_SECONDS, REFRESH_SECONDS, marketRate, normalizeMakerConfig, planOffers } from './automaker';
+import { MARS_NETWORK } from './htlc';
+import { MakerState, createMakerEngine, isMakerFinished } from './maker';
+import { randomBytes } from '../../class/rng';
 
 const bitcoin = require('bitcoinjs-lib');
 const ElectrumClient = require('electrum-client');
@@ -247,4 +251,295 @@ export function useSwapOwnerId() {
 
 export async function hasUnfinishedSwaps(walletId) {
   return [...(await load()).values()].some(swap => !isSwapFinished(swap) && (!walletId || swap.walletId === walletId));
+}
+
+// ============================================================================
+// Offering Marscoin for Bitcoin (maker side)
+// ============================================================================
+// Offers are live only while the app is open: answering an acceptance means
+// signing a Marscoin transaction, which only this phone can do. When the app
+// leaves the foreground the open offers are withdrawn; swaps already under way
+// are picked up again when it returns, and unwind safely if it does not.
+
+const MAKER_STORAGE_KEY = 'org.martianrepublic.maker.v1';
+const MAKER_CONFIG_KEY = 'org.martianrepublic.maker.config.v1';
+const MAKER_KEY_PATH = "m/1017'/1'";
+const PRICE_FEED = 'https://price.marscoin.org/json/';
+const BTC_PRICE_FEED = 'https://mempool.space/api/v1/prices';
+
+let makerRecords = null;
+let makerLoading = null;
+let makerSnapshot = [];
+let makerConfig = null;
+let makerStatus = { market: 0, marsUsd: 0, position: null, message: null, checkedAt: 0 };
+const makerListeners = new Set();
+const publishMaker = () => {
+  makerSnapshot = makerRecords ? [...makerRecords.values()].sort((a, b) => b.createdAt - a.createdAt).map(record => ({ ...record })) : [];
+  makerListeners.forEach(listener => listener());
+};
+
+function loadMaker() {
+  makerLoading =
+    makerLoading ||
+    Promise.all([AsyncStorage.getItem(MAKER_STORAGE_KEY), AsyncStorage.getItem(MAKER_CONFIG_KEY)]).then(([raw, rawConfig]) => {
+      makerRecords = new Map((raw ? JSON.parse(raw) : []).map(record => [record.id, record]));
+      let stored = null;
+      try {
+        stored = rawConfig ? JSON.parse(rawConfig) : null;
+      } catch {
+        /* An unreadable configuration falls back to the defaults, switched off. */
+      }
+      makerConfig = normalizeMakerConfig(stored);
+      publishMaker();
+      return makerRecords;
+    });
+  makerLoading.catch(() => (makerLoading = null));
+  return makerLoading;
+}
+
+const persistMaker = map => AsyncStorage.setItem(MAKER_STORAGE_KEY, JSON.stringify([...map.values()]));
+const makerStore = {
+  async all() {
+    return [...(await loadMaker()).values()];
+  },
+  async save(record) {
+    const map = await loadMaker();
+    map.set(record.id, record);
+    await persistMaker(map);
+    publishMaker();
+  },
+  async remove(id) {
+    const map = await loadMaker();
+    if (!map.delete(id)) return;
+    await persistMaker(map);
+    publishMaker();
+  },
+};
+
+const makerServices = new Map();
+
+// The maker engine for one Marscoin wallet. Marscoin is locked from, and
+// returned to, the wallet's main address; Bitcoin is collected into the
+// built-in Bitcoin wallet of the same recovery phrase.
+export function getMakerServices(wallet) {
+  const id = wallet.getID();
+  if (makerServices.has(id)) return makerServices.get(id);
+  const root = bitcoin.bip32.fromSeed(wallet._getSeed()).derivePath(MAKER_KEY_PATH);
+  const address = wallet._getExternalAddressByIndex(0);
+  const engine = createMakerEngine({
+    chain: swapChain,
+    btc: esplora,
+    store: {
+      all: async () => (await makerStore.all()).filter(record => record.walletId === id),
+      save: record => makerStore.save(Object.assign(record, { walletId: id })),
+      remove: key => makerStore.remove(key),
+    },
+    keyFor: ([a, b]) => root.deriveHardened(a).deriveHardened(b).privateKey,
+    funds: {
+      address,
+      privateKey: () => bitcoin.ECPair.fromWIF(wallet._getWifForAddress(address), MARS_NETWORK).privateKey,
+      async coins() {
+        const found = await MARSConnection.multiGetUtxoByAddress([address]);
+        return (found[address] || []).map(utxo => ({
+          txid: utxo.txId,
+          vout: utxo.vout,
+          value: utxo.value,
+          height: utxo.height > 0 ? utxo.height : 0,
+        }));
+      },
+      // The bytes must hash to the requested ID: the amount we sign for comes from them.
+      async rawTx(txid) {
+        const hex = await MARSConnection.getTxHex(txid);
+        if (typeof hex !== 'string' || bitcoin.Transaction.fromHex(hex).getId() !== txid)
+          throw new Error('A wallet coin could not be verified.');
+        return hex;
+      },
+    },
+    now: Date.now,
+    random: randomBytes,
+  });
+  const created = { id, engine, btcWallet: getSwapServices(wallet).btcWallet };
+  makerServices.set(id, created);
+  return created;
+}
+
+async function fetchJson(url) {
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = controller && setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(url, controller ? { signal: controller.signal } : undefined);
+    if (!response.ok) throw new Error('unavailable');
+    return await response.json();
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+// Bounds outside which a feed is taken to be wrong rather than believed.
+const PLAUSIBLE_BTC_USD = [5000, 5000000];
+const PLAUSIBLE_MARS_USD = [0.0005, 50];
+const within = (value, [low, high]) => Number.isFinite(value) && value >= low && value <= high;
+
+async function fetchMarket() {
+  const [mars, btcPrices] = await Promise.all([fetchJson(PRICE_FEED), fetchJson(BTC_PRICE_FEED)]);
+  const marsUsd = Object.values(mars?.data || {})[0]?.quote?.USD?.price;
+  const btcUsd = btcPrices?.USD;
+  if (!within(marsUsd, PLAUSIBLE_MARS_USD) || !within(btcUsd, PLAUSIBLE_BTC_USD))
+    throw new Error('The market price looks wrong. No offers were posted.');
+  return { marsUsd, market: marketRate({ marsUsd, btcUsd }) };
+}
+
+const setMakerStatus = patch => {
+  makerStatus = { ...makerStatus, ...patch, checkedAt: Date.now() };
+  makerListeners.forEach(listener => listener());
+};
+
+// Replace our untaken offers with fresh ones at the current price.
+async function refreshOffers(wallet) {
+  const { engine, btcWallet } = getMakerServices(wallet);
+  await engine.withdraw();
+  const [{ marsUsd, market }, position, book, { receiveAddress }] = await Promise.all([
+    fetchMarket(),
+    engine.position(),
+    swapChain.rawOffers().catch(() => []),
+    btcWallet.sync(),
+  ]);
+  const mine = new Set((await engine.all()).map(record => record.id));
+  const competingRates = book
+    .filter(offer => offer && !mine.has(offer.offer_id) && offer.mars_amount_sat > 0 && offer.btc_amount_sat > 0)
+    .map(offer => offer.btc_amount_sat / offer.mars_amount_sat);
+  // The price feeds are single sources. If other sellers are on the market
+  // and ours would undercut the cheapest of them by half, the feed is not believed.
+  if (competingRates.length && market * (1 + makerConfig.feePercent / 100) < Math.min(...competingRates) / 2) {
+    throw new Error('The market price looks wrong next to other offers. No offers were posted.');
+  }
+  const plan = planOffers({ ...position, market, competingRates, config: makerConfig });
+  // Switched off, or the app left the foreground, while the prices were being read.
+  if (!makerConfig.enabled || AppState.currentState !== 'active') return;
+  const posted = await engine.post(plan, { lifetime: OFFER_SECONDS, btcDestination: receiveAddress });
+  setMakerStatus({
+    market,
+    marsUsd,
+    position: await engine.position(),
+    message: posted.length
+      ? null
+      : plan.length
+        ? 'The swap relay did not take the offers. Trying again shortly.'
+        : 'Not enough confirmed Marscoin to offer right now.',
+  });
+}
+
+let makerRunningSince = 0;
+let lastRefresh = 0;
+const hasSeed = wallet => wallet && typeof wallet._getSeed === 'function';
+// One pass: move every maker swap of every wallet along, then renew the
+// offers of the offering wallet when due.
+export async function runMaker(wallet, { force = false, wallets = [] } = {}) {
+  if (makerRunningSince && Date.now() - makerRunningSince < STALE_PASS) return;
+  const started = Date.now();
+  makerRunningSince = started;
+  try {
+    const all = [...(await loadMaker()).values()];
+    for (const owner of new Set([wallet, ...wallets].filter(hasSeed))) {
+      if (!all.some(record => record.walletId === owner.getID())) continue;
+      await getMakerServices(owner)
+        .engine.tick()
+        .catch(() => {});
+    }
+    if (hasSeed(wallet) && makerConfig.enabled && (force || Date.now() - lastRefresh >= REFRESH_SECONDS * 1000)) {
+      lastRefresh = Date.now();
+      await refreshOffers(wallet).catch(error =>
+        setMakerStatus({ message: error?.message || 'Offers could not be refreshed. Trying again shortly.' }),
+      );
+    }
+    publishMaker();
+  } catch {
+    /* Offline; the next pass tries again. */
+  } finally {
+    if (makerRunningSince === started) makerRunningSince = 0;
+  }
+}
+
+// Take our untaken offers off the relay: when switched off, or when the app
+// leaves the foreground and could no longer answer an acceptance.
+export async function withdrawOffers(wallet) {
+  if (!wallet || typeof wallet._getSeed !== 'function') return;
+  await loadMaker();
+  if (!(await makerStore.all()).some(record => record.walletId === wallet.getID())) return;
+  await getMakerServices(wallet)
+    .engine.withdraw()
+    .catch(() => {});
+  lastRefresh = 0;
+  publishMaker();
+}
+
+export async function saveMakerConfig(wallet, next) {
+  await loadMaker();
+  const wanted = normalizeMakerConfig(next);
+  if (wanted.enabled && !wanted.floorSatsPerMars) {
+    // A hard lower limit from the start: four fifths of today's market price.
+    // Without one, a wrong price feed could sell at any price.
+    const { market } = await fetchMarket();
+    wanted.floorSatsPerMars = Math.max(1, Math.round(market * 100000000 * 0.8 * 10) / 10);
+  }
+  makerConfig = wanted;
+  await AsyncStorage.setItem(MAKER_CONFIG_KEY, JSON.stringify(makerConfig));
+  publishMaker();
+  if (makerConfig.enabled) await runMaker(wallet, { force: true });
+  else await withdrawOffers(wallet);
+  return makerConfig;
+}
+
+// Keeps the maker going while the app is open. Mount once, near the root.
+export function useMakerRunner(wallet, wallets) {
+  const current = useRef({ wallet, wallets });
+  current.current = { wallet, wallets };
+  useEffect(() => {
+    const run = () => runMaker(current.current.wallet, { wallets: current.current.wallets });
+    run();
+    const timer = setInterval(run, TICK_SECONDS * 1000);
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') run();
+      else if (state === 'background') withdrawOffers(current.current.wallet);
+    });
+    return () => {
+      clearInterval(timer);
+      subscription.remove();
+    };
+  }, []);
+}
+
+const subscribeMaker = listener => {
+  makerListeners.add(listener);
+  return () => makerListeners.delete(listener);
+};
+
+// Live view for the maker screen: configuration, records and market status.
+export function useMaker(wallet) {
+  const records = useSyncExternalStore(
+    subscribeMaker,
+    () => makerSnapshot,
+    () => makerSnapshot,
+  );
+  const status = useSyncExternalStore(
+    subscribeMaker,
+    () => makerStatus,
+    () => makerStatus,
+  );
+  const config = useSyncExternalStore(
+    subscribeMaker,
+    () => makerConfig,
+    () => makerConfig,
+  );
+  useEffect(() => {
+    loadMaker().catch(() => {});
+  }, []);
+  const id = wallet?.getID();
+  return { config: config || DEFAULT_MAKER_CONFIG, status, records: records.filter(record => record.walletId === id) };
+}
+
+export async function hasUnfinishedMakerSwaps(walletId) {
+  return [...(await loadMaker()).values()].some(
+    record => !isMakerFinished(record) && record.state !== MakerState.OFFERED && (!walletId || record.walletId === walletId),
+  );
 }

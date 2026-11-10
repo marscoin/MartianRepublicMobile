@@ -1,9 +1,9 @@
+import { marsAlert } from '../../components/MarsDialog';
 import { parseMarsAmount } from '../../blue_modules/mars-amount';
 import { parseMarsPaymentURI } from '../../blue_modules/mars-payment-uri';
 import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, useLayoutEffect } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   I18nManager,
@@ -682,7 +682,7 @@ const SendDetails = () => {
 
   const askCosignThisTransaction = async () => {
     return new Promise(resolve => {
-      Alert.alert(
+      marsAlert(
         '',
         loc.multisig.cosign_this_transaction,
         [
@@ -981,7 +981,7 @@ const SendDetails = () => {
   const onUseAllPressed = () => {
     triggerHapticFeedback(HapticFeedbackTypes.NotificationWarning);
     const message = frozenBalance > 0 ? loc.send.details_adv_full_sure_frozen : loc.send.details_adv_full_sure;
-    Alert.alert(
+    marsAlert(
       loc.send.details_adv_full,
       message,
       [

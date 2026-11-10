@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useCallback, useContext, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useCivicSession } from '../../blue_modules/civic-api';
@@ -98,7 +99,7 @@ export default function CivicHome() {
           organizationId: invite.organization_id,
         });
     } catch (error) {
-      Alert.alert('Invitation saved', error.message);
+      marsAlert('Invitation saved', error.message);
     } finally {
       setBusy('');
       loadLocal();
@@ -254,17 +255,54 @@ export default function CivicHome() {
         </>
       )}
       <SectionHeading title="Around the Republic" />
-      <View style={styles.card}>
-        <SmallAction title="Meet the community" icon="users" onPress={() => navigation.navigate('CitizenScreen')} />
-        <SmallAction title="Public square" icon="message-circle" onPress={() => navigation.navigate('PublicSquare')} />
-        <SmallAction title="Congress and voting" icon="file-text" onPress={() => navigation.navigate('Proposals')} />
-        <SmallAction title="Get Marscoin with Bitcoin" icon="repeat" onPress={() => navigation.navigate('SwapHome')} />
+      <View style={home.grid}>
+        {AROUND.map(place => (
+          <TouchableOpacity
+            key={place.route}
+            accessibilityRole="button"
+            accessibilityLabel={`${place.title}. ${place.note}`}
+            onPress={() => navigation.navigate(place.route)}
+            style={home.tile}
+            testID={`Around-${place.route}`}
+          >
+            <View style={home.tileTop}>
+              <View style={home.tileIcon}>
+                <Icon name={place.icon} type="feather" size={20} color={civicColors.orange} />
+              </View>
+              <Icon name="arrow-up-right" type="feather" size={18} color="#6B7178" />
+            </View>
+            <Text style={home.tileTitle}>{place.title}</Text>
+            <Text style={home.tileNote}>{place.note}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </WorkspaceScreen>
   );
 }
 
+const AROUND = [
+  { route: 'CitizenScreen', icon: 'users', title: 'Citizens', note: 'Meet the people of the Republic and endorse newcomers.' },
+  { route: 'PublicSquare', icon: 'message-circle', title: 'Public square', note: 'What citizens are saying and doing.' },
+  { route: 'Proposals', icon: 'file-text', title: 'Congress', note: 'Read proposals and cast your vote.' },
+  { route: 'SwapHome', icon: 'repeat', title: 'Get Marscoin', note: 'Swap Bitcoin for Marscoin, person to person.' },
+];
+
 const home = StyleSheet.create({
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  tile: {
+    width: '48.4%',
+    minHeight: 148,
+    backgroundColor: civicColors.panel,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: civicColors.border,
+    padding: 16,
+    marginBottom: 12,
+  },
+  tileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 },
+  tileIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#1D2126', alignItems: 'center', justifyContent: 'center' },
+  tileTitle: { color: civicColors.text, fontFamily: 'ChakraPetch-Bold', fontSize: 17, marginBottom: 4 },
+  tileNote: { color: civicColors.muted, fontSize: 13, lineHeight: 18 },
   identity: {
     backgroundColor: '#EAE2D5',
     borderRadius: 18,

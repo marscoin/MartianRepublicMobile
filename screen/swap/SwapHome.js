@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useCallback, useRef, useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { advanceSwaps, getSwapServices, useSwaps } from '../../blue_modules/swap';
 import { isSwapFinished } from '../../blue_modules/swap/engine';
@@ -53,7 +54,7 @@ export default function SwapHome() {
   const finished = swaps.filter(isSwapFinished).slice(0, 5);
 
   const take = offer => {
-    Alert.alert(
+    marsAlert(
       `Swap ${formatSats(offer.btcAmount)} for ${formatMars(offer.marsAmount)}?`,
       'The maker locks the Marscoin first. You pay Bitcoin only after this app has verified that lock, and your Bitcoin returns automatically if the swap does not complete.\n\nOnce you have paid, the swap is handed to the network’s watchtower and completes even if your phone is off.',
       [
@@ -71,7 +72,7 @@ export default function SwapHome() {
               const swap = await engine.accept(offer, { marsDestination, btcRefundAddress: balance.receiveAddress });
               navigation.navigate('SwapDetail', { swapId: swap.id });
             } catch (failure) {
-              Alert.alert('Offer not reserved', failure.message);
+              marsAlert('Offer not reserved', failure.message);
             } finally {
               reserving.current = false;
               setAccepting('');
@@ -186,7 +187,20 @@ export default function SwapHome() {
           ))}
         </>
       ) : null}
-      <SmallAction title="How swaps keep both sides safe" icon="info" onPress={() => Alert.alert('How a swap works', HOW)} />
+      <SectionHeading title="Have Marscoin to sell?" />
+      <TouchableOpacity
+        accessibilityRole="button"
+        style={styles.card}
+        onPress={() => navigation.navigate('SwapMaker')}
+        testID="OpenSwapMaker"
+      >
+        <Text style={styles.cardTitle}>Offer Marscoin for Bitcoin</Text>
+        <Text style={styles.secondaryText}>
+          Set your price and limits. The app keeps your offers on the market and completes each sale.
+        </Text>
+        <Text style={styles.actionText}>Set up</Text>
+      </TouchableOpacity>
+      <SmallAction title="How swaps keep both sides safe" icon="info" onPress={() => marsAlert('How a swap works', HOW)} />
     </WorkspaceScreen>
   );
 }

@@ -207,12 +207,15 @@ export function createSwapEngine({ chain, btc, store, swapKey, now, randomId, wa
   // show the same output with enough confirmations.
   async function verifyMarsLock(swap, contracts, marsHeight) {
     const candidates = (await chain.unspent(contracts.marsOutput)).filter(utxo => utxo.value >= swap.marsAmount);
-    if (!candidates.length) return { waiting: 'Waiting for the maker to lock Marscoin.' };
+    if (!candidates.length) return { waiting: 'Waiting for the maker to lock Marscoin.', lock: { seen: false, confirmations: 0 } };
     let waiting = 'The Marscoin lock could not be verified yet.';
+    // How far the best candidate has come, for showing progress.
+    let lock = { seen: true, confirmations: 0 };
     for (const utxo of candidates) {
       const confirmations = utxo.height > 0 ? marsHeight - utxo.height + 1 : 0;
       if (confirmations < MARS_MIN_CONFIRMATIONS) {
         waiting = `Marscoin lock seen. Waiting for confirmation (${Math.max(confirmations, 0)} of ${MARS_MIN_CONFIRMATIONS}).`;
+        if (confirmations > lock.confirmations) lock = { seen: true, confirmations };
         continue;
       }
       const hex = await chain.transactionHex(utxo.txid);
@@ -240,11 +243,12 @@ export function createSwapEngine({ chain, btc, store, swapKey, now, randomId, wa
       }
       if (!confirmed) {
         waiting = 'Waiting for a second Marscoin node to confirm the lock.';
+        lock = { seen: true, confirmations: MARS_MIN_CONFIRMATIONS };
         continue;
       }
       return { funding };
     }
-    return { waiting };
+    return { waiting, lock };
   }
 
   // ---- Reading the Bitcoin contract ---------------------------------------
@@ -586,7 +590,7 @@ export function createSwapEngine({ chain, btc, store, swapKey, now, randomId, wa
         }
         const result = await verifyMarsLock(swap, contracts, agreed);
         if (result.funding) return save(swap, { state: SwapState.READY_TO_PAY, marsFunding: result.funding, error: null });
-        return save(swap, { error: result.waiting });
+        return save(swap, { error: result.waiting, lockProgress: result.lock });
       }
       return swap;
     }

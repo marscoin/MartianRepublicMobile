@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useState } from 'react';
-import { Image, View, TouchableOpacity, Platform, StyleSheet, TextInput, Alert } from 'react-native';
+import { Image, View, TouchableOpacity, Platform, StyleSheet, TextInput } from 'react-native';
 import { CameraScreen } from 'react-native-camera-kit';
 import { Icon } from 'react-native-elements';
 //import { useNavigation, useRoute } from '@react-navigation/native';
@@ -138,7 +139,7 @@ const ScanQRCode = () => {
     } catch (error) {
       console.warn(error);
       setIsLoading(true);
-      Alert.alert(
+      marsAlert(
         loc.send.scan_error,
         loc._.invalid_animated_qr_code_fragment,
         [
@@ -186,7 +187,7 @@ const ScanQRCode = () => {
     } catch (error) {
       console.warn(error);
       setIsLoading(true);
-      Alert.alert(
+      marsAlert(
         loc.send.scan_error,
         loc._.invalid_animated_qr_code_fragment,
         [

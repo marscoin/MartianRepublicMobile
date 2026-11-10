@@ -1,8 +1,9 @@
+import { marsAlert } from '../../components/MarsDialog';
 import { saveCitizenshipDraft, ipfsURL } from '../../blue_modules/citizenship-draft';
 import { getCivicToken } from '../../blue_modules/civic-api';
 import { citizenshipVideoFile, citizenshipVideoUploadError, MAX_CITIZENSHIP_VIDEO_BYTES } from '../../blue_modules/citizenship-media';
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Alert, Platform, SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
 import { Icon } from 'react-native-elements';
@@ -50,12 +51,12 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
   async function openVideoCamera() {
     try {
       if (!(await requestPermissions())) {
-        Alert.alert('Camera access needed', 'Allow camera and microphone access in Settings to record your citizenship video.');
+        marsAlert('Camera access needed', 'Allow camera and microphone access in Settings to record your citizenship video.');
         return;
       }
       setModalVisible(true);
     } catch {
-      Alert.alert('Camera unavailable', 'Camera and microphone access could not be checked. Please try again.');
+      marsAlert('Camera unavailable', 'Camera and microphone access could not be checked. Please try again.');
     }
   }
 
@@ -69,7 +70,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       const info = await RNFS.stat(capturedVideo);
       file = citizenshipVideoFile(capturedVideo, Number(info.size));
     } catch (error) {
-      Alert.alert('Recording not ready', error.code ? 'The recording could not be read. Please record it again.' : error.message);
+      marsAlert('Recording not ready', error.code ? 'The recording could not be read. Please record it again.' : error.message);
       return null;
     }
     formData.append('file', file);
@@ -92,7 +93,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       if (!uploaded) return;
       navigation.navigate('JoinGeneralPublicApplication3Screen', { firstName, lastName, displayName, bio, photo, video: uploaded });
     } catch (error) {
-      Alert.alert('Video not uploaded', citizenshipVideoUploadError(error));
+      marsAlert('Video not uploaded', citizenshipVideoUploadError(error));
     } finally {
       setLoading(false);
     }
@@ -376,7 +377,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
           onVideoCaptured(compressedVideoUri);
           setCapturedUri(compressedVideoUri);
         } catch (err) {
-          Alert.alert('Recording failed', 'The video could not be recorded. Check camera and microphone access and try again.');
+          marsAlert('Recording failed', 'The video could not be recorded. Check camera and microphone access and try again.');
         } finally {
           setIsRecording(false);
         }

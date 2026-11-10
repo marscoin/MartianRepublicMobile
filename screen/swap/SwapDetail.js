@@ -1,10 +1,11 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { celebrate } from '../../blue_modules/app-review';
 import { advanceSwaps, esplora, getSwapServices, swapChain, useSwaps } from '../../blue_modules/swap';
 import { SwapState, isSwapFinished } from '../../blue_modules/swap/engine';
-import { describeSwap, formatBtc, formatMars, formatSats, timeUntil } from '../../blue_modules/swap/present';
+import { describeSwap, formatBtc, formatMars, formatSats, timeUntil, swapSubsteps } from '../../blue_modules/swap/present';
 import { BTC_BLOCK_SECONDS, MARS_BLOCK_SECONDS, MARS_SPEND_FEE } from '../../blue_modules/swap/safety';
 import { CivicButton } from '../../components/CivicUi';
 import QRCodeComponent from '../../components/QRCodeComponent';
@@ -72,12 +73,9 @@ export default function SwapDetail() {
       await action(await record());
     } catch (error) {
       if (error.shortfall) {
-        Alert.alert(
-          'Not enough Bitcoin',
-          `Add at least ${formatSats(error.shortfall)} to your Bitcoin wallet, or pay from another wallet.`,
-        );
+        marsAlert('Not enough Bitcoin', `Add at least ${formatSats(error.shortfall)} to your Bitcoin wallet, or pay from another wallet.`);
       } else {
-        Alert.alert(failureTitle, error.message);
+        marsAlert(failureTitle, error.message);
       }
     } finally {
       working.current = false;
@@ -90,7 +88,7 @@ export default function SwapDetail() {
     // Show what the network will charge before asking.
     const feeRate = await esplora.feeRate().catch(() => null);
     const fee = feeRate ? `\n\nBitcoin network fee: about ${formatSats(Math.ceil(feeRate * 155))} (${feeRate} sat/vB).` : '';
-    Alert.alert(
+    marsAlert(
       `Pay ${formatSats(swap.btcAmount)}?`,
       `Your Bitcoin is locked for the maker and returns to you automatically if the swap does not complete.${fee}`,
       [
@@ -101,7 +99,7 @@ export default function SwapDetail() {
   };
 
   const cancel = () =>
-    Alert.alert(
+    marsAlert(
       'Cancel this swap?',
       'Nothing has been paid. After cancelling, never send Bitcoin to this swap’s address.\n\nThe maker may already have locked Marscoin for you. Cancelling repeatedly can get you blocked from swapping for a day.',
       [
@@ -142,8 +140,17 @@ export default function SwapDetail() {
         <Text style={styles.caption}>Last check could not finish: {swap.lastProblem}</Text>
       ) : null}
 
-      <Steps steps={view.steps} current={view.step} tone={view.tone} />
+      <Steps steps={view.steps} current={view.step} tone={view.tone} substeps={swapSubsteps(swap)} />
 
+      {view.payNext ? (
+        <>
+          <CivicButton title={`Pay ${formatSats(swap.btcAmount)} · waiting for the lock`} disabled onPress={() => {}} testID="PayWaiting" />
+          <Text style={styles.caption}>
+            This button unlocks as soon as the Marscoin lock has two confirmations. Marscoin blocks usually take a couple of minutes,
+            sometimes much longer. You do not need to keep this screen open.
+          </Text>
+        </>
+      ) : null}
       {view.canPay ? (
         <>
           <CivicButton

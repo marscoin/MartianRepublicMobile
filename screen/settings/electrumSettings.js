@@ -1,7 +1,7 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert,
   View,
   TextInput,
   TouchableOpacity,
@@ -90,7 +90,7 @@ export default class ElectrumSettings extends Component {
 
     if (this.state.server) {
       triggerHapticFeedback(HapticFeedbackTypes.ImpactHeavy);
-      Alert.alert(
+      marsAlert(
         loc.formatString(loc.settings.set_electrum_server_as_default, { server: this.state.server }),
         '',
         [
@@ -125,7 +125,7 @@ export default class ElectrumSettings extends Component {
 
   clearHistoryAlert() {
     triggerHapticFeedback(HapticFeedbackTypes.ImpactHeavy);
-    Alert.alert(loc.settings.electrum_clear_alert_title, loc.settings.electrum_clear_alert_message, [
+    marsAlert(loc.settings.electrum_clear_alert_title, loc.settings.electrum_clear_alert_message, [
       { text: loc.settings.electrum_clear_alert_cancel, onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
       { text: loc.settings.electrum_clear_alert_ok, onPress: () => this.clearHistory() },
     ]);

@@ -1,5 +1,6 @@
+import { marsAlert } from '../../components/MarsDialog';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { celebrate } from '../../blue_modules/app-review';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -90,7 +91,7 @@ export default function Ballot() {
     joining.current = attempt;
     attempt.promise
       .catch(failure => {
-        if (failure.message !== 'cancelled') Alert.alert('Ballot not issued', failure.message);
+        if (failure.message !== 'cancelled') marsAlert('Ballot not issued', failure.message);
       })
       .finally(() => {
         // An earlier attempt finishing must not disturb a newer one.
@@ -110,7 +111,7 @@ export default function Ballot() {
   };
 
   const cast = choice =>
-    Alert.alert(`Vote ${choice.label}?`, `“${proposal.title}”\n\nA vote is final and cannot be changed.`, [
+    marsAlert(`Vote ${choice.label}?`, `“${proposal.title}”\n\nA vote is final and cannot be changed.`, [
       { text: 'Not yet', style: 'cancel' },
       {
         text: `Vote ${choice.label}`,
@@ -124,7 +125,7 @@ export default function Ballot() {
             await refresh();
             celebrate();
           } catch (failure) {
-            Alert.alert('Vote not sent', `${failure.message}\n\nYour ballot is unchanged. Try again.`);
+            marsAlert('Vote not sent', `${failure.message}\n\nYour ballot is unchanged. Try again.`);
           } finally {
             voting.current = false;
             setCasting('');
