@@ -130,6 +130,10 @@ import SwapHome from './screen/swap/SwapHome';
 import SwapDetail from './screen/swap/SwapDetail';
 import BtcWallet from './screen/swap/BtcWallet';
 import { SwapWatcher } from './screen/swap/SwapUi';
+import OnboardingIntro from './screen/onboarding/OnboardingIntro';
+import OnboardingWords from './screen/onboarding/OnboardingWords';
+import OnboardingCheck from './screen/onboarding/OnboardingCheck';
+import OnboardingReady from './screen/onboarding/OnboardingReady';
 
 const WalletsStack = createNativeStackNavigator();
 const SquareStack = createNativeStackNavigator();
@@ -263,6 +267,10 @@ const AppNavigator = () => {
         component={ImportCivicWalletScreen}
         options={{ headerShown: false }}
       />
+      <AppStack.Screen name="OnboardingIntro" component={OnboardingIntro} options={{ headerShown: false }} />
+      <AppStack.Screen name="OnboardingWords" component={OnboardingWords} options={{ headerShown: false }} />
+      <AppStack.Screen name="OnboardingCheck" component={OnboardingCheck} options={{ headerShown: false }} />
+      <AppStack.Screen name="OnboardingReady" component={OnboardingReady} options={{ headerShown: false, gestureEnabled: false }} />
       <AppStack.Screen 
           name="ImportWallet" 
           component={ImportWallet} 
