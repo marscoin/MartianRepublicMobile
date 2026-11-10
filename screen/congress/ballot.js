@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { celebrate } from '../../blue_modules/app-review';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { castVote, joinBallotRound, prepareBallotInput, readBallot } from '../../blue_modules/voting';
 import { ballotWindow, fetchProposal, isVotingOpen, tally, timeLeft } from '../../blue_modules/voting/congress';
@@ -121,6 +122,7 @@ export default function Ballot() {
           try {
             await castVote({ wallet, proposal, choice: choice.key });
             await refresh();
+            celebrate();
           } catch (failure) {
             Alert.alert('Vote not sent', `${failure.message}\n\nYour ballot is unchanged. Try again.`);
           } finally {

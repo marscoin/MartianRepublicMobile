@@ -263,6 +263,8 @@ describe('Built-in Bitcoin wallet', () => {
     };
     const state = await createBtcWallet({ seed, esplora }).sync();
     expect(state).toMatchObject({ balance: 9500, confirmed: 9000, unconfirmed: 500 });
+    // The unconfirmed payment is shown as incoming as soon as the network has it.
+    expect(state.incoming).toBe(500);
     expect(state.receiveAddress).toBe(wallet.address(0, 2));
     expect(state.changeAddress).toBe(wallet.address(1, 0));
     expect(state.utxos[0]).toMatchObject({ chain: 0, index: 1 });

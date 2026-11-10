@@ -37,7 +37,16 @@ export default function SwapHome() {
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh]),
+      // Show incoming Bitcoin as soon as the network has seen it.
+      const timer = setInterval(() => {
+        if (!wallet) return;
+        getSwapServices(wallet)
+          .btcWallet.sync()
+          .then(setFunds)
+          .catch(() => {});
+      }, 15000);
+      return () => clearInterval(timer);
+    }, [refresh, wallet]),
   );
 
   const active = swaps.find(swap => !isSwapFinished(swap));
@@ -100,6 +109,9 @@ export default function SwapHome() {
         <Text style={styles.caption}>BITCOIN WALLET</Text>
         <Text style={swapStyles.amount}>{funds ? formatSats(funds.balance) : loading ? 'Checking…' : '—'}</Text>
         {funds ? <Text style={styles.secondaryText}>{formatBtc(funds.balance)}</Text> : null}
+        {funds && funds.incoming > 0 ? (
+          <Text style={styles.caption}>Includes {formatSats(funds.incoming)} incoming, seen on the network and awaiting confirmation.</Text>
+        ) : null}
         <Text style={styles.actionText}>{funds && funds.balance > 0 ? 'Receive or withdraw' : 'Add Bitcoin to begin'}</Text>
       </TouchableOpacity>
 

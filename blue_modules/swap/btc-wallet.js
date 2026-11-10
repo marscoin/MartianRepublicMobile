@@ -72,6 +72,8 @@ export function createBtcWallet({ seed, esplora }) {
         confirmed,
         unconfirmed,
         balance: utxos.reduce((sum, utxo) => sum + utxo.value, 0),
+        // Payments seen on the network but not yet in a block.
+        incoming: utxos.filter(utxo => !utxo.confirmed).reduce((sum, utxo) => sum + utxo.value, 0),
         receiveAddress: address(0, external.next),
         changeAddress: address(1, change.next),
       };

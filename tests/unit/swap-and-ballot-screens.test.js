@@ -20,6 +20,7 @@ jest.mock('@react-navigation/native', () => {
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: ({ children }) => children }));
 jest.mock('react-native-elements', () => ({ Icon: () => null }));
 jest.mock('../../components/QRCodeComponent', () => () => null);
+jest.mock('../../blue_modules/app-review', () => ({ celebrate: jest.fn(), noteAppOpened: jest.fn(), openStoreReview: jest.fn() }));
 jest.mock('../../blue_modules/civic-api', () => ({ getCivicToken: jest.fn() }));
 jest.mock('../../blue_modules/workspace-api', () => ({
   assertWorkspaceIdentity: jest.fn(),
@@ -190,6 +191,42 @@ describe('Swap screens', () => {
     expect(text(tree)).toContain('Swap in progress');
     expect(text(tree)).toContain('Unable to reach the Marscoin swap relay');
     expect(text(tree)).toContain('25,000 sats');
+  });
+
+  it('shows Bitcoin that is on its way before it confirms', async () => {
+    mockBtcWallet.sync.mockResolvedValue({
+      balance: 25000,
+      confirmed: 0,
+      unconfirmed: 25000,
+      incoming: 25000,
+      utxos: [],
+      receiveAddress: 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu',
+      changeAddress: 'bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el',
+    });
+    expect(text(await render(SwapHome))).toContain('Includes 25,000 sats incoming');
+    const wallet = text(await render(BtcWallet));
+    expect(wallet).toContain('Incoming');
+    expect(wallet).toContain('Seen on the Bitcoin network');
+  });
+
+  it('asks for a review when a swap is seen through to completion, not when an old one is opened', async () => {
+    const { celebrate } = require('../../blue_modules/app-review');
+    mockParams = { swapId: 's1' };
+    mockSwaps = [swap(SwapState.COMPLETED)];
+    await render(SwapDetail);
+    expect(celebrate).not.toHaveBeenCalled();
+
+    mockSwaps = [swap(SwapState.CLAIMING)];
+    const tree = await render(SwapDetail);
+    mockSwaps = [swap(SwapState.COMPLETED)];
+    await act(async () =>
+      tree.update(
+        <BlueStorageContext.Provider value={{ wallets: mockWallets }}>
+          <SwapDetail />
+        </BlueStorageContext.Provider>,
+      ),
+    );
+    expect(celebrate).toHaveBeenCalledTimes(1);
   });
 
   it('asks for a wallet when there is none', async () => {

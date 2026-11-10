@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Icon } from 'react-native-elements';
+import { noteAppOpened } from '../../blue_modules/app-review';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { useSwapOwnerId, useSwapWatcher } from '../../blue_modules/swap';
 import { civicColors } from '../../components/CivicUi';
@@ -21,6 +22,10 @@ export function useSwapWallet() {
 export function SwapWatcher() {
   const { wallets } = useContext(BlueStorageContext);
   useSwapWatcher(wallets);
+  // Mounted once near the root, so this also counts app starts.
+  React.useEffect(() => {
+    noteAppOpened();
+  }, []);
   return null;
 }
 

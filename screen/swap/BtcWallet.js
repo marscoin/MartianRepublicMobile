@@ -35,7 +35,16 @@ export default function BtcWallet() {
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh]),
+      // A payment shows here within seconds of being sent, well before its
+      // first confirmation, so keep looking while the screen is open.
+      const timer = setInterval(() => {
+        getSwapServices(wallet)
+          .btcWallet.sync()
+          .then(setFunds)
+          .catch(() => {});
+      }, 15000);
+      return () => clearInterval(timer);
+    }, [refresh, wallet]),
   );
 
   if (!wallet) {
@@ -107,7 +116,15 @@ export default function BtcWallet() {
         <Text style={styles.caption}>BALANCE</Text>
         <Text style={swapStyles.amount}>{funds ? formatSats(funds.balance) : loading ? 'Checking…' : '—'}</Text>
         {funds ? <Text style={styles.secondaryText}>{formatBtc(funds.balance)}</Text> : null}
-        {funds && funds.unconfirmed !== 0 ? <Row label="Awaiting confirmation" value={formatSats(Math.abs(funds.unconfirmed))} /> : null}
+        {funds && funds.incoming > 0 ? (
+          <>
+            <Row label="Incoming" value={formatSats(funds.incoming)} strong />
+            <Text style={styles.caption}>
+              Seen on the Bitcoin network and included in your balance. Its first confirmation usually takes 10 to 30 minutes; you can
+              reserve an offer meanwhile.
+            </Text>
+          </>
+        ) : null}
       </View>
 
       {funds ? (

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import { celebrate } from '../../blue_modules/app-review';
 import { advanceSwaps, esplora, getSwapServices, swapChain, useSwaps } from '../../blue_modules/swap';
 import { SwapState, isSwapFinished } from '../../blue_modules/swap/engine';
 import { describeSwap, formatBtc, formatMars, formatSats, timeUntil } from '../../blue_modules/swap/present';
@@ -30,6 +31,17 @@ export default function SwapDetail() {
       current = false;
     };
   }, [swap?.state, swap?.updatedAt]);
+
+  // A swap seen through to the end is a good moment to ask for a review.
+  const completed = swap?.state === SwapState.COMPLETED;
+  const seenUnfinished = useRef(false);
+  useEffect(() => {
+    if (swap && !completed) seenUnfinished.current = true;
+    if (completed && seenUnfinished.current) {
+      seenUnfinished.current = false;
+      celebrate();
+    }
+  }, [swap, completed]);
 
   if (!wallet || !swap) {
     return (
