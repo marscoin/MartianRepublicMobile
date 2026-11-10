@@ -10,7 +10,7 @@ import { BTC_BLOCK_SECONDS, MARS_BLOCK_SECONDS, MARS_SPEND_FEE } from '../../blu
 import { CivicButton } from '../../components/CivicUi';
 import QRCodeComponent from '../../components/QRCodeComponent';
 import { SectionHeading, SmallAction, WorkspaceNotice, WorkspaceScreen, styles } from '../workspace/WorkspaceUi';
-import { Copyable, Row, Steps, swapStyles, useSwapWallet } from './SwapUi';
+import { Copyable, Receipt, Row, Steps, swapStyles, useSwapWallet } from './SwapUi';
 
 export default function SwapDetail() {
   const { swapId } = useRoute().params;
@@ -22,6 +22,7 @@ export default function SwapDetail() {
   const [refreshing, setRefreshing] = useState(false);
   const [heights, setHeights] = useState(null);
   const [external, setExternal] = useState(false);
+  const [details, setDetails] = useState(false);
 
   useEffect(() => {
     let current = true;
@@ -90,7 +91,7 @@ export default function SwapDetail() {
     const fee = feeRate ? `\n\nBitcoin network fee: about ${formatSats(Math.ceil(feeRate * 155))} (${feeRate} sat/vB).` : '';
     marsAlert(
       `Pay ${formatSats(swap.btcAmount)}?`,
-      `Your Bitcoin is locked for the maker and returns to you automatically if the swap does not complete.${fee}`,
+      `Your Bitcoin is locked for the seller and returns to you automatically if the swap does not complete.${fee}`,
       [
         { text: 'Not now', style: 'cancel' },
         { text: 'Pay', onPress: () => run('pay', current => engine.pay(current, btcWallet), 'Payment not sent') },
@@ -115,6 +116,8 @@ export default function SwapDetail() {
   const btcBlocksLeft = heights ? swap.btcLocktime - heights.btc : null;
   const marsBlocksLeft = heights ? swap.marsLocktime - heights.mars : null;
   const waitingOnMaker = swap.state === SwapState.BTC_SENT;
+  // Refunds are signed ahead of time for the watchtower; only one that was needed belongs on the receipt.
+  const refunding = swap.state === SwapState.REFUNDING || swap.state === SwapState.REFUNDED;
   const payUri = `bitcoin:${swap.btcHtlcAddress}?amount=${(swap.btcAmount / 100000000).toFixed(8)}`;
 
   return (
@@ -131,7 +134,7 @@ export default function SwapDetail() {
           <Text style={styles.caption}>WATCHTOWER</Text>
           <Text style={styles.secondaryText}>
             This swap is protected while your phone is off. The Marscoin network’s watchtower holds transactions you have already signed,
-            which can only pay your own wallet: it claims your Marscoin when the maker collects, or returns your Bitcoin after the time
+            which can only pay your own wallet: it claims your Marscoin when the seller collects, or returns your Bitcoin after the time
             lock.
           </Text>
         </View>
@@ -203,18 +206,36 @@ export default function SwapDetail() {
         <SmallAction title={busy === 'cancel' ? 'Cancelling…' : 'Cancel swap'} icon="x" danger disabled={!!busy} onPress={cancel} />
       ) : null}
 
-      <SectionHeading title="Record" />
-      <Copyable label="Marscoin contract" value={swap.marsHtlcAddress} />
-      <Copyable label="Bitcoin contract" value={swap.btcHtlcAddress} />
-      {swap.btcPayment ? <Copyable label="Bitcoin payment" value={swap.btcPayment.txid} /> : null}
-      {swap.marsClaim ? <Copyable label="Marscoin claim" value={swap.marsClaim.txid} /> : null}
-      {swap.btcRefunds.map(refund => (
-        <Copyable key={refund.txid} label="Bitcoin refund" value={refund.txid} />
-      ))}
-      <Text style={styles.caption}>
-        Started {new Date(swap.createdAt * 1000).toLocaleString()} · Bitcoin unlocks at block {swap.btcLocktime} · Marscoin at block{' '}
-        {swap.marsLocktime}
-      </Text>
+      <SectionHeading title={isSwapFinished(swap) ? 'Receipt' : 'Record'} />
+      <View style={styles.card}>
+        {swap.btcPayment ? <Receipt label="Bitcoin payment" value={swap.btcPayment.txid} /> : null}
+        {swap.marsClaim ? <Receipt label="Marscoin claim" value={swap.marsClaim.txid} /> : null}
+        {refunding
+          ? swap.btcRefunds.slice(-1).map(refund => <Receipt key={refund.txid} label="Bitcoin refund" value={refund.txid} />)
+          : null}
+        {!swap.btcPayment && !swap.marsClaim ? <Text style={styles.secondaryText}>Nothing has been sent yet.</Text> : null}
+        <Text style={styles.caption}>Started {new Date(swap.createdAt * 1000).toLocaleString()}. Tap a line to copy it.</Text>
+      </View>
+      <SmallAction
+        title={details ? 'Hide technical details' : 'Technical details'}
+        icon={details ? 'chevron-up' : 'chevron-down'}
+        onPress={() => setDetails(!details)}
+      />
+      {details ? (
+        <>
+          <Copyable label="Marscoin contract" value={swap.marsHtlcAddress} />
+          <Copyable label="Bitcoin contract" value={swap.btcHtlcAddress} />
+          {swap.btcRefunds.length && !refunding ? (
+            <Text style={styles.caption}>
+              {swap.btcRefunds.length} Bitcoin refund{swap.btcRefunds.length === 1 ? ' was' : 's were'} signed in advance as a safeguard and
+              {isSwapFinished(swap) ? ' never needed.' : ' not sent.'}
+            </Text>
+          ) : null}
+          <Text style={styles.caption}>
+            Bitcoin unlocks at block {swap.btcLocktime} · Marscoin at block {swap.marsLocktime}
+          </Text>
+        </>
+      ) : null}
     </WorkspaceScreen>
   );
 }

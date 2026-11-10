@@ -305,7 +305,7 @@ describe('Atomic swap engine (Bitcoin to Marscoin)', () => {
 
     await w.engine.advance(swap);
     expect(swap.state).toBe(SwapState.WAITING_MARS);
-    expect(swap.error).toMatch(/Waiting for the maker/);
+    expect(swap.error).toMatch(/Waiting for the seller/);
 
     w.makerLocksMars(swap);
     await w.engine.advance(swap);
@@ -352,7 +352,7 @@ describe('Atomic swap engine (Bitcoin to Marscoin)', () => {
     expect(JSON.stringify(w.state.saved)).not.toContain(seed.toString('hex'));
   });
 
-  it('claims Marscoin when the maker claimed while the app was closed', async () => {
+  it('claims Marscoin when the seller claimed while the app was closed', async () => {
     const w = world();
     const swap = await toReadyToPay(w);
     w.fundWallet(50000);
@@ -379,7 +379,7 @@ describe('Atomic swap engine (Bitcoin to Marscoin)', () => {
     expect(swap.error).toBeNull();
   });
 
-  it('refunds Bitcoin after the timelock when the maker never claims', async () => {
+  it('refunds Bitcoin after the timelock when the seller never claims', async () => {
     const w = world();
     const swap = await toReadyToPay(w);
     w.fundWallet(50000);
@@ -407,7 +407,7 @@ describe('Atomic swap engine (Bitcoin to Marscoin)', () => {
     expect(swap.state).toBe(SwapState.REFUNDED);
   });
 
-  it('still claims Marscoin if the maker claims at the last moment instead of our refund', async () => {
+  it('still claims Marscoin if the seller claims at the last moment instead of our refund', async () => {
     const w = world();
     const swap = await toReadyToPay(w);
     w.fundWallet(50000);
@@ -472,7 +472,7 @@ describe('Atomic swap engine (Bitcoin to Marscoin)', () => {
     expect(w.verifyHeaders.mock.calls[0][0]).toHaveLength(2);
   });
 
-  it('fails harmlessly when the maker never locks Marscoin', async () => {
+  it('fails harmlessly when the seller never locks Marscoin', async () => {
     const w = world();
     const swap = await w.start();
     w.state.btcHeight += 13; // under two hours of window remain
@@ -600,7 +600,7 @@ describe('Atomic swap engine (Bitcoin to Marscoin)', () => {
     expect(swap.preimage).toBe(preimage.toString('hex'));
   });
 
-  it('stops re-sending a claim once the maker has reclaimed the Marscoin after its deadline', async () => {
+  it('stops re-sending a claim once the seller has reclaimed the Marscoin after its deadline', async () => {
     const w = world();
     const swap = await toReadyToPay(w);
     w.fundWallet(50000);
@@ -696,7 +696,7 @@ describe('Atomic swap engine (Bitcoin to Marscoin)', () => {
       expect(swap.state).toBe(SwapState.CLAIMING);
     });
 
-    it('finds the maker’s claim when the address history is flooded and omits it', async () => {
+    it('finds the seller’s claim when the address history is flooded and omits it', async () => {
       const w = world();
       const swap = await paidSwap(w);
       await w.engine.advance(swap);

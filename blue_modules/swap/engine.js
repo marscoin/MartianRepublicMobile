@@ -42,7 +42,7 @@ import {
 
 export const SwapState = {
   ACCEPTING: 'accepting', // saved locally, acceptance not yet confirmed by the relay
-  WAITING_MARS: 'waiting_mars', // accepted; the maker must lock Marscoin
+  WAITING_MARS: 'waiting_mars', // accepted; the seller must lock Marscoin
   READY_TO_PAY: 'ready_to_pay', // Marscoin lock verified; Bitcoin may be sent
   BTC_SENT: 'btc_sent', // Bitcoin is in the contract
   CLAIMING: 'claiming', // secret known; Marscoin claim in progress
@@ -207,7 +207,7 @@ export function createSwapEngine({ chain, btc, store, swapKey, now, randomId, wa
   // show the same output with enough confirmations.
   async function verifyMarsLock(swap, contracts, marsHeight) {
     const candidates = (await chain.unspent(contracts.marsOutput)).filter(utxo => utxo.value >= swap.marsAmount);
-    if (!candidates.length) return { waiting: 'Waiting for the maker to lock Marscoin.', lock: { seen: false, confirmations: 0 } };
+    if (!candidates.length) return { waiting: 'Waiting for the seller to lock Marscoin.', lock: { seen: false, confirmations: 0 } };
     let waiting = 'The Marscoin lock could not be verified yet.';
     // How far the best candidate has come, for showing progress.
     let lock = { seen: true, confirmations: 0 };
@@ -578,7 +578,7 @@ export function createSwapEngine({ chain, btc, store, swapKey, now, randomId, wa
           error:
             swap.state === SwapState.READY_TO_PAY
               ? 'The time to pay safely ran out. No Bitcoin was sent.'
-              : 'The maker did not lock Marscoin in time. No Bitcoin was sent.',
+              : 'The seller did not lock Marscoin in time. No Bitcoin was sent.',
         });
       }
       if (swap.state === SwapState.WAITING_MARS) {

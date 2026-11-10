@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -46,6 +46,28 @@ export function Row({ label, value, strong = false }) {
 }
 
 // A long value such as an address or transaction ID; tap to copy.
+// One line of a receipt: a label and a shortened transaction ID. Tap to copy
+// the whole ID.
+export function Receipt({ label, value }) {
+  const [copied, setCopied] = useState(false);
+  const short = value.length > 20 ? `${value.slice(0, 10)}…${value.slice(-8)}` : value;
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={`${label}. Copy ${value}`}
+      style={swapStyles.receipt}
+      onPress={() => {
+        Clipboard.setString(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+    >
+      <Text style={swapStyles.receiptLabel}>{label}</Text>
+      <Text style={swapStyles.receiptValue}>{copied ? 'Copied' : short}</Text>
+    </TouchableOpacity>
+  );
+}
+
 export function Copyable({ label, value }) {
   const [copied, setCopied] = React.useState(false);
   const copy = () => {
@@ -304,6 +326,9 @@ export const swapStyles = StyleSheet.create({
   bannerSegment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: civicColors.border, marginRight: 4 },
   bannerSegmentDone: { backgroundColor: '#8FCEAB' },
   bannerSegmentLive: { backgroundColor: civicColors.orange },
+  receipt: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 40 },
+  receiptLabel: { color: civicColors.muted, fontSize: 15 },
+  receiptValue: { color: civicColors.text, fontSize: 14, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
   stepDone: { backgroundColor: '#8FCEAB', borderColor: '#8FCEAB' },
   stepActive: { borderColor: civicColors.orange, borderWidth: 2 },
   stepNumber: { color: civicColors.muted, fontFamily: 'ChakraPetch-SemiBold', fontSize: 13 },

@@ -87,7 +87,7 @@ export function describeSwap(swap) {
         steps: ['Reserve offer', 'Confirming the Marscoin lock', 'Pay Bitcoin', 'Receive Marscoin'],
         payNext: true,
         title: 'Waiting for the Marscoin lock',
-        body: `${swap.error || 'Waiting for the maker to lock Marscoin.'} Nothing has been paid. Do not send Bitcoin yet.`,
+        body: `${swap.error || 'Waiting for the seller to lock Marscoin.'} Nothing has been paid. Do not send Bitcoin yet.`,
         canCancel: true,
       };
     case SwapState.READY_TO_PAY:
@@ -108,7 +108,7 @@ export function describeSwap(swap) {
         title: 'Bitcoin sent',
         body:
           swap.error ||
-          'Waiting for the maker to collect it, which releases your Marscoin. If that does not happen, your Bitcoin is returned automatically after the time lock.',
+          'Waiting for the seller to collect it, which releases your Marscoin. If that does not happen, your Bitcoin is returned automatically after the time lock.',
       };
     case SwapState.CLAIMING:
       return { ...base, step: 3, title: 'Claiming your Marscoin', body: swap.error || 'Your Marscoin is on its way to your wallet.' };
@@ -125,7 +125,7 @@ export function describeSwap(swap) {
         ...base,
         step: 2,
         title: 'Returning your Bitcoin',
-        body: 'The maker did not complete the swap. Your Bitcoin refund has been sent and is awaiting confirmation.',
+        body: 'The seller did not complete the swap. Your Bitcoin refund has been sent and is awaiting confirmation.',
       };
     case SwapState.REFUNDED:
       return {
