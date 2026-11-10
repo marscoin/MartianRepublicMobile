@@ -1,3 +1,5 @@
+import { parseMarsAmount, formatMarsAmount } from '../blue_modules/mars-amount';
+import { Alert } from 'react-native';
 import React, { Component} from 'react';
 import PropTypes from 'prop-types';
 import BigNumber from 'bignumber.js';
@@ -101,57 +103,31 @@ class AmountInput extends Component {
    * @param newUnit {string} one of {BitcoinUnit.*}
    */
   onAmountUnitChange(previousUnit, newUnit) {
-    const amount = this.props.amount || 0;
-    const log = `${amount}(${previousUnit}) ->`;
-    let sats = 0;
-    switch (previousUnit) {
-      case BitcoinUnit.MARS:
-        zubrins = new BigNumber(amount).multipliedBy(100000000).toString();
-        break;
-      case BitcoinUnit.ZUBRINS:
-        zubrins = amount;
-        break;
-      case BitcoinUnit.LOCAL_CURRENCY:
-        zubrins = new BigNumber(fiatToBTC(amount)).multipliedBy(100000000).toString();
-        break;
+    try {
+      const amount = this.props.amount || '0';
+      const cached = AmountInput.conversionCache[amount + previousUnit];
+      const atomic = previousUnit === BitcoinUnit.LOCAL_CURRENCY && cached !== undefined
+        ? Number(cached)
+        : Number(amount) === 0 ? 0 : parseMarsAmount(amount, previousUnit, this.state.marsRate);
+      const next = formatMarsAmount(atomic, newUnit, this.state.marsRate);
+      if (newUnit === BitcoinUnit.LOCAL_CURRENCY) AmountInput.conversionCache[next + newUnit] = atomic;
+      this.props.onChangeText(next);
+      this.props.onAmountUnitChange(newUnit, atomic);
+    } catch (error) {
+      Alert.alert('Amount', error.message);
     }
-    if (previousUnit === BitcoinUnit.LOCAL_CURRENCY && AmountInput.conversionCache[amount + previousUnit]) {
-      // cache hit! we reuse old value that supposedly doesnt have rounding errors
-      sats = AmountInput.conversionCache[amount + previousUnit];
-    }
-
-    const newInputValue = formatBalancePlain(sats, newUnit, false);
-    console.log(`${log} ${sats}(sats) -> ${newInputValue}(${newUnit})`);
-
-    if (newUnit === BitcoinUnit.LOCAL_CURRENCY && previousUnit === BitcoinUnit.SATS) {
-      // we cache conversion, so when we will need reverse conversion there wont be a rounding error
-      AmountInput.conversionCache[newInputValue + newUnit] = amount;
-    }
-    this.props.onChangeText(newInputValue);
-    this.props.onAmountUnitChange(newUnit);
   }
 
-  /**
-   * responsible for cycling currently selected denomination, BTC->SAT->LOCAL_CURRENCY->BTC
-   */
   changeAmountUnit = () => {
-    let previousUnit = this.props.unit;
-    let newUnit;
-    if (previousUnit === BitcoinUnit.BTC) {
-      newUnit = BitcoinUnit.SATS;
-    } else if (previousUnit === BitcoinUnit.SATS) {
-      newUnit = BitcoinUnit.LOCAL_CURRENCY;
-    } else if (previousUnit === BitcoinUnit.LOCAL_CURRENCY) {
-      newUnit = BitcoinUnit.BTC;
-    } else {
-      newUnit = BitcoinUnit.BTC;
-      previousUnit = BitcoinUnit.SATS;
-    }
-    this.onAmountUnitChange(previousUnit, newUnit);
+    const previous = this.props.unit || BitcoinUnit.MARS;
+    const next = previous === BitcoinUnit.MARS || previous === BitcoinUnit.BTC
+      ? BitcoinUnit.ZUBRINS
+      : previous === BitcoinUnit.ZUBRINS || previous === BitcoinUnit.SATS ? BitcoinUnit.LOCAL_CURRENCY : BitcoinUnit.MARS;
+    this.onAmountUnitChange(previous, next);
   };
 
   maxLength = () => {
-        return 11;
+        return 18;
   };
 
   textInput = React.createRef();
@@ -200,7 +176,8 @@ class AmountInput extends Component {
   //   this.props.onChangeText(text);
   // };
   handleChangeText = text => {
-    // Trim whitespace and replace commas with dots if necessary
+    // A typed amount replaces any exact value cached during unit conversion.
+    delete AmountInput.conversionCache[text + this.props.unit];
     text = text.trim().replace(/,/g, '.');
   
     // This regular expression allows digits and a single dot

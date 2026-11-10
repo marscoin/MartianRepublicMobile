@@ -7,7 +7,7 @@ def node_require(script)
     )", __dir__]).strip
 end
 
-min_ios_version_supported = '13.4'
+min_ios_version_supported = '15.0'
 node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
 
@@ -82,7 +82,7 @@ post_install do |installer|
   plugin 'cocoapods-bugsnag'
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = min_ios_version_supported
       if ['React-Core-AccessibilityResources'].include? target.name 
         config.build_settings['CODE_SIGN_STYLE'] = "Automatic"
         config.build_settings['CODE_SIGN_IDENTITY'] = "Apple Development"

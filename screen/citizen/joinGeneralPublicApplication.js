@@ -1,3 +1,5 @@
+import { readCitizenshipDraft, saveCitizenshipDraft, ipfsURL } from '../../blue_modules/citizenship-draft';
+import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import { Platform, SafeAreaView, ScrollView, StyleSheet, View, TouchableWithoutFeedback, ActivityIndicator, Keyboard, Text,Image, KeyboardAvoidingView, TouchableOpacity, TextInput, I18nManager, Modal, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -32,6 +34,8 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [isFormValid, setIsFormValid] = useState(false);
   const {wallets} = useContext(BlueStorageContext);
   const [loading, setLoading] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const civicAddress = wallets.find(wallet => wallet.civic)?._getExternalAddressByIndex(0);
   const isIOS = (Platform.OS === 'ios');
 
   const scrollViewRef = useRef();
@@ -44,7 +48,7 @@ const JoinGeneralPublicApplicationScreen = () => {
     try {
       // Get the original file size
       const originalFileInfo = await RNFS.stat(uri);
-      console.log('Original file size (in bytes):', originalFileInfo.size);
+
   
       // Compress the image
       const compressedImage = await CompressorImage.compress(uri, {
@@ -55,24 +59,24 @@ const JoinGeneralPublicApplicationScreen = () => {
   
       // Get the compressed file size
       const compressedFileInfo = await RNFS.stat(compressedImage);
-      console.log('Compressed file size (in bytes):', compressedFileInfo.size);
+
   
       setCapturedImage(compressedImage); // Set the compressed image
       setIsPhotoChanged(true); // Indicate that a new photo has been taken
       setModalVisible(false)
     } catch (error) {
-      console.error("Error compressing image:", error);
+
     }
   };
 
   async function fetchUser() {
-    const token = await AsyncStorage.getItem('@auth_token');
-    response = await axios.post("https://martianrepublic.org/api/scitizen", {
+    const token = await getCivicToken();
+    const response = await axios.post("https://martianrepublic.org/api/scitizen", {
         // firstname:'',
       }, {
       headers: {'Authorization': `Bearer ${token}`}
     })
-    console.log('USER DATA', response.data);
+
     setUserData(response.data);
     if (response.data.citizen) {
       const { firstname, lastname, displayname, shortbio, avatar_link, liveness_link} = response.data.citizen;
@@ -81,8 +85,8 @@ const JoinGeneralPublicApplicationScreen = () => {
       setDisplayName(displayname || '');
       setBio(shortbio || '');
       if (avatar_link) {
-        setCapturedImage(avatar_link);
-        setPhotoIPFS(avatar_link); // Assuming avatar_link is the IPFS hash/link
+        setCapturedImage(ipfsURL(avatar_link));
+        setPhotoIPFS(ipfsURL(avatar_link)); // Assuming avatar_link is the IPFS hash/link
         setIsPhotoChanged(false); // Photo is not new, it's from previous data
       }
       if (liveness_link) {
@@ -92,99 +96,77 @@ const JoinGeneralPublicApplicationScreen = () => {
   }
 
   useEffect(() => {
-    fetchUser()
-  }, []);  
-  
+    let cancelled = false;
+    (async () => {
+      try {
+        await fetchUser();
+      } catch {
+        // A saved local draft remains useful while the service is unavailable.
+      }
+      try {
+        const draft = await readCitizenshipDraft(civicAddress);
+        if (cancelled) return;
+        if (draft.firstName !== undefined) setFirstName(draft.firstName);
+        if (draft.lastName !== undefined) setLastName(draft.lastName);
+        if (draft.displayName !== undefined) setDisplayName(draft.displayName);
+        if (draft.bio !== undefined) setBio(draft.bio);
+        if (draft.photo) { setPhotoIPFS(draft.photo); setCapturedImage(draft.photo); }
+        if (draft.video) setVideoIPFS(draft.video);
+      } finally {
+        if (!cancelled) setDraftReady(true);
+      }
+    })().catch(() => Alert.alert('Application draft', 'Your saved progress could not be loaded.'));
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [civicAddress]);
+
+  useEffect(() => {
+    if (!draftReady || !civicAddress) return;
+    const timer = setTimeout(() => {
+      saveCitizenshipDraft(civicAddress, { firstName, lastName, displayName, bio }).catch(() => {});
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [draftReady, civicAddress, firstName, lastName, displayName, bio]);
+
   async function postName() {
-    const token = await AsyncStorage.getItem('@auth_token');
-    return axios.post("https://martianrepublic.org/api/scitizen", {
-      firstname: firstName,
-      lastname: lastName,
-      displayname: displayName,
-      shortbio: bio,
-    }, {
-      headers: {'Authorization': `Bearer ${token}`}
-    })
-    .then(response => {
-      console.log('Success, data posted to api:', response.status);
-    })
-    .catch(error => {
-      console.error('Error:', error.response);
-    });
+    const token = await getCivicToken();
+    await axios.post('https://martianrepublic.org/api/scitizen', {
+      firstname: firstName.trim(), lastname: lastName.trim(), displayname: displayName.trim(), shortbio: bio.trim(),
+    }, { headers: { Authorization: `Bearer ${token}` }, timeout: 15000 });
   }
-  
+
   async function postPhoto() {
-    const token = await AsyncStorage.getItem('@auth_token');
-    const civicAddress = await AsyncStorage.getItem('civicAddress');
+    const token = await getCivicToken();
     const base64 = await RNFS.readFile(capturedImage, 'base64');
-    const imageData = `data:image/jpeg;base64,${base64}`;
-    //console.log('image data', imageData)
-    try {
-        const response = await axios.post("https://martianrepublic.org/api/pinpic", {
-            picture: imageData,
-            type: 'profile_pic',
-            address: civicAddress,
-        }, {
-            headers: {'Authorization': `Bearer ${token}`}
-        });
-        console.log('Photo pinned!!!! hash:', response.data.Hash);
-        setPhotoIPFS(response.data.Hash);
-    } catch (error) {
-        console.error('Error posting photo:', error.response || error);
-    }
+    const response = await axios.post('https://martianrepublic.org/api/pinpic', {
+      picture: `data:image/jpeg;base64,${base64}`, type: 'profile_pic', address: civicAddress,
+    }, { headers: { Authorization: `Bearer ${token}` }, timeout: 90000 });
+    const photo = ipfsURL(response.data.Hash);
+    await saveCitizenshipDraft(civicAddress, { photo });
+    setPhotoIPFS(photo);
+    setIsPhotoChanged(false);
+    return photo;
   }
 
   const handleSubmit = async () => {
-    if (!isFormValid) {
-      Alert.alert('Validation Error', 'Make sure all required fields are filled in and Photo ID is taken!');
+    if (loading) return;
+    if (!isFormValid || !firstName.trim() || !lastName.trim() || !displayName.trim() || !bio.trim()) {
+      Alert.alert('Application incomplete', 'Complete each field and take your photo before continuing.');
       return;
     }
     setLoading(true);
     try {
+      await saveCitizenshipDraft(civicAddress, { firstName, lastName, displayName, bio });
+      const photo = isPhotoChanged ? await postPhoto() : ipfsURL(photoIPFS);
       await postName();
-      let photoHash = photoIPFS; // Existing photo IPFS hash
-      let videoHash = videoIPFS; // Existing video IPFS hash
-
-      if (isPhotoChanged && capturedImage) {
-        photoHash = await postPhoto(); // Upload and get new IPFS hash for the photo
-      }
-      // Assuming there's a scenario where the video might be updated or checked
-      // This might include a function like postVideo() if you have video uploading logic
-
-      setButtonPressed(true);
-      if (photoHash) { // Also, consider checking videoHash if it's necessary for the navigation
-        navigation.navigate('JoinGeneralPublicApplication2Screen', {
-          firstName,
-          lastName,
-          displayName,
-          bio,
-          photo: photoHash,
-          video: videoHash  // Include the video link here
-        });
-      }
-    } catch (error) {
-      console.error("Error in submission:", error);
-      Alert.alert('Error', 'An error occurred during submission.');
+      await saveCitizenshipDraft(civicAddress, { photo, video: videoIPFS });
+      navigation.navigate('JoinGeneralPublicApplication2Screen', { firstName, lastName, displayName, bio, photo, video: videoIPFS });
+    } catch {
+      Alert.alert('Application not sent', 'Your progress stays on this device. Check your connection and try again. If the photo is unavailable, take it again.');
     } finally {
       setLoading(false);
     }
-};
-
-useEffect(() => {
-  // React only on changes to buttonPressed or photoIPFS (add videoIPFS if it affects the outcome)
-  if (buttonPressed && photoIPFS) {
-    navigation.navigate('JoinGeneralPublicApplication2Screen', {
-      firstName,
-      lastName,
-      displayName,
-      bio,
-      photo: photoIPFS,
-      video: videoIPFS  // Ensure video IPFS is included in navigation here as well
-    });
-    setButtonPressed(false); // Reset buttonPressed to prevent repeated navigation
-  }
-}, [buttonPressed, photoIPFS, videoIPFS]); // Include videoIPFS in the dependency array if it's relevant
-
+  };
 
   const CameraModal = ({ isVisible, onClose, onImageCaptured }) => {
     const cameraRef = useRef(null);

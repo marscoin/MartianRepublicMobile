@@ -1,0 +1,60 @@
+--- a/node_modules/react-native-tcp-socket/android/src/main/java/com/asterinet/react/tcpsocket/TcpSocketClient.java
++++ b/node_modules/react-native-tcp-socket/android/src/main/java/com/asterinet/react/tcpsocket/TcpSocketClient.java
+@@ -15,6 +15,7 @@
+ import java.util.concurrent.ExecutorService;
+ import java.util.concurrent.Executors;
+ 
++import javax.net.ssl.SSLParameters;
+ import javax.net.ssl.SSLSocket;
+ import javax.net.ssl.SSLSocketFactory;
+ 
+@@ -24,6 +25,7 @@
+     private final TcpEventListener receiverListener;
+     private TcpReceiverTask receiverTask;
+     private Socket socket;
++    private String remoteHost;
+     private boolean closed = true;
+ 
+     TcpSocketClient(TcpEventListener receiverListener, Integer id, Socket socket) {
+@@ -40,6 +42,7 @@
+ 
+     public void connect(Context context, String address, final Integer port, ReadableMap options, Network network, ReadableMap tlsOptions) throws IOException, GeneralSecurityException {
+         if (socket != null) throw new IOException("Already connected");
++        remoteHost = address;
+         if (tlsOptions != null) {
+             SSLSocketFactory ssf = getSSLSocketFactory(context, tlsOptions);
+             socket = ssf.createSocket();
+@@ -65,17 +68,31 @@
+         // bind
+         socket.bind(new InetSocketAddress(localInetAddress, localPort));
+         socket.connect(new InetSocketAddress(remoteInetAddress, port));
+-        if (socket instanceof SSLSocket) ((SSLSocket) socket).startHandshake();
++        if (socket instanceof SSLSocket) {
++            configureHostnameVerification((SSLSocket) socket, tlsOptions);
++            ((SSLSocket) socket).startHandshake();
++        }
+         startListening();
+     }
+ 
+     public void startTLS(Context context, ReadableMap tlsOptions) throws IOException, GeneralSecurityException {
+         if (socket instanceof SSLSocket) return;
+         SSLSocketFactory ssf = getSSLSocketFactory(context, tlsOptions);
+-        SSLSocket sslSocket = (SSLSocket) ssf.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(), true);
++        SSLSocket sslSocket = (SSLSocket) ssf.createSocket(socket, remoteHost, socket.getPort(), true);
+         sslSocket.setUseClientMode(true);
++        configureHostnameVerification(sslSocket, tlsOptions);
+         sslSocket.startHandshake();
+         socket = sslSocket;
++    }
++
++    // Certificate-chain validation alone does not authenticate the requested
++    // server. Match its DNS/IP identity before application data is exchanged.
++    private void configureHostnameVerification(SSLSocket sslSocket, ReadableMap tlsOptions) {
++        if (tlsOptions == null || !tlsOptions.hasKey("rejectUnauthorized") || tlsOptions.getBoolean("rejectUnauthorized")) {
++            SSLParameters parameters = sslSocket.getSSLParameters();
++            parameters.setEndpointIdentificationAlgorithm("HTTPS");
++            sslSocket.setSSLParameters(parameters);
++        }
+     }
+ 
+     private SSLSocketFactory getSSLSocketFactory(Context context, ReadableMap tlsOptions) throws GeneralSecurityException, IOException {

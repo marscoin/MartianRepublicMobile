@@ -101,7 +101,6 @@ const QRCodeComponent: React.FC<QRCodeComponentProps> = ({
     return actions;
   };
 
-  console.error('[QRCode] rendering with value:', value, 'size:', size);
   const renderQRCode = (
     <QRCode
       value={value || 'placeholder'}

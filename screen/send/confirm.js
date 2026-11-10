@@ -20,8 +20,8 @@ import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/h
 import SafeArea from '../../components/SafeArea';
 import { satoshiToBTC, satoshiToLocalCurrency } from '../../blue_modules/currency';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {EXCHANGE_RATES_STORAGE_KEY} from '../blue_modules/currency';
-const BlueElectrum = require('../../blue_modules/BlueElectrum');
+
+const MARSConnection = require('../../blue_modules/MARSConnection');
 const Bignumber = require('bignumber.js');
 const bitcoin = require('bitcoinjs-lib');
 
@@ -39,7 +39,6 @@ const Confirm = () => {
   const { navigate, setOptions } = useNavigation();
   const { colors } = useTheme();
 
-  console.log('PARAMS', params)
 
   const stylesM = StyleSheet.create({
     container: {
@@ -96,8 +95,8 @@ const Confirm = () => {
   });
 
   useEffect(() => {
-    console.log('send/confirm - useEffect');
-    console.log('address = ', recipients);
+
+
     Biometric.isBiometricUseCapableAndEnabled().then(setIsBiometricUseCapableAndEnabled);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -150,7 +149,10 @@ const Confirm = () => {
     try {
       const txids2watch = [];
       if (!isPayjoinEnabled) {
-        await broadcast(tx);
+        if (!(await broadcast(tx))) {
+          setIsLoading(false);
+          return;
+        }
       } else {
         const payJoinWallet = new PayjoinTransaction(psbt, txHex => broadcast(txHex), wallet);
         const paymentScript = getPaymentScript();
@@ -194,8 +196,8 @@ const Confirm = () => {
   };
 
   const broadcast = async transaction => {
-    await BlueElectrum.ping();
-    await BlueElectrum.waitTillConnected();
+    await MARSConnection.ping();
+    await MARSConnection.waitTillConnected();
 
     if (isBiometricUseCapableAndEnabled) {
       if (!(await Biometric.unlockWithBiometrics())) {
@@ -255,6 +257,7 @@ const Confirm = () => {
           </TouchableOpacity>
       
       <View style={styles.cardTop}>
+        <Text style={styles.reviewLabel}>REVIEW PAYMENT</Text>
         <FlatList
           scrollEnabled={recipients.length > 1}
           extraData={recipients}
@@ -276,10 +279,17 @@ const Confirm = () => {
       </View>
       <View style={styles.cardBottom}>
         <BlueCard>
-          <Text style={styles.cardText} testID="TransactionFee">
-            {loc.send.create_fee}: {(feeSatoshi).toLocaleString(undefined, { maximumFractionDigits: 2 })} zubrin (${(feeSatoshi*params.marsRate/1000000000).toFixed(6)})
-          </Text>
-          {isLoading ? <ActivityIndicator /> : <Button disabled={isElectrumDisabled} onPress={send} title={loc.send.confirm_sendNow} />}
+          <View style={styles.feePanel}>
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Network fee</Text>
+              <Text style={styles.feeValue} testID="TransactionFee">{new Bignumber(fee).toFixed(8)} MARS</Text>
+            </View>
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Total</Text>
+              <Text style={styles.feeTotal}>{new Bignumber(recipients.reduce((sum, recipient) => sum + recipient.value, 0)).plus(feeSatoshi).dividedBy(100000000).toFixed(8)} MARS</Text>
+            </View>
+          </View>
+          {isLoading ? <ActivityIndicator /> : <Button disabled={isElectrumDisabled} onPress={send} title="Send Marscoin" />}
         </BlueCard>
       </View>
     </SafeArea>
@@ -289,6 +299,12 @@ const Confirm = () => {
 export default Confirm;
 
 const styles = StyleSheet.create({
+  reviewLabel: { fontFamily: 'ChakraPetch-Bold', color: '#FF924D', fontSize: 12, letterSpacing: 2, marginBottom: 24 },
+  feePanel: { minWidth: 280, padding: 18, borderRadius: 16, borderWidth: 1, borderColor: '#343034', backgroundColor: '#141416', marginBottom: 18 },
+  feeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 5, gap: 16 },
+  feeLabel: { fontFamily: 'ChakraPetch-Regular', color: '#B7B1AC', fontSize: 14 },
+  feeValue: { fontFamily: 'ChakraPetch-Regular', color: '#F6F3F0', fontSize: 14 },
+  feeTotal: { fontFamily: 'ChakraPetch-Bold', color: '#F6F3F0', fontSize: 16 },
   transactionDetailsTitle: {
     fontWeight: '500',
     fontSize: 17,

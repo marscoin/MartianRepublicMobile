@@ -1,3 +1,5 @@
+import { parseMarsAmount } from '../../blue_modules/mars-amount';
+import { parseMarsPaymentURI } from '../../blue_modules/mars-payment-uri';
 import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, useLayoutEffect } from 'react';
 import {
   ActivityIndicator,
@@ -157,7 +159,8 @@ const SendDetails = () => {
     const currentAddress = addresses[scrollIndex.current];
     if (routeParams.uri) {
       try {
-        const { address, amount, memo, payjoinUrl: pjUrl } = DeeplinkSchemaMatch.decodeBitcoinUri(routeParams.uri);
+        const { address, amount, amountSats, memo } = parseMarsPaymentURI(routeParams.uri);
+        const pjUrl = '';
 
         setUnits(u => {
           u[scrollIndex.current] = BitcoinUnit.MARS; // also resetting current unit to BTC
@@ -169,12 +172,12 @@ const SendDetails = () => {
             currentAddress.address = address;
             if (Number(amount) > 0) {
               currentAddress.amount = amount;
-              currentAddress.amountSats = btcToSatoshi(amount);
+              currentAddress.amountSats = amountSats;
             }
             addrs[scrollIndex.current] = currentAddress;
             return [...addrs];
           } else {
-            return [...addrs, { address, amount, amountSats: btcToSatoshi(amount), key: String(Math.random()) }];
+            return [...addrs, { address, amount, amountSats: amountSats, key: String(Math.random()) }];
           }
         });
 
@@ -184,7 +187,7 @@ const SendDetails = () => {
         setAmountUnit(BitcoinUnit.MARS);
         setPayjoinUrl(pjUrl);
       } catch (error) {
-        console.log(error);
+
         presentAlert({ title: loc.errors.error, message: loc.send.details_error_decode });
       }
     } else if (routeParams.address) {
@@ -286,7 +289,7 @@ const SendDetails = () => {
   useEffect(() => {
     if (!wallet) return; // wait for it
     const fees = networkTransactionFees;
-    console.log("FEES: ", fees)
+
     const change = getChangeAddressFast();
     const requestedSatPerByte = Number(feeRate);
     const lutxo = utxo || wallet.getUtxo();
@@ -316,7 +319,7 @@ const SendDetails = () => {
           targets = [{ address: transaction.address }];
           break;
         }
-        const value = parseInt(transaction.amountSats, 10);
+        const value = Number(transaction.amountSats);
         if (value > 0) {
           targets.push({ address: transaction.address, value });
         } else if (transaction.amount) {
@@ -391,37 +394,12 @@ const SendDetails = () => {
   };
 
   const getChangeAddressAsync = async () => {
-    console.log("== [SendDetails] getChangeAddressAsync ==")
-    if (changeAddress) {
-      console.log("Found changeAddress in cache: " + changeAddress)
-      return changeAddress
-    } // cache
-
-    let change;
-    if (WatchOnlyWallet.type === wallet.type && !wallet.isHd()) {
-      // plain watchonly - just get the address
-      change = wallet.getAddress();
-    } else {
-      // otherwise, lets call widely-used getChangeAddressAsync()
-      try {
-        change = await Promise.race([sleep(2000), wallet.getChangeAddressAsync()]);
-      } catch (_) {}
-
-      if (!change) {
-        console.log("Could not find change")
-        // either sleep expired or getChangeAddressAsync threw an exception
-        if (wallet instanceof AbstractHDElectrumWallet) {
-          change = wallet._getInternalAddressByIndex(wallet.getNextFreeChangeAddressIndex());
-        } else {
-          // legacy wallets
-          change = wallet.getAddress();
-        }
-      }
-    }
-
-    if (change) setChangeAddress(change); // cache
-  
-    console.log("Setting change address to: " + change)
+    if (changeAddress) return changeAddress;
+    const change = WatchOnlyWallet.type === wallet.type && !wallet.isHd()
+      ? wallet.getAddress()
+      : await wallet.getChangeAddressAsync();
+    await saveToDisk();
+    setChangeAddress(change);
     return change;
   };
 
@@ -431,166 +409,80 @@ const SendDetails = () => {
    * @param data {String} Can be address or `bitcoin:xxxxxxx` uri scheme, or invalid garbage
    */
   const processAddressData = data => {
-    console.log("[PROCESS ADDRESS DATA] Data: ", data)
-    const currentIndex = scrollIndex.current;
     setIsLoading(true);
-    if (!data.replace) {
-      // user probably scanned PSBT and got an object instead of string..?
-      setIsLoading(false);
-      return presentAlert({ title: loc.errors.error, message: loc.send.details_address_field_is_not_valid });
-    }
-
-    const dataWithoutSchema = data
-      .replace('bitcoin:', '')
-      .replace('BITCOIN:', '')
-      .replace("marscoin:", "")
-
-    // Check if address without amount is valid  
-    if (wallet.isAddressValid(dataWithoutSchema)) {
-      console.log("address valud")
-      setAddresses(addrs => {
-        addrs[scrollIndex.current].address = dataWithoutSchema;
-        return [...addrs];
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    //Process address with ?amount=<>
-    let address = '';
-    let options;
     try {
-      if (!data.toLowerCase().startsWith('bitcoin:')) data = `bitcoin:${data}`;
-      const decoded = DeeplinkSchemaMatch.bip21decode(data);
-      address = decoded.address;
-      options = decoded.options;
+      const payment = parseMarsPaymentURI(typeof data === 'object' ? data?.data : data);
+      const index = scrollIndex.current;
+      setAddresses(current => current.map((recipient, i) => i === index ? {
+        ...recipient,
+        address: payment.address,
+        ...(payment.amountSats === undefined ? {} : { amount: payment.amount, amountSats: payment.amountSats }),
+      } : recipient));
+      if (payment.amountSats !== undefined) {
+        setUnits(current => current.map((unit, i) => i === index ? BitcoinUnit.MARS : unit));
+        setAmountUnit(BitcoinUnit.MARS);
+      }
+      if (payment.memo) setTransactionMemo(payment.memo);
+      setPayjoinUrl('');
     } catch (error) {
-      data = data.replace(/(amount)=([^&]+)/g, '').replace(/(amount)=([^&]+)&/g, '');
-      const decoded = DeeplinkSchemaMatch.bip21decode(data);
-      decoded.options.amount = 0;
-      //address = decoded.address;
-      address = decoded.address
-        .replace("bitcoin:", "")
-        .replace("BITCOIN:", "")
-        .replace("marscoin:", "")
-      options = decoded.options;
+      presentAlert({ title: loc.errors.error, message: error.message });
+    } finally {
+      setIsLoading(false);
     }
-
-    console.log('options', options);
-
-    const network =
-      typeof wallet.getNetwork === "undefined"
-        ? BitcoinUnit.BTC
-        : wallet.getNetwork()
-
-   
-      setAddresses(addrs => {
-        addrs[scrollIndex.current].address = address;
-        addrs[scrollIndex.current].amount = options.amount;
-        addrs[scrollIndex.current].amountSats = new BigNumber(options.amount).multipliedBy(100000000).toNumber();
-        return [...addrs];
-      });
-      setUnits(u => {
-        u[scrollIndex.current] = BitcoinUnit.MARS; // also resetting current unit to BTC
-        return [...u];
-      });
-      setTransactionMemo(options.label || options.message);
-      setAmountUnit(BitcoinUnit.MARS);
-      setPayjoinUrl(options.pj || '');
-      // RN Bug: contentOffset gets reset to 0 when state changes. Remove code once this bug is resolved.
-      setTimeout(() => scrollView.current.scrollToIndex({ index: currentIndex, animated: false }), 50);
-    
-
-    setIsLoading(false);
   };
 
   const createTransaction = async () => {
+    if (isLoading) return;
     Keyboard.dismiss();
     setIsLoading(true);
-    const requestedSatPerByte = feeRate;
-    console.log("[TX] feeRate: " + feeRate)
-    console.log("[TX] balance: " + balance)
-
-    for (const [index, transaction] of addresses.entries()) {
-      let error;
-      console.log('!!!!transaction.amount', transaction.amount)
-      if (!transaction.amount || transaction.amount < 0 || parseFloat(transaction.amount) === 0) {
-        error = loc.send.details_amount_field_is_not_valid;
-        console.log('validation error 1', error);
-        presentAlert({ title: 'ERROR', message: 'The amount is not valid.' });
-      } else if (parseFloat(transaction.amountSats) <= 500) {
-        error = loc.send.details_amount_field_is_less_than_minimum_amount_sat;
-        console.log('validation error 2', error);
-        presentAlert({ title: 'ERROR', message: 'The specified amount is too small. Please enter greater amount.' });
-      } else if (!requestedSatPerByte || parseFloat(requestedSatPerByte) < 1) {
-        error = loc.send.details_fee_field_is_not_valid;
-        console.log('validation error 3');
-      } else if (!transaction.address) {
-        error = loc.send.details_address_field_is_not_valid;
-        console.log('validation error 4', error);
-        //presentAlert({ title: 'ERROR', message: 'Address is invalid!' });
-      } else if (balance - transaction.amountSats < 0) {
-        // first sanity check is that sending amount is not bigger than available balance
-        error = frozenBalance > 0 ? loc.send.details_total_exceeds_balance_frozen : loc.send.details_total_exceeds_balance;
-        console.log('validation error 5', error);
-        presentAlert({ title: 'ERROR', message: 'The sending amount exceeds the available balance!' });
-      } else if (transaction.address) {
-        const address = transaction.address.trim().toLowerCase();
-        if (address.startsWith('lnb') || address.startsWith('lightning:lnb')) {
-          error = loc.send.provided_address_is_invoice;
-          console.log('validation error 6');
-        }
-      }
-
-      if (!error) {
+    try {
+      if (!Number.isFinite(Number(feeRate)) || Number(feeRate) < 1) throw new Error('Enter a valid fee rate.');
+      if (!addresses.length) throw new Error('Enter a Marscoin recipient.');
+      for (const [index, transaction] of addresses.entries()) {
+        let error;
         if (!wallet.isAddressValid(transaction.address)) {
-          console.log('validation error 7');
-          presentAlert({ title: 'ERROR', message: 'Address is invalid!' });
-          error = loc.send.details_address_field_is_not_valid;
+          error = 'Enter a valid Marscoin address.';
+        } else if (transaction.amount !== BitcoinUnit.MAX) {
+          const value = Number(transaction.amountSats);
+          if (!Number.isSafeInteger(value) || value <= 500) error = 'Enter an amount greater than 500 zubrins, with no more than eight decimal places.';
+          else if (value > balance) error = 'The sending amount exceeds the available balance.';
+        }
+        if (error) {
+          scrollView.current?.scrollToIndex({ index });
+          throw new Error(error);
         }
       }
-
-      if (error) {
-        scrollView.current.scrollToIndex({ index });
-        setIsLoading(false);
-        //presentAlert({ title: loc.errors.error, message: error.message });
-        triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-        return;
-      }
+      await createPsbtTransaction();
+    } catch (error) {
+      presentAlert({ title: loc.errors.error, message: error.message || 'Unable to prepare this transaction. Please try again.' });
+      triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
+    } finally {
+      setIsLoading(false);
     }
-
-    // try {
-    //   await createPsbtTransaction();
-    // } catch (Err) {
-    //   setIsLoading(false);
-    //   presentAlert({ title: loc.errors.error, message: Err.message });
-    //   triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-    //}
-    createPsbtTransaction();
   };
 
   const createPsbtTransaction = async () => {
-    console.log("[createPsbtTx] Creating")
+
     const change = await getChangeAddressAsync();
     const requestedSatPerByte = Number(feeRate);
     const lutxo = utxo || wallet.getUtxo();
-    console.log({ requestedSatPerByte, lutxo: lutxo.length });
+
 
     const targets = [];
     for (const transaction of addresses) {
-      console.log("=========== THE GREAT DEBUG ===========")
-      console.log("FEE RATE:", feeRate)
-      console.log("REQUESTED SAT P/Byte: ", requestedSatPerByte)
-      console.log("BITCOIN UNIT: ", BitcoinUnit.MAX)
-      console.log("AMOUNT SATS:", transaction?.amountSats)
-      console.log("AMOUNT (FIAT)", transaction?.amount)
+
+
+
+
+
+
 
       if (transaction.amount === BitcoinUnit.MAX) {
         // output with MAX
         targets.push({ address: transaction.address });
         continue;
       }
-      const value = parseInt(transaction.amountSats, 10);
+      const value = Number(transaction.amountSats);
       if (value > 0) {
         targets.push({ address: transaction.address, value });
       } else if (transaction.amount) {
@@ -614,7 +506,7 @@ const SendDetails = () => {
     // console.log("(OLD SEND) THE TX BEING BUILT:", tx)
     // console.log("(OLD SEND) THE TX BEING BUILT:", outputs)
     // console.log("(OLD SEND) THE TX BEING BUILT:",  psbt)
-    console.log("(OLD SEND) THE TX BEING BUILT:",  fee)
+
 
     if (tx && routeParams.launchedBy && psbt) {
       console.warn('navigating back to ', routeParams.launchedBy);
@@ -1246,9 +1138,9 @@ const SendDetails = () => {
                 </View>
                 <View style={styles.feeModalRow}>
                   {marsRate &&
-                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>{fee*100} zubrin / ${(fee*marsRate/ 1000000).toFixed(8)}</Text>}
+                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>{fee} zubrins / ${(fee*marsRate/ 100000000).toFixed(8)}</Text>}
                   <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>
-                    {rate} {loc.units.sat_vbyte}
+                    {rate} zubrins/vB
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -1406,106 +1298,39 @@ const SendDetails = () => {
     );
   };
 
+  const amountInZubrins = (value, unit) => {
+    try { return parseMarsAmount(value, unit, marsRate); } catch { return undefined; }
+  };
+
   const renderBitcoinTransactionInfoFields = params => {
     const { item, index } = params;
     return (
       <View style={{ width }} testID={'Transaction' + index}>
         <AmountInput
           isLoading={isLoading}
-          amount={item.amount ? item.amount.toString() : null}
-          onAmountUnitChange={unit => {
-            console.log(
-              "UNIT AND AMOUNT: ",
-              unit,
-              " - ",
-              (item.amount),
-              "AMOUNT ITEM:",
-              item.amount
-            )
-            setAddresses(addrs => {
-              const addr = addrs[index];
-              switch (unit) {
-                case BitcoinUnit.SATS:
-                  addr.amountSats = parseInt(addr.amount, 10);
-                  break;
-                case BitcoinUnit.BTC:
-                  addr.amountSats = btcToSatoshi(addr.amount);
-                  break;
-                case BitcoinUnit.MARS:
-                  addr.amountSats = currency.btcToSatoshi(item.amount)
-                  break
-                case BitcoinUnit.LOCAL_CURRENCY:
-                  // also accounting for cached fiat->sat conversion to avoid rounding error
-                  //addr.amountSats = AmountInput.getCachedSatoshis(addr.amount) || btcToSatoshi(fiatToBTC(addr.amount));
-                  addr.amountSats = currency.btcToSatoshi(
-                    currency.fiatToMARS(addr.amount)
-                  )
-                  break;
-              }
-
-              addrs[index] = addr;
-              return [...addrs];
-            });
-            setUnits(u => {
-              u[index] = unit;
-              return [...u];
-            });
+          amount={item.amount ? String(item.amount) : ''}
+          onAmountUnitChange={(unit, atomic) => {
+            setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, amountSats: Number.isSafeInteger(atomic) ? atomic : amountInZubrins(recipient.amount, unit) } : recipient));
+            setUnits(current => { const next = [...current]; next[index] = unit; return next; });
           }}
           onChangeText={text => {
-            setAddresses(addrs => {
-              item.amount = text;
-              switch (units[index] || amountUnit) {
-                case BitcoinUnit.BTC:
-                  item.amountSats = btcToSatoshi(item.amount);
-                  break;
-                case BitcoinUnit.MARS:
-                  item.amountSats = currency.btcToSatoshi(item.amount)
-                break
-                case BitcoinUnit.LOCAL_CURRENCY:
-                  //item.amountSats = btcToSatoshi(fiatToBTC(item.amount));
-                  item.amountSats = currency.btcToSatoshi(
-                    currency.fiatToMARS(item.amount)
-                  )
-                  break;
-                case BitcoinUnit.SATS:
-                default:
-                  item.amountSats = parseInt(text, 10);
-                  break;
-              }
-              addrs[index] = item;
-              return [...addrs];
-            });
+            setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, amount: text || '', amountSats: amountInZubrins(text, units[index] || amountUnit || BitcoinUnit.MARS) } : recipient));
           }}
-          chain={ wallet.getNetwork()}
-          unit={units[index] || amountUnit}
+          chain={wallet.getNetwork()}
+          unit={units[index] || amountUnit || BitcoinUnit.MARS}
           editable={isEditable}
           disabled={!isEditable}
-          // marsRate={marsRate}
           inputAccessoryViewID={InputAccessoryAllFunds.InputAccessoryViewID}
         />
-
-        {/* {frozenBalance > 0 && (
-          <TouchableOpacity accessibilityRole="button" style={styles.frozenContainer} onPress={handleCoinControl}>
-            <BlueText>
-              {loc.formatString(loc.send.details_frozen, { amount: formatBalanceWithoutSuffix(frozenBalance, BitcoinUnit.BTC, true) })}
-            </BlueText>
-          </TouchableOpacity>
-        )} */}
-
         <AddressInput
           onChangeText={text => {
-            text = text.trim();
-            const { address, amount, memo, payjoinUrl: pjUrl } = 
-              DeeplinkSchemaMatch.decodeBitcoinUri(text);
-            setAddresses(addrs => {
-              item.address = address || text;
-              item.amount = amount || item.amount;
-              addrs[index] = item;
-              return [...addrs];
-            });
-            setTransactionMemo(memo || transactionMemo);
-            setIsLoading(false);
-            setPayjoinUrl(pjUrl);
+            const value = text.trim();
+            if (value.length > 35 && (value.includes(':') || value.includes('?'))) {
+              processAddressData(value);
+              return;
+            }
+            setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, address: value } : recipient));
+            setPayjoinUrl('');
           }}
           onBarScanned={processAddressData}
           address={item.address}
@@ -1580,7 +1405,7 @@ const SendDetails = () => {
                   <Text style={[stylesHook.feeValue, {fontSize: 12}]}>
                     {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' ' + loc.units.sat_vbyte} */}
                     {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' zubrin'} */}
-                    {(feePrecalc.current*100).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' zubrin' }
+                    {(feePrecalc.current || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' zubrin' }
                   </Text>
                 </View>
               )}

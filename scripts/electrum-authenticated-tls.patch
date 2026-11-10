@@ -1,0 +1,11 @@
+--- a/node_modules/electrum-client/lib/client.js
++++ b/node_modules/electrum-client/lib/client.js
+@@ -42,7 +42,7 @@
+           throw new Error('tls package could not be loaded');
+         }
+         this.connUnsecure = new this.net.Socket();
+-        this.conn = new this.tls.TLSSocket(this.connUnsecure, { rejectUnauthorized: false });
++        this.conn = new this.tls.TLSSocket(this.connUnsecure, { ...options, rejectUnauthorized: true, servername: this.host });
+         break;
+       default:
+         throw new Error('unknown protocol');

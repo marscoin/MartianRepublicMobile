@@ -311,6 +311,7 @@ export const BlueCopyToClipboardButton = ({ stringToCopy, displayText = false })
 export class BlueCopyTextToClipboard extends Component {
   static propTypes = {
     text: PropTypes.string,
+    value: PropTypes.string,
     truncated: PropTypes.bool,
   };
 
@@ -334,7 +335,7 @@ export class BlueCopyTextToClipboard extends Component {
 
   copyToClipboard = () => {
     this.setState({ hasTappedText: true }, () => {
-      Clipboard.setString(this.props.text);
+      Clipboard.setString(this.props.value ?? this.props.text);
       this.setState({ address: loc.wallets.xpub_copiedToClipboard }, () => {
         setTimeout(() => {
           this.setState({ hasTappedText: false, address: this.props.text });

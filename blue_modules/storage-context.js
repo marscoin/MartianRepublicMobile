@@ -210,47 +210,36 @@ export const BlueStorageProvider = ({ children }) => {
     setWallets([]);
   };
 
-  const addAndSaveWallet = async w => {
-    if (wallets.some(i => i.getID() === w.getID())) {
-      triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-      presentAlert({ title:'', message: 'This wallet has been previously imported.' });
-      return;
+  const persistImportedWallet = async (w, civic = false) => {
+    if (BlueApp.getWallets().some(existing => existing.getID() === w.getID())) {
+      presentAlert({ title: '', message: 'This wallet has been previously imported.' });
+      return false;
     }
-    const emptyWalletLabel = new LegacyWallet().getLabel();
-    triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
-    if (w.getLabel() === emptyWalletLabel) w.setLabel(loc.wallets.import_imported + ' ' + w.typeReadable);
-    w.setUserHasSavedExport(true);
-    w.getAddressAsync()
-    addWallet(w);
-    await saveToDisk();
-    A(A.ENUM.CREATED_WALLET);
-    presentAlert({title:'', message: w.type === WatchOnlyWallet.type ? loc.wallets.import_success_watchonly : loc.wallets.import_success });
-    Notifications.majorTomToGroundControl(w.getAllExternalAddresses(), [], []);
-    // start balance fetching at the background
-    await w.fetchBalance();
-    setWallets([...BlueApp.getWallets()]);
-  };
-  const addAndSaveCivicWallet = async w => {
-    if (wallets.some(i => i.getID() === w.getID())) {
-      triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-      presentAlert({title:'', message: 'This wallet has been previously imported.' });
-      return;
+    if (civic) {
+      w.setLabel('CIVIC WALLET');
+      w.setCivic();
+    } else if (w.getLabel() === new LegacyWallet().getLabel()) {
+      w.setLabel(loc.wallets.import_imported + ' ' + w.typeReadable);
     }
-    const emptyWalletLabel = new LegacyWallet().getLabel();
-    triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
-    w.setLabel('CIVIC WALLET');
-    w.setCivic()
-    w.getAddressAsync()
     w.setUserHasSavedExport(true);
-    addWallet(w);
-    await saveToDisk();
-    A(A.ENUM.CREATED_WALLET);
-    presentAlert({ title:'', message: w.type === WatchOnlyWallet.type ? loc.wallets.import_success_watchonly : loc.wallets.import_success });
-    Notifications.majorTomToGroundControl(w.getAllExternalAddresses(), [], []);
-    // start balance fetching at the background
-    await w.fetchBalance();
+    // Recovery does not depend on a second network request. Address discovery
+    // already ran before this point; the wallet can refresh after persistence.
+    BlueApp.wallets.push(w);
+    try {
+      await BlueApp.saveToDisk(true);
+    } catch (error) {
+      BlueApp.wallets = BlueApp.wallets.filter(existing => existing !== w);
+      throw error;
+    }
     setWallets([...BlueApp.getWallets()]);
+    triggerHapticFeedback(HapticFeedbackTypes.NotificationSuccess);
+    A(A.ENUM.CREATED_WALLET);
+    presentAlert({ title: '', message: w.type === WatchOnlyWallet.type ? loc.wallets.import_success_watchonly : loc.wallets.import_success });
+    Notifications.majorTomToGroundControl(w.getAllExternalAddresses(), [], []).catch(() => {});
+    return true;
   };
+  const addAndSaveWallet = w => persistImportedWallet(w);
+  const addAndSaveCivicWallet = w => persistImportedWallet(w, true);
 
   const setSharedCosigner = cosigner => {
     setCurrentSharedCosigner(cosigner);

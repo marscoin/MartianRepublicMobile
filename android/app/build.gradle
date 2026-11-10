@@ -77,6 +77,15 @@ def enableProguardInReleaseBuilds = true
  */
 def jscFlavor = 'org.webkit:android-jsc-intl:+'
 
+// Supply these through the process environment or ~/.gradle/gradle.properties.
+// Never commit upload keys or passwords to this repository.
+def uploadSigning = [:]
+['STORE_FILE', 'STORE_PASSWORD', 'KEY_ALIAS', 'KEY_PASSWORD'].each { name ->
+    def setting = "MARS_UPLOAD_${name}"
+    uploadSigning[name] = System.getenv(setting) ?: project.findProperty(setting)
+}
+def hasUploadSigning = uploadSigning.values().every { it }
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -87,25 +96,30 @@ android {
         applicationId "com.martianrepublic.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion 34
-        versionCode 4
+        versionCode = (System.getenv('MARS_VERSION_CODE') ?: '4').toInteger()
         versionName "4.0.1"
+        // Filter prebuilt native libraries to the same ABIs as source-built modules.
+        // Otherwise an ARM-only build advertises incomplete x86/32-bit support.
+        ndk {
+            abiFilters.addAll((project.findProperty('reactNativeArchitectures') ?: 'armeabi-v7a,arm64-v8a,x86,x86_64').split(','))
+        }
         testBuildType System.getProperty('testBuildType', 'debug')
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         missingDimensionStrategy 'react-native-camera', 'general'
     }
     signingConfigs {
-        release {
-            storeFile file("marswallet-key.keystore")
-            storePassword "MCRforever"
-            keyAlias "my-key-alias"
-            keyPassword "MCRforever"
+        if (hasUploadSigning) {
+            release {
+                storeFile file(uploadSigning.STORE_FILE)
+                storePassword uploadSigning.STORE_PASSWORD
+                keyAlias uploadSigning.KEY_ALIAS
+                keyPassword uploadSigning.KEY_PASSWORD
+            }
         }
     }
     buildTypes {
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.release
+            if (hasUploadSigning) signingConfig signingConfigs.release
             //minifyEnabled enableProguardInReleaseBuilds
             minifyEnabled false
             shrinkResources false

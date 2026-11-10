@@ -2,7 +2,6 @@ import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, use
 import {View,TouchableOpacity,Text,StyleSheet,SectionList, RefreshControl, Platform,Image,Dimensions,useWindowDimensions,findNodeHandle,I18nManager,InteractionManager, ActivityIndicator} from 'react-native';
 import { BlueHeaderDefaultMain } from '../../BlueComponents';
 import WalletsCarousel from '../../components/WalletsCarousel';
-import { Icon } from 'react-native-elements';
 import DeeplinkSchemaMatch from '../../class/deeplink-schema-match';
 import ActionSheet from '../ActionSheet';
 import loc from '../../loc';
@@ -12,6 +11,7 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { isDesktop, isTablet } from '../../blue_modules/environment';
 import BlueClipboard from '../../blue_modules/clipboard';
 import navigationStyle from '../../components/navigationStyle';
+import HeaderAction from '../../components/HeaderAction';
 import { TransactionListItem } from '../../components/TransactionListItem';
 import { scanQrHelper } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
@@ -99,28 +99,22 @@ const verifyBalance = () => {
       // eslint-disable-next-line react/no-unstable-nested-components
       headerRight: () =>
         I18nManager.isRTL ? null : (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={loc._.more}
+          <HeaderAction
+            label={loc._.more}
+            color={colors.foregroundColor}
             testID="SettingsButton"
-            style={styles.headerTouch}
             onPress={navigateToSettings}
-          >
-            <Icon size={22} name="more-horiz" type="material" color={colors.foregroundColor} />
-          </TouchableOpacity>
+          />
         ),
       // eslint-disable-next-line react/no-unstable-nested-components
       headerLeft: () =>
         I18nManager.isRTL ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={loc._.more}
+          <HeaderAction
+            label={loc._.more}
+            color={colors.foregroundColor}
             testID="SettingsButton"
-            style={styles.headerTouch}
             onPress={navigateToSettings}
-          >
-            <Icon size={22} name="more-horiz" type="material" color={colors.foregroundColor} />
-          </TouchableOpacity>
+          />
         ) : null,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -251,11 +245,24 @@ const verifyBalance = () => {
     switch (section.section.key) {
       case WalletsListSections.CAROUSEL:
         return  (
-          <BlueHeaderDefaultMain 
-            navigation={navigation}
-            leftText={loc.wallets.list_title} 
-            onNewWalletPress={()=>navigation.navigate('AddWalletRoot')} 
-          />
+          <>
+            <BlueHeaderDefaultMain 
+              navigation={navigation}
+              leftText={loc.wallets.list_title} 
+              onNewWalletPress={()=>navigation.navigate('AddWalletRoot')} 
+            />
+            {wallets.some(wallet => wallet.type === 'marscoin') && (
+              <TouchableOpacity
+                accessibilityRole="button"
+                testID="GetMarscoinButton"
+                onPress={() => navigation.navigate('SwapHome')}
+                style={styles.swapEntry}
+              >
+                <Text style={styles.swapEntryText}>Get Marscoin with Bitcoin</Text>
+                <Text style={styles.swapEntryArrow}>→</Text>
+              </TouchableOpacity>
+            )}
+          </>
         );
       case WalletsListSections.TRANSACTIONS:
         return renderListHeaderComponent();
@@ -442,6 +449,21 @@ export default WalletsList;
 WalletsList.navigationOptions = navigationStyle({}, opts => ({ ...opts, headerTitle: '', headerBackTitle: loc.wallets.list_title }));
 
 const styles = StyleSheet.create({
+  swapEntry: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    minHeight: 52,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#30353B',
+    backgroundColor: '#14171B',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  swapEntryText: { color: '#F5F1EB', fontFamily: 'ChakraPetch-SemiBold', fontSize: 16 },
+  swapEntryArrow: { color: '#FF812D', fontFamily: 'ChakraPetch-Bold', fontSize: 20 },
   root: {
     flex: 1,
   },
@@ -453,10 +475,6 @@ const styles = StyleSheet.create({
   },
   walletsListWrapper: {
     flex: 1,
-  },
-  headerTouch: {
-    height: 48,
-    paddingVertical: 10,
   },
   listHeaderBack: {
     flexDirection: 'row',

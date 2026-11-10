@@ -24,21 +24,19 @@ import {
   SLIP39SegwitBech32Wallet,
 } from './class/';
 import { randomBytes } from './class/rng';
-import presentAlert from './components/Alert';
 import { initCurrencyDaemon } from './blue_modules/currency';
 import DefaultPreference from 'react-native-default-preference';
 import { MarsElectrumWallet } from './screen/wallets/mars-wallet';
+import { createRealmKeyLoader, persistWalletData } from './blue_modules/wallet-persistence';
 
 const encryption = require('./blue_modules/encryption');
 const Realm = require('realm');
 const createHash = require('create-hash');
 let usedBucketNum = false;
-let savingInProgress = 0; // its both a flag and a counter of attempts to write to disk
+const loadRealmKey = createRealmKeyLoader(Keychain, randomBytes);
 const prompt = require('./helpers/prompt');
 const BlueElectrum = require('./blue_modules/BlueElectrum');
-const MARSConnection=require('./blue_modules/MARSConnection')
 BlueElectrum.connectMain();
-//MARSConnection.connectMain();
 
 class AppStorage {
   static FLAG_ENCRYPTED = 'data_encrypted';
@@ -79,7 +77,9 @@ class AppStorage {
    */
   setItem = (key, value) => {
     if (typeof navigator !== 'undefined' && navigator.product === 'ReactNative') {
-      return RNSecureKeyStore.set(key, value, { accessible: ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+      return RNSecureKeyStore.set(key, value, {
+        accessible: ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
     } else {
       return AsyncStorage.setItem(key, value);
     }
@@ -264,16 +264,7 @@ class AppStorage {
    * @returns {Promise<Realm>}
    */
   async openRealmKeyValue() {
-    const service = 'realm_encryption_key';
-    let password;
-    const credentials = await Keychain.getGenericPassword({ service });
-    if (credentials) {
-      password = credentials.password;
-    } else {
-      const buf = await randomBytes(64);
-      password = buf.toString('hex');
-      await Keychain.setGenericPassword(service, password, { service });
-    }
+    const password = await loadRealmKey();
 
     const buf = Buffer.from(password, 'hex');
     const encryptionKey = Int8Array.from(buf);
@@ -330,7 +321,7 @@ class AppStorage {
       try {
         realm = await this.getRealm();
       } catch (error) {
-        //presentAlert({ message: error.message });
+        // presentAlert({ message: error.message });
       }
       data = JSON.parse(data);
       if (!data.wallets) return false;
@@ -347,8 +338,8 @@ class AppStorage {
             unserializedWallet = SegwitP2SHWallet.fromJson(key);
             break;
           case MarsElectrumWallet.type:
-              unserializedWallet = MarsElectrumWallet.fromJson(key);
-          break;  
+            unserializedWallet = MarsElectrumWallet.fromJson(key);
+            break;
           case WatchOnlyWallet.type:
             unserializedWallet = WatchOnlyWallet.fromJson(key);
             unserializedWallet.init();
@@ -431,7 +422,7 @@ class AppStorage {
         try {
           if (realm) this.inflateWalletFromRealm(realm, unserializedWallet);
         } catch (error) {
-          //presentAlert({ message: error.message });
+          // presentAlert({ message: error.message });
         }
 
         // done
@@ -441,7 +432,11 @@ class AppStorage {
           this.tx_metadata = data.tx_metadata;
         }
       }
-      if (realm) realm.close();
+      if (realm) {
+        try {
+          realm.close();
+        } catch (_) {}
+      }
       return true;
     } else {
       return false; // failed loading data or loading/decryptin data
@@ -479,7 +474,7 @@ class AppStorage {
   deleteAllWallets() {
     this.wallets = []; // Clears the array
     this.saveToDisk(); // Assuming you have a method to save changes to persistent storage
-}
+  }
 
   inflateWalletFromRealm(realm, walletToInflate) {
     const transactions = realm.objects('WalletTransactions');
@@ -589,36 +584,50 @@ class AppStorage {
    *
    * @returns {Promise} Result of storage save
    */
-  async saveToDisk() {
-    if (savingInProgress) {
-      console.warn('saveToDisk is in progress');
-      if (++savingInProgress > 10) presentAlert({ message: 'Critical error. Last actions were not saved' }); // should never happen
-      await new Promise(resolve => setTimeout(resolve, 1000 * savingInProgress)); // sleep
-      return this.saveToDisk();
-    }
-    savingInProgress = 1;
-
+  async saveToDisk(throwOnError = false) {
+    const previous = this._pendingSave || Promise.resolve();
+    const pending = previous.catch(() => {}).then(() => this._saveToDisk());
+    this._pendingSave = pending;
     try {
-      const walletsToSave = [];
-      let realm;
-      try {
-        realm = await this.getRealm();
-      } catch (error) {
-        //presentAlert({ message: error.message });
-      }
+      await pending;
+    } catch (_) {
+      console.warn('Wallet secure storage write failed.');
+      if (throwOnError) throw new Error('Your wallet could not be saved securely on this device. Unlock the device and try again.');
+    } finally {
+      if (this._pendingSave === pending) this._pendingSave = undefined;
+    }
+  }
+
+  async _saveToDisk() {
+    const walletsToSave = [];
+    let realm;
+    try {
+      realm = await this.getRealm();
+    } catch (error) {
+      // presentAlert({ message: error.message });
+    }
+    try {
       for (const key of this.wallets) {
         if (typeof key === 'boolean') continue;
         key.prepareForSerialization();
         delete key.current;
         const keyCloned = Object.assign({}, key); // stripped-down version of a wallet to save to secure keystore
         if (key._hdWalletInstance) keyCloned._hdWalletInstance = Object.assign({}, key._hdWalletInstance);
-        if (realm) this.offloadWalletToRealm(realm, key);
-        // stripping down:
-        if (key._txs_by_external_index) {
+        let offloaded = false;
+        if (realm) {
+          try {
+            this.offloadWalletToRealm(realm, key);
+            offloaded = true;
+          } catch (_) {
+            console.warn('Transaction cache unavailable; retaining transactions in secure storage.');
+          }
+        }
+        // Strip transactions only after the cache accepted them.
+        if (offloaded && key._txs_by_external_index) {
           keyCloned._txs_by_external_index = {};
           keyCloned._txs_by_internal_index = {};
         }
-        if (key._hdWalletInstance) {
+        if (offloaded && key._hdWalletInstance) {
           keyCloned._hdWalletInstance._txs_by_external_index = {};
           keyCloned._hdWalletInstance._txs_by_internal_index = {};
         }
@@ -629,63 +638,60 @@ class AppStorage {
 
         walletsToSave.push(JSON.stringify({ ...keyCloned, type: keyCloned.type }));
       }
-      if (realm) realm.close();
-      let data = {
-        wallets: walletsToSave,
-        tx_metadata: this.tx_metadata,
-      };
-
-      if (this.cachedPassword) {
-        // should find the correct bucket, encrypt and then save
-        let buckets = await this.getItemWithFallbackToRealm('data');
-        buckets = JSON.parse(buckets);
-        const newData = [];
-        let num = 0;
-        for (const bucket of buckets) {
-          let decrypted;
-          // if we had `usedBucketNum` during loadFromDisk(), no point to try to decode each bucket to find the one we
-          // need, we just to find bucket with the same index
-          if (usedBucketNum !== false) {
-            if (num === usedBucketNum) {
-              decrypted = true;
-            }
-            num++;
-          } else {
-            // we dont have `usedBucketNum` for whatever reason, so lets try to decrypt each bucket after bucket
-            // till we find the right one
-            decrypted = encryption.decrypt(bucket, this.cachedPassword);
-          }
-
-          if (!decrypted) {
-            // no luck decrypting, its not our bucket
-            newData.push(bucket);
-          } else {
-            // decrypted ok, this is our bucket
-            // we serialize our object's data, encrypt it, and add it to buckets
-            newData.push(encryption.encrypt(JSON.stringify(data), this.cachedPassword));
-          }
-        }
-        data = newData;
-      }
-
-      await this.setItem('data', JSON.stringify(data));
-      await this.setItem(AppStorage.FLAG_ENCRYPTED, this.cachedPassword ? '1' : '');
-
-      // now, backing up same data in realm:
-      const realmkeyValue = await this.openRealmKeyValue();
-      this.saveToRealmKeyValue(realmkeyValue, 'data', JSON.stringify(data));
-      this.saveToRealmKeyValue(realmkeyValue, AppStorage.FLAG_ENCRYPTED, this.cachedPassword ? '1' : '');
-      realmkeyValue.close();
-    } catch (error) {
-      console.error('save to disk exception:', error.message);
-      //presentAlert({ message: 'save to disk exception: ' + error.message });
-      if (error.message.includes('Realm file decryption failed')) {
-        console.warn('purging realm key-value database file');
-        this.purgeRealmKeyValueFile();
-      }
     } finally {
-      savingInProgress = 0;
+      if (realm) {
+        try {
+          realm.close();
+        } catch (_) {}
+      }
     }
+    let data = {
+      wallets: walletsToSave,
+      tx_metadata: this.tx_metadata,
+    };
+
+    if (this.cachedPassword) {
+      // should find the correct bucket, encrypt and then save
+      let buckets = await this.getItemWithFallbackToRealm('data');
+      buckets = JSON.parse(buckets);
+      const newData = [];
+      let num = 0;
+      for (const bucket of buckets) {
+        let decrypted;
+        // if we had `usedBucketNum` during loadFromDisk(), no point to try to decode each bucket to find the one we
+        // need, we just to find bucket with the same index
+        if (usedBucketNum !== false) {
+          if (num === usedBucketNum) {
+            decrypted = true;
+          }
+          num++;
+        } else {
+          // we dont have `usedBucketNum` for whatever reason, so lets try to decrypt each bucket after bucket
+          // till we find the right one
+          decrypted = encryption.decrypt(bucket, this.cachedPassword);
+        }
+
+        if (!decrypted) {
+          // no luck decrypting, its not our bucket
+          newData.push(bucket);
+        } else {
+          // decrypted ok, this is our bucket
+          // we serialize our object's data, encrypt it, and add it to buckets
+          newData.push(encryption.encrypt(JSON.stringify(data), this.cachedPassword));
+        }
+      }
+      data = newData;
+    }
+
+    await persistWalletData({
+      setItem: this.setItem,
+      data: JSON.stringify(data),
+      flagKey: AppStorage.FLAG_ENCRYPTED,
+      encrypted: this.cachedPassword ? '1' : '',
+      openBackup: () => this.openRealmKeyValue(),
+      writeBackup: (backup, key, value) => this.saveToRealmKeyValue(backup, key, value),
+      onBackupError: () => console.warn('Wallet saved; secondary backup is unavailable.'),
+    });
   }
 
   /**

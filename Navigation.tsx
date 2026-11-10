@@ -119,6 +119,17 @@ import EndorseSuccessScreen from './screen/citizen/endorseSuccessScreen';
 import ProposalsScreen from './screen/congress/proposals';
 import ProposalDetail from './screen/congress/proposalDetail';
 import PublicSquare from './screen/square/PublicSquare';
+import CivicHome from './screen/workspace/CivicHome';
+import WorkspaceOrganizations from './screen/workspace/WorkspaceOrganizations';
+import WorkspaceOrganization from './screen/workspace/WorkspaceOrganization';
+import WorkspaceCompose from './screen/workspace/WorkspaceCompose';
+import WorkspaceTask from './screen/workspace/WorkspaceTask';
+import WorkspaceDrafts from './screen/workspace/WorkspaceDrafts';
+import Ballot from './screen/congress/ballot';
+import SwapHome from './screen/swap/SwapHome';
+import SwapDetail from './screen/swap/SwapDetail';
+import BtcWallet from './screen/swap/BtcWallet';
+import { SwapWatcher } from './screen/swap/SwapUi';
 
 const WalletsStack = createNativeStackNavigator();
 const SquareStack = createNativeStackNavigator();
@@ -131,15 +142,17 @@ const SquareRoot = () => {
       <SquareStack.Screen name="PublicSquare" component={PublicSquare} />
       <SquareStack.Screen name="ProposalDetail" component={ProposalDetail} />
       <SquareStack.Screen name="Proposals" component={ProposalsScreen} />
+      <SquareStack.Screen name="Ballot" component={Ballot} />
       <SquareStack.Screen name="ForumScreen" component={ForumScreen} />
       <SquareStack.Screen name="ForumThreadScreen" component={ForumThreadScreen} />
       <SquareStack.Screen name="IndividualCitizenScreen" component={IndividualCitizenScreen} />
       <SquareStack.Screen name="IndividualPublicScreen" component={IndividualPublicScreen} />
       <SquareStack.Screen name="IndividualApplicantScreen" component={IndividualApplicantScreen} />
-      <SquareStack.Screen name="CivicIDScreen" component={CivicIDScreen} />
+      <SquareStack.Screen name="CivicIDScreen" component={CivicIDScreen} options={{ headerShown: false }} />
       <SquareStack.Screen name="CitizenScreen" component={CitizenScreen} />
       <SquareStack.Screen name="EndorseConfirmationScreen" component={EndorseConfirmationScreen} />
       <SquareStack.Screen name="EndorseSuccessScreen" component={EndorseSuccessScreen} />
+      <SquareStack.Screen name="SendDetailsRoot" component={SendDetailsRoot} />
       <SquareStack.Screen name="SendWithAddress" component={SendWithAddress} initialParams={SendWithAddress.initialParams} />
       <SquareStack.Screen name="SendConfirm" component={SendConfirm} options={Confirm.navigationOptions(theme)} />
       <SquareStack.Screen name="SendSuccess" component={SendSuccess} options={{headerShown: false, gestureEnabled: false}} />
@@ -149,6 +162,8 @@ const SquareRoot = () => {
 
 const BottomTabNavigator = () => {
   return (
+    <>
+    <SwapWatcher />
     <Tab.Navigator
       initialRouteName="Citizen"
       screenOptions={{
@@ -163,7 +178,7 @@ const BottomTabNavigator = () => {
         component={CitizenRoot}
         options={{
           tabBarIcon: () => null,
-          tabBarLabel: 'Citizen',
+          tabBarLabel: 'Home',
           tabBarLabelStyle: {fontSize: 25, color: '#FF7400', fontFamily: 'ChakraPetch-Bold', letterSpacing: 1.1},
           headerShown: false,
         }}
@@ -221,6 +236,7 @@ const BottomTabNavigator = () => {
         }}
       />
     </Tab.Navigator>
+    </>
   );
 };
 
@@ -255,7 +271,7 @@ const AppNavigator = () => {
         name="ImportCivicWalletDiscovery"
         component={ImportCivicWalletDiscovery}
         options={
-          ImportWalletDiscovery.navigationOptions(theme)
+          ImportCivicWalletDiscovery.navigationOptions(theme)
          }
       />
       <AppStack.Screen 
@@ -306,7 +322,12 @@ const CitizenRoot = () => {
   const theme = useTheme();
   return (
     <CitizenStack.Navigator screenOptions={{ headerShown: false }} >
-      {/* <CitizenStack.Screen name="AreYouCitizenScreen" component={AreYouCitizenScreen} options={{ headerShown: false }}/> */}
+      <CitizenStack.Screen name="CivicHome" component={CivicHome} options={{ headerShown: false }} />
+      <CitizenStack.Screen name="WorkspaceOrganizations" component={WorkspaceOrganizations} options={{ headerShown: false }} />
+      <CitizenStack.Screen name="WorkspaceOrganization" component={WorkspaceOrganization} options={{ headerShown: false }} />
+      <CitizenStack.Screen name="WorkspaceCompose" component={WorkspaceCompose} options={{ headerShown: false }} />
+      <CitizenStack.Screen name="WorkspaceTask" component={WorkspaceTask} options={{ headerShown: false }} />
+      <CitizenStack.Screen name="WorkspaceDrafts" component={WorkspaceDrafts} options={{ headerShown: false }} />
       <CitizenStack.Screen name="CitizenScreen" component={CitizenScreen} options={{headerShown: false}}  />
       <CitizenStack.Screen name="IndividualCitizenScreen" component={IndividualCitizenScreen} options={{headerShown: false}}/>
       <CitizenStack.Screen name="IndividualPublicScreen" component={IndividualPublicScreen} options={{headerShown: false}}  />
@@ -330,6 +351,10 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="Proposals" component={ProposalsScreen} options={{headerShown: false}} />
       <CitizenStack.Screen name="ProposalDetail" component={ProposalDetail} options={{headerShown: false}} />
       <CitizenStack.Screen name="PublicSquare" component={PublicSquare} options={{headerShown: false}} />
+      <CitizenStack.Screen name="Ballot" component={Ballot} options={{headerShown: false}} />
+      <CitizenStack.Screen name="SwapHome" component={SwapHome} options={{headerShown: false}} />
+      <CitizenStack.Screen name="SwapDetail" component={SwapDetail} options={{headerShown: false}} />
+      <CitizenStack.Screen name="BtcWallet" component={BtcWallet} options={{headerShown: false}} />
     </CitizenStack.Navigator>
   );
 };
@@ -352,6 +377,9 @@ const WalletsRoot = () => {
       <WalletsStack.Screen name="WalletsList" component={WalletsList} options={WalletsList.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletTransactions" component={WalletTransactions} options={WalletTransactions.navigationOptions(theme)}  />
       <WalletsStack.Screen name="WalletTransactionsCivic" component={WalletTransactionsCivic} options={WalletTransactionsCivic.navigationOptions(theme)}  />
+      <WalletsStack.Screen name="SwapHome" component={SwapHome} options={{headerShown: false}} />
+      <WalletsStack.Screen name="SwapDetail" component={SwapDetail} options={{headerShown: false}} />
+      <WalletsStack.Screen name="BtcWallet" component={BtcWallet} options={{headerShown: false}} />
       <WalletsStack.Screen name="LdkOpenChannel" component={LdkOpenChannel} options={LdkOpenChannel.navigationOptions(theme)} />
       <WalletsStack.Screen name="LdkInfo" component={LdkInfo} options={LdkInfo.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletDetails" component={WalletDetails} options={WalletDetails.navigationOptions(theme)} />
@@ -772,6 +800,7 @@ const ReceiveDetailsStackRoot = () => {
         component={ReceiveDetails} 
         options={
           navigationStyle({
+            title: 'Receive Marscoin',
             closeButton: true,
             headerBackVisible: false,
             //headerTitle: ' ',
@@ -876,7 +905,7 @@ const InitRoot = () => {
     );
   }
   return (
-    <InitStack.Navigator initialRouteName="BottomTabs" screenOptions={{ animationTypeForReplace: 'push' }}>
+    <InitStack.Navigator initialRouteName="BottomTabs" screenOptions={{ animationTypeForReplace: 'push', statusBarStyle: 'light' }}>
       {!walletsInitialized ? (
         <InitStack.Screen name="UnlockWithScreenRoot" component={UnlockWithScreenRoot} options={{ headerShown: false }} />
       ) : initialRoute === 'BottomTabs' ? (

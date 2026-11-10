@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getCivicToken } from '../../blue_modules/civic-api';
 
 const { width } = Dimensions.get('window');
 const API_BASE = 'https://martianrepublic.org/api';
@@ -184,8 +184,10 @@ const PublicSquare = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [token, setToken] = useState(null);
 
+  // The civic session lives in the device keystore. Reading stays possible
+  // without one, so a missing or expired session is not an error here.
   const getToken = async () => {
-    const t = await AsyncStorage.getItem('sessionToken');
+    const t = await getCivicToken().catch(() => null);
     setToken(t);
     return t;
   };

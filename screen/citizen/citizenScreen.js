@@ -1,5 +1,7 @@
+import { uniqueCitizens } from '../../blue_modules/citizen-directory';
+import { getCivicToken, useCivicSession } from '../../blue_modules/civic-api';
 import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
-import { ScrollView, Platform,ActivityIndicator, Modal, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
+import { Alert, ScrollView, Platform,ActivityIndicator, Modal, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
@@ -41,62 +43,47 @@ const CitizenScreen = () => {
     const imageLoadError = useRef({});
     const [modalVisible, setModalVisible] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
+    const [termsRequired, setTermsRequired] = useState(false);
+    const [acceptingTerms, setAcceptingTerms] = useState(false);
+    const [serviceError, setServiceError] = useState(false);
+    const session = useCivicSession();
 
     async function fetchUser() {
-        const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.post("https://martianrepublic.org/api/scitizen", {
+        const token = await getCivicToken();
+        const response = await axios.post("https://martianrepublic.org/api/scitizen", {
           }, {
           headers: {'Authorization': `Bearer ${token}`}
         })
-        console.log('USER DATA', response.data);
+
         setUserData(response.data)
     }
 
     async function fetchTOSAccepted() {
+        const token = await getCivicToken();
+        const response = await axios.get('https://martianrepublic.org/api/eula', {
+            headers: { Authorization: `Bearer ${token}` }, timeout: 15000,
+        });
+        setTermsRequired(response.data.is_signed === false);
+    }
+
+    async function refreshCitizenServices() {
+        setServiceError(false);
         try {
-            const token = await AsyncStorage.getItem('@auth_token');
-            const response = await axios.get("https://martianrepublic.org/api/eula", {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            console.log('TOS Accepted:', response.data);
-            if (response.data.is_signed === false) {
-                setModalVisible(true); // Show modal if TOS is not signed
-            }
-        } catch (error) {
-            if (error.response) {
-                console.error('Error response TOS Accepted:', error.response.data);
-            } else if (error.request) {
-                // The request was made but no response was received
-                console.error('Error request TOS Accepted:', error.request);
-            } else {
-                // Something happened in setting up the request that triggered an Error
-                console.error('Error message TOS Accepted:', error.message);
-            }
-            console.error('Config:', error.config);
+            await getCivicToken();
+            await Promise.all([fetchUser(), fetchTOSAccepted()]);
+        } catch {
+            setServiceError(true);
         }
     }
-    
-    async function setTOSAccepted() {
-        try {
-            const token = await AsyncStorage.getItem('@auth_token');
-            const response = await axios.get("https://martianrepublic.org/api/set/eula", {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            console.log('TOS set:', response.data);
-        } catch (error) {
-            if (error.response) {
-                console.error('Error response TOS set:', error.response.data);
-            } else {
-                console.error('Error message TOS set:', error.message);
-            }
-            console.error('Config:', error.config);
-        }
-    }
-      
+
     useEffect(() => {
-        fetchUser()
-        fetchTOSAccepted()
-    }, []);  
+        setUserData('');
+        setTermsRequired(false);
+        setTermsAccepted(false);
+        setModalVisible(false);
+        if (session.status === 'active') refreshCitizenServices();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session.address, session.status]);
 
     function martianReducer(state, action) {
         switch (action.type) {
@@ -111,7 +98,7 @@ const CitizenScreen = () => {
                     ...state,
                     citizens: {
                         ...state.citizens, 
-                        data: [...(state.citizens.data || []), ...action.payload]}
+                        data: uniqueCitizens(action.payload)}
                 };
             case 'SET_IS_CITIZEN':
                 return { ...state, isCitizen: true };    
@@ -120,13 +107,13 @@ const CitizenScreen = () => {
                     ...state,
                     generalPublic: {
                         ...state.generalPublic, 
-                        data: [...(state.generalPublic.data || []), ...action.payload]}
+                        data: uniqueCitizens(action.payload)}
                 };
             case 'SET_APPLICANTS':
                 return { ...state, 
                     applicants: {
                         ...state.applicants,
-                        data: [...(state.applicants?.data || []), ...action.payload.data],
+                        data: uniqueCitizens([...(state.applicants?.data || []), ...action.payload.data]),
                     }
                 }
             case 'SET_LAST_PAGE_APPLICANTS':
@@ -149,7 +136,7 @@ const CitizenScreen = () => {
 
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedPublic.current) === JSON.stringify(response.data)) {
-                console.log("No new public data to fetch.");
+
                 return; // Stop the fetching process as data is repeated
             }
             // Update the last fetched data
@@ -157,7 +144,7 @@ const CitizenScreen = () => {
             // Dispatch new data to the reducer
             dispatch({ type: 'SET_GENERAL_PUBLIC', payload: response.data });
         } catch (error) {
-            console.error(`Error fetching genersal public:`, error);   
+
         } finally {
         }
     }
@@ -168,7 +155,7 @@ const CitizenScreen = () => {
             //console.log('CITIZENS', response.data[8]);
             // Check if new data is the same as the last fetched data
             if (JSON.stringify(lastFetchedCitizens.current) === JSON.stringify(response.data)) {
-                console.log("No new citizens data to fetch.");
+
                 return; // Stop the fetching process as data is repeated
             }
             // Update the last fetched data
@@ -178,14 +165,14 @@ const CitizenScreen = () => {
             dispatch({ type: 'SET_CITIZENS', payload: response.data });
     
         } catch (error) {
-            console.error(`Error fetching citizens:`, error);   
+
         }
     };
 
     const fetchApplicants = async () => {
         try {
             const response = await axios.get(`https://martianrepublic.org/api/feed/applicant?page=${applicantPageRef.current}`);
-            console.log('APPLICANTS', response.data);
+
             const sortedApplicants = response.data.data.sort((a, b) => {
                 const countA = countMissingFields(a);
                 const countB = countMissingFields(b);
@@ -199,7 +186,7 @@ const CitizenScreen = () => {
             dispatch({ type: 'SET_APPLICANTS', payload: updatedResponse });
             dispatch({ type: 'SET_LAST_PAGE_APPLICANTS', payload: response.data.last_page });
         } catch (error) {
-            console.error(`Error fetching applicants:`, error);
+
         } finally {
         }
     };
@@ -256,14 +243,14 @@ const CitizenScreen = () => {
         // Check if any civic wallet matches a citizen's address
         const checkIfCitizen = () => {
             const isCitizen = wallets.some(wallet =>
-                wallet.civic && state.citizens.some(citizen => citizen.address === wallet._address)
+                wallet.civic && (state.citizens.data || []).some(citizen => citizen.address === wallet._address)
             );
-            console.log('IS CITIZEN', isCitizen)
+
             if (isCitizen) {
                 dispatch({ type: 'SET_IS_CITIZEN', payload: true });
             }
         };
-        if (wallets.length > 0 && state.citizens.length > 0) {
+        if (wallets.length > 0 && (state.citizens.data || []).length > 0) {
             checkIfCitizen();
         }
     }, [wallets, state.citizens]);
@@ -275,55 +262,38 @@ const CitizenScreen = () => {
     }, []); 
 
     const handleEndApplicantsReached = async () => {
-        console.log('handleEndApplicantsReached')
-        console.log('applicantPageRef', applicantPageRef)
+
+
         if (applicantPageRef.current < state.lastPageApplicants) {
           applicantPageRef.current += 1; // Prepare to fetch the next page
-          console.log('applicantPageRef', applicantPageRef)
+
           await fetchApplicants(); // Fetch the next page of applicants
         } else {
-          console.log("No more applicants to fetch.");
+
         }
     };
 
-    const handleEndCitizensReached = async () => {
-        console.log('handleEndCitizensReached')
-        console.log('citizenPageRef', citizenPageRef)
-        if (citizenPageRef.current < state.lastPageCitizenss) {
-          citizenPageRef.current += 1; // Prepare to fetch the next page
-          console.log('citizenPageRef', citizenPageRef)
-          await fetchCitizens(); // Fetch the next page of applicants
-        } else {
-          console.log("No more citizens to fetch.");
-        }
-    };
-
-    const handleEndPublicReached = async () => {
-        console.log('handleEndPublicReached')
-        console.log('publicPageRef', publicPageRef)
-        if (publicPageRef.current < state.lastPageCitizenss) {
-          citizenPageRef.current += 1; // Prepare to fetch the next page
-          console.log('citizenPageRef', citizenPageRef)
-          await fetchCitizens(); // Fetch the next page of applicants
-        } else {
-          console.log("No more citizens to fetch.");
-        }
-    };
+    // The public and citizen endpoints return their complete directories.
+    const handleEndCitizensReached = () => {};
+    const handleEndPublicReached = () => {};
 
     const handleAcceptance = async () => {
-        if (termsAccepted) {
-            try {
-                await setTOSAccepted(); // Call the API to set TOS as accepted
-                setModalVisible(false); // Close the modal only if the API call is successful
-                console.log('Terms of Service accepted');
-            } catch (error) {
-                console.error('Error setting TOS accepted:', error);
-            }
-        } else {
-            alert('Please accept the terms of service to continue.');
+        if (!termsAccepted || acceptingTerms) return;
+        setAcceptingTerms(true);
+        try {
+            const token = await getCivicToken();
+            await axios.get('https://martianrepublic.org/api/set/eula', {
+                headers: { Authorization: `Bearer ${token}` }, timeout: 15000,
+            });
+            setTermsRequired(false);
+            setModalVisible(false);
+        } catch {
+            Alert.alert('Terms not saved', 'We could not save your acceptance. Please check your connection and try again.');
+        } finally {
+            setAcceptingTerms(false);
         }
     };
-    
+
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
         {/* ////margin -80 sticks screen to the tabbar///// */}
@@ -339,6 +309,19 @@ const CitizenScreen = () => {
                 </View>
                 <Text style={styles.smallText}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
                 
+                {session.address && (session.status !== 'active' || serviceError || termsRequired) && (
+                    <View style={styles.serviceCard}>
+                        <Text style={styles.serviceEyebrow}>CITIZEN SERVICES</Text>
+                        <Text style={styles.serviceTitle}>{session.status === 'connecting' ? 'Connecting to the Republic' : termsRequired ? 'Your place in the Republic' : session.status === 'inactive' ? 'Account inactive' : 'Connection unavailable'}</Text>
+                        <Text style={styles.serviceBody}>{termsRequired ? 'Review the terms to continue using citizen services.' : 'Your wallet stays available on this device.'}</Text>
+                        {session.status !== 'connecting' && (
+                            <TouchableOpacity accessibilityRole="button" style={styles.serviceAction} onPress={termsRequired ? () => setModalVisible(true) : refreshCitizenServices}>
+                                <Text style={styles.serviceActionText}>{termsRequired ? 'REVIEW TERMS' : 'TRY AGAIN'}</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+
                 {/* ///////////APPLICATION BLOCK - JOIN MARS if new, CONTINUE if has application, WELCOME CITIZEN for ciitzens///////// */}
                 {userData && (
                     <>
@@ -348,6 +331,9 @@ const CitizenScreen = () => {
                             <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
                                 <TouchableOpacity
                                     style={[styles.joinButton]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Open civic ID"
+                                    testID="OpenCivicID"
                                     onPress={() => navigation.navigate('CivicIDScreen', {user: userData})}
                                 >
                                     <Text style={[styles.noWalletText, {paddingHorizontal: 8}]}>OPEN CIVIC ID</Text>
@@ -443,7 +429,7 @@ const CitizenScreen = () => {
                         }}
                     >
                         <LinearGradient
-                            colors={state.filterCitizen ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // Change to grey gradient if inactive
+                            colors={state.filterCitizen ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#222225', '#222225']} // Change to grey gradient if inactive
                             style={state.filterCitizen ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
                         >
                             <Text style={styles.filterButtonText}>CITIZENS</Text>
@@ -457,7 +443,7 @@ const CitizenScreen = () => {
                         }}
                     >
                         <LinearGradient
-                            colors={state.filterPublic ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
+                            colors={state.filterPublic ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#222225', '#222225']} // grey gradient if inactive
                             style={state.filterPublic ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
                         >
                             <Text style={styles.filterButtonText}>PUBLIC</Text>
@@ -471,7 +457,7 @@ const CitizenScreen = () => {
                         }}
                     >
                         <LinearGradient
-                            colors={state.filterApplicants ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#D3D3D3', '#C0C0C0']} // grey gradient if inactive
+                            colors={state.filterApplicants ? ['#FFB67D', '#FF8A3E', '#FF7400'] : ['#222225', '#222225']} // grey gradient if inactive
                             style={state.filterApplicants ? styles.filterButtonGradientActive : styles.filterButtonGradientInactive}
                         >
                             <Text style={styles.filterButtonText}>APPLICANTS</Text>
@@ -495,7 +481,7 @@ const CitizenScreen = () => {
                                     <Image
                                         source={state.imageLoadErrors[item.id] ? require('../../img/genericprofile.png') : !item.user.citizen.avatar_link ? require('../../img/genericprofile.png'):{ uri: item.user.citizen.avatar_link }}
                                         style={styles.citizenImage} 
-                                        onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: citizen.id } })}
+                                        onError={() => dispatch({ type: 'SET_IMAGE_LOAD_ERROR', payload: { id: item.id } })}
                                     />
                                     <View style={{ marginHorizontal: 5, width: windowWidth * 0.45 }}>
                                         <Text numberOfLines={2} style={styles.citizenName}>{item.user.fullname}</Text>
@@ -654,7 +640,6 @@ const CitizenScreen = () => {
                     transparent={true}
                     visible={modalVisible}
                     onRequestClose={() => {
-                        Alert.alert("Modal has been closed.");
                         setModalVisible(!modalVisible);
                     }}
                 >
@@ -707,13 +692,16 @@ const CitizenScreen = () => {
                         </View>
                         <LinearGradient colors={termsAccepted ? ['#FFB67D','#FF8A3E', '#FF7400'] : ['#ccc', '#bbb', '#aaa']} style={[styles.joinButtonGradient, {marginBottom: 40}]}>
                             <TouchableOpacity
-                                disabled={!termsAccepted}  // Disable button when terms are not accepted
+                                disabled={!termsAccepted || acceptingTerms}  // Disable button when terms are not accepted
                                 style={[styles.joinButton, {width: 200, opacity: termsAccepted ? 1 : 0.5}]}  // Conditional opacity for disabled state
                                 onPress={handleAcceptance}
                             >
-                                <Text style={styles.buttonText}>Continue</Text>
+                                <Text style={styles.buttonText}>{acceptingTerms ? 'Saving…' : 'Continue'}</Text>
                             </TouchableOpacity>
                         </LinearGradient>
+                        <TouchableOpacity accessibilityRole="button" onPress={() => setModalVisible(false)} style={{ padding: 16 }}>
+                            <Text style={styles.serviceBody}>Review later</Text>
+                        </TouchableOpacity>
                     </View>
                 </Modal>
         </View>
@@ -722,6 +710,12 @@ const CitizenScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  serviceCard: { marginHorizontal: 20, marginTop: 24, padding: 20, backgroundColor: '#141416', borderWidth: 1, borderColor: '#34302D', borderRadius: 16 },
+  serviceEyebrow: { fontFamily: 'ChakraPetch-Bold', color: '#FF924D', fontSize: 11, letterSpacing: 2, marginBottom: 10 },
+  serviceTitle: { fontFamily: 'ChakraPetch-SemiBold', color: '#F6F3F0', fontSize: 21, marginBottom: 8 },
+  serviceBody: { fontFamily: 'ChakraPetch-Regular', color: '#B7B1AC', fontSize: 15, lineHeight: 22 },
+  serviceAction: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', marginTop: 12 },
+  serviceActionText: { fontFamily: 'ChakraPetch-Bold', color: '#FF924D', fontSize: 13, letterSpacing: 1 },
     root: {
         flex:1,
     },
@@ -863,7 +857,8 @@ const styles = StyleSheet.create({
         letterSpacing: 1.1, 
     },
     filterButton: {
-        height: 24,
+        flex: 1,
+        minHeight: 44,
         borderRadius: 10,
         justifyContent:'center',
         alignItems:'center',
@@ -876,7 +871,7 @@ const styles = StyleSheet.create({
         letterSpacing: 1.5, 
     },
     filterButtonGradientActive: {
-        height: 24,
+        minHeight: 36,
         borderRadius: 10,
         paddingHorizontal: 10,
         paddingVertical: 5,
@@ -884,7 +879,7 @@ const styles = StyleSheet.create({
         alignItems:'center',
     },
     filterButtonGradientInactive: {
-        height: 24,
+        minHeight: 36,
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 10,
@@ -900,7 +895,7 @@ const styles = StyleSheet.create({
         flexDirection:'row',
         borderWidth: 1,
         borderBottomWidth: 0.5,
-        borderColor: '#FF7400',
+        borderColor: '#343034',
         padding: 10,
         borderTopRightRadius: 10,
         borderTopLeftRadius: 10
@@ -909,13 +904,13 @@ const styles = StyleSheet.create({
         flex: 1, 
         width: windowWidth,
         borderWidth: 0.5,
-        borderColor: '#FF7400',
+        borderColor: '#343034',
       },
     citizenItem: {
         flexDirection: 'row',
         alignItems: 'center',
         borderBottomWidth: 0.3,
-        borderColor: '#FF7400',
+        borderColor: '#343034',
         padding: 10,
         width: windowWidth,
     },

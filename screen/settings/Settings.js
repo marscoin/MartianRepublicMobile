@@ -1,3 +1,4 @@
+import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useContext, useState, useCallback, useEffect } from 'react';
 import { ScrollView, StyleSheet, Platform, Linking, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -30,23 +31,23 @@ const Settings = () => {
   const [userData, setUserData] = useState('');
 
   async function fetchUser() {
-    const token = await AsyncStorage.getItem('@auth_token');
-    response = await axios.post("https://martianrepublic.org/api/scitizen", {
+    const token = await getCivicToken();
+    const response = await axios.post("https://martianrepublic.org/api/scitizen", {
       }, {
       headers: {'Authorization': `Bearer ${token}`}
     })
-    console.log('USER DATA', response.data);
+
     setUserData(response.data)
   }
 
   async function deleteUser(id) {
-    console.log('DELETE USER id', id);
-    const token = await AsyncStorage.getItem('@auth_token');
-    response = await axios.post(`https://martianrepublic.org/api/user/delete/${id}`, {
+
+    const token = await getCivicToken();
+    const response = await axios.post(`https://martianrepublic.org/api/user/delete/${id}`, {
       }, {
       headers: {'Authorization': `Bearer ${token}`}
     })
-    console.log('DELETE USER RESPONSE', response);
+
   }
 
   useEffect(() => {
@@ -59,7 +60,7 @@ const Settings = () => {
 
   const deleteAllWallets = useCallback(async () => {
     await BlueApp.deleteAllWallets(); // Ensure this is awaited if asynchronous
-    console.log('All wallets have been deleted.');
+
     RNRestart.Restart(); 
   }, []);
 
@@ -82,7 +83,7 @@ const Settings = () => {
                 deleteAllWallets();
             })
             .catch(error => {
-                console.error('Error deleting user:', error);
+
                 alert('There was an error deleting the user. Please try again.');
             });
     } else {

@@ -1,1 +1,1 @@
-Thin Bitcoin Wallet Built with React Native and Electrum
+Your Marscoin wallet and civic identity for the Martian Republic.

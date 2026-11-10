@@ -1,3 +1,8 @@
+import BigNumber from 'bignumber.js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EXCHANGE_RATES_STORAGE_KEY } from '../../blue_modules/currency';
+import { Alert } from 'react-native';
+import { encodeMarsPaymentURI } from '../../blue_modules/mars-payment-uri';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   BackHandler,
@@ -42,16 +47,24 @@ import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/h
 import { fiatToBTC, satoshiToBTC } from '../../blue_modules/currency';
 
 import * as MARSConnection from "../../blue_modules/MARSConnection"
-import * as BlueElectrum from "../../blue_modules/BlueElectrum"
+
 
 const ReceiveDetails = () => {
   const { walletID, address } = useRoute().params;
-  console.log ('PARAMS RECEIVE DETAILS', walletID, address)
+
   const { wallets, saveToDisk, sleep, isElectrumDisabled, fetchAndSaveWalletTransactions } = useContext(BlueStorageContext);
   const wallet = wallets.find(w => w.getID() === walletID);
   const [customLabel, setCustomLabel] = useState();
+  const [marsRate, setMarsRate] = useState(null);
+  useEffect(() => {
+    AsyncStorage.getItem(EXCHANGE_RATES_STORAGE_KEY).then(value => {
+      const rate = Number(JSON.parse(value || '{}').MARS_USD);
+      if (Number.isFinite(rate) && rate > 0) setMarsRate(rate);
+    }).catch(() => {});
+  }, []);
   const [customAmount, setCustomAmount] = useState();
-  const [customUnit, setCustomUnit] = useState(BitcoinUnit.BTC);
+  const [customAmountAtomic, setCustomAmountAtomic] = useState();
+  const [customUnit, setCustomUnit] = useState(BitcoinUnit.MARS);
   const [bip21encoded, setBip21encoded] = useState();
   const [isCustom, setIsCustom] = useState(false);
   const [isCustomModalVisible, setIsCustomModalVisible] = useState(false);
@@ -132,7 +145,7 @@ const ReceiveDetails = () => {
 
   // re-fetching address balance periodically
   useEffect(() => {
-    console.log('receive/defails - useEffect');
+
 
     if (fetchAddressInterval.current) {
       // interval already exists, lets cleanup it and recreate, so theres no duplicate intervals
@@ -146,9 +159,8 @@ const ReceiveDetails = () => {
         const address2use = address || decoded.address;
         if (!address2use) return;
 
-        console.log('checking address', address2use, 'for balance...');
-        const balance = await BlueElectrum.getBalanceByAddress(address2use);
-        console.log('...got', balance);
+        const balance = await MARSConnection.getBalanceByAddress(address2use);
+
 
 
         if (balance.unconfirmed > 0) {
@@ -160,13 +172,13 @@ const ReceiveDetails = () => {
             triggerHapticFeedback(HapticFeedbackTypes.ImpactHeavy);
           }
 
-          const txs = await BlueElectrum.getMempoolTransactionsByAddress(address2use);
+          const txs = await MARSConnection.getMempoolTransactionsByAddress(address2use);
           const tx = txs.pop();
           if (tx) {
-            const rez = await BlueElectrum.multiGetTransactionByTxid([tx.tx_hash], 10, true);
+            const rez = await MARSConnection.multiGetTransactionByTxid([tx.tx_hash], 10, true);
             if (rez && rez[tx.tx_hash] && rez[tx.tx_hash].vsize) {
               const satPerVbyte = Math.round(tx.fee / rez[tx.tx_hash].vsize);
-              const fees = await BlueElectrum.estimateFees();
+              const fees = await MARSConnection.estimateFees();
               if (satPerVbyte >= fees.fast) {
                 setEta(loc.formatString(loc.transactions.eta_10m));
               }
@@ -218,7 +230,7 @@ const ReceiveDetails = () => {
           }
         }
       } catch (error) {
-        console.log(error);
+
       }
     }, intervalMs);
   }, [bip21encoded, address, initialConfirmed, initialUnconfirmed, intervalMs, fetchAndSaveWalletTransactions, walletID]);
@@ -318,6 +330,7 @@ const ReceiveDetails = () => {
               onPress={showCustomAmountModal}
             />
             <Button onPress={handleShareButtonPressed} title={loc.receive.details_share} />
+            <BlueButtonLink title="Enable payment alerts" onPress={() => Notifications.tryToObtainPermissions()} />
           </BlueCard>
         </View>
         {renderCustomAmountModal()}
@@ -326,7 +339,7 @@ const ReceiveDetails = () => {
   };
 
   const obtainWalletAddress = useCallback(async () => {
-    console.log('receive/details - componentDidMount');
+
     wallet.setUserHasSavedExport(true);
     await saveToDisk();
     
@@ -335,13 +348,12 @@ const ReceiveDetails = () => {
     if (wallet.civic) {
       // If the wallet is a Civic wallet, always use the civic address
       newAddress = wallet._address; // Assuming `_address` is the civic address
-      console.log('Civic wallet detected. Using Civic address:', newAddress);
+
     } else if (address) {
       // Use the provided address
       newAddress = address;
       setAddressBIP21Encoded(address);
-      await Notifications.tryToObtainPermissions();
-      Notifications.majorTomToGroundControl([address], [], []);
+        Notifications.majorTomToGroundControl([address], [], []);
     } else {
       // Default logic for non-Civic wallets
       if (wallet.chain === Chain.ONCHAIN) {
@@ -371,14 +383,13 @@ const ReceiveDetails = () => {
     }
   
     setAddressBIP21Encoded(newAddress);
-    await Notifications.tryToObtainPermissions();
     Notifications.majorTomToGroundControl([newAddress], [], []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
 
   const setAddressBIP21Encoded = addr => {
-    const newBip21encoded = DeeplinkSchemaMatch.bip21encode(addr);
+    const newBip21encoded = encodeMarsPaymentURI(addr);
     setParams({ address: addr });
     setBip21encoded(newBip21encoded);
     setShowAddress(true);
@@ -425,34 +436,32 @@ const ReceiveDetails = () => {
   };
 
   const createCustomAmountAddress = () => {
-    setIsCustom(true);
-    setIsCustomModalVisible(false);
-    let amount = customAmount;
-    switch (customUnit) {
-      case BitcoinUnit.MARS:
-        // Amount is already in MARS
-        break;
-      case BitcoinUnit.ZUBRINS:
+    try {
+      let amount = customAmount;
+      if (customUnit === BitcoinUnit.ZUBRINS) {
+        if (!/^\d+$/.test(String(customAmount))) throw new Error('Enter a whole number of zubrins.');
         amount = new BigNumber(customAmount).dividedBy(100000000).toFixed(8);
-        break;
-      case BitcoinUnit.LOCAL_CURRENCY:
+      } else if (customUnit === BitcoinUnit.LOCAL_CURRENCY) {
+        if (!Number.isFinite(Number(marsRate)) || Number(marsRate) <= 0) throw new Error('The exchange rate is unavailable. Enter the amount in MARS.');
         amount = new BigNumber(customAmount).dividedBy(marsRate).toFixed(8);
-        break;
-      default:
-        // Handle other units if necessary
-        break;
+      }
+      if (customAmountAtomic !== undefined) amount = new BigNumber(customAmountAtomic).dividedBy(100000000).toFixed(8);
+      const encoded = encodeMarsPaymentURI(address, { amount, label: customLabel });
+      setBip21encoded(encoded);
+      setIsCustom(true);
+      setIsCustomModalVisible(false);
+      setShowAddress(true);
+    } catch (error) {
+      Alert.alert('Payment request', error.message);
     }
-    setBip21encoded(DeeplinkSchemaMatch.bip21encode(address, { amount, label: customLabel }));
-    setShowAddress(true);
   };
-  
 
   const renderCustomAmountModal = () => {
     return (
       <BottomModal isVisible={isCustomModalVisible} onClose={dismissCustomAmountModal}>
         <KeyboardAvoidingView enabled={!Platform.isPad} behavior={Platform.OS === 'ios' ? 'position' : null}>
           <View style={[styles.modalContent, stylesHook.modalContent]}>
-            <AmountInput unit={customUnit} amount={customAmount || ''} onChangeText={setCustomAmount} onAmountUnitChange={setCustomUnit} />
+            <AmountInput unit={customUnit} amount={customAmount || ''} onChangeText={value => { setCustomAmount(value); setCustomAmountAtomic(undefined); }} onAmountUnitChange={(unit, atomic) => { setCustomUnit(unit); setCustomAmountAtomic(atomic); }} />
             <View style={[styles.customAmount, stylesHook.customAmount]}>
               <TextInput
                 onChangeText={setCustomLabel}

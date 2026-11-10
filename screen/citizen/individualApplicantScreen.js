@@ -1,3 +1,4 @@
+import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useContext ,useState, useRef, useReducer} from 'react';
 import { ScrollView, Platform,ActivityIndicator, Dimensions, Image, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -23,7 +24,7 @@ const IndividualApplicantScreen = () => {
     const { colors } = useTheme();
     const route = useRoute();
     const person = route.params.person;
-    console.log('PARAMS',person )
+
    
     const [userData, setUserData] = useState('');
     const [videoAvailable, setVideoAvailable] = useState(true);
@@ -33,7 +34,7 @@ const IndividualApplicantScreen = () => {
 
     const copyToClipboard = (text) => {
         Clipboard.setString(text);
-        console.log('copied to clipboard', text)
+
         Snackbar.show({
           text: `${text} copied to clipboard!`,
           duration: Snackbar.LENGTH_SHORT,
@@ -42,12 +43,12 @@ const IndividualApplicantScreen = () => {
     };
     
     async function fetchPersonDetails() {
-       const token = await AsyncStorage.getItem('@auth_token');
-        response = await axios.get(`https://martianrepublic.org/api/citizen/${person.citizen.public_address}`, {
+       const token = await getCivicToken();
+        const response = await axios.get(`https://martianrepublic.org/api/citizen/${person.citizen.public_address}`, {
         }, {
         headers: {'Authorization': `Bearer ${token}`}
       })
-        console.log('PERSONAL DATA', response.data);
+
         setUserData(response.data)
     }
 
@@ -119,7 +120,7 @@ const IndividualApplicantScreen = () => {
                         controls={true}
                         paused={isVideoPaused}
                         onError={(e) => {
-                            console.log("Video error:", e);
+
                             if (e.error.domain === "NSURLErrorDomain" && e.error.code === -1008) {
                             setVideoError(true); // Set video error state to true if the resource is unavailable
                             }

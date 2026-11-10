@@ -1,3 +1,4 @@
+import { hasUnfinishedSwaps } from '../../blue_modules/swap';
 import React, { useEffect, useState, useCallback, useContext, useRef, useMemo, useLayoutEffect } from 'react';
 import {
   View,
@@ -19,6 +20,7 @@ import {
 } from 'react-native';
 import { BlueCard, BlueLoading, BlueSpacing10, BlueSpacing20, BlueText, SecondButton } from '../../BlueComponents';
 import navigationStyle from '../../components/navigationStyle';
+import HeaderAction from '../../components/HeaderAction';
 import { LightningCustodianWallet } from '../../class/wallets/lightning-custodian-wallet';
 import Biometric from '../../class/biometrics';
 import {
@@ -112,18 +114,6 @@ const styles = StyleSheet.create({
   marginRight16: {
     marginRight: 16,
   },
-  save: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 80,
-    borderRadius: 8,
-    height: 34,
-  },
-  saveText: {
-    fontSize: 15,
-    fontWeight: '600',
-    fontFamily: 'Orbitron-Regular', 
-  },
 });
 
 const WalletDetails = (navigation) => {
@@ -176,12 +166,6 @@ const WalletDetails = (navigation) => {
 
       backgroundColor: colors.inputBackgroundColor,
     },
-    save: {
-      backgroundColor: colors.lightButton,
-    },
-    saveText: {
-      color: colors.buttonTextColor,
-    },
   });
   useEffect(() => {
     if (wallet.type === LightningLdkWallet.type) {
@@ -217,15 +201,13 @@ const WalletDetails = (navigation) => {
 
     setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          accessibilityRole="button"
+        <HeaderAction
+          title={loc.wallets.details_save}
+          color={colors.foregroundColor}
           testID="Save"
           disabled={isLoading}
-          style={[styles.save, stylesHook.save]}
           onPress={save}
-        >
-          <Text style={[styles.saveText, stylesHook.saveText]}>{loc.wallets.details_save}</Text>
-        </TouchableOpacity>
+        />
       ),
     });
   }, [isLoading, colors, walletName, useWithHardwareWallet, hideTransactionsInWalletsList, isBIP47Enabled]);
@@ -465,8 +447,13 @@ const WalletDetails = (navigation) => {
     await writeFileAndExport(`${wallet.label.replace(' ', '-')}-history.csv`, csvFile);
   };
 
-  const handleDeleteButtonTapped = () => {
+  const handleDeleteButtonTapped = async () => {
     triggerHapticFeedback(HapticFeedbackTypes.NotificationWarning);
+    // A swap in progress is claimed or refunded with keys from this wallet.
+    if (await hasUnfinishedSwaps(wallet.getID()).catch(() => false)) {
+      Alert.alert('Swap in progress', 'This wallet has a Bitcoin swap that has not finished. Wait until it completes or is refunded before deleting the wallet.');
+      return;
+    }
     Alert.alert(
       loc.wallets.details_delete_wallet,
       loc.wallets.details_are_you_sure,
@@ -731,7 +718,7 @@ const WalletDetails = (navigation) => {
 WalletDetails.navigationOptions = navigationStyle({}, opts => ({
   ...opts,
   headerTitle: loc.wallets.details_title,
-  statusBarStyle: 'auto',
+  statusBarStyle: 'light',
 }));
 
 export default WalletDetails;

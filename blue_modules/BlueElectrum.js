@@ -6,10 +6,10 @@ import loc from '../loc';
 import WidgetCommunication from './WidgetCommunication';
 import presentAlert from '../components/Alert';
 import { Marscoin } from './constants';
+import { assertMarsMainnet, defaultMarsElectrumPeer, selectMarsElectrumPeer } from './mars-electrum-peer';
 const bitcoin = require('bitcoinjs-lib');
 const ElectrumClient = require('electrum-client');
 const BigNumber = require('bignumber.js');
-const reverse = require('buffer-reverse');
 
 const net = require('net');
 const tls = require('tls');
@@ -50,30 +50,18 @@ async function _getRealm() {
 }
 
 const storageKey = 'ELECTRUM_PEERS';
-const defaultPeer = { host: 'electrum1.bluewallet.io', ssl: '443' };
-const hardcodedPeers = [
-  { host: 'mainnet.foundationdevices.com', ssl: '50002' },
-  { host: 'bitcoin.lukechilds.co', ssl: '50002' },
-  { host: 'electrum.jochen-hoenicke.de', ssl: '50006' },
-  { host: 'electrum1.bluewallet.io', ssl: '443' },
-  { host: 'electrum.acinq.co', ssl: '50002' },
-  { host: 'electrum.bitaroo.net', ssl: '50002' },
-];
-// const defaultPeer = { host: "164.90.138.207", ssl: "50002" };
-// const hardcodedPeers = [
-//   { host: "164.90.138.207", tcp: "50001" },
-//   { host: "164.90.138.207", ssl: "50002" },
-// ];
+const defaultPeer = defaultMarsElectrumPeer;
+const hardcodedPeers = [defaultMarsElectrumPeer];
 
 /** @type {ElectrumClient} */
 let mainClient;
-//console.log('MAIN CLIENT', mainClient)
+// console.log('MAIN CLIENT', mainClient)
 let mainConnected = false;
 let wasConnectedAtLeastOnce = false;
 let serverName = false;
 let disableBatching = false;
 let connectionAttempt = 0;
-let currentPeerIndex = Math.floor(Math.random() * hardcodedPeers.length);
+const currentPeerIndex = Math.floor(Math.random() * hardcodedPeers.length);
 
 let latestBlockheight = false;
 let latestBlockheightTimestamp = false;
@@ -104,11 +92,7 @@ async function connectMain() {
     console.log('Electrum connection disabled by user. Skipping connectMain call');
     return;
   }
-  let usingPeer = await getNextPeer();
-  const savedPeer = await getSavedPeer();
-  if (savedPeer && savedPeer.host && (savedPeer.tcp || savedPeer.ssl)) {
-    usingPeer = savedPeer;
-  }
+  const usingPeer = selectMarsElectrumPeer(await getSavedPeer());
 
   await DefaultPreference.setName('group.io.bluewallet.bluewallet');
   try {
@@ -147,11 +131,16 @@ async function connectMain() {
         setTimeout(connectMain, usingPeer.host.endsWith('.onion') ? 4000 : 500);
       }
     };
-    const ver = await mainClient.initElectrum({ client: 'bluewallet', version: '1.4' });
+    const ver = await mainClient.initElectrum({
+      client: 'martianrepublic',
+      version: '1.4',
+    });
+    assertMarsMainnet(await mainClient.server_features());
     if (ver && ver[0]) {
       console.log('BlueElectrum is connected to ', ver);
       serverName = ver[0];
       mainConnected = true;
+      connectionAttempt = 0;
       wasConnectedAtLeastOnce = true;
       if (ver[0].startsWith('ElectrumPersonalServer') || ver[0].startsWith('electrs') || ver[0].startsWith('Fulcrum')) {
         disableBatching = true;
@@ -190,7 +179,7 @@ async function connectMain() {
   if (!mainConnected) {
     console.log('retry');
     connectionAttempt = connectionAttempt + 1;
-    mainClient.close && mainClient.close();
+    mainClient?.close?.();
     if (connectionAttempt >= 5) {
       presentNetworkErrorAlert(usingPeer);
     } else {
@@ -219,7 +208,7 @@ async function presentNetworkErrorAlert(usingPeer) {
         text: loc.wallets.list_tryagain,
         onPress: () => {
           connectionAttempt = 0;
-          mainClient.close() && mainClient.close();
+          mainClient?.close?.();
           setTimeout(connectMain, 500);
         },
         style: 'default',
@@ -261,7 +250,7 @@ async function presentNetworkErrorAlert(usingPeer) {
             { cancelable: true },
           );
           connectionAttempt = 0;
-          mainClient.close() && mainClient.close();
+          mainClient?.close?.();
         },
         style: 'destructive',
       },
@@ -269,7 +258,7 @@ async function presentNetworkErrorAlert(usingPeer) {
         text: loc._.cancel,
         onPress: () => {
           connectionAttempt = 0;
-          mainClient.close() && mainClient.close();
+          mainClient?.close?.();
         },
         style: 'cancel',
       },
@@ -280,18 +269,6 @@ async function presentNetworkErrorAlert(usingPeer) {
 
 async function getCurrentPeer() {
   return hardcodedPeers[currentPeerIndex];
-}
-
-/**
- * Returns NEXT hardcoded electrum server (increments index after use)
- *
- * @returns {Promise<{tcp, host, ssl?}|*>}
- */
-async function getNextPeer() {
-  const peer = getCurrentPeer();
-  currentPeerIndex++;
-  if (currentPeerIndex + 1 >= hardcodedPeers.length) currentPeerIndex = 0;
-  return peer;
 }
 
 async function getSavedPeer() {
@@ -338,11 +315,11 @@ async function getRandomDynamicPeer() {
  */
 module.exports.getBalanceByAddress = async function (address) {
   if (!mainClient) throw new Error('Electrum client is not connected');
-  console.log('getBalanceByAddress STARTED!!!!')
-  //console.log('getBalanceByAddress bitcoin.address!!!!', bitcoin.address)
-  //const script = bitcoin.address.toOutputScript(address);
+  console.log('getBalanceByAddress STARTED!!!!');
+  // console.log('getBalanceByAddress bitcoin.address!!!!', bitcoin.address)
+  // const script = bitcoin.address.toOutputScript(address);
   const script = bitcoin.address.toOutputScript(address, Marscoin.mainnet);
-  //console.log('getBalanceByAddress script!!!!', script)
+  // console.log('getBalanceByAddress script!!!!', script)
   const hash = bitcoin.crypto.sha256(script);
   const reversedHash = Buffer.from(hash).reverse();
   const balance = await mainClient.blockchainScripthash_getBalance(reversedHash.toString('hex'));
@@ -373,7 +350,7 @@ module.exports.getSecondsSinceLastRequest = function () {
 module.exports.getTransactionsByAddress = async function (address) {
   if (!mainClient) throw new Error('Electrum client is not connected');
   const script = bitcoin.address.toOutputScript(address);
-  //const script = bitcoin.address.toOutputScript(address, Marscoin.mainnet);
+  // const script = bitcoin.address.toOutputScript(address, Marscoin.mainnet);
   const hash = bitcoin.crypto.sha256(script);
   const reversedHash = Buffer.from(hash).reverse();
   const history = await mainClient.blockchainScripthash_getHistory(reversedHash.toString('hex'));
@@ -508,7 +485,10 @@ module.exports.multiGetBalanceByAddress = async function (addresses, batchsize) 
       }
       const promiseResults = await Promise.all(promises);
       for (let resultIndex = 0; resultIndex < promiseResults.length; resultIndex++) {
-        balances.push({ result: promiseResults[resultIndex], param: index2scripthash[resultIndex] });
+        balances.push({
+          result: promiseResults[resultIndex],
+          param: index2scripthash[resultIndex],
+        });
       }
     } else {
       balances = await mainClient.blockchainScripthash_getBalanceBatch(scripthashes);
@@ -597,7 +577,10 @@ module.exports.multiGetHistoryByAddress = async function (addresses, batchsize) 
       }
       const histories = await Promise.all(promises);
       for (let historyIndex = 0; historyIndex < histories.length; historyIndex++) {
-        results.push({ result: histories[historyIndex], param: index2scripthash[historyIndex] });
+        results.push({
+          result: histories[historyIndex],
+          param: index2scripthash[historyIndex],
+        });
       }
     } else {
       results = await mainClient.blockchainScripthash_getHistoryBatch(scripthashes);
@@ -777,6 +760,7 @@ module.exports.waitTillConnected = async function () {
       if (wasConnectedAtLeastOnce && mainClient.status === 1) {
         clearInterval(waitTillConnectedInterval);
         mainConnected = true;
+        connectionAttempt = 0;
         return resolve(true);
       }
 
@@ -1018,7 +1002,7 @@ const semVerToInt = function (semver) {
 
 function txhexToElectrumTransaction(txhex) {
   const tx = bitcoin.Transaction.fromHex(txhex);
-  console.log('!!!! BLUE ELECTRUM txhexToElectrumTransaction')
+  console.log('!!!! BLUE ELECTRUM txhexToElectrumTransaction');
   const ret = {
     txid: tx.getId(),
     hash: tx.getId(),
