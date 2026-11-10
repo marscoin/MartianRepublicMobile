@@ -14,17 +14,17 @@ export const BlueDefaultTheme = {
   },
   colors: {
     ...DefaultTheme.colors,
-    brandingColor: 'black',
-    customHeader: 'black',
-    foregroundColor: 'white',////text
+    brandingColor: '#080A0C',
+    customHeader: '#080A0C',
+    foregroundColor: '#F5F1EB',////text
     borderTopColor: 'rgba(0, 0, 0, 0.1)',
     buttonBackgroundColor: '#FF7400',///orange
     buttonTextColor: 'white',
     buttonAlternativeTextColor: 'white',
-    buttonDisabledBackgroundColor: '#2F2D2B',////type of crypto
+    buttonDisabledBackgroundColor: '#1D2126',////type of crypto
     buttonDisabledTextColor: 'white',
-    inputBorderColor: 'white',
-    inputBackgroundColor: '#2F2D2B', //bg of text input
+    inputBorderColor: '#30353B',
+    inputBackgroundColor: '#14171B', //bg of text input
     alternativeTextColor: 'white',
     alternativeTextColor2: 'white',
     buttonBlueBackgroundColor: '#FF7400',///
@@ -41,25 +41,25 @@ export const BlueDefaultTheme = {
     hdbackgroundColor: '#FF7400',
     lnborderColor: 'white',///
     lnbackgroundColor: '#FFFAEF',////lightning text and border
-    background: 'black',
-    lightButton: '#2F2D2B', ////add wallet gray area in flatList
+    background: '#080A0C',
+    lightButton: '#14171B', ////add wallet gray area in flatList
     ballReceive: '#d2f8d6',///
     ballOutgoing: '#f8d2d2',///
-    lightBorder: 'white',////line between transactions
+    lightBorder: '#30353B',////line between transactions
     ballOutgoingExpired: '#EEF0F4',///
-    modal: 'black',
-    formBorder: 'white',///orange frame of Qr iand input
+    modal: '#101317',
+    formBorder: '#30353B',///orange frame of Qr iand input
     modalButton: '#FF7400',
     darkGray: 'red',///
-    scanLabel: '#9AA0AA',///
+    scanLabel: '#30353B',///
     feeText: 'white',
-    feeLabel: 'white',
+    feeLabel: '#1D2126',
     feeValue: '#37c0a1',
     feeActive: '#FF7400',
     labelText: 'white',
     cta2: '#062453',///
     outputValue: '#13244D',
-    elevated: 'black',
+    elevated: '#080A0C',
     mainColor: '#FF7400',
     success: 'white',
     successCheck: '#FF7400',
@@ -109,7 +109,7 @@ export const BlueDefaultTheme = {
     // formBorder: '#d2d2d2',
     // modalButton: '#ccddf9',
     // darkGray: '#9AA0AA',
-    // scanLabel: '#9AA0AA',
+    // scanLabel: '#30353B',
     // feeText: '#81868e',
     // feeLabel: '#d2f8d6',
     // feeValue: '#37c0a1',
@@ -150,20 +150,20 @@ export const BlueDarkTheme: Theme = {
   colors: {
     ...BlueDefaultTheme.colors,
     ...DarkTheme.colors,
-    brandingColor: 'black',
-    customHeader: 'black',
-    foregroundColor: 'white',////text
+    brandingColor: '#080A0C',
+    customHeader: '#080A0C',
+    foregroundColor: '#F5F1EB',////text
     borderTopColor: 'rgba(0, 0, 0, 0.1)',
-    buttonBackgroundColor: '#FF7400',///orange
+    buttonBackgroundColor: '#FF812D',///orange
     buttonTextColor: 'white',
     buttonAlternativeTextColor: 'white',
-    buttonDisabledBackgroundColor: '#2F2D2B',////type of crypto
+    buttonDisabledBackgroundColor: '#1D2126',////type of crypto
     buttonDisabledTextColor: 'white',
-    inputBorderColor: 'white',
-    inputBackgroundColor: '#2F2D2B', //bg of text input
+    inputBorderColor: '#30353B',
+    inputBackgroundColor: '#14171B', //bg of text input
     alternativeTextColor: 'white',
     alternativeTextColor2: 'white',
-    buttonBlueBackgroundColor: '#FF7400',///
+    buttonBlueBackgroundColor: '#FF812D',///
     incomingBackgroundColor: '#d2f8d6',///
     incomingForegroundColor: '#72A66D',//incoming transactions   #72A66D
     outgoingBackgroundColor: '#f8d2d2',//
@@ -177,25 +177,25 @@ export const BlueDarkTheme: Theme = {
     hdbackgroundColor: '#FF7400',
     lnborderColor: 'white',///
     lnbackgroundColor: '#FFFAEF',////lightning text and border
-    background: 'black',
-    lightButton: '#2F2D2B', ////add wallet gray area in flatList
+    background: '#080A0C',
+    lightButton: '#14171B', ////add wallet gray area in flatList
     ballReceive: '#d2f8d6',///
     ballOutgoing: '#f8d2d2',///
-    lightBorder: 'white',////line between transactions
+    lightBorder: '#30353B',////line between transactions
     ballOutgoingExpired: '#EEF0F4',///
-    modal: 'black',
-    formBorder: 'white',///orange frame of Qr iand input
-    modalButton: '#FF7400',
-    darkGray: 'red',///
-    scanLabel: '#9AA0AA',///
+    modal: '#101317',
+    formBorder: '#30353B',///orange frame of Qr iand input
+    modalButton: '#FF812D',
+    darkGray: '#8A9098',///
+    scanLabel: '#30353B',///
     feeText: 'white',
-    feeLabel: 'white',
+    feeLabel: '#1D2126',
     feeValue: '#37c0a1',
     feeActive: '#FF7400',
     labelText: 'white',
     cta2: '#062453',///
     outputValue: '#13244D',
-    elevated: 'black',
+    elevated: '#080A0C',
     mainColor: '#FF7400',
     success: 'white',
     successCheck: '#FF7400',
@@ -208,7 +208,7 @@ export const BlueDarkTheme: Theme = {
     changeText: 'white',
     receiveBackground: '#D1F9D6',
     receiveText: '#37C0A1',
-    navigationBarColor: 'black',
+    navigationBarColor: '#080A0C',
   },
 };
 

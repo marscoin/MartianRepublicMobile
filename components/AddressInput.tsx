@@ -58,7 +58,7 @@ const AddressInput = ({
       backgroundColor: colors.scanLabel,
     },
     scanText: {
-      color: colors.inverseForegroundColor,
+      color: colors.foregroundColor,
     },
   });
 

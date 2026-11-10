@@ -49,12 +49,13 @@ export function dialogBlocks(message) {
     });
 }
 
-// Buttons in the order they are drawn: the main action first, cancel last.
+// Buttons in the order they are drawn: actions in the order given, the first
+// one emphasised, cancel last.
 export function dialogButtons(buttons) {
   const list = Array.isArray(buttons) && buttons.length ? buttons : [{ text: 'OK' }];
   const cancel = list.filter(button => button.style === 'cancel');
   const others = list.filter(button => button.style !== 'cancel');
-  return [...others.reverse(), ...cancel].map((button, index) => ({
+  return [...others, ...cancel].map((button, index) => ({
     ...button,
     text: button.text || 'OK',
     kind: button.style === 'cancel' ? 'quiet' : button.style === 'destructive' ? 'danger' : index === 0 ? 'primary' : 'quiet',

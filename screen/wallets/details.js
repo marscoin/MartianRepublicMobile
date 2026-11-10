@@ -525,6 +525,7 @@ const WalletDetails = (navigation) => {
                   </Text>
                 </View>
                 <Switch
+                  style={m.toggle}
                   value={hideTransactionsInWalletsList}
                   onValueChange={setHideTransactionsInWalletsList}
                   trackColor={{ false: '#30353B', true: '#FF812D' }}
@@ -582,7 +583,7 @@ const WalletDetails = (navigation) => {
             <View style={m.panel}>
               <DetailAction
                 icon="shield"
-                title={loc.wallets.details_export_backup}
+                title="Back up this wallet"
                 note="Show the twelve words that restore this wallet."
                 onPress={navigateToWalletExport}
                 testID="WalletExport"
@@ -594,7 +595,7 @@ const WalletDetails = (navigation) => {
               {walletTransactionsLength > 0 && (
                 <DetailAction
                   icon="download"
-                  title={loc.wallets.details_export_history}
+                  title="Export history"
                   note="A spreadsheet of this wallet's transactions."
                   onPress={onExportHistoryPressed}
                 />
@@ -613,7 +614,7 @@ const WalletDetails = (navigation) => {
               {wallet.allowXpub() && (
                 <DetailAction
                   icon="eye"
-                  title={loc.wallets.details_show_xpub}
+                  title="Read-only key (XPUB)"
                   note="A read-only key: it can watch this wallet but not spend."
                   onPress={navigateToXPub}
                   testID="XPub"
@@ -656,8 +657,9 @@ function DetailAction({ icon, title, note, onPress, testID }) {
 
 const m = StyleSheet.create({
   screen: { backgroundColor: '#080A0C' },
-  content: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 48 },
+  content: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 150 },
   flex: { flex: 1 },
+  toggle: { marginLeft: 12, marginRight: 6 },
   hero: { backgroundColor: '#14171B', borderRadius: 18, borderWidth: 1, borderColor: '#30353B', padding: 20, marginBottom: 14 },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   tick: { width: 3, height: 13, backgroundColor: '#FF812D', marginRight: 9 },

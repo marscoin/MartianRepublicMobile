@@ -73,7 +73,7 @@ const PostCard = ({ item, onPress, onProfile, type }) => {
           {/* Header: name + handle + time */}
           <View style={styles.postHeader}>
             <Text style={styles.postName} numberOfLines={1}>
-              {item.displayname || item.fullname || 'Citizen'}
+              {item.displayname || item.fullname || item.author_name || item.author || 'Citizen'}
             </Text>
             {item.citizen === 1 && (
               <MaterialCommunityIcons name="check-decagram" size={14} color="#FF7400" style={{ marginLeft: 3 }} />
