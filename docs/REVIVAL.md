@@ -9,7 +9,7 @@ Updated 2026-10-09. First milestone: wallet and citizenship. Preserve Yanina's v
 - Ballot server: shuffle state per room, reset after each round; a round restarts if a voter leaves. Once three voters are ready it stays open 90 seconds for more (up to 12), so larger groups share one issuance. Restarted on the new code.
 - Tally: a vote counts only if it spends exactly one 0.1 MARS ballot from an issuance funded by at least three distinct citizens, was mined while voting was open, and does not count a citizen twice (`scripts/vote_validation.py`). Existing votes untouched.
 - Results: decided at the close of voting from quorum and tier threshold. `TEST_MODE` is off, so a sol is a day. Proposals 11 and 14, whose minute-long test windows had closed, are marked expired.
-- Chain tracker: it had been idle since 2026-06-03 after a lost database connection (last block 3,486,514). Fixed, and now a single systemd service (`track_blockchain`) replacing two hand-started processes. It is replaying about 112,000 blocks; civic records published since June appear as it catches up.
+- Chain tracker: it had been idle since 2026-06-03 after a lost database connection (last block 3,486,514). Fixed. It runs as the server's existing `blockanalyzer.service`; a second unit added that evening by mistake ran a duplicate tracker for about an hour and was removed. It is replaying about 112,000 blocks; civic records published since June appear as it catches up.
 - `pebas` (the site's chain-data service) was hung and was restarted. Its Electrum fallback still points at `147.182.177.23`, whose certificate has expired, so it may hang again.
 
 Later the same evening:
