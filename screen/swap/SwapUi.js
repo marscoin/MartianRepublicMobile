@@ -28,7 +28,7 @@ export function SwapWatcher() {
   const { wallets } = useContext(BlueStorageContext);
   useSwapWatcher(wallets);
   // Offers of Marscoin are answered from the same wallet.
-  useMakerRunner(useSwapWallet());
+  useMakerRunner(useSwapWallet(), wallets);
   // Mounted once near the root, so this also counts app starts.
   React.useEffect(() => {
     noteAppOpened();

@@ -194,6 +194,16 @@ export function createMarsSwapChain({ request, fetch, explorer = MARS_EXPLORER, 
       return status && typeof status === 'object' ? status : null;
     },
 
+    // The transaction that spent an output according to the separate full
+    // node: its ID, or null while unspent. Throws when that node does not know
+    // the funding transaction.
+    async explorerSpender(txid, vout) {
+      const tx = await explore(`/api/tx/${txid}`);
+      const output = Array.isArray(tx?.vout) ? tx.vout.find(item => item.n === vout) : null;
+      if (tx?.txid !== txid || !output) throw new Error('The Marscoin explorer returned an unexpected transaction.');
+      return typeof output.spentTxId === 'string' && /^[0-9a-f]{64}$/.test(output.spentTxId) ? output.spentTxId : null;
+    },
+
     // What a separate full node says about one output of a transaction.
     // Throws when that node does not know the transaction.
     async explorerOutput(txid, vout) {

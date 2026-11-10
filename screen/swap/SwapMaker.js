@@ -9,7 +9,8 @@ import { SectionHeading, SmallAction, WorkspaceField, WorkspaceNotice, Workspace
 import { Row, Steps, swapStyles, useSwapWallet } from './SwapUi';
 
 const COIN = 100000000;
-const coins = value => formatCoins(value).replace(/\.?0+$/, '');
+// Plain digits for editing: no grouping.
+const coins = value => formatCoins(value).replace(/,/g, '');
 
 // The settings as the text the user edits.
 const toForm = config => ({
@@ -212,7 +213,7 @@ export default function SwapMaker() {
         value={form.floorSatsPerMars}
         onChangeText={edit('floorSatsPerMars')}
         keyboardType="decimal-pad"
-        hint="Optional. Protects you if the price feed is wrong."
+        hint="A hard limit that protects you if the price feed is wrong. Left empty, it is set to four fifths of the market price when you switch on."
       />
       {dirty ? (
         <CivicButton title={busy ? 'Saving…' : 'Save terms'} disabled={busy} onPress={() => apply(config.enabled)} testID="MakerSave" />

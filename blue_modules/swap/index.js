@@ -375,10 +375,18 @@ async function fetchJson(url) {
   }
 }
 
+// Bounds outside which a feed is taken to be wrong rather than believed.
+const PLAUSIBLE_BTC_USD = [5000, 5000000];
+const PLAUSIBLE_MARS_USD = [0.0005, 50];
+const within = (value, [low, high]) => Number.isFinite(value) && value >= low && value <= high;
+
 async function fetchMarket() {
   const [mars, btcPrices] = await Promise.all([fetchJson(PRICE_FEED), fetchJson(BTC_PRICE_FEED)]);
   const marsUsd = Object.values(mars?.data || {})[0]?.quote?.USD?.price;
-  return { marsUsd, market: marketRate({ marsUsd, btcUsd: btcPrices?.USD }) };
+  const btcUsd = btcPrices?.USD;
+  if (!within(marsUsd, PLAUSIBLE_MARS_USD) || !within(btcUsd, PLAUSIBLE_BTC_USD))
+    throw new Error('The market price looks wrong. No offers were posted.');
+  return { marsUsd, market: marketRate({ marsUsd, btcUsd }) };
 }
 
 const setMakerStatus = patch => {
@@ -400,7 +408,14 @@ async function refreshOffers(wallet) {
   const competingRates = book
     .filter(offer => offer && !mine.has(offer.offer_id) && offer.mars_amount_sat > 0 && offer.btc_amount_sat > 0)
     .map(offer => offer.btc_amount_sat / offer.mars_amount_sat);
+  // The price feeds are single sources. If other sellers are on the market
+  // and ours would undercut the cheapest of them by half, the feed is not believed.
+  if (competingRates.length && market * (1 + makerConfig.feePercent / 100) < Math.min(...competingRates) / 2) {
+    throw new Error('The market price looks wrong next to other offers. No offers were posted.');
+  }
   const plan = planOffers({ ...position, market, competingRates, config: makerConfig });
+  // Switched off, or the app left the foreground, while the prices were being read.
+  if (!makerConfig.enabled || AppState.currentState !== 'active') return;
   const posted = await engine.post(plan, { lifetime: OFFER_SECONDS, btcDestination: receiveAddress });
   setMakerStatus({
     market,
@@ -416,17 +431,22 @@ async function refreshOffers(wallet) {
 
 let makerRunningSince = 0;
 let lastRefresh = 0;
-// One pass: move every maker swap along, then renew the offers when due.
-export async function runMaker(wallet, { force = false } = {}) {
-  if (!wallet || typeof wallet._getSeed !== 'function') return;
+const hasSeed = wallet => wallet && typeof wallet._getSeed === 'function';
+// One pass: move every maker swap of every wallet along, then renew the
+// offers of the offering wallet when due.
+export async function runMaker(wallet, { force = false, wallets = [] } = {}) {
   if (makerRunningSince && Date.now() - makerRunningSince < STALE_PASS) return;
   const started = Date.now();
   makerRunningSince = started;
   try {
-    await loadMaker();
-    const { engine } = getMakerServices(wallet);
-    if ((await engine.all()).length) await engine.tick().catch(() => {});
-    if (makerConfig.enabled && (force || Date.now() - lastRefresh >= REFRESH_SECONDS * 1000)) {
+    const all = [...(await loadMaker()).values()];
+    for (const owner of new Set([wallet, ...wallets].filter(hasSeed))) {
+      if (!all.some(record => record.walletId === owner.getID())) continue;
+      await getMakerServices(owner)
+        .engine.tick()
+        .catch(() => {});
+    }
+    if (hasSeed(wallet) && makerConfig.enabled && (force || Date.now() - lastRefresh >= REFRESH_SECONDS * 1000)) {
       lastRefresh = Date.now();
       await refreshOffers(wallet).catch(error =>
         setMakerStatus({ message: error?.message || 'Offers could not be refreshed. Trying again shortly.' }),
@@ -455,7 +475,14 @@ export async function withdrawOffers(wallet) {
 
 export async function saveMakerConfig(wallet, next) {
   await loadMaker();
-  makerConfig = normalizeMakerConfig(next);
+  const wanted = normalizeMakerConfig(next);
+  if (wanted.enabled && !wanted.floorSatsPerMars) {
+    // A hard lower limit from the start: four fifths of today's market price.
+    // Without one, a wrong price feed could sell at any price.
+    const { market } = await fetchMarket();
+    wanted.floorSatsPerMars = Math.max(1, Math.round(market * 100000000 * 0.8 * 10) / 10);
+  }
+  makerConfig = wanted;
   await AsyncStorage.setItem(MAKER_CONFIG_KEY, JSON.stringify(makerConfig));
   publishMaker();
   if (makerConfig.enabled) await runMaker(wallet, { force: true });
@@ -464,16 +491,16 @@ export async function saveMakerConfig(wallet, next) {
 }
 
 // Keeps the maker going while the app is open. Mount once, near the root.
-export function useMakerRunner(wallet) {
-  const current = useRef(wallet);
-  current.current = wallet;
+export function useMakerRunner(wallet, wallets) {
+  const current = useRef({ wallet, wallets });
+  current.current = { wallet, wallets };
   useEffect(() => {
-    const run = () => runMaker(current.current);
+    const run = () => runMaker(current.current.wallet, { wallets: current.current.wallets });
     run();
     const timer = setInterval(run, TICK_SECONDS * 1000);
     const subscription = AppState.addEventListener('change', state => {
       if (state === 'active') run();
-      else if (state === 'background') withdrawOffers(current.current);
+      else if (state === 'background') withdrawOffers(current.current.wallet);
     });
     return () => {
       clearInterval(timer);

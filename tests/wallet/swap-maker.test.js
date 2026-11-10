@@ -21,7 +21,7 @@ function world({ coins = [900 * COIN] } = {}) {
     time: 1794000000000,
     marsHeight: 3598300,
     btcHeight: 975000,
-    feeRate: 4,
+    feeRate: 2,
     offers: new Map(),
     acceptances: new Map(),
     cancels: [],
@@ -33,6 +33,9 @@ function world({ coins = [900 * COIN] } = {}) {
     btcTxs: new Map(), // txid -> { tx, height }
     btcBroadcasts: [],
     btcSecondSourceLag: false,
+    btcSecondSourceSeesSpend: false,
+    btcDown: false,
+    saveFails: 0,
     saved: [],
     counter: 0,
   };
@@ -40,6 +43,10 @@ function world({ coins = [900 * COIN] } = {}) {
   const store = {
     all: async () => [...records.values()],
     save: async record => {
+      if (state.saveFails > 0) {
+        state.saveFails--;
+        throw new Error('storage full');
+      }
       records.set(record.id, record);
       state.saved.push(JSON.parse(JSON.stringify(record)));
     },
@@ -97,6 +104,11 @@ function world({ coins = [900 * COIN] } = {}) {
       if (!state.marsTxs.has(id(tx))) state.marsTxs.set(id(tx), { tx, height: 0 });
       return id(tx);
     }),
+    explorerSpender: async (txid, vout) => {
+      if (!state.marsTxs.has(txid)) throw new Error('unknown');
+      const spender = spentOn(state.marsTxs, txid, vout);
+      return spender ? id(spender.tx) : null;
+    },
     explorerOutput: async (txid, vout) => {
       const found = state.marsTxs.get(txid);
       if (!found) throw new Error('unknown');
@@ -106,7 +118,9 @@ function world({ coins = [900 * COIN] } = {}) {
 
   const btc = {
     agreedTipHeight: async () => state.btcHeight,
+    tipHeight: async () => state.btcHeight,
     feeRate: async () => state.feeRate,
+    unspentEverywhere: async (txid, vout) => !state.btcSecondSourceSeesSpend && !spentOn(state.btcTxs, txid, vout),
     transactions: async address =>
       [...state.btcTxs.values()]
         .filter(({ tx }) => tx.outs.some(out => out.script.equals(bitcoin.address.toOutputScript(address, BTC_NETWORK))))
@@ -118,6 +132,7 @@ function world({ coins = [900 * COIN] } = {}) {
       return spender ? { spent: true, txid: id(spender.tx), confirmed: spender.height > 0 } : { spent: false };
     },
     broadcast: jest.fn(async hex => {
+      if (state.btcDown) throw new Error('Bitcoin network services are unreachable.');
       const tx = bitcoin.Transaction.fromHex(hex);
       state.btcBroadcasts.push(hex);
       const [txid, vout] = outpoint(tx.ins[0]).split(':');
@@ -241,11 +256,14 @@ describe('offers', () => {
     expect(state.offers.size).toBe(0);
   });
 
-  it('forgets an offer the relay did not take', async () => {
-    const { post, chain, store } = world();
-    chain.postOffer.mockRejectedValueOnce(new Error('offline'));
+  it('keeps the record of an offer whose posting failed, in case the relay stored it', async () => {
+    const { post, chain, store, engine, state } = world();
+    chain.postOffer.mockRejectedValueOnce(new Error('timeout'));
     expect(await post()).toEqual([]);
-    expect(await store.all()).toEqual([]);
+    expect(await store.all()).toHaveLength(1);
+    state.time += 961 * 1000;
+    await engine.tick();
+    expect(await store.all()).toHaveLength(0);
   });
 
   it('withdraws untaken offers and leaves a taken one alone', async () => {
@@ -357,9 +375,11 @@ describe('a completed sale', () => {
     const claim = bitcoin.Transaction.fromHex(state.btcBroadcasts[0]);
     expect(spendsOutpoint(state.btcBroadcasts[0], payment.getId(), 0)).toBe(true);
     expect(bitcoin.address.fromOutputScript(claim.outs[0].script, BTC_NETWORK)).toBe(BTC_DESTINATION);
-    expect(claim.outs[0].value).toBe(9000 - 4 * 2 * 150);
-    // Saved before the secret left the phone.
-    expect(state.saved.find(item => item.state === MakerState.CLAIMING).btcClaims[0].hex).toBe(state.btcBroadcasts[0]);
+    expect(claim.outs[0].value).toBe(9000 - 2 * 2 * 150);
+    // Saved before the secret left the phone, and without the secret in it.
+    const savedClaim = state.saved.find(item => item.state === MakerState.CLAIMING);
+    expect(savedClaim.btcClaims).toEqual([{ txid: claim.getId(), fee: 600 }]);
+    expect(JSON.stringify(state.saved)).not.toContain(extractPreimage(state.btcBroadcasts[0], contracts.hash160).toString('hex'));
 
     // The taker reads the secret from our claim and collects the Marscoin.
     const secret = extractPreimage(state.btcBroadcasts[0], contracts.hash160);
@@ -584,7 +604,7 @@ describe('interruptions', () => {
     w.state.feeRate = 10;
     await w.engine.tick();
     const fees = (await w.one()).btcClaims.map(claim => claim.fee);
-    expect(fees).toEqual([1200, 3000]);
+    expect(fees).toEqual([600, 3000]);
     w.mineBtc(1);
     await w.engine.tick();
     expect((await w.one()).state).toBe(MakerState.COMPLETED);
@@ -603,6 +623,7 @@ describe('interruptions', () => {
     // Our claim never confirms; the buyer's refund does.
     const contracts = makerContracts(now);
     w.state.btcTxs.delete(now.btcClaims[0].txid);
+    const revealed = w.state.btcBroadcasts[0];
     const back = buildRefundTx({
       script: contracts.btc,
       txid: payment.getId(),
@@ -624,7 +645,7 @@ describe('interruptions', () => {
       vout: 0,
       value: 100 * COIN,
       fee: MARS_SPEND_FEE,
-      preimage: extractPreimage(now.btcClaims[0].hex, contracts.hash160),
+      preimage: extractPreimage(revealed, contracts.hash160),
       privkey: takerKey,
       destination: TAKER_MARS,
       network: MARS_NETWORK,
@@ -634,6 +655,124 @@ describe('interruptions', () => {
     await w.engine.tick();
     now = await w.one();
     expect(now.state).toBe(MakerState.LOST);
+  });
+});
+
+describe('hostile or failing services', () => {
+  const locked = async () => {
+    const w = world();
+    const [record] = await w.post();
+    w.accept(record);
+    await w.engine.tick();
+    return w;
+  };
+
+  it('does not collect when one service says the payment is already spent', async () => {
+    const w = await locked();
+    w.payBtc(await w.one());
+    w.mineBtc(2);
+    w.state.btcSecondSourceSeesSpend = true;
+    await w.engine.tick();
+    expect(w.state.btcBroadcasts).toEqual([]);
+    expect((await w.one()).state).toBe(MakerState.MARS_LOCKED);
+  });
+
+  it('caps the claim fee at a quarter of the payment however high a service says fees are', async () => {
+    const w = await locked();
+    w.payBtc(await w.one());
+    w.mineBtc(2);
+    w.state.feeRate = 500;
+    await w.engine.tick();
+    const claim = bitcoin.Transaction.fromHex(w.state.btcBroadcasts[0]);
+    expect(claim.outs[0].value).toBe(9000 - 2250);
+  });
+
+  it('keeps the secret when a claim that never went out is resumed too late', async () => {
+    const w = await locked();
+    w.payBtc(await w.one());
+    w.mineBtc(2);
+    w.state.btcDown = true;
+    await w.engine.tick();
+    let now = await w.one();
+    expect(now.state).toBe(MakerState.CLAIMING);
+    expect(now.claimSeen).toBe(false);
+    expect(w.state.btcBroadcasts).toEqual([]);
+    // The phone is away until two blocks before the buyer's refund opens.
+    w.mineBtc(20);
+    w.state.btcDown = false;
+    await w.engine.tick();
+    now = await w.one();
+    expect(w.state.btcBroadcasts).toEqual([]);
+    expect(now.note).toContain('could not be collected in time');
+    // The Marscoin comes back at its own timelock.
+    w.mineMars(234);
+    await w.engine.tick();
+    expect((await w.one()).state).toBe(MakerState.REFUNDING);
+    w.mineMars(1);
+    await w.engine.tick();
+    expect((await w.one()).state).toBe(MakerState.REFUNDED);
+    expect(w.state.btcBroadcasts).toEqual([]);
+  });
+
+  it('keeps sending a claim that is already public, even late', async () => {
+    const w = await locked();
+    w.payBtc(await w.one());
+    w.mineBtc(2);
+    await w.engine.tick();
+    expect((await w.one()).claimSeen).toBe(true);
+    w.state.btcTxs.delete((await w.one()).btcClaims[0].txid); // dropped from the mempool
+    w.mineBtc(20);
+    await w.engine.tick();
+    expect(w.state.btcBroadcasts).toHaveLength(2);
+  });
+
+  it('refunds on the Marscoin chain even when Bitcoin services are down', async () => {
+    const w = await locked();
+    w.btc.tipHeight = async () => {
+      throw new Error('down');
+    };
+    w.mineMars(234);
+    await w.engine.tick();
+    expect((await w.one()).state).toBe(MakerState.REFUNDING);
+  });
+
+  it('does not call its own unconfirmed refund a sale', async () => {
+    const w = await locked();
+    w.mineMars(234);
+    await w.engine.tick();
+    await w.engine.tick();
+    await w.engine.tick();
+    expect((await w.one()).state).toBe(MakerState.REFUNDING);
+    w.mineMars(1);
+    await w.engine.tick();
+    expect((await w.one()).state).toBe(MakerState.REFUNDED);
+  });
+
+  it('does not report a buyer when the phone was away during their window', async () => {
+    const w = await locked();
+    w.state.time += 3 * 3600 * 1000;
+    await w.engine.tick();
+    expect((await w.one()).away).toBe(true);
+    w.mineMars(234);
+    await w.engine.tick();
+    expect((await w.one()).state).toBe(MakerState.REFUNDING);
+    expect(w.state.reports).toEqual([]);
+  });
+
+  it('sends nothing when a step could not be saved', async () => {
+    const w = world();
+    const [record] = await w.post();
+    w.accept(record);
+    await w.engine.tick(); // accepted and locked
+    w.payBtc(await w.one());
+    w.mineBtc(2);
+    w.state.saveFails = 1;
+    await w.engine.tick();
+    expect(w.state.btcBroadcasts).toEqual([]);
+    expect((await w.one()).state).toBe(MakerState.MARS_LOCKED);
+    expect((await w.one()).btcClaims).toEqual([]);
+    await w.engine.tick();
+    expect(w.state.btcBroadcasts).toHaveLength(1);
   });
 });
 

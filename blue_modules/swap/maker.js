@@ -49,7 +49,7 @@ export const MakerState = {
   REFUNDING: 'refunding', // taking the Marscoin back after the timelock
   REFUNDED: 'refunded',
   DECLINED: 'declined', // an acceptance we refused; nothing was locked
-  LOST: 'lost', // the taker recovered the Bitcoin after we revealed the secret
+  LOST: 'lost', // the secret was revealed, the Marscoin collected, and our Bitcoin claim overtaken
 };
 
 const FINISHED = [MakerState.COMPLETED, MakerState.REFUNDED, MakerState.DECLINED, MakerState.LOST];
@@ -62,6 +62,12 @@ const MARS_FEE_PER_BYTE = 1000;
 // The Bitcoin claim pays above the going rate: it races the taker's refund.
 const CLAIM_FEE_MULTIPLE = 2;
 const CLAIM_BUMP = 1.5;
+// The claim never pays more than this share of the payment in fees.
+const MAX_CLAIM_FEE_SHARE = 0.25;
+// Offers are posted only while collecting would cost at most this share.
+const MAX_OFFER_FEE_SHARE = 0.1;
+// Longer than this between checks and we were not watching.
+const AWAY_SECONDS = 30 * 60;
 const PREIMAGE_TAG = Buffer.from('martian-republic/swap-secret/v1');
 
 const buffer = value => Buffer.from(value, 'hex');
@@ -133,9 +139,18 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
   // `random` may be asynchronous (the platform's secure generator is).
   const hardened = async () => (await random(4)).readUInt32BE(0) >>> 1; // eslint-disable-line no-bitwise
 
+  // What is in memory never runs ahead of what is stored: a step that could
+  // not be saved did not happen.
   async function save(record, patch) {
+    const before = { ...record };
     Object.assign(record, patch, { updatedAt: seconds() });
-    await store.save(record);
+    try {
+      await store.save(record);
+    } catch (error) {
+      for (const key of Object.keys(record)) delete record[key];
+      Object.assign(record, before);
+      throw error;
+    }
     return record;
   }
 
@@ -177,12 +192,13 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
   // Publish offers: [{ marsAmount, btcAmount }]. Returns the records created.
   async function post(plan, { lifetime, btcDestination }) {
     bitcoin.address.toOutputScript(btcDestination, BTC_NETWORK);
-    const [marsHeight, feeRate] = await Promise.all([chain.agreedTipHeight(), btc.feeRate()]);
+    const [marsHeight, feeRate] = await Promise.all([chain.agreedTipHeight(), btc.feeRate({ highest: true })]);
     const created = [];
     for (const { marsAmount, btcAmount } of plan) {
       if (!Number.isSafeInteger(marsAmount) || !Number.isSafeInteger(btcAmount) || marsAmount <= MARS_SPEND_FEE + DUST) continue;
       // An offer we could not afford to collect on is not worth making.
       if (btcFeeProblem({ btcAmount, feeRate: feeRate * CLAIM_FEE_MULTIPLE })) continue;
+      if (feeRate * CLAIM_FEE_MULTIPLE * BTC_SPEND_VBYTES > btcAmount * MAX_OFFER_FEE_SHARE) continue;
       const keyPath = [await hardened(), await hardened()];
       const privateKey = keyFor(keyPath);
       const record = {
@@ -207,8 +223,11 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
         marsFunding: null,
         btcFunding: null,
         btcClaims: [],
+        claimSeen: false,
         marsRefund: null,
         reported: false,
+        away: false,
+        checkedAt: 0,
       };
       // Durable before it is public: an acceptance must always find its record.
       await store.save(record);
@@ -230,7 +249,8 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
         });
         created.push(record);
       } catch {
-        await store.remove(record.id);
+        // The relay may have stored it all the same. The record stays until
+        // the offer would have expired, so an acceptance still finds it.
       }
     }
     return created;
@@ -325,7 +345,9 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
 
   // The taker's payment: an unspent output of the contract we computed,
   // holding at least the agreed amount. Amounts come from the raw transaction,
-  // which must hash to its ID; the block comes from every service that answers.
+  // which must hash to its ID. Its block, and that it is unspent, must be
+  // confirmed by every Bitcoin service: one alone could otherwise describe a
+  // payment that was never broadcast and so draw the secret out of us.
   async function findBtcPayment(record, contracts, btcHeight) {
     let best = null;
     for (const tx of await btc.transactions(record.btcHtlcAddress)) {
@@ -339,8 +361,9 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
         if (output.value < record.btcAmount) continue;
         const height = await btc.confirmedHeight(output.txid).catch(() => 0);
         const confirmations = height > 0 ? Math.max(0, btcHeight - height + 1) : 0;
-        const spent = (await btc.outspend(output.txid, output.vout)).spent;
-        if (spent) continue;
+        const unspent = await btc.unspentEverywhere(output.txid, output.vout).catch(() => false);
+        // An unconfirmed payment is worth reporting; a confirmed one counts only while unspent.
+        if (confirmations > 0 && !unspent) continue;
         if (!best || confirmations > best.confirmations)
           best = { txid: output.txid, vout: output.vout, value: output.value, confirmations };
       }
@@ -348,6 +371,16 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
     return best;
   }
 
+  // What to pay for the claim. It races the buyer's refund, so the highest
+  // rate any service reports is doubled; a service cannot talk it down. It is
+  // capped at a share of the payment, so a service cannot burn it either.
+  async function claimFee(value) {
+    const feeRate = await btc.feeRate({ highest: true });
+    return Math.min(Math.ceil(feeRate * CLAIM_FEE_MULTIPLE * BTC_SPEND_VBYTES), Math.floor(value * MAX_CLAIM_FEE_SHARE), value - DUST);
+  }
+
+  // Deterministic: the same payment and fee always give the same transaction,
+  // so only the fee is stored and the secret never sits in storage.
   function claimFor(record, contracts, payment, fee) {
     const privateKey = keyOf(record);
     const tx = buildClaimTx({
@@ -363,40 +396,46 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
     });
     return { txid: tx.getId(), hex: tx.toHex(), fee };
   }
+  const stored = claim => ({ txid: claim.txid, fee: claim.fee });
 
   async function marsLocked(record) {
     const contracts = makerContracts(record);
-    const [marsHeight, btcHeight] = await Promise.all([chain.agreedTipHeight(), btc.agreedTipHeight()]);
+    // The refund depends on the Marscoin chain alone; an unreachable Bitcoin
+    // service must never hold it up.
+    const marsHeight = await chain.agreedTipHeight();
     if (marsHeight >= record.marsLocktime) return refund(record, contracts);
+    // Whether we were present for the buyer's whole payment window. If not,
+    // a buyer who gave up is not at fault.
+    const gap = seconds() - (record.checkedAt || record.lockedAt || seconds());
+    const away = record.away || gap > AWAY_SECONDS;
+    // Judged from the highest tip any service reports: time may only run short.
+    const btcHeight = await btc.tipHeight();
     const payment = await findBtcPayment(record, contracts, btcHeight);
-    if (!payment) return save(record, { error: null, note: 'Marscoin locked. Waiting for the buyer to pay Bitcoin.' });
+    const seen = { checkedAt: seconds(), away, error: null };
+    if (!payment) return save(record, { ...seen, note: 'Marscoin locked. Waiting for the buyer to pay Bitcoin.' });
     if (payment.confirmations < MAKER_BTC_CONFIRMATIONS) {
       return save(record, {
+        ...seen,
         btcSeen: true,
-        error: null,
         note: `Bitcoin payment seen. Waiting for confirmation (${payment.confirmations} of ${MAKER_BTC_CONFIRMATIONS}).`,
       });
     }
     if (makerClaimProblem({ btcHeight, btcLocktime: record.btcLocktime })) {
       // Revealing the secret now could lose both coins. Let the swap unwind:
       // the buyer takes back the Bitcoin, we take back the Marscoin.
-      return save(record, {
-        btcSeen: true,
-        error: null,
-        note: 'The Bitcoin arrived too late to collect safely. Your Marscoin will return.',
-      });
+      return save(record, { ...seen, btcSeen: true, note: 'The Bitcoin arrived too late to collect safely. Your Marscoin will return.' });
     }
-    const feeRate = await btc.feeRate();
-    const fee = Math.min(Math.ceil(feeRate * CLAIM_FEE_MULTIPLE * BTC_SPEND_VBYTES), payment.value - DUST);
-    if (fee <= 0) return save(record, { error: 'The Bitcoin payment is too small to collect.' });
+    const fee = await claimFee(payment.value);
+    if (fee <= 0) return save(record, { ...seen, error: 'The Bitcoin payment is too small to collect.' });
     const claim = claimFor(record, contracts, payment, fee);
     // Saved before the secret leaves the phone.
     await save(record, {
+      ...seen,
       btcFunding: { txid: payment.txid, vout: payment.vout, value: payment.value },
-      btcClaims: [claim],
+      btcClaims: [stored(claim)],
+      claimSeen: false,
       btcSeen: true,
       state: MakerState.CLAIMING,
-      error: null,
       note: null,
     });
     return claiming(record);
@@ -405,41 +444,55 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
   async function claiming(record) {
     const contracts = makerContracts(record);
     const { btcFunding } = record;
+    const ours = txid => record.btcClaims.some(claim => claim.txid === txid);
     const outspend = await btc.outspend(btcFunding.txid, btcFunding.vout);
     if (outspend.spent) {
-      const ours = record.btcClaims.some(claim => claim.txid === outspend.txid);
-      if (ours && outspend.confirmed) return save(record, { state: MakerState.COMPLETED, completedAt: seconds(), error: null, note: null });
-      if (!ours && outspend.confirmed) {
+      // Believed only when every service shows that transaction in a block.
+      const settled = (await btc.confirmedHeight(outspend.txid).catch(() => 0)) > 0;
+      if (ours(outspend.txid)) {
+        if (settled) return save(record, { state: MakerState.COMPLETED, completedAt: seconds(), claimSeen: true, error: null, note: null });
+        if (!record.claimSeen) await save(record, { claimSeen: true });
+      } else if (settled) {
         // The buyer's refund confirmed first. The secret is public, so the
         // Marscoin may be collected too; take it back the moment that is allowed.
-        const marsHeight = await chain.agreedTipHeight();
-        if (marsHeight >= record.marsLocktime) return refund(record, contracts, MakerState.LOST);
-        return save(record, { error: 'The buyer took the Bitcoin back before your claim confirmed.' });
+        if ((await chain.agreedTipHeight()) >= record.marsLocktime) return refund(record, contracts);
+        return save(record, { claimSeen: true, error: 'The buyer took the Bitcoin back before your claim confirmed.' });
       }
     }
-    // Still unconfirmed: send it again, paying more if fees have risen.
+    if (!record.claimSeen) {
+      // No service has seen our claim, so the secret is still ours. Past the
+      // safe margin it must stay that way: the swap unwinds instead.
+      const btcHeight = await btc.tipHeight();
+      if (makerClaimProblem({ btcHeight, btcLocktime: record.btcLocktime })) {
+        if ((await chain.agreedTipHeight()) >= record.marsLocktime) return refund(record, contracts);
+        return save(record, { error: null, note: 'The Bitcoin could not be collected in time. Your Marscoin will return.' });
+      }
+    }
+    // Send it again, paying more if fees have risen.
     const latest = record.btcClaims[record.btcClaims.length - 1];
-    const feeRate = await btc.feeRate().catch(() => 0);
-    const wanted = Math.min(Math.ceil(feeRate * CLAIM_FEE_MULTIPLE * BTC_SPEND_VBYTES), btcFunding.value - DUST);
-    let claim = latest;
+    const wanted = await claimFee(btcFunding.value).catch(() => 0);
+    let fee = latest.fee;
     if (wanted > latest.fee * CLAIM_BUMP) {
-      claim = claimFor(record, contracts, btcFunding, wanted);
-      await save(record, { btcClaims: [...record.btcClaims, claim] });
+      fee = wanted;
+      await save(record, { btcClaims: [...record.btcClaims, stored(claimFor(record, contracts, btcFunding, fee))] });
     }
     let sent = true;
     try {
-      await btc.broadcast(claim.hex);
+      await btc.broadcast(claimFor(record, contracts, btcFunding, fee).hex);
     } catch {
       sent = false;
     }
-    return save(record, { error: sent ? null : 'Collecting Bitcoin. The transaction will be sent again shortly.' });
+    return save(record, {
+      claimSeen: record.claimSeen || sent,
+      error: sent ? null : 'Collecting Bitcoin. The transaction will be sent again shortly.',
+    });
   }
 
-  // Take the Marscoin back after the timelock. `whenGone` is the state to
-  // settle in if the Marscoin turns out to have been collected by the buyer.
-  async function refund(record, contracts, whenGone = MakerState.REFUNDED) {
-    if (!record.reported && !record.btcSeen) {
-      // The buyer accepted and never paid. Tell the relay, once.
+  // Take the Marscoin back after the timelock. Nothing here is final until a
+  // second node shows what became of the locked Marscoin.
+  async function refund(record, contracts) {
+    if (!record.reported && !record.btcSeen && !record.away) {
+      // The buyer accepted and never paid, though we were here. Tell the relay, once.
       await chain.reportAbandoned(record.id);
       await save(record, { reported: true });
     }
@@ -460,24 +513,24 @@ export function createMakerEngine({ chain, btc, store, keyFor, funds, now, rando
     } else if (record.state !== MakerState.REFUNDING) {
       await save(record, { state: MakerState.REFUNDING, error: null, note: null });
     }
-    // Settled only when a second node shows our refund in a block.
+    let spender;
     try {
-      const paid = await chain.explorerOutput(record.marsRefund.txid, 0);
-      if (paid.confirmations >= 1) return save(record, { state: MakerState.REFUNDED, error: null });
+      spender = await chain.explorerSpender(funding.txid, funding.vout);
     } catch {
-      /* Not known to the second node yet. */
+      spender = undefined; // the second node cannot say yet
     }
-    let sent = true;
-    try {
-      await chain.broadcast(record.marsRefund.hex);
-    } catch {
-      sent = false;
+    if (spender === record.marsRefund.txid) {
+      const paid = await chain.explorerOutput(spender, 0).catch(() => null);
+      if (paid && paid.confirmations >= 1) return save(record, { state: MakerState.REFUNDED, error: null });
+      return record; // ours, awaiting a block
     }
-    if (!sent) {
-      const stillThere = (await chain.unspent(contracts.marsOutput)).some(utxo => utxo.txid === funding.txid && utxo.vout === funding.vout);
-      // Gone, and not by our refund: the buyer collected it.
-      if (!stillThere) return save(record, { state: whenGone === MakerState.LOST ? MakerState.LOST : MakerState.COMPLETED, error: null });
+    if (spender) {
+      // Collected by someone else, which takes the secret. If we revealed it,
+      // the buyer has both coins unless our Bitcoin claim still confirms.
+      if (record.btcClaims.length) return save(record, { state: MakerState.LOST, error: null });
+      return save(record, { error: 'The locked Marscoin was spent unexpectedly. Contact the Republic with this record.' });
     }
+    await chain.broadcast(record.marsRefund.hex).catch(() => {});
     return record;
   }
 
