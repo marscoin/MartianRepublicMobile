@@ -1,12 +1,15 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useCivicSession } from '../../blue_modules/civic-api';
+import { journey } from '../../blue_modules/onboarding';
+import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { readCitizenshipDraft } from '../../blue_modules/citizenship-draft';
 import { assertWorkspaceIdentity, workspaceStore } from '../../blue_modules/workspace-api';
 import { useWorkspaceData } from '../../blue_modules/workspace-hooks';
 import { CivicButton, civicColors } from '../../components/CivicUi';
+import Journey from '../onboarding/Journey';
 import {
   OrganizationCard,
   ResourceStatus,
@@ -20,6 +23,7 @@ import {
 
 export default function CivicHome() {
   const navigation = useNavigation();
+  const { wallets } = useContext(BlueStorageContext);
   const { address } = useCivicSession();
   const resource = useWorkspaceData(address, 'home', '/workspace');
   const refresh = resource.refresh;
@@ -54,6 +58,16 @@ export default function CivicHome() {
   const application = currentLocal.application;
   const status = data?.citizenship?.status;
   const publicationWaiting = status === 'new' && ['pending', 'submitted'].includes(application?.publication?.status);
+  // The newcomer's path. Until it is complete it takes the place of the
+  // single next-step card below, except while a publication is in flight.
+  const civicWallet = wallets.find(candidate => candidate.civic);
+  const path = journey({
+    balance: civicWallet ? civicWallet.getBalance() : 0,
+    termsAccepted: !!data?.citizenship?.terms_accepted,
+    status: status || null,
+    applicationSaved: !!application && Object.keys(application).length > 0,
+  });
+  const pathComplete = !path.some(step => !step.done && step.key !== 'vote');
   const name = identity?.name && identity.name !== 'UserWithoutWallet' ? identity.name : 'Fellow Martian';
   const openID = () =>
     navigation.navigate('CivicIDScreen', {
@@ -163,6 +177,9 @@ export default function CivicHome() {
               {address}
             </Text>
           </TouchableOpacity>
+          {path.some(step => !step.done && step.key !== 'vote') && (
+            <Journey steps={path} onOpen={step => navigation.navigate(step.route)} />
+          )}
           <ResourceStatus resource={resource} />
           {currentLocal.error && <WorkspaceNotice error>{currentLocal.error}</WorkspaceNotice>}
           {savedCount > 0 && (
@@ -170,7 +187,7 @@ export default function CivicHome() {
               {savedCount} {savedCount === 1 ? 'draft or saved change' : 'drafts and saved changes'} on this phone.
             </WorkspaceNotice>
           )}
-          {nextStep && data && (
+          {nextStep && data && (pathComplete || publicationWaiting || status === 'submitted') && (
             <View style={home.nextStep}>
               <Text style={styles.cardTitle}>{nextStep.title}</Text>
               <Text style={styles.secondaryText}>{nextStep.body}</Text>

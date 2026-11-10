@@ -24,23 +24,22 @@ const AreYouCitizenScreen = () => {
         <Text style={ui.title}>Your place in{'\n'}the Republic.</Text>
         <Text style={styles.intro}>Your civic wallet connects your Marscoin and your public identity.</Text>
         <View style={styles.choices}>
+          <CivicButton
+            title="I am new here"
+            icon="arrow-right"
+            onPress={() => navigation.navigate('OnboardingIntro', { page: 0 })}
+            testID="CreateCivicWallet"
+          />
+          <Text style={styles.hint}>We will set you up step by step. About three minutes.</Text>
+          <View style={styles.divider} />
           <Text style={ui.eyebrow}>ALREADY HAVE A CIVIC WALLET?</Text>
           <CivicButton
-            title="Restore civic wallet"
+            title="Restore with my twelve words"
             icon="rotate-ccw"
+            secondary
             onPress={() => navigation.navigate('ImportCivicWalletScreen')}
             testID="RestoreCivicWallet"
           />
-          <Text style={styles.hint}>Use the recovery phrase from your backup.</Text>
-          <View style={styles.divider} />
-          <CivicButton
-            title="Create a civic wallet"
-            icon="plus"
-            secondary
-            onPress={() => navigation.navigate('WalletsCivicAdd')}
-            testID="CreateCivicWallet"
-          />
-          <Text style={styles.hint}>New here? Start with a wallet of your own.</Text>
         </View>
         <Text style={styles.footer}>MARTIAN CONGRESSIONAL REPUBLIC</Text>
       </ScrollView>
