@@ -222,7 +222,7 @@ function world() {
     btcAmount: 6244,
     makerPubkey: maker.publicKey.toString('hex'),
     paymentHash: paymentHash.toString('hex'),
-    marsLocktime: state.marsHeight + 234,
+    marsLocktime: state.marsHeight + 480,
     expiresAt: state.time / 1000 + 900,
     ...overrides,
   });
