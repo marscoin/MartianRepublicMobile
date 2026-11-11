@@ -83,8 +83,29 @@ export const ordinal = number => {
 
 // The journey after setup, as shown on the home screen. Each step is done,
 // current (the one to do now) or ahead.
-export function journey({ balance = 0, termsAccepted = false, status = null, applicationSaved = false } = {}) {
-  const applied = ['submitted', 'public_member', 'citizen'].includes(status);
+//
+// The server marks an application 'submitted' as soon as its first page is
+// saved, long before anything is published. So 'submitted' alone proves
+// nothing: the introduction counts as made only when the server says it was
+// published (`applicationStage`, absent on older servers) or this phone
+// itself sent the transaction (`publicationStatus` from the saved draft).
+export function introductionPublished({ status = null, applicationStage = null, publicationStatus = null } = {}) {
+  if (['public_member', 'citizen'].includes(status)) return true;
+  if (status !== 'submitted') return false;
+  return ['published_pending', 'confirmed'].includes(applicationStage) || publicationStatus === 'submitted';
+}
+
+export function journey({
+  balance = 0,
+  termsAccepted = false,
+  status = null,
+  applicationSaved = false,
+  applicationStage = null,
+  publicationStatus = null,
+} = {}) {
+  const started = ['submitted', 'public_member', 'citizen'].includes(status);
+  const applied = introductionPublished({ status, applicationStage, publicationStatus });
+  const unfinished = started && !applied;
   const member = ['public_member', 'citizen'].includes(status);
   const steps = [
     { key: 'wallet', title: 'Create your wallet', detail: 'Done. Keep your twelve words safe.', done: true },
@@ -100,18 +121,20 @@ export function journey({ balance = 0, termsAccepted = false, status = null, app
       key: 'terms',
       title: 'Meet the community',
       detail: 'Read the short community terms and see who is already here.',
-      done: termsAccepted || applied,
+      done: termsAccepted || started,
       action: 'Open the community',
       route: 'CitizenScreen',
     },
     {
       key: 'apply',
-      title: 'Introduce yourself',
+      title: unfinished ? 'Finish your introduction' : 'Introduce yourself',
       detail: applicationSaved
         ? 'Your introduction is saved on this phone. Pick up where you left off.'
-        : 'A name, a photo and a few words. It is published on the Marscoin chain as your public record.',
+        : unfinished
+          ? 'You have started your introduction, but it is not published yet. Pick up where you left off.'
+          : 'A name, a photo and a few words. It is published on the Marscoin chain as your public record.',
       done: applied,
-      action: applicationSaved ? 'Continue' : 'Start',
+      action: applicationSaved || unfinished ? 'Continue' : 'Start',
       route: 'JoinGeneralPublicApplicationScreen',
     },
     {

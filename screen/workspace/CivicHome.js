@@ -4,7 +4,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useCivicSession } from '../../blue_modules/civic-api';
-import { journey } from '../../blue_modules/onboarding';
+import { introductionPublished, journey } from '../../blue_modules/onboarding';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { readCitizenshipDraft } from '../../blue_modules/citizenship-draft';
 import { assertWorkspaceIdentity, workspaceStore } from '../../blue_modules/workspace-api';
@@ -58,7 +58,14 @@ export default function CivicHome() {
     .size;
   const application = currentLocal.application;
   const status = data?.citizenship?.status;
-  const publicationWaiting = status === 'new' && ['pending', 'submitted'].includes(application?.publication?.status);
+  const publicationStatus = application?.publication?.status || null;
+  const publicationWaiting = status === 'new' && ['pending', 'submitted'].includes(publicationStatus);
+  // 'submitted' on the server only means the first page was saved. Say the
+  // introduction is on its way only when it was really published, or when a
+  // transaction this phone signed still has to be sent again.
+  const applicationStage = data?.application_stage || data?.citizenship?.application_stage || null;
+  const introduced =
+    status === 'submitted' && (introductionPublished({ status, applicationStage, publicationStatus }) || publicationStatus === 'pending');
   // The newcomer's path. Until it is complete it takes the place of the
   // single next-step card below, except while a publication is in flight.
   const civicWallet = wallets.find(candidate => candidate.civic);
@@ -66,6 +73,8 @@ export default function CivicHome() {
     balance: civicWallet ? civicWallet.getBalance() : 0,
     termsAccepted: !!data?.citizenship?.terms_accepted,
     status: status || null,
+    applicationStage,
+    publicationStatus,
     applicationSaved: !!application && Object.keys(application).length > 0,
   });
   const pathComplete = !path.some(step => !step.done && step.key !== 'vote');
@@ -112,7 +121,7 @@ export default function CivicHome() {
         action: 'Open the community',
         route: 'CitizenScreen',
       }
-    : publicationWaiting || status === 'submitted'
+    : publicationWaiting || introduced
       ? {
           title: application?.publication?.status === 'pending' ? 'Your submission is saved.' : 'Your introduction is on its way.',
           body:
@@ -122,10 +131,13 @@ export default function CivicHome() {
           action: application?.publication?.status === 'pending' ? 'Continue application' : 'Meet the community',
           route: application?.publication?.status === 'pending' ? 'JoinGeneralPublicApplicationScreen' : 'CitizenScreen',
         }
-      : status === 'new'
+      : status === 'new' || status === 'submitted'
         ? {
-            title: 'Introduce yourself.',
-            body: 'Add your name, a photo, and a short introduction to begin your civic journey.',
+            title: status === 'submitted' ? 'Finish your introduction.' : 'Introduce yourself.',
+            body:
+              status === 'submitted'
+                ? 'Your introduction is started but not published yet. Pick up where you left off.'
+                : 'Add your name, a photo, and a short introduction to begin your civic journey.',
             action: 'Continue application',
             route: 'JoinGeneralPublicApplicationScreen',
           }
@@ -231,7 +243,7 @@ export default function CivicHome() {
               {savedCount} {savedCount === 1 ? 'draft or saved change' : 'drafts and saved changes'} on this phone.
             </WorkspaceNotice>
           )}
-          {nextStep && data && (pathComplete || publicationWaiting || status === 'submitted') && (
+          {nextStep && data && (pathComplete || publicationWaiting || introduced) && (
             <View style={home.nextStep}>
               <Text style={styles.cardTitle}>{nextStep.title}</Text>
               <Text style={styles.secondaryText}>{nextStep.body}</Text>

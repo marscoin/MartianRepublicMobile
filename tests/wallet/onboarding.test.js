@@ -1,4 +1,12 @@
-import { INTRO_PAGES, TOTAL_STEPS, backupQuiz, journey, journeyProgress, ordinal } from '../../blue_modules/onboarding';
+import {
+  INTRO_PAGES,
+  TOTAL_STEPS,
+  backupQuiz,
+  introductionPublished,
+  journey,
+  journeyProgress,
+  ordinal,
+} from '../../blue_modules/onboarding';
 
 const words = 'legal winner thank year wave sausage worth useful legal winner thank yellow'.split(' ');
 const unique = 'abandon ability able about above absent absorb abstract absurd abuse access accident'.split(' ');
@@ -100,7 +108,9 @@ describe('The journey after setup', () => {
   it('moves on as each thing is done', () => {
     expect(states(journey({ balance: 5000000 })).terms).toBe('current');
     expect(states(journey({ balance: 5000000, termsAccepted: true })).apply).toBe('current');
-    expect(states(journey({ balance: 5000000, termsAccepted: true, status: 'submitted' }))).toMatchObject({
+    expect(
+      states(journey({ balance: 5000000, termsAccepted: true, status: 'submitted', applicationStage: 'published_pending' })),
+    ).toMatchObject({
       apply: 'done',
       citizen: 'current',
     });
@@ -121,6 +131,49 @@ describe('The journey after setup', () => {
     const apply = journey({ balance: 1, termsAccepted: true, applicationSaved: true }).find(step => step.key === 'apply');
     expect(apply.action).toBe('Continue');
     expect(apply.detail).toMatch(/saved on this phone/);
+  });
+
+  // The server says 'submitted' once the first page is saved. That is not a
+  // published introduction.
+  it('does not tick the introduction while the server still holds only a draft', () => {
+    const steps = journey({ balance: 5000000, termsAccepted: true, status: 'submitted', applicationStage: 'draft' });
+    expect(states(steps)).toMatchObject({ terms: 'done', apply: 'current', citizen: 'ahead' });
+    const apply = steps.find(step => step.key === 'apply');
+    expect(apply).toMatchObject({ title: 'Finish your introduction', action: 'Continue', route: 'JoinGeneralPublicApplicationScreen' });
+    expect(apply.detail).toMatch(/not published yet/);
+    // Having started still counts as having met the community.
+    expect(states(journey({ balance: 1, status: 'submitted', applicationStage: 'draft' })).terms).toBe('done');
+  });
+
+  it('on an older server, believes only a transaction this phone sent', () => {
+    const base = { balance: 5000000, termsAccepted: true, status: 'submitted' };
+    expect(states(journey(base)).apply).toBe('current');
+    expect(states(journey({ ...base, publicationStatus: 'prepared' })).apply).toBe('current');
+    expect(states(journey({ ...base, publicationStatus: 'pending' })).apply).toBe('current');
+    expect(states(journey({ ...base, publicationStatus: 'submitted' }))).toMatchObject({ apply: 'done', citizen: 'current' });
+    expect(journey({ ...base, applicationSaved: true }).find(step => step.key === 'apply').detail).toMatch(/saved on this phone/);
+  });
+
+  it('ticks the introduction once it is published, pending or confirmed', () => {
+    const base = { balance: 5000000, termsAccepted: true, status: 'submitted' };
+    for (const applicationStage of ['published_pending', 'confirmed']) {
+      const steps = journey({ ...base, applicationStage });
+      expect(states(steps)).toMatchObject({ apply: 'done', citizen: 'current' });
+      expect(steps.find(step => step.key === 'apply').title).toBe('Introduce yourself');
+    }
+  });
+
+  it('decides in one place whether an introduction was really made', () => {
+    expect(introductionPublished({ status: 'submitted' })).toBe(false);
+    expect(introductionPublished({ status: 'submitted', applicationStage: 'draft' })).toBe(false);
+    expect(introductionPublished({ status: 'submitted', applicationStage: 'published_pending' })).toBe(true);
+    expect(introductionPublished({ status: 'submitted', applicationStage: 'confirmed' })).toBe(true);
+    // Just broadcast from this phone; the server has not caught up yet.
+    expect(introductionPublished({ status: 'submitted', applicationStage: 'draft', publicationStatus: 'submitted' })).toBe(true);
+    expect(introductionPublished({ status: 'new', publicationStatus: 'submitted' })).toBe(false);
+    expect(introductionPublished({ status: 'public_member', applicationStage: 'draft' })).toBe(true);
+    expect(introductionPublished({ status: 'citizen' })).toBe(true);
+    expect(introductionPublished()).toBe(false);
   });
 
   it('gives every unfinished step somewhere to go', () => {
