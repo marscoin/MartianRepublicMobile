@@ -1,6 +1,7 @@
 import { marsAlert } from '../../components/MarsDialog';
 import { readCitizenshipDraft, saveCitizenshipDraft } from '../../blue_modules/citizenship-draft';
-import { prepareCitizenshipPublication, publishCitizenshipTransaction } from '../../blue_modules/citizenship-publication';
+import { prepareCitizenshipPublication, publishCitizenshipTransaction, isInsufficientFunds } from '../../blue_modules/citizenship-publication';
+import { requestWelcomeGrant, waitForGrant } from '../../blue_modules/welcome-grant';
 import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
@@ -36,6 +37,14 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [progress, setProgress] = useState('');
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
   const [wallet, setWallet] = useState(null);
   const [changeAddress, setChangeAddress] = useState();
 
@@ -114,22 +123,86 @@ const JoinGeneralPublicApplicationScreen = () => {
     }
   };
 
+  const preparePublication = async () => {
+    const fees = await NetworkTransactionFees.recommendedFees();
+    return prepareCitizenshipPublication({
+      wallet, form: formData, feeRate: Number(fees.mediumFee), readDraft: readCitizenshipDraft, saveDraft: saveCitizenshipDraft,
+      pin: async (payload, address) => {
+        const token = await getCivicToken();
+        const response = await axios.post('https://martianrepublic.org/api/pinjson', {
+          type: 'data', payload: JSON.stringify(payload), address,
+        }, { headers: { Authorization: `Bearer ${token}` }, timeout: 90000 });
+        return response.data.Hash;
+      },
+    });
+  };
+
+  // The civic wallet cannot pay the fee and no grant is coming: say why, and
+  // offer the two real ways to get Marscoin.
+  const offerWaysToGetMarscoin = why => {
+    marsAlert(
+      'You need a little Marscoin',
+      `${why}\n\nPublishing your application costs a small network fee, a tiny fraction of one Marscoin.\n\nYou can swap a little Bitcoin for Marscoin, or show your address to someone who can send you some. Your application stays saved on this phone.`,
+      [
+        { text: 'Get Marscoin with Bitcoin', onPress: () => navigation.navigate('SwapHome') },
+        {
+          text: 'Show my address',
+          onPress: () => navigation.navigate('ReceiveDetailsRoot', { screen: 'ReceiveDetails', params: { walletID: wallet.getID() } }),
+        },
+        { text: 'Not now', style: 'cancel' },
+      ],
+    );
+  };
+
+  // Tried once per tap when the civic wallet cannot cover the fee. Returns the
+  // prepared publication, or null after telling the person what to do next.
+  const publishWithWelcomeGrant = async () => {
+    setProgress('Requesting your welcome grant…');
+    const grant = await requestWelcomeGrant({ wallet, http: axios, getToken: getCivicToken });
+    if (!mounted.current) return null;
+    const sent = grant.outcome === 'sent';
+    if (!sent && grant.outcome !== 'already') {
+      offerWaysToGetMarscoin(grant.reason);
+      return null;
+    }
+    setProgress('Waiting for it to arrive…');
+    // A grant sent earlier is either already visible or long spent: look briefly.
+    const arrived = await waitForGrant({ wallet, txid: grant.txid, timeout: sent ? 180000 : 30000, shouldStop: () => !mounted.current });
+    if (!mounted.current) return null;
+    if (arrived) {
+      setProgress('Your welcome grant arrived. Preparing your application…');
+      try {
+        return await preparePublication();
+      } catch (error) {
+        if (!isInsufficientFunds(error)) throw error;
+        offerWaysToGetMarscoin('Your welcome grant arrived, but your civic wallet still does not hold enough for the fee.');
+        return null;
+      }
+    }
+    if (sent) {
+      marsAlert(
+        'Your welcome grant is on its way',
+        'The Republic has sent a small welcome grant to your civic wallet, but it has not arrived yet.\n\nMarscoin blocks can take a while, sometimes more than half an hour.\n\nYour application is saved on this phone. Come back in a little while and tap the button again to publish it.',
+      );
+      return null;
+    }
+    offerWaysToGetMarscoin('A welcome grant was already sent to this civic address, and it is not in your civic wallet now.');
+    return null;
+  };
+
   const validateAndSubmit = async () => {
     if (!isVerified || isPublishing) return;
     setIsPublishing(true);
     try {
       await MARSConnection.waitTillConnected();
-      const fees = await NetworkTransactionFees.recommendedFees();
-      const publication = await prepareCitizenshipPublication({
-        wallet, form: formData, feeRate: Number(fees.mediumFee), readDraft: readCitizenshipDraft, saveDraft: saveCitizenshipDraft,
-        pin: async (payload, address) => {
-          const token = await getCivicToken();
-          const response = await axios.post('https://martianrepublic.org/api/pinjson', {
-            type: 'data', payload: JSON.stringify(payload), address,
-          }, { headers: { Authorization: `Bearer ${token}` }, timeout: 90000 });
-          return response.data.Hash;
-        },
-      });
+      let publication;
+      try {
+        publication = await preparePublication();
+      } catch (error) {
+        if (!isInsufficientFunds(error)) throw error;
+        publication = await publishWithWelcomeGrant();
+        if (!publication) return;
+      }
       if (publication.status === 'submitted') {
         navigation.navigate('JoinGeneralPublicApplicationSuccessScreen', { txid: publication.txid });
         return;
@@ -138,9 +211,12 @@ const JoinGeneralPublicApplicationScreen = () => {
         `Network fee: ${new BigNumber(publication.fee).dividedBy(100000000).toFixed(8)} MARS. Your application will be public. Blockchain confirmation may take time.`,
         [{ text: 'Review later', style: 'cancel' }, { text: publication.status === 'pending' ? 'Retry submission' : 'Confirm publication', onPress: () => publishApplication(publication) }]);
     } catch (error) {
-      marsAlert('Application not published', error.message || 'Please check your connection and try again.');
+      if (mounted.current) marsAlert('Application not published', error.message || 'Please check your connection and try again.');
     } finally {
-      setIsPublishing(false);
+      if (mounted.current) {
+        setIsPublishing(false);
+        setProgress('');
+      }
     }
   };
 
@@ -254,6 +330,8 @@ const JoinGeneralPublicApplicationScreen = () => {
             </TouchableOpacity>  
           </LinearGradient>
 
+            {!!progress && <Text style={styles.progressText}>{progress}</Text>}
+
             {/* {!isFormValid &&
               <Text style={[styles.smallText, {marginTop: 10}]}>Notarize via a blockchain transaction</Text>} */}
         </View> 
@@ -339,6 +417,15 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     borderRadius: 20,
     marginHorizontal: 40,
     marginTop: 50
+  },
+  progressText: {
+    fontSize: 14,
+    color: 'white',
+    fontFamily: fonts.regular.fontFamily,
+    textAlign: 'center',
+    marginTop: 16,
+    marginHorizontal: 40,
+    lineHeight: 18
   },
   checkboxContainer: {
     flexDirection: 'row',
