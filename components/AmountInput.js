@@ -1,10 +1,10 @@
 import { marsAlert } from './MarsDialog';
-import { parseMarsAmount, formatMarsAmount } from '../blue_modules/mars-amount';
+import { parseMarsAmount, formatMarsAmount, normalizeAmountText } from '../blue_modules/mars-amount';
 import React, { Component} from 'react';
 import PropTypes from 'prop-types';
 import BigNumber from 'bignumber.js';
 import { Badge, Icon, Text } from 'react-native-elements';
-import { Image, LayoutAnimation, Pressable, StyleSheet, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Image, LayoutAnimation, Platform, Pressable, StyleSheet, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { useState } from 'react';
 import confirm from '../helpers/confirm';
 import { BitcoinUnit } from '../models/bitcoinUnits';
@@ -46,6 +46,8 @@ class AmountInput extends Component {
     unit: PropTypes.string,
     onBlur: PropTypes.func,
     onFocus: PropTypes.func,
+    // A small caption above the amount, e.g. "Amount".
+    label: PropTypes.string,
     // marsRate: PropTypes.number,
   };
   
@@ -178,21 +180,14 @@ class AmountInput extends Component {
   handleChangeText = text => {
     // A typed amount replaces any exact value cached during unit conversion.
     delete AmountInput.conversionCache[text + this.props.unit];
-    text = text.trim().replace(/,/g, '.');
-  
-    // This regular expression allows digits and a single dot
-    const validPattern = /^\d*\.?\d*$/;
-  
-    // Check if the text matches the pattern for valid input
-    if (validPattern.test(text)) {
-      if (text.startsWith('.')) {
-        // Prefix the decimal point with a zero if there is no leading digit
-        text = '0' + text;
-      }
-  
-      // Update state and call the passed onChangeText function with the new value
-      this.props.onChangeText(text);
-    }
+    // Digits and one decimal point; no zero left in front of other digits.
+    const next = normalizeAmountText(text);
+    if (next !== null) this.props.onChangeText(next);
+  };
+
+  // Put the cursor in the amount, so the keyboard types here.
+  focus = () => {
+    this.textInput?.focus?.();
   };
   
 
@@ -308,6 +303,7 @@ class AmountInput extends Component {
           <View style={styles.root}>
             {!disabled && <View style={[styles.center, stylesHook.center]} />}
             <View style={styles.flex}>
+              {this.props.label ? <Text style={styles.label}>{this.props.label}</Text> : null}
               <View style={styles.container}>
                 {/* {unit === BitcoinUnit.LOCAL_CURRENCY && amount !== BitcoinUnit.MAX && (
                   <Text style={[styles.localCurrency, stylesHook.localCurrency]}>{getCurrencySymbol() + ' '}</Text>
@@ -330,8 +326,10 @@ class AmountInput extends Component {
                     ref={textInput => (this.textInput = textInput)}
                     editable={!this.props.isLoading && !disabled}
                     //value={amount === BitcoinUnit.MAX ? loc.units.MAX : parseFloat(amount) >= 0 ? String(amount) : undefined}
-                    value={amount.toString()}
-                    placeholderTextColor={disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2}
+                    // Empty shows the muted placeholder. A literal "0" here was kept in
+                    // front of what was typed next ("010.").
+                    value={this.props.amount ? String(this.props.amount) : ''}
+                    placeholderTextColor={disabled ? colors.buttonDisabledTextColor : '#81868e'}
                     style={[styles.input, stylesHook.input]}
                   />
                 ) : (
@@ -435,6 +433,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     justifyContent: 'center',
   },
+  label: {
+    marginTop: 10,
+    marginBottom: -8,
+    textAlign: 'center',
+    fontSize: 11,
+    letterSpacing: 1.2,
+    color: '#81868e',
+    fontFamily: 'Orbitron-Regular',
+  },
   input: {
     fontWeight: 'bold',
     fontFamily: 'Orbitron-Black',
@@ -494,7 +501,7 @@ const styles = StyleSheet.create({
 
 
 
-const AmountInputWithStyle = props => {
+const AmountInputWithStyle = React.forwardRef((props, ref) => {
   const { colors } = useTheme();
   // const [amount, setAmount] = useState('');
   // handleChangeText = text => {
@@ -506,8 +513,9 @@ const AmountInputWithStyle = props => {
   //   onChangeText(text);
   // };
 
-  return <AmountInput {...props} colors={colors} />;
-};
+  // The ref reaches the input itself, so a screen can call focus().
+  return <AmountInput {...props} colors={colors} ref={ref} />;
+});
 
 // expose static methods
 AmountInputWithStyle.conversionCache = AmountInput.conversionCache;

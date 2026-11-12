@@ -32,3 +32,29 @@ export function formatMarsAmount(atomic, unit, usdRate) {
   }
   return mars.toFixed();
 }
+
+// What an amount field holds after a keystroke, or null when the keystroke
+// is refused. A zero in front of other digits is dropped, so typing 1, 0 into
+// a field showing "0" gives "10", not "010"; "0.5" and a lone "0" stay.
+export function normalizeAmountText(text) {
+  let next = String(text ?? '')
+    .trim()
+    .replace(/,/g, '.');
+  // Digits with at most one decimal point.
+  if (!/^\d*\.?\d*$/.test(next)) return null;
+  if (next.startsWith('.')) next = '0' + next;
+  return next.replace(/^0+(?=\d)/, '');
+}
+
+// Why a recipient's amount cannot be sent, in words for the person, or
+// undefined when it can. `amount` is the text typed; `amountSats` its value
+// in zubrins when it could be read.
+export function sendAmountProblem({ amount, amountSats, balance }) {
+  if (amount === undefined || amount === null || String(amount).trim() === '') {
+    return 'Enter the amount to send. Tap the large number at the top of the screen to type it.';
+  }
+  const value = Number(amountSats);
+  if (!Number.isSafeInteger(value) || value <= 500) return 'Enter an amount greater than 500 zubrins, with no more than eight decimal places.';
+  if (value > balance) return 'The sending amount exceeds the available balance.';
+  return undefined;
+}
