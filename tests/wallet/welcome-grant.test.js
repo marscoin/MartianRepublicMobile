@@ -1,7 +1,14 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import * as bitcoinMessage from 'bitcoinjs-message';
 import { Marscoin } from '../../blue_modules/constants';
-import { GRANT_API, grantMessage, requestWelcomeGrant, waitForGrant } from '../../blue_modules/welcome-grant';
+import {
+  GRANT_API,
+  claimGrantOffer,
+  fetchGrantOffer,
+  grantMessage,
+  requestWelcomeGrant,
+  waitForGrant,
+} from '../../blue_modules/welcome-grant';
 
 // A throwaway key made for this run. Nothing here belongs to a real wallet.
 const key = bitcoin.ECPair.makeRandom({ network: Marscoin.mainnet });
@@ -260,5 +267,100 @@ describe('Waiting for the grant to arrive', () => {
     expect(await waitForGrant({ wallet, txid, interval: 1000, timeout: 60000, ...clock(), shouldStop: () => ++asked > 3 })).toBe(false);
     expect(wallet.fetchUtxo).toHaveBeenCalledTimes(2);
     expect(await waitForGrant({ wallet: null })).toBe(false);
+  });
+});
+
+// The offer and the claim are separate steps so that nothing is requested
+// until the newcomer accepts the gift.
+describe('Asking about the gift, then claiming it', () => {
+  it('asking only asks: one request, nothing signed, nothing claimed', async () => {
+    const f = setup({ challenge: { amount_zubrins: 1000000 } });
+    const sign = jest.fn();
+    const offer = await fetchGrantOffer({ ...f, sign });
+    expect(offer).toEqual({
+      outcome: 'available',
+      txid: null,
+      amountZubrins: 1000000,
+      reason: null,
+      challenge: { address, nonce, message: grantMessage(address, nonce) },
+    });
+    expect(f.http.post).toHaveBeenCalledTimes(1);
+    expect(f.http.post.mock.calls[0][0]).toBe('https://martianrepublic.org/api/grant/challenge');
+    expect(f.http.post.mock.calls[0][1]).toEqual({});
+    expect(sign).not.toHaveBeenCalled();
+    expect(f.claims()).toHaveLength(0);
+  });
+
+  it('claims an accepted offer with a signature over exactly the expected message', async () => {
+    const f = setup();
+    const offer = await fetchGrantOffer(f);
+    const result = await claimGrantOffer({ ...f, offer });
+    expect(result).toEqual({ outcome: 'sent', txid, amountZubrins: 5000000, reason: null });
+    expect(f.posted(GRANT_API + '/grant/challenge')).toHaveLength(1);
+    const [, body] = f.claims()[0];
+    expect(Object.keys(body).sort()).toEqual(['address', 'nonce', 'signature']);
+    expect(bitcoinMessage.verify(grantMessage(address, nonce), address, body.signature)).toBe(true);
+  });
+
+  it('does not present an offer it could not safely claim', async () => {
+    for (const challenge of [
+      { message: grantMessage(address, nonce) + '\nI also authorise a transfer' },
+      { address: other, message: grantMessage(other, nonce) },
+      { nonce: 'abc\nextra: line', message: grantMessage(address, 'abc\nextra: line') },
+    ]) {
+      const offer = await fetchGrantOffer(setup({ challenge }));
+      expect(offer.outcome).toBe('failed');
+      expect(offer.reason).toMatch(/nothing was signed/);
+      expect(offer.challenge).toBeUndefined();
+    }
+  });
+
+  it('checks the offer again at the claim and signs nothing for a tampered one', async () => {
+    const good = await fetchGrantOffer(setup());
+    const tampered = [
+      { ...good, challenge: { ...good.challenge, message: good.challenge.message + '\nextra' } },
+      { ...good, challenge: { address: other, nonce, message: grantMessage(other, nonce) } },
+      { ...good, challenge: { ...good.challenge, nonce: 'another-nonce' } },
+      { ...good, challenge: null },
+      { ...good, outcome: 'already' },
+      null,
+    ];
+    for (const offer of tampered) {
+      const f = setup();
+      const sign = jest.fn();
+      const result = await claimGrantOffer({ ...f, offer, sign });
+      expect(result.outcome).toBe('failed');
+      expect(result.reason).toMatch(/nothing was signed/);
+      expect(sign).not.toHaveBeenCalled();
+      expect(f.http.post).not.toHaveBeenCalled();
+    }
+  });
+
+  it('reports the outcomes that are not an offer without a challenge to claim', async () => {
+    const before = await fetchGrantOffer(
+      setup({ challenge: { status: 'already_granted', eligible: false, nonce: null, message: null, txid } }),
+    );
+    expect(before).toEqual({ outcome: 'already', txid, amountZubrins: 5000000, reason: expect.any(String) });
+    const off = await fetchGrantOffer(setup({ challenge: { status: 'unavailable', eligible: false, nonce: null, message: null } }));
+    expect(off).toMatchObject({ outcome: 'unavailable', reason: 'The welcome gift is not available right now.' });
+    const no = await fetchGrantOffer(
+      setup({ challenge: { status: 'not_eligible', eligible: false, reason: 'This address has received Marscoin before.' } }),
+    );
+    expect(no).toMatchObject({ outcome: 'not_eligible', reason: 'This address has received Marscoin before.' });
+    const offline = setup();
+    offline.http.post.mockRejectedValue(new Error('Network Error'));
+    expect(await fetchGrantOffer(offline)).toMatchObject({ outcome: 'failed', reason: expect.stringMatching(/Check your connection/) });
+    const old = setup();
+    old.replies[GRANT_API + '/grant/challenge'] = notFound();
+    expect((await fetchGrantOffer(old)).outcome).toBe('unavailable');
+  });
+
+  it('marks a claim whose challenge ran out, so a new offer can be fetched', async () => {
+    const f = setup({ claim: { status: 'expired', txid: null } });
+    const result = await claimGrantOffer({ ...f, offer: await fetchGrantOffer(f) });
+    expect(result).toMatchObject({ outcome: 'failed', expired: true });
+    expect(result.reason).toMatch(/expired/);
+    const fine = setup();
+    expect((await claimGrantOffer({ ...fine, offer: await fetchGrantOffer(fine) })).expired).toBeUndefined();
   });
 });
