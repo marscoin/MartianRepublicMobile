@@ -1,7 +1,9 @@
 import { marsAlert } from '../../components/MarsDialog';
 import { readCitizenshipDraft, saveCitizenshipDraft } from '../../blue_modules/citizenship-draft';
-import { prepareCitizenshipPublication, publishCitizenshipTransaction, isInsufficientFunds } from '../../blue_modules/citizenship-publication';
-import { requestWelcomeGrant, waitForGrant } from '../../blue_modules/welcome-grant';
+import { prepareCitizenshipPublication, publishCitizenshipTransaction } from '../../blue_modules/citizenship-publication';
+import { fetchGrantOffer, claimGrantOffer, waitForGrant } from '../../blue_modules/welcome-grant';
+import { startPublishing, acceptGift, giftAmountText, GIFT_PROGRESS } from '../../blue_modules/welcome-gift';
+import WelcomeGift from '../../components/WelcomeGift';
 import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import { Platform, SafeAreaView, ScrollView, StyleSheet, View, Text, TouchableOpacity, I18nManager, FlatList } from 'react-native';
@@ -38,6 +40,13 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [progress, setProgress] = useState('');
+  // The welcome gift: the offer on show, how far accepting it has got, and
+  // whether it was turned down this visit.
+  const [gift, setGift] = useState(null);
+  const [giftStep, setGiftStep] = useState('');
+  const [stopping, setStopping] = useState(false);
+  const [declined, setDeclined] = useState(false);
+  const gaveUp = useRef(false);
   const mounted = useRef(true);
   useEffect(
     () => () => {
@@ -53,9 +62,6 @@ const JoinGeneralPublicApplicationScreen = () => {
   const [feeUnit, setFeeUnit] = useState();
 
   const bip39 = require("bip39");
-  const { BIP32Factory } = require('bip32')
-  const ecc = require('tiny-secp256k1')
-  const bip32 = BIP32Factory(ecc)
   const bitcoin = require("bitcoinjs-lib");
 
   const MARSCOIN = {
@@ -154,62 +160,63 @@ const JoinGeneralPublicApplicationScreen = () => {
     );
   };
 
-  // Tried once per tap when the civic wallet cannot cover the fee. Returns the
-  // prepared publication, or null after telling the person what to do next.
-  const publishWithWelcomeGrant = async () => {
-    setProgress('Requesting your welcome grant…');
-    const grant = await requestWelcomeGrant({ wallet, http: axios, getToken: getCivicToken });
-    if (!mounted.current) return null;
-    const sent = grant.outcome === 'sent';
-    if (!sent && grant.outcome !== 'already') {
-      offerWaysToGetMarscoin(grant.reason);
-      return null;
-    }
-    setProgress('Waiting for it to arrive…');
-    // A grant sent earlier is either already visible or long spent: look briefly.
-    const arrived = await waitForGrant({ wallet, txid: grant.txid, timeout: sent ? 180000 : 30000, shouldStop: () => !mounted.current });
-    if (!mounted.current) return null;
-    if (arrived) {
-      setProgress('Your welcome grant arrived. Preparing your application…');
-      try {
-        return await preparePublication();
-      } catch (error) {
-        if (!isInsufficientFunds(error)) throw error;
-        offerWaysToGetMarscoin('Your welcome grant arrived, but your civic wallet still does not hold enough for the fee.');
-        return null;
-      }
-    }
-    if (sent) {
-      marsAlert(
-        'Your welcome grant is on its way',
-        'The Republic has sent a small welcome grant to your civic wallet, but it has not arrived yet.\n\nMarscoin blocks can take a while, sometimes more than half an hour.\n\nYour application is saved on this phone. Come back in a little while and tap the button again to publish it.',
-      );
-      return null;
-    }
-    offerWaysToGetMarscoin('A welcome grant was already sent to this civic address, and it is not in your civic wallet now.');
-    return null;
+  const confirmFee = publication => {
+    marsAlert('Publish your application',
+      `Network fee: ${new BigNumber(publication.fee).dividedBy(100000000).toFixed(8)} MARS. Your application will be public. Blockchain confirmation may take time.`,
+      [{ text: 'Review later', style: 'cancel' }, { text: publication.status === 'pending' ? 'Retry submission' : 'Confirm publication', onPress: () => publishApplication(publication) }]);
   };
 
+  // Does what the welcome-gift flow decided. See blue_modules/welcome-gift.js.
+  const follow = outcome => {
+    switch (outcome.next) {
+      case 'published':
+        navigation.navigate('JoinGeneralPublicApplicationSuccessScreen', { txid: outcome.txid });
+        break;
+      case 'confirm':
+        confirmFee(outcome.publication);
+        break;
+      case 'gift':
+        setGift(outcome.offer);
+        break;
+      case 'fund':
+        offerWaysToGetMarscoin(outcome.reason || 'A welcome gift is not available right now.');
+        break;
+      case 'later':
+        marsAlert(
+          'Your welcome gift is on its way',
+          'The Republic has sent your welcome gift to your civic wallet, but it has not arrived yet. Nothing has been published.\n\nMarscoin blocks can take a while, sometimes more than half an hour.\n\nYour application is saved on this phone. Come back in a little while and tap the button again to publish it.',
+        );
+        break;
+      case 'pending':
+        marsAlert('Submission pending', outcome.message);
+        break;
+      default:
+        // 'blocked' (the box is not ticked) and 'stopped' (the screen was left).
+        break;
+    }
+  };
+
+  const fetchOffer = () => fetchGrantOffer({ wallet, http: axios, getToken: getCivicToken });
+  const left = () => !mounted.current;
+
+  // The publish button. A wallet that can pay goes to the fee confirmation;
+  // one that cannot is shown the welcome gift when the Republic offers one.
+  // Asking about the gift sends no coins; only "Accept and publish" claims it.
   const validateAndSubmit = async () => {
     if (!isVerified || isPublishing) return;
     setIsPublishing(true);
+    setDeclined(false);
     try {
       await MARSConnection.waitTillConnected();
-      let publication;
-      try {
-        publication = await preparePublication();
-      } catch (error) {
-        if (!isInsufficientFunds(error)) throw error;
-        publication = await publishWithWelcomeGrant();
-        if (!publication) return;
-      }
-      if (publication.status === 'submitted') {
-        navigation.navigate('JoinGeneralPublicApplicationSuccessScreen', { txid: publication.txid });
-        return;
-      }
-      marsAlert('Publish your application',
-        `Network fee: ${new BigNumber(publication.fee).dividedBy(100000000).toFixed(8)} MARS. Your application will be public. Blockchain confirmation may take time.`,
-        [{ text: 'Review later', style: 'cancel' }, { text: publication.status === 'pending' ? 'Retry submission' : 'Confirm publication', onPress: () => publishApplication(publication) }]);
+      const outcome = await startPublishing({
+        verified: isVerified,
+        prepare: preparePublication,
+        fetchOffer,
+        waitForGrant: options => waitForGrant({ wallet, ...options, shouldStop: left }),
+        onProgress: step => mounted.current && setProgress(GIFT_PROGRESS[step]),
+        shouldStop: left,
+      });
+      if (mounted.current) follow(outcome);
     } catch (error) {
       if (mounted.current) marsAlert('Application not published', error.message || 'Please check your connection and try again.');
     } finally {
@@ -218,6 +225,54 @@ const JoinGeneralPublicApplicationScreen = () => {
         setProgress('');
       }
     }
+  };
+
+  // "Accept and publish" on the welcome gift: claim it, wait for it to arrive,
+  // then publish. The verification box was ticked to get here, and the flow
+  // checks it again.
+  const acceptWelcomeGift = async () => {
+    if (!isVerified || isPublishing || !gift) return;
+    setIsPublishing(true);
+    gaveUp.current = false;
+    try {
+      const outcome = await acceptGift({
+        verified: isVerified,
+        offer: gift,
+        claim: offer => claimGrantOffer({ wallet, offer, http: axios, getToken: getCivicToken }),
+        fetchOffer,
+        waitForGrant: options => waitForGrant({ wallet, ...options, shouldStop: () => !mounted.current || gaveUp.current }),
+        prepare: preparePublication,
+        publish: publication => publishCitizenshipTransaction({
+          wallet, publication, saveDraft: saveCitizenshipDraft, findTransaction: MARSConnection.getTxHex,
+        }),
+        onProgress: step => mounted.current && setGiftStep(step),
+        shouldStop: left,
+      });
+      if (!mounted.current) return;
+      setGift(null);
+      follow(outcome);
+    } catch (error) {
+      if (!mounted.current) return;
+      setGift(null);
+      marsAlert('Application not published', error.message || 'Please check your connection and try again.');
+    } finally {
+      if (mounted.current) {
+        setIsPublishing(false);
+        setGiftStep('');
+        setStopping(false);
+      }
+    }
+  };
+
+  // "Not now": nothing was requested and nothing is sent. The draft stays.
+  const declineWelcomeGift = () => {
+    setGift(null);
+    setDeclined(true);
+  };
+
+  const stopWaitingForGift = () => {
+    gaveUp.current = true;
+    setStopping(true);
   };
 
   const copyToClipboard = (text) => {
@@ -326,16 +381,47 @@ const JoinGeneralPublicApplicationScreen = () => {
               onPress={validateAndSubmit} 
               disabled={!isVerified || isPublishing}
             >
-                <Text style={styles.buttonText}>{isPublishing ? 'PLEASE WAIT…' : 'REVIEW PUBLICATION FEE'}</Text>
-            </TouchableOpacity>  
+                <Text style={styles.buttonText}>{isPublishing ? 'PLEASE WAIT…' : 'CONTINUE TO PUBLISH'}</Text>
+            </TouchableOpacity>
           </LinearGradient>
 
             {!!progress && <Text style={styles.progressText}>{progress}</Text>}
 
+            {declined && !isPublishing && (
+              <View style={styles.declinedBox} testID="WelcomeGiftDeclined">
+                <Text style={styles.declinedText}>
+                  No gift was requested and no Marscoin was sent. Your application is saved on this phone. Tap the button above when you
+                  would like to accept the welcome gift, or pay the small network fee yourself.
+                </Text>
+                <TouchableOpacity accessibilityRole="button" style={styles.declinedAction} onPress={() => navigation.navigate('SwapHome')}>
+                  <Text style={styles.declinedActionText}>Get Marscoin with Bitcoin</Text>
+                </TouchableOpacity>
+                {wallet && (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    style={styles.declinedAction}
+                    onPress={() => navigation.navigate('ReceiveDetailsRoot', { screen: 'ReceiveDetails', params: { walletID: wallet.getID() } })}
+                  >
+                    <Text style={styles.declinedActionText}>Show my address</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
             {/* {!isFormValid &&
               <Text style={[styles.smallText, {marginTop: 10}]}>Notarize via a blockchain transaction</Text>} */}
-        </View> 
-      </ScrollView>  
+        </View>
+      </ScrollView>
+      <WelcomeGift
+        visible={!!gift}
+        amountText={giftAmountText(gift?.amountZubrins)}
+        progress={giftStep ? GIFT_PROGRESS[giftStep] : ''}
+        canStop={giftStep === 'waiting'}
+        stopping={stopping}
+        onAccept={acceptWelcomeGift}
+        onDecline={declineWelcomeGift}
+        onStop={stopWaitingForGift}
+      />
     </SafeAreaView>
   );
 };
@@ -426,6 +512,30 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     marginTop: 16,
     marginHorizontal: 40,
     lineHeight: 18
+  },
+  declinedBox: {
+    marginTop: 24,
+    marginHorizontal: 20,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#30353B',
+    backgroundColor: '#14171B',
+  },
+  declinedText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#ADB3BA',
+  },
+  declinedAction: {
+    minHeight: 44,
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  declinedActionText: {
+    fontSize: 15,
+    color: '#FF812D',
+    fontFamily: 'ChakraPetch-SemiBold',
   },
   checkboxContainer: {
     flexDirection: 'row',
