@@ -182,6 +182,11 @@ const Settings = () => {
         <Row icon="tool" title="Tools" note="Broadcast a transaction, check an address and more." onPress={() => navigate('Tools')} testID="Tools" last />
       </View>
 
+      <Text style={styles.section}>YOUR COINS</Text>
+      <View style={styles.panel}>
+        <Row icon="search" title="Find older funds" note="Check the addresses earlier versions of the Republic's wallet used for your recovery words." onPress={() => navigate('FindOlderFunds')} testID="FindOlderFunds" last />
+      </View>
+
       <Text style={styles.section}>THE REPUBLIC</Text>
       <View style={styles.panel}>
         <Row icon="file-text" title="Terms of service" note="Opens martianrepublic.org." onPress={openTermsOfService} testID="TermsOfService" last />
