@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import { Marscoin } from "../../blue_modules/constants";
 import { BitcoinUnit } from "../../models/bitcoinUnits";
 import { randomBytes } from "../../class/rng";
@@ -14,6 +13,7 @@ const bip32Instance = BIP32Factory(ecc);
 // import checkReporting
 
 const MARSConnection = require("../../blue_modules/MARSConnection");
+const { isExactCoinValue, marsToExactZubrins } = require("../../blue_modules/mars-coins");
 
 const bip39 = require("bip39");
 const coinSelect = require("coinselect");
@@ -527,13 +527,11 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
   getUtxo(respectFrozen = false) {
 
-    let ret = [];
-
-    if (this._utxo.length === 0) {
-      ret = this.getDerivedUtxoFromOurTransaction(); // oy vey, no stored utxo. lets attempt to derive it from stored transactions
-    } else {
-      ret = this._utxo;
-    }
+    // Only coins the network reported. This used to fall back to coins worked
+    // out from stored transactions when there were none: that list is stale by
+    // construction (it cannot see spends or receipts the phone has not
+    // fetched) and so must never be spent from.
+    let ret = this._utxo || [];
     if (!respectFrozen) {
       ret = ret.filter(
         ({ txid, vout }) => !this.getUTXOMetadata(txid, vout).frozen
@@ -586,9 +584,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
           address = output.scriptPubKey.addresses[0];
         }
         if (ownedAddressesHashmap[address]) {
-          const value = new BigNumber(output.value)
-            .multipliedBy(100000000)
-            .toNumber();
+          // Exact zubrins or nothing: never a rounded or missing amount.
+          const value = marsToExactZubrins(output.value);
+          if (value === null) continue;
           utxos.push({
             txid: tx.txid,
             txId: tx.txid,
@@ -766,11 +764,14 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     //console.log('!!!!!!!!!!!!!!!addressess', addressess)
     const fetchedUtxo = await MARSConnection.multiGetUtxoByAddress(addressess);
     //console.log('!!!!!!!!!!!!!!!fetchedUtxo', fetchedUtxo)
-    this._utxo = [];
+    let fresh = [];
     for (const arr of Object.values(fetchedUtxo)) {
       //console.log(arr);
-      this._utxo = this._utxo.concat(arr);
+      fresh = fresh.concat(arr);
     }
+    // Keep the previous list rather than store a coin without an exact value.
+    if (fresh.some(coin => !isExactCoinValue(coin?.value))) throw new Error('The network returned a coin without a valid amount.');
+    this._utxo = fresh;
 
     // backward compatibility TODO: remove when we make sure `.utxo` is not used
     this.utxo = this._utxo;
