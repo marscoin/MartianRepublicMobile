@@ -1,6 +1,6 @@
 import { getCivicToken } from '../../blue_modules/civic-api';
 import React, { useContext, useState, useCallback, useEffect } from 'react';
-import { ScrollView, StyleSheet, Platform, Linking, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Platform, Linking, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { marsAlert } from '../../components/MarsDialog';
 import { useNavigation } from '@react-navigation/native';
@@ -10,36 +10,16 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import navigationStyle from '../../components/navigationStyle';
+import { SettingsHeader, SettingsRow, SettingsScreen, SettingsSection } from '../../components/SettingsUi';
 import { BlueHeaderDefaultSub } from '../../BlueComponents';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 const BlueApp = require('../../BlueApp');
 
-function Row({ icon, title, note, onPress, testID, danger = false, last = false }) {
-  const color = danger ? '#F4A38A' : '#FF812D';
-  return (
-    <TouchableOpacity accessibilityRole="button" onPress={onPress} testID={testID} style={[styles.row, last && styles.rowLast]}>
-      <View style={styles.rowIcon}>
-        <Icon name={icon} type="feather" size={18} color={color} />
-      </View>
-      <View style={styles.flex}>
-        <Text style={[styles.rowTitle, danger && styles.danger]}>{title}</Text>
-        {note ? <Text style={styles.note}>{note}</Text> : null}
-      </View>
-      <Icon name="chevron-right" type="feather" size={20} color="#6B7178" />
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#080A0C' },
-  content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 150 },
+  content: { paddingBottom: 150 },
   androidTop: { height: 24 },
   flex: { flex: 1 },
-  eyebrowRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  tick: { width: 3, height: 13, backgroundColor: '#FF812D', marginRight: 9 },
-  eyebrow: { color: '#ADB3BA', fontFamily: 'ChakraPetch-SemiBold', fontSize: 11, letterSpacing: 2 },
-  title: { color: '#F5F1EB', fontFamily: 'ChakraPetch-Bold', fontSize: 30, marginBottom: 18 },
   feature: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -51,14 +31,7 @@ const styles = StyleSheet.create({
   },
   featureIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#1D2126', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
   featureTitle: { color: '#F5F1EB', fontFamily: 'ChakraPetch-Bold', fontSize: 18 },
-  section: { color: '#8A9098', fontFamily: 'ChakraPetch-SemiBold', fontSize: 11, letterSpacing: 2, marginTop: 26, marginBottom: 10 },
-  panel: { backgroundColor: '#14171B', borderRadius: 18, borderWidth: 1, borderColor: '#30353B', paddingHorizontal: 16 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#30353B' },
-  rowLast: { borderBottomWidth: 0 },
-  rowIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#1D2126', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
-  rowTitle: { color: '#F5F1EB', fontFamily: 'ChakraPetch-SemiBold', fontSize: 16 },
   note: { color: '#8A9098', fontSize: 13, lineHeight: 18, marginTop: 2 },
-  danger: { color: '#F4A38A' },
 });
 
 const Settings = () => {
@@ -150,18 +123,16 @@ const Settings = () => {
 
   return (
     <>
-    <ScrollView style={styles.root} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>
-      {Platform.OS === 'android' ? <View style={styles.androidTop} /> : null}
-      {Platform.OS === 'android' ? <BlueHeaderDefaultSub leftText={loc.settings.header} /> : null}
-
-      <View style={styles.eyebrowRow}>
-        <View style={styles.tick} />
-        <Text style={styles.eyebrow}>MCR / SETTINGS</Text>
-      </View>
-      <Text accessibilityRole="header" style={styles.title}>
-        Settings
-      </Text>
-
+    <SettingsScreen
+      contentStyle={styles.content}
+      header={
+        <>
+          {Platform.OS === 'android' ? <View style={styles.androidTop} /> : null}
+          {Platform.OS === 'android' ? <BlueHeaderDefaultSub leftText={loc.settings.header} /> : null}
+          <SettingsHeader overline="MCR / SETTINGS" title="Settings" />
+        </>
+      }
+    >
       <TouchableOpacity accessibilityRole="button" style={styles.feature} onPress={() => navigate('NetworkLive')} testID="NetworkLive">
         <View style={styles.featureIcon}>
           <Icon name="activity" type="feather" size={22} color="#FF812D" />
@@ -173,31 +144,27 @@ const Settings = () => {
         <Icon name="chevron-right" type="feather" size={20} color="#6B7178" />
       </TouchableOpacity>
 
-      <Text style={styles.section}>THIS APP</Text>
-      <View style={styles.panel}>
-        <Row icon="sliders" title="General" note="Start screen, advanced mode and other preferences." onPress={() => navigate('GeneralSettings')} testID="GeneralSettings" />
-        <Row icon="dollar-sign" title="Currency" note="The currency amounts are also shown in." onPress={() => navigate('Currency')} testID="Currency" />
-        <Row icon="lock" title="Security" note="Password, Face ID and encrypted storage." onPress={() => navigate('EncryptStorage')} testID="SecurityButton" />
-        <Row icon="server" title="Network" note="Choose the Marscoin server your wallet uses." onPress={() => navigate('NetworkSettings')} testID="NetworkSettings" />
-        <Row icon="tool" title="Tools" note="Broadcast a transaction, check an address and more." onPress={() => navigate('Tools')} testID="Tools" last />
-      </View>
+      <SettingsSection label="THIS APP">
+        <SettingsRow icon="sliders" title="General" note="Start screen, advanced mode and other preferences." onPress={() => navigate('GeneralSettings')} testID="GeneralSettings" />
+        <SettingsRow icon="dollar-sign" title="Currency" note="The currency amounts are also shown in." onPress={() => navigate('Currency')} testID="Currency" />
+        <SettingsRow icon="lock" title="Security" note="Password, Face ID and encrypted storage." onPress={() => navigate('EncryptStorage')} testID="SecurityButton" />
+        <SettingsRow icon="server" title="Network" note="The Marscoin server your wallet is connected to, and notifications." onPress={() => navigate('NetworkSettings')} testID="NetworkSettings" />
+        <SettingsRow icon="tool" title="Tools" note="Broadcast a transaction, check an address and more." onPress={() => navigate('Tools')} testID="Tools" />
+      </SettingsSection>
 
-      <Text style={styles.section}>YOUR COINS</Text>
-      <View style={styles.panel}>
-        <Row icon="search" title="Find older funds" note="Check the addresses earlier versions of the Republic's wallet used for your recovery words." onPress={() => navigate('FindOlderFunds')} testID="FindOlderFunds" last />
-      </View>
+      <SettingsSection label="YOUR COINS">
+        <SettingsRow icon="search" title="Find older funds" note="Check the addresses earlier versions of the Republic's wallet used for your recovery words." onPress={() => navigate('FindOlderFunds')} testID="FindOlderFunds" />
+      </SettingsSection>
 
-      <Text style={styles.section}>THE REPUBLIC</Text>
-      <View style={styles.panel}>
-        <Row icon="file-text" title="Terms of service" note="Opens martianrepublic.org." onPress={openTermsOfService} testID="TermsOfService" last />
-      </View>
+      <SettingsSection label="THE REPUBLIC">
+        <SettingsRow icon="file-text" title="Terms of service" note="Opens martianrepublic.org." onPress={openTermsOfService} testID="TermsOfService" />
+      </SettingsSection>
 
-      <Text style={styles.section}>START OVER</Text>
-      <View style={styles.panel}>
-        <Row icon="refresh-ccw" title="Reset this app" note="Removes every wallet from this phone. Your coins stay on the chain; you need your twelve words to get back to them." onPress={showDialog} testID="ResetApp" danger />
-        <Row icon="user-x" title="Delete account" note="Deletes your Republic account and removes every wallet from this phone." onPress={showDialogDelete} testID="DeleteApp" danger last />
-      </View>
-    </ScrollView>
+      <SettingsSection label="START OVER">
+        <SettingsRow icon="refresh-ccw" title="Reset this app" note="Removes every wallet from this phone. Your coins stay on the chain; you need your twelve words to get back to them." onPress={showDialog} testID="ResetApp" danger />
+        <SettingsRow icon="user-x" title="Delete account" note="Deletes your Republic account and removes every wallet from this phone." onPress={showDialogDelete} testID="DeleteApp" danger />
+      </SettingsSection>
+    </SettingsScreen>
 
     <Dialog.Container visible={dialogVisible}>
         <Dialog.Title>App Reset Confirmation</Dialog.Title>

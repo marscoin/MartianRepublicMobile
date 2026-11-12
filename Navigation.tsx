@@ -57,6 +57,7 @@ import AztecoRedeem from './screen/receive/aztecoRedeem';
 import ReceiveDetails from './screen/receive/details';
 
 import ScanQRCode from './screen/send/ScanQRCode';
+import { settingsNavigation } from './components/SettingsUi';
 import Broadcast from './screen/send/broadcast';
 import CoinControl from './screen/send/coinControl';
 import Confirm from './screen/send/confirm';
@@ -409,19 +410,19 @@ const WalletsRoot = () => {
       <WalletsStack.Screen name="RBFCancel" component={RBFCancel} options={RBFCancel.navigationOptions(theme)} />
       <WalletsStack.Screen name="Settings" component={Settings} options={Settings.navigationOptions(theme)} />
       <WalletsStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} />
-      <WalletsStack.Screen name="Currency" component={Currency} options={navigationStyle({ title: loc.settings.currency },)(theme)} />
+      <WalletsStack.Screen name="Currency" component={Currency} options={settingsNavigation(() => loc.settings.currency)(theme)} />
       <WalletsStack.Screen name="About" component={About} options={About.navigationOptions(theme)} />
       <WalletsStack.Screen name="ReleaseNotes" component={ReleaseNotes} options={ReleaseNotes.navigationOptions(theme)} />
       <WalletsStack.Screen name="Selftest" component={Selftest} options={Selftest.navigationOptions(theme)} />
       <WalletsStack.Screen name="Licensing" component={Licensing} options={Licensing.navigationOptions(theme)} />
       <WalletsStack.Screen name="DefaultView" component={DefaultView} options={DefaultView.navigationOptions(theme)} />
-      <WalletsStack.Screen name="Language" component={Language} options={navigationStyle({ title: loc.settings.language })(theme)} />
+      <WalletsStack.Screen name="Language" component={Language} options={settingsNavigation(() => loc.settings.language)(theme)} />
       <WalletsStack.Screen name="EncryptStorage" component={EncryptStorage} options={EncryptStorage.navigationOptions(theme)} />
 
       <WalletsStack.Screen
         name="GeneralSettings"
         component={GeneralSettings}
-        options={navigationStyle({ title: loc.settings.general })(theme)}
+        options={settingsNavigation(() => loc.settings.general)(theme)}
       />
       <WalletsStack.Screen name="NetworkSettings" component={NetworkSettings} options={NetworkSettings.navigationOptions(theme)} />
       <WalletsStack.Screen
