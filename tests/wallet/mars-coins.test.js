@@ -144,14 +144,16 @@ describe('the wallet spends only coins the network reported', () => {
     expect(wallet.getUtxo()).toEqual([good]);
   });
 
-  it('refuses a fetched coin without an exact value', async () => {
+  it('leaves out a fetched coin without a spendable value and keeps the rest', async () => {
     const wallet = makeWallet();
     const address = wallet._getExternalAddressByIndex(0);
+    const good = { txId: 'cc'.repeat(32), vout: 0, value: 668426267450, height: 3599000, address };
     MARSConnection.multiGetUtxoByAddress.mockResolvedValue({
-      [address]: [{ txId: 'bb'.repeat(32), vout: 1, value: 6684.2626745, height: 3599000, address }],
+      [address]: [{ txId: 'bb'.repeat(32), vout: 1, value: 0, height: 3599000, address }, good, { txId: 'dd'.repeat(32), vout: 2, value: 1.5, height: 3599000, address }],
     });
-    await expect(wallet.fetchUtxo()).rejects.toThrow('without a valid amount');
-    expect(wallet.getUtxo()).toEqual([]);
+    await wallet.fetchUtxo();
+    expect(wallet.getUtxo().map(coin => coin.value)).toEqual([668426267450]);
+    expect(wallet._unusableCoins).toBe(2);
   });
 
   it('never plans a payment from a coin whose value is not exact', () => {

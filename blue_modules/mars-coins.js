@@ -22,7 +22,7 @@ export function marsToExactZubrins(amount) {
 
 // Ask the network for the wallet's coins and wait for the answer. A payment
 // is planned only from this list: when it cannot be had, say so.
-export async function loadFreshCoins(wallet, { timeout = 15000 } = {}) {
+export async function loadFreshCoins(wallet, { timeout = 45000 } = {}) {
   let timer;
   try {
     await Promise.race([
@@ -34,6 +34,8 @@ export async function loadFreshCoins(wallet, { timeout = 15000 } = {}) {
   } catch (cause) {
     const error = new Error(COINS_UNREACHABLE);
     error.code = 'MARS_COINS_UNREACHABLE';
+    // What actually went wrong, short enough to show under the message.
+    error.detail = cause?.message === 'timeout' ? 'The network took too long to answer.' : String(cause?.message || cause || '').slice(0, 140);
     error.cause = cause;
     throw error;
   } finally {

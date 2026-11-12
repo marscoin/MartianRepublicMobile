@@ -769,9 +769,13 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
       //console.log(arr);
       fresh = fresh.concat(arr);
     }
-    // Keep the previous list rather than store a coin without an exact value.
-    if (fresh.some(coin => !isExactCoinValue(coin?.value))) throw new Error('The network returned a coin without a valid amount.');
-    this._utxo = fresh;
+    // A coin without an exact, positive value (an empty output someone sent to
+    // one of our addresses, for instance) cannot be spent. Leave it out rather
+    // than refuse the whole wallet because of it.
+    const usable = fresh.filter(coin => isExactCoinValue(coin?.value));
+    this._unusableCoins = fresh.length - usable.length;
+    if (this._unusableCoins) console.log(`fetchUtxo: left out ${this._unusableCoins} coin(s) without a spendable value`);
+    this._utxo = usable;
 
     // backward compatibility TODO: remove when we make sure `.utxo` is not used
     this.utxo = this._utxo;

@@ -276,7 +276,7 @@ const SendDetails = () => {
       return true;
     } catch (e) {
       console.log('could not load coins:', e.cause?.message || e.message);
-      if (request === coinsRequest.current) setCoins({ status: 'failed', at: 0 });
+      if (request === coinsRequest.current) setCoins({ status: 'failed', at: 0, detail: e.detail || '' });
       return false;
     }
   };
@@ -486,7 +486,7 @@ const SendDetails = () => {
       // Plan the payment only from coins the network has just reported.
       if ((coins.status !== 'ready' || Date.now() - coins.at > 60000) && !(await refreshCoins(wallet))) {
         triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
-        marsAlert('Coins not loaded', COINS_UNREACHABLE, [
+        marsAlert('Coins not loaded', COINS_UNREACHABLE + (coins.detail ? `\n\n${coins.detail}` : ''), [
           { text: loc._.cancel, style: 'cancel' },
           { text: loc.wallets.list_tryagain, onPress: () => createTransaction() },
         ]);
@@ -1457,7 +1457,7 @@ const SendDetails = () => {
             </TouchableOpacity>
             {coins.status === 'failed' ? (
               <TouchableOpacity accessibilityRole="button" onPress={() => refreshCoins(wallet)} style={styles.coinsNotice} testID="RetryCoins">
-                <Text style={styles.coinsNoticeText}>{COINS_UNREACHABLE} Tap here to retry.</Text>
+                <Text style={styles.coinsNoticeText}>{COINS_UNREACHABLE} Tap here to retry.{coins.detail ? ` (${coins.detail})` : ''}</Text>
               </TouchableOpacity>
             ) : null}
             {renderCreateButton()}
