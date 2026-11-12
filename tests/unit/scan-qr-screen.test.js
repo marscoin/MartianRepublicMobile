@@ -104,7 +104,8 @@ const text = tree =>
     .join('\n');
 const byId = (tree, testID) => tree.root.findAll(node => node.props.testID === testID && typeof node.type !== 'string');
 const hostById = (tree, testID) => tree.root.findAll(node => node.props.testID === testID && typeof node.type === 'string');
-const tap = (tree, testID) => act(async () => tree.root.findAll(node => node.props.testID === testID && node.props.onPress)[0].props.onPress());
+const tap = (tree, testID) =>
+  act(async () => tree.root.findAll(node => node.props.testID === testID && node.props.onPress)[0].props.onPress());
 const camera = tree => tree.root.findAll(node => node.type === 'Camera');
 const scan = (tree, data) => act(async () => camera(tree)[0].props.onReadCode({ nativeEvent: { codeStringValue: data } }));
 
