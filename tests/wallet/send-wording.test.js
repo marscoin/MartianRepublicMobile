@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { sendAmountProblem } from '../../blue_modules/mars-amount';
-import { feeAmountText, feeRateText, feeSummaryText } from '../../blue_modules/mars-fee-text';
+import { feeAmountText, feeRateText, feeSummaryText, networkFeeText } from '../../blue_modules/mars-fee-text';
 
 const en = require('../../loc/en.json');
 const source = file => fs.readFileSync(path.join(__dirname, '../..', file), 'utf8');
@@ -73,8 +73,43 @@ describe('send screens', () => {
     expect(text).not.toMatch(/fetchUtxo error/);
     expect(text).toMatch(/await refreshCoins\(wallet\)/);
     expect(text).toMatch(/COINS_UNREACHABLE/);
-    expect(text).toMatch(/feeSummaryText\(\{ fee: feePrecalc\.current, rate: feeRate, usdRate: marsRate \}\)/);
+    // The fee, the rate and the exchange rate go to the shared send screen, which words them.
+    expect(text).toMatch(/fee=\{feePrecalc\.current\}/);
+    expect(text).toMatch(/feeRate=\{feeRate\}/);
+    expect(text).toMatch(/usdRate=\{marsRate\}/);
+    expect(text).toMatch(/SendComposer/);
+    // No speed tiers: on Marscoin a higher fee does not buy a faster payment.
+    expect(text).not.toMatch(/fee_fast|fee_medium|fee_slow|'2m'|'15m'|'45m'/);
     expect(text).toMatch(/sendAmountProblem\(/);
+  });
+});
+
+describe('the shared send screen', () => {
+  const composer = source('components/send/SendComposer.js');
+  const sheets = source('components/send/SendSheets.js');
+
+  it('shows the fee amount once it is known and the rate until then, never a made-up fee', () => {
+    expect(composer).toMatch(/const amount = networkFeeText\(fee, usdRate\);/);
+    expect(composer).toMatch(/\{amount \|\| feeRateText\(feeRate\)\}/);
+    expect(networkFeeText(1356, 0.061)).toBe('0.00001356 MARS · under $0.01');
+    expect(networkFeeText(null, 0.061)).toBeNull();
+  });
+
+  it('offers one standard fee and a custom rate, and claims no speeds', () => {
+    expect(sheets).toMatch(/testID="feeStandard"/);
+    expect(sheets).toMatch(/testID="feeCustom"/);
+    for (const text of [composer, sheets]) {
+      expect(text).not.toMatch(/fee_fast|fee_medium|fee_slow|~\{time\}|[>'"](Fast|Medium|Slow)[<'"]/);
+      expect(text).not.toMatch(/zubrins\/vB|sat\/vB|sats?\/vByte|satoshi/i);
+    }
+    expect(sheets).toMatch(/paying more does not make it faster/);
+  });
+
+  it('keeps the notice for coins that could not be loaded, with a way to retry', () => {
+    expect(composer).toMatch(/coins\.status === 'failed'/);
+    expect(composer).toMatch(/testID="RetryCoins"/);
+    expect(composer).toMatch(/COINS_UNREACHABLE/);
+    expect(composer).toMatch(/coins\.detail/);
   });
 });
 

@@ -1,25 +1,9 @@
 import { marsAlert } from '../../components/MarsDialog';
 import { parseMarsAmount, sendAmountProblem } from '../../blue_modules/mars-amount';
 import { COINS_UNREACHABLE, loadFreshCoins } from '../../blue_modules/mars-coins';
-import { feeAmountText, feeRateText, feeSummaryText } from '../../blue_modules/mars-fee-text';
 import { parseMarsPaymentURI } from '../../blue_modules/mars-payment-uri';
 import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, useLayoutEffect } from 'react';
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  I18nManager,
-  Keyboard,
-  KeyboardAvoidingView,
-  LayoutAnimation,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Keyboard, LayoutAnimation, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,30 +12,22 @@ import RNFS from 'react-native-fs';
 import BigNumber from 'bignumber.js';
 import * as bitcoin from 'bitcoinjs-lib';
 
-import { BlueDismissKeyboardInputAccessory, BlueLoading, BlueText } from '../../BlueComponents';
 import { navigationStyleTx } from '../../components/navigationStyle';
 import NetworkTransactionFees, { NetworkTransactionFee } from '../../models/networkTransactionFees';
 import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
 import { HDSegwitBech32Wallet, MultisigHDWallet, WatchOnlyWallet } from '../../class';
 import DocumentPicker from 'react-native-document-picker';
 import DeeplinkSchemaMatch from '../../class/deeplink-schema-match';
-import loc, { formatBalance, formatBalanceWithoutSuffix } from '../../loc';
-import CoinsSelected from '../../components/CoinsSelected';
-import BottomModal from '../../components/BottomModal';
-import AddressInput from '../../components/AddressInput';
-import AmountInput from '../../components/AmountInput';
-import InputAccessoryAllFunds from '../../components/InputAccessoryAllFunds';
+import loc from '../../loc';
+import SendComposer from '../../components/send/SendComposer';
 import { AbstractHDElectrumWallet } from '../../class/wallets/abstract-hd-electrum-wallet';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import ToolTipMenu from '../../components/TooltipMenu';
 import { requestCameraAuthorization, scanQrHelper } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
-import Button from '../../components/Button';
-import ListItem from '../../components/ListItem';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 import { btcToSatoshi, fiatToBTC } from '../../blue_modules/currency';
 import presentAlert from '../../components/Alert';
-const prompt = require('../../helpers/prompt');
 const fs = require('../../blue_modules/fs');
 const btcAddressRx = /^[a-zA-Z0-9]{26,35}$/;
 const currency = require("../../blue_modules/currency")
@@ -67,11 +43,8 @@ const SendDetails = () => {
   const { colors } = useTheme();
 
   // state
-  const [width, setWidth] = useState(Dimensions.get('window').width);
   const [isLoading, setIsLoading] = useState(false);
   const [wallet, setWallet] = useState(null);
-  const [walletSelectionOrCoinsSelectedHidden, setWalletSelectionOrCoinsSelectedHidden] = useState(false);
-  const [isAmountToolbarVisibleForAndroid, setIsAmountToolbarVisibleForAndroid] = useState(false);
   const [isFeeSelectionModalVisible, setIsFeeSelectionModalVisible] = useState(false);
   const [optionsVisible, setOptionsVisible] = useState(false);
   const [isTransactionReplaceable, setIsTransactionReplaceable] = useState(false);
@@ -82,7 +55,6 @@ const SendDetails = () => {
   const [networkTransactionFeesIsLoading, setNetworkTransactionFeesIsLoading] = useState(false);
   const [customFee, setCustomFee] = useState(null);
   const [feePrecalc, setFeePrecalc] = useState({ current: null, slowFee: null, mediumFee: null, fastestFee: null });
-  const [feeUnit, setFeeUnit] = useState();
   const [amountUnit, setAmountUnit] = useState();
   const [utxo, setUtxo] = useState(null);
   const [frozenBalance, setFrozenBlance] = useState(false);
@@ -97,7 +69,6 @@ const SendDetails = () => {
   const { isEditable } = routeParams;
   // if utxo is limited we use it to calculate available balance
   const balance = utxo ? utxo.reduce((prev, curr) => prev + curr.value, 0) : wallet?.getBalance();
-  const allBalance = formatBalanceWithoutSuffix(balance, BitcoinUnit.BTC, true);
 
   const [marsRate, setMarsRate] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -120,8 +91,9 @@ const SendDetails = () => {
 
   // if cutomFee is not set, we need to choose highest possible fee for wallet balance
   // if there are no funds for even Slow option, use 1 sat/vbyte fee
-  const feeRate = useMemo(() => {
-    if (customFee) return customFee;
+  // The standard rate: the one the wallet picks by itself. A rate the person
+  // set under "Advanced" takes its place.
+  const standardFeeRate = useMemo(() => {
     // Until the coins are loaded no fee can be worked out: show the rate that
     // will normally apply, not the 1 that means "cannot afford more".
     if (coins.status !== 'ready') return String(networkTransactionFees.fastestFee);
@@ -135,7 +107,8 @@ const SendDetails = () => {
       initialFee = String(networkTransactionFees.slowFee);
     }
     return initialFee;
-  }, [customFee, feePrecalc, networkTransactionFees, coins.status]);
+  }, [feePrecalc, networkTransactionFees, coins.status]);
+  const feeRate = customFee || standardFeeRate;
 
   useLayoutEffect(() => {
     if (wallet) {
@@ -143,26 +116,6 @@ const SendDetails = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colors, wallet, isTransactionReplaceable, balance, addresses, isEditable, isLoading]);
-
-  // keyboad effects
-  useEffect(() => {
-    const _keyboardDidShow = () => {
-      setWalletSelectionOrCoinsSelectedHidden(true);
-      setIsAmountToolbarVisibleForAndroid(true);
-    };
-
-    const _keyboardDidHide = () => {
-      setWalletSelectionOrCoinsSelectedHidden(false);
-      setIsAmountToolbarVisibleForAndroid(false);
-    };
-
-    Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
-    Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
-    return () => {
-      Keyboard.removeAllListeners('keyboardDidShow');
-      Keyboard.removeAllListeners('keyboardDidHide');
-    };
-  }, []);
 
   useEffect(() => {
     // decode route params
@@ -234,7 +187,6 @@ const SendDetails = () => {
     }
     const newWallet = (routeParams.walletID && wallets.find(w => w.getID() === routeParams.walletID)) || suitable[0];
     setWallet(newWallet);
-    setFeeUnit(newWallet.getPreferredBalanceUnit());
     setAmountUnit(newWallet.preferredBalanceUnit); // default for whole screen
 
     // we are ready!
@@ -1049,433 +1001,160 @@ const SendDetails = () => {
     );
   };
 
-  const formatFee = fee => formatBalance(fee, feeUnit, true);
-
-  const stylesHook = StyleSheet.create({
-    loading: {
-      backgroundColor: colors.background,
-    },
-    root: {
-      backgroundColor: colors.elevated,
-    },
-    modalContent: {
-      backgroundColor: colors.modal,
-      borderTopColor: colors.borderTopColor,
-      borderWidth: colors.borderWidth,
-    },
-    optionsContent: {
-      backgroundColor: colors.modal,
-      borderTopColor: colors.borderTopColor,
-      borderWidth: colors.borderWidth,
-    },
-    feeModalItemActive: {
-      backgroundColor: colors.feeActive,
-    },
-    feeModalLabel: {
-      color: colors.successColor,
-    },
-    feeModalTime: {
-      backgroundColor: colors.successColor,
-    },
-    feeModalTimeText: {
-      color: colors.background,
-    },
-    feeModalValue: {
-      color: colors.successColor,
-    },
-    feeModalCustomText: {
-      color: colors.buttonAlternativeTextColor,
-    },
-    selectLabel: {
-      color: colors.buttonTextColor,
-    },
-    of: {
-      color: colors.feeText,
-    },
-    memo: {
-      borderColor: colors.formBorder,
-      borderBottomColor: colors.formBorder,
-      backgroundColor: colors.inputBackgroundColor,
-    },
-    feeLabel: {
-      color: colors.feeText,
-      fontFamily: 'Orbitron-Regular',
-      letterSpacing: 1.2,
-    },
-    feeModalItemDisabled: {
-      backgroundColor: colors.buttonDisabledBackgroundColor,
-    },
-    feeModalItemTextDisabled: {
-      color: colors.buttonDisabledTextColor,
-    },
-    feeRow: {
-      backgroundColor: colors.feeLabel,
-    },
-    feeValue: {
-      color: colors.feeValue,
-      fontFamily: 'Orbitron-Regular',
-      letterSpacing: 1.2,
-      color:'#FF7400'
-    },
-  });
-
-  const renderFeeSelectionModal = () => {
-    const nf = networkTransactionFees;
-    const options = [
-      {
-        label: loc.send.fee_fast,
-        time: '2m',
-        fee: feePrecalc.fastestFee,
-        rate: nf.fastestFee,
-        active: Number(feeRate) === nf.fastestFee,
-      },
-      {
-        label: loc.send.fee_medium,
-       // time: loc.send.fee_3h,
-        time: '15m',
-        fee: feePrecalc.mediumFee,
-        rate: nf.mediumFee,
-        active: Number(feeRate) === nf.mediumFee,
-        disabled: nf.mediumFee === nf.fastestFee,
-      },
-      {
-        label: loc.send.fee_slow,
-        time: '45m',
-        fee: feePrecalc.slowFee,
-        rate: nf.slowFee,
-        active: Number(feeRate) === nf.slowFee,
-        disabled: nf.slowFee === nf.mediumFee || nf.slowFee === nf.fastestFee,
-      },
-    ];
-
-    return (
-      <BottomModal
-        deviceWidth={width + width / 2}
-        isVisible={isFeeSelectionModalVisible}
-        onClose={() => setIsFeeSelectionModalVisible(false)}
-      >
-        <KeyboardAvoidingView enabled={!Platform.isPad} behavior={Platform.OS === 'ios' ? 'position' : null}>
-          <View style={[styles.modalContent, stylesHook.modalContent]}>
-            {options.map(({ label, time, fee, rate, active, disabled }, index) => (
-              <TouchableOpacity
-                accessibilityRole="button"
-                key={label}
-                disabled={disabled}
-                onPress={() => {
-                  setFeePrecalc(fp => ({ ...fp, current: fee }));
-                  setIsFeeSelectionModalVisible(false);
-                  setCustomFee(rate.toString());
-                }}
-                style={[styles.feeModalItem, active && styles.feeModalItemActive, active && !disabled && stylesHook.feeModalItemActive]}
-              >
-                <View style={styles.feeModalRow}>
-                  <Text style={[styles.feeModalLabel, disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalLabel]}>
-                    {label}
-                  </Text>
-                  <View style={[styles.feeModalTime, disabled ? stylesHook.feeModalItemDisabled : stylesHook.feeModalTime]}>
-                    <Text style={stylesHook.feeModalTimeText}>~{time}</Text>
-                  </View>
-                </View>
-                <View style={styles.feeModalRow}>
-                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>{feeAmountText(fee, marsRate) || ''}</Text>
-                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>
-                    {feeRateText(rate)}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              testID="feeCustom"
-              accessibilityRole="button"
-              style={styles.feeModalCustom}
-              onPress={async () => {
-                let error = loc.send.fee_satvbyte;
-                while (true) {
-                  let fee;
-
-                  try {
-                    fee = await prompt(loc.send.create_fee, error, true, 'numeric');
-                  } catch (_) {
-                    return;
-                  }
-
-                  if (!/^\d+$/.test(fee)) {
-                    error = loc.send.details_fee_field_is_not_valid;
-                    continue;
-                  }
-
-                  if (fee < 1) fee = '1';
-                  fee = Number(fee).toString(); // this will remove leading zeros if any
-                  setCustomFee(fee);
-                  setIsFeeSelectionModalVisible(false);
-                  return;
-                }
-              }}
-            >
-              <Text style={[styles.feeModalCustomText, stylesHook.feeModalCustomText]}>{loc.send.fee_custom}</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </BottomModal>
-    );
+  // null goes back to the standard rate the wallet picks by itself; a number
+  // (as text) is a custom rate in zubrins per byte.
+  const chooseFeeRate = rate => {
+    setCustomFee(rate);
+    setIsFeeSelectionModalVisible(false);
   };
 
-  const renderOptionsModal = () => {
+  // The further options, as rows for the sheet behind the "more" button.
+  const sendOptions = () => {
     const isSendMaxUsed = addresses.some(element => element.amount === BitcoinUnit.MAX);
-
-    return (
-      <BottomModal deviceWidth={width + width / 2} isVisible={optionsVisible} onClose={hideOptions}>
-        <KeyboardAvoidingView enabled={!Platform.isPad} behavior={Platform.OS === 'ios' ? 'position' : null}>
-          <View style={[styles.optionsContent, stylesHook.optionsContent]}>
-            {isEditable && (
-              <ListItem
-                testID="sendMaxButton"
-                disabled={balance === 0 || isSendMaxUsed}
-                title={loc.send.details_adv_full}
-                hideChevron
-                onPress={onUseAllPressed}
-              />
-            )}
-            {wallet.type === HDSegwitBech32Wallet.type && isEditable && (
-              <ListItem
-                title={loc.send.details_adv_fee_bump}
-                Component={TouchableWithoutFeedback}
-                switch={{ value: isTransactionReplaceable, onValueChange: onReplaceableFeeSwitchValueChanged }}
-              />
-            )}
-            {wallet.type === WatchOnlyWallet.type && wallet.isHd() && (
-              <ListItem title={loc.send.details_adv_import} hideChevron component={TouchableOpacity} onPress={importTransaction} />
-            )}
-            {wallet.type === WatchOnlyWallet.type && wallet.isHd() && (
-              <ListItem
-                testID="ImportQrTransactionButton"
-                title={loc.send.details_adv_import_qr}
-                hideChevron
-                onPress={importQrTransaction}
-              />
-            )}
-            {wallet.type === MultisigHDWallet.type && isEditable && (
-              <ListItem title={loc.send.details_adv_import} hideChevron onPress={importTransactionMultisig} />
-            )}
-            {wallet.type === MultisigHDWallet.type && wallet.howManySignaturesCanWeMake() > 0 && isEditable && (
-              <ListItem title={loc.multisig.co_sign_transaction} hideChevron onPress={importTransactionMultisigScanQr} />
-            )}
-            {isEditable && (
-              <>
-                <ListItem testID="AddRecipient" title={loc.send.details_add_rec_add} hideChevron onPress={handleAddRecipient} />
-                <ListItem
-                  testID="RemoveRecipient"
-                  title={loc.send.details_add_rec_rem}
-                  hideChevron
-                  disabled={addresses.length < 2}
-                  onPress={handleRemoveRecipient}
-                />
-              </>
-            )}
-            <ListItem testID="CoinControl" title={loc.cc.header} hideChevron onPress={handleCoinControl} />
-            {wallet.allowCosignPsbt() && isEditable && (
-              <ListItem testID="PsbtSign" title={loc.send.psbt_sign} hideChevron onPress={handlePsbtSign} />
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </BottomModal>
-    );
-  };
-
-  const renderCreateButton = () => {
-    return (
-      <View style={styles.createButton}>
-        {isLoading ? (
-          <ActivityIndicator />
-        ) : (
-          <Button onPress={createTransaction} title={loc.send.details_next} testID="CreateTransactionButton" />
-        )}
-      </View>
-    );
-  };
-
-  const renderWalletSelectionOrCoinsSelected = () => {
-    if (walletSelectionOrCoinsSelectedHidden) return null;
-    if (utxo !== null) {
-      return (
-        <View style={styles.select}>
-          <CoinsSelected
-            number={utxo.length}
-            onContainerPress={handleCoinControl}
-            onClose={() => {
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-              setUtxo(null);
-            }}
-          />
-        </View>
+    const list = [];
+    if (isEditable) {
+      list.push({
+        key: 'max',
+        testID: 'sendMaxButton',
+        icon: 'maximize-2',
+        title: loc.send.details_adv_full,
+        disabled: balance === 0 || isSendMaxUsed,
+        onPress: () => {
+          setOptionsVisible(false);
+          onUseAllPressed();
+        },
+      });
+    }
+    if (wallet.type === HDSegwitBech32Wallet.type && isEditable) {
+      list.push({
+        key: 'rbf',
+        icon: 'trending-up',
+        title: loc.send.details_adv_fee_bump,
+        switchValue: isTransactionReplaceable,
+        onSwitch: onReplaceableFeeSwitchValueChanged,
+      });
+    }
+    if (wallet.type === WatchOnlyWallet.type && wallet.isHd()) {
+      list.push(
+        { key: 'import', icon: 'download', title: loc.send.details_adv_import, onPress: importTransaction },
+        {
+          key: 'importQr',
+          testID: 'ImportQrTransactionButton',
+          icon: 'maximize',
+          title: loc.send.details_adv_import_qr,
+          onPress: importQrTransaction,
+        },
       );
     }
-
-    return (
-      <View style={styles.select}>
-        {!isLoading && isEditable && (
-          <TouchableOpacity
-            accessibilityRole="button"
-            style={styles.selectTouch}
-            onPress={() => navigation.navigate('SelectWallet', { onWalletSelect, chainType: Chain.ONCHAIN })}
-          >
-            <Text style={styles.selectText}>{loc.wallets.select_wallet.toLowerCase()}</Text>
-            <Icon name={I18nManager.isRTL ? 'angle-left' : 'angle-right'} size={18} type="font-awesome" color="#9aa0aa" />
-          </TouchableOpacity>
-        )}
-        <View style={styles.selectWrap}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            style={styles.selectTouch}
-            onPress={() => navigation.navigate('SelectWallet', { onWalletSelect, chainType: Chain.ONCHAIN })}
-            disabled={!isEditable || isLoading}
-          >
-            <Text style={[styles.selectLabel, stylesHook.selectLabel]}>{wallet.getLabel()}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
+    if (wallet.type === MultisigHDWallet.type && isEditable) {
+      list.push({ key: 'importMultisig', icon: 'download', title: loc.send.details_adv_import, onPress: importTransactionMultisig });
+    }
+    if (wallet.type === MultisigHDWallet.type && wallet.howManySignaturesCanWeMake() > 0 && isEditable) {
+      list.push({ key: 'cosign', icon: 'edit-3', title: loc.multisig.co_sign_transaction, onPress: importTransactionMultisigScanQr });
+    }
+    if (isEditable) {
+      list.push(
+        { key: 'add', testID: 'AddRecipient', icon: 'user-plus', title: loc.send.details_add_rec_add, onPress: handleAddRecipient },
+        {
+          key: 'remove',
+          testID: 'RemoveRecipient',
+          icon: 'user-minus',
+          title: loc.send.details_add_rec_rem,
+          disabled: addresses.length < 2,
+          onPress: handleRemoveRecipient,
+        },
+      );
+    }
+    list.push({ key: 'coins', testID: 'CoinControl', icon: 'sliders', title: loc.cc.header, onPress: handleCoinControl });
+    if (wallet.allowCosignPsbt() && isEditable) {
+      list.push({ key: 'psbt', testID: 'PsbtSign', icon: 'pen-tool', title: loc.send.psbt_sign, onPress: handlePsbtSign });
+    }
+    return list;
   };
 
   const amountInZubrins = (value, unit) => {
     try { return parseMarsAmount(value, unit, marsRate); } catch { return undefined; }
   };
 
-  const renderBitcoinTransactionInfoFields = params => {
-    const { item, index } = params;
-    return (
-      <View style={{ width }} testID={'Transaction' + index}>
-        <AmountInput
-          ref={input => {
-            amountInputs.current[index] = input;
-          }}
-          label={loc.send.create_amount}
-          isLoading={isLoading}
-          amount={item.amount ? String(item.amount) : ''}
-          onAmountUnitChange={(unit, atomic) => {
-            setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, amountSats: Number.isSafeInteger(atomic) ? atomic : amountInZubrins(recipient.amount, unit) } : recipient));
-            setUnits(current => { const next = [...current]; next[index] = unit; return next; });
-          }}
-          onChangeText={text => {
-            setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, amount: text || '', amountSats: amountInZubrins(text, units[index] || amountUnit || BitcoinUnit.MARS) } : recipient));
-          }}
-          chain={wallet.getNetwork()}
-          unit={units[index] || amountUnit || BitcoinUnit.MARS}
-          editable={isEditable}
-          disabled={!isEditable}
-          inputAccessoryViewID={InputAccessoryAllFunds.InputAccessoryViewID}
-        />
-        <AddressInput
-          onChangeText={text => {
-            const value = text.trim();
-            if (value.length > 35 && (value.includes(':') || value.includes('?'))) {
-              processAddressData(value);
-              return;
-            }
-            setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, address: value } : recipient));
-            setPayjoinUrl('');
-            // A whole address arriving at once was pasted: the amount comes next.
-            if (value.length - (item.address || '').length > 1 && wallet.isAddressValid(value) && !item.amount) focusAmountSoon(index);
-          }}
-          onBarScanned={processAddressData}
-          address={item.address}
-          isLoading={isLoading}
-          inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
-          launchedBy={name}
-          editable={isEditable}
-        />
-        {addresses.length > 1 && (
-          <Text style={[styles.of, stylesHook.of]}>{loc.formatString(loc._.of, { number: index + 1, total: addresses.length })}</Text>
-        )}
-      </View>
-    );
+  const onAmountText = (index, text) => {
+    setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, amount: text || '', amountSats: amountInZubrins(text, units[index] || amountUnit || BitcoinUnit.MARS) } : recipient));
   };
 
-  if (isLoading || !wallet) {
+  const onAddressText = (index, text) => {
+    const value = text.trim();
+    if (value.length > 35 && (value.includes(':') || value.includes('?'))) {
+      processAddressData(value);
+      return;
+    }
+    const item = addresses[index] || {};
+    setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, address: value } : recipient));
+    setPayjoinUrl('');
+    // A whole address arriving at once was pasted: the amount comes next.
+    if (value.length - (item.address || '').length > 1 && wallet.isAddressValid(value) && !item.amount) focusAmountSoon(index);
+  };
+
+  if (!wallet) {
     return (
-      <View style={[styles.loading, stylesHook.loading]}>
-        <BlueLoading />
+      <View style={styles.loading}>
+        <ActivityIndicator color="#FF812D" />
       </View>
     );
   }
+  // What people see is drawn by SendComposer, shared with the other send
+  // screen; the state and the handlers above stay here.
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={[styles.root, stylesHook.root]} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
-        <View>
-          <KeyboardAvoidingView enabled={!Platform.isPad} behavior="position">
-            {/* /////////Currency and address//////// */}
-            <FlatList
-              keyboardShouldPersistTaps="always"
-              scrollEnabled={addresses.length > 1}
-              data={addresses}
-              renderItem={renderBitcoinTransactionInfoFields}
-              ref={scrollView}
-              horizontal
-              pagingEnabled
-              removeClippedSubviews={false}
-              onMomentumScrollBegin={Keyboard.dismiss}
-              onMomentumScrollEnd={handleRecipientsScrollEnds}
-              onScroll={handleRecipientsScroll}
-              scrollEventThrottle={200}
-              scrollIndicatorInsets={styles.scrollViewIndicator}
-              contentContainerStyle={styles.scrollViewContent}
-            />
-            {/* ///////Note to Self/////// */}
-            <View style={[styles.memo, stylesHook.memo]}>
-              <TextInput
-                onChangeText={setTransactionMemo}
-                placeholder={loc.send.details_note_placeholder}
-                placeholderTextColor="#81868e"
-                value={transactionMemo}
-                numberOfLines={1}
-                style={styles.memoText}
-                editable={!isLoading}
-                onSubmitEditing={Keyboard.dismiss}
-                inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
-              />
-            </View>
-            <TouchableOpacity
-              testID="chooseFee"
-              accessibilityRole="button"
-              onPress={() => setIsFeeSelectionModalVisible(true)}
-              disabled={isLoading}
-              style={styles.fee}
-            >
-              <Text style={[styles.feeLabel, stylesHook.feeLabel]}>{loc.send.create_fee}</Text>
-
-              {networkTransactionFeesIsLoading ? (
-                <ActivityIndicator />
-              ) : (
-                <View style={[styles.feeRow, stylesHook.feeRow]}>
-                  <Text style={[stylesHook.feeValue, {fontSize: 12}]}>
-                    {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' ' + loc.units.sat_vbyte} */}
-                    {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' zubrin'} */}
-                    {feeSummaryText({ fee: feePrecalc.current, rate: feeRate, usdRate: marsRate })}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            {coins.status === 'failed' ? (
-              <TouchableOpacity accessibilityRole="button" onPress={() => refreshCoins(wallet)} style={styles.coinsNotice} testID="RetryCoins">
-                <Text style={styles.coinsNoticeText}>{COINS_UNREACHABLE} Tap here to retry.{coins.detail ? ` (${coins.detail})` : ''}</Text>
-              </TouchableOpacity>
-            ) : null}
-            {renderCreateButton()}
-            {renderFeeSelectionModal()}
-            {renderOptionsModal()}
-          </KeyboardAvoidingView>
-        </View>
-        <BlueDismissKeyboardInputAccessory />
-        {Platform.select({
-          ios: <InputAccessoryAllFunds canUseAll={balance > 0} onUseAllPressed={onUseAllPressed} balance={allBalance} />,
-          android: isAmountToolbarVisibleForAndroid && (
-            <InputAccessoryAllFunds canUseAll={balance > 0} onUseAllPressed={onUseAllPressed} balance={allBalance} />
-          ),
-        })}
-
-        {renderWalletSelectionOrCoinsSelected()}
-      </View>
-    </TouchableWithoutFeedback>
+    <SendComposer
+      placement="sheet"
+      onClose={() => {
+        Keyboard.dismiss();
+        navigation.goBack();
+      }}
+      wallet={wallet}
+      wallets={wallets}
+      balance={balance}
+      usdRate={marsRate}
+      editable={isEditable}
+      busy={isLoading}
+      onSelectWallet={() => navigation.navigate('SelectWallet', { onWalletSelect, chainType: Chain.ONCHAIN })}
+      chosenCoins={utxo === null ? null : utxo.length}
+      onCoinControl={handleCoinControl}
+      onClearCoins={() => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setUtxo(null);
+      }}
+      coins={coins}
+      onRetryCoins={() => refreshCoins(wallet)}
+      recipients={addresses}
+      units={units}
+      defaultUnit={amountUnit}
+      listRef={scrollView}
+      onPageScrollEnd={handleRecipientsScrollEnds}
+      onPageScroll={handleRecipientsScroll}
+      amountRef={(index, input) => {
+        amountInputs.current[index] = input;
+      }}
+      onChangeAmount={onAmountText}
+      onChangeAddress={onAddressText}
+      onScanned={processAddressData}
+      scanName={name}
+      onUseMax={onUseAllPressed}
+      memo={transactionMemo}
+      onChangeMemo={setTransactionMemo}
+      fee={feePrecalc.current}
+      feeRate={feeRate}
+      standardRate={standardFeeRate}
+      customFee={!!customFee}
+      feesLoading={networkTransactionFeesIsLoading}
+      feeSheetVisible={isFeeSelectionModalVisible}
+      onShowFee={() => setIsFeeSelectionModalVisible(true)}
+      onHideFee={() => setIsFeeSelectionModalVisible(false)}
+      onChooseFeeRate={chooseFeeRate}
+      options={sendOptions()}
+      optionsVisible={optionsVisible}
+      onShowOptions={() => setOptionsVisible(true)}
+      onHideOptions={hideOptions}
+      onNext={createTransaction}
+    />
   );
 };
 
@@ -1507,168 +1186,16 @@ SendDetails.actionIcons = {
 };
 
 const styles = StyleSheet.create({
-  coinsNotice: {
-    marginHorizontal: 20,
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  coinsNoticeText: {
-    fontSize: 12,
-    lineHeight: 17,
-    color: '#FF7400',
-    fontFamily: 'Orbitron-Regular',
-  },
   loading: {
     flex: 1,
-    paddingTop: 20,
-  },
-  root: {
-    flex: 1,
-    marginTop:100,
-    justifyContent: 'space-between',
-  },
-  scrollViewContent: {
-    flexDirection: 'row',
-  },
-  scrollViewIndicator: {
-    top: 0,
-    left: 8,
-    bottom: 0,
-    right: 8,
-  },
-  modalContent: {
-    padding: 22,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    minHeight: 200,
-  },
-  optionsContent: {
-    padding: 22,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    minHeight: 130,
-  },
-  feeModalItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 10,
-  },
-  feeModalItemActive: {
-    borderRadius: 8,
-  },
-  feeModalRow: {
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  feeModalLabel: {
-    fontSize: 22,
-    fontWeight: '600',
-    fontFamily: 'Orbitron-Regular',
-    letterSpacing: 1.2
-  },
-  feeModalTime: {
-    borderRadius: 5,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-  },
-  feeModalCustom: {
-    height: 60,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  feeModalCustomText: {
-    fontSize: 15,
-    fontWeight: '600',
-    fontFamily: 'Orbitron-Regular',
-    letterSpacing: 1.2
-  },
-  createButton: {
-    marginVertical: 36,
-    marginHorizontal: 16,
-    alignContent: 'center',
-    minHeight: 44,
-  },
-  select: {
-    marginBottom: 24,
-    marginHorizontal: 24,
-    alignItems: 'center',
-  },
-  selectTouch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectText: {
-    color: '#9aa0aa',
-    fontSize: 14,
-    marginRight: 8,
-    fontFamily: 'Orbitron-Regular',
-    letterSpacing: 1.2
-  },
-  selectWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 4,
-  },
-  selectLabel: {
-    fontSize: 14,
-    fontFamily: 'Orbitron-Regular',
-    letterSpacing: 1.2
-  },
-  of: {
-    alignSelf: 'flex-end',
-    marginRight: 18,
-    marginVertical: 8,
-  },
-  memo: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderBottomWidth: 0.5,
-    minHeight: 44,
-    height: 44,
-    marginHorizontal: 20,
-    alignItems: 'center',
-    marginVertical: 8,
-    borderRadius: 4,
-  },
-  memoText: {
-    flex: 1,
-    marginHorizontal: 8,
-    minHeight: 33,
-    color: '#81868e',
-    fontFamily: 'Orbitron-Regular',
-    letterSpacing: 1.2
-  },
-  fee: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  feeLabel: {
-    fontSize: 14,
-    fontFamily: 'Orbitron-Regular',
-    letterSpacing: 1.2
-  },
-  feeRow: {
-    minWidth: 40,
-    height: 25,
-    borderRadius: 4,
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
+    backgroundColor: '#080A0C',
   },
   advancedOptions: {
     minWidth: 40,
     height: 40,
     justifyContent: 'center',
-  },
-  frozenContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 8,
   },
 });
 
