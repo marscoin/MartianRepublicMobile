@@ -1,10 +1,8 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Notifications from '../../blue_modules/notifications';
-import navigationStyle from '../../components/navigationStyle';
+import { SettingsNote, SettingsRow, SettingsScreen, SettingsSection, settingsNavigation } from '../../components/SettingsUi';
 import loc from '../../loc';
-import ListItem from '../../components/ListItem';
 
 const NetworkSettings = () => {
   const { navigate } = useNavigation();
@@ -18,21 +16,31 @@ const NetworkSettings = () => {
   };
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>
-      <ListItem title={loc.settings.network_electrum} onPress={navigateToElectrumSettings} testID="ElectrumSettings" chevron />
-      {/* <ListItem title={loc.settings.lightning_settings} onPress={navigateToLightningSettings} testID="LightningSettings" chevron /> */}
-      {Notifications.isNotificationsCapable && (
-        <ListItem
-          title={loc.settings.notifications}
-          onPress={() => navigate('NotificationSettings')}
-          testID="NotificationSettings"
-          chevron
+    <SettingsScreen title={loc.settings.network}>
+      <SettingsSection first>
+        <SettingsRow
+          icon="server"
+          title="Marscoin server"
+          note="See which server your wallet is connected to."
+          onPress={navigateToElectrumSettings}
+          testID="ElectrumSettings"
         />
-      )}
-    </ScrollView>
+        {/* <ListItem title={loc.settings.lightning_settings} onPress={navigateToLightningSettings} testID="LightningSettings" chevron /> */}
+        {Notifications.isNotificationsCapable && (
+          <SettingsRow
+            icon="bell"
+            title={loc.settings.notifications}
+            note="Be told when coins arrive."
+            onPress={() => navigate('NotificationSettings')}
+            testID="NotificationSettings"
+          />
+        )}
+      </SettingsSection>
+      <SettingsNote>The app finds a Marscoin server and reconnects by itself. There is nothing here you need to set up.</SettingsNote>
+    </SettingsScreen>
   );
 };
 
-NetworkSettings.navigationOptions = navigationStyle({}, opts => ({ ...opts, headerTitle: loc.settings.network }));
+NetworkSettings.navigationOptions = settingsNavigation(() => loc.settings.network);
 
 export default NetworkSettings;

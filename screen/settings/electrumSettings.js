@@ -1,40 +1,28 @@
 import { marsAlert } from '../../components/MarsDialog';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Text,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Switch,
-  Pressable,
-} from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Text, Keyboard, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import DefaultPreference from 'react-native-default-preference';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import loc from '../../loc';
 import DeeplinkSchemaMatch from '../../class/deeplink-schema-match';
-import navigationStyle from '../../components/navigationStyle';
+import { BlueDoneAndDismissKeyboardInputAccessory, BlueDismissKeyboardInputAccessory } from '../../BlueComponents';
+import { CivicButton } from '../../components/CivicUi';
 import {
-  BlueButtonLink,
-  BlueCard,
-  BlueLoading,
-  BlueSpacing20,
-  BlueText,
-  BlueDoneAndDismissKeyboardInputAccessory,
-  BlueDismissKeyboardInputAccessory,
-} from '../../BlueComponents';
-import { BlueCurrentTheme } from '../../components/themes';
+  SettingsCard,
+  SettingsField,
+  SettingsLink,
+  SettingsRow,
+  SettingsScreen,
+  SettingsSection,
+  SettingsSwitchRow,
+  settingsColors,
+  settingsNavigation,
+} from '../../components/SettingsUi';
 import WidgetCommunication from '../../blue_modules/WidgetCommunication';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import presentAlert from '../../components/Alert';
 import { requestCameraAuthorization } from '../../helpers/scan-qr';
-import Button from '../../components/Button';
-import ListItem from '../../components/ListItem';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 
 const BlueElectrum = require('../../blue_modules/BlueElectrum');
@@ -79,12 +67,12 @@ export default class ElectrumSettings extends Component {
 
     const inverval = setInterval(async () => {
       this.setState({
-        config: await BlueElectrum.getConfig(),
+        config: await this.readConfig(),
       });
     }, 500);
 
     this.setState({
-      config: await BlueElectrum.getConfig(),
+      config: await this.readConfig(),
       inverval,
     });
 
@@ -107,6 +95,15 @@ export default class ElectrumSettings extends Component {
       );
     }
   }
+
+  // There is no configuration to read while nothing is connected.
+  readConfig = async () => {
+    try {
+      return (await BlueElectrum.getConfig()) || {};
+    } catch (_) {
+      return {};
+    }
+  };
 
   checkServer = async () => {
     this.setState({ isLoading: true }, async () => {
@@ -268,66 +265,67 @@ export default class ElectrumSettings extends Component {
     this.setState({ isOfflineMode: value });
   };
 
-  renderElectrumSettings = () => {
-    const serverHistoryItems = this.state.serverHistory.map((server, i) => {
-      return (
-        <View key={i} style={styles.serverHistoryItem}>
-          <Text style={styles.serverRow} numberOfLines={1} ellipsizeMode="middle">{`${server.host}:${server.port || server.sslPort}`}</Text>
-
-          <TouchableOpacity accessibilityRole="button" style={styles.selectButton} onPress={() => this.selectServer(server)}>
-            <BlueText>{loc.settings.electrum_select}</BlueText>
-          </TouchableOpacity>
+  renderStatus = () => {
+    const { config, isOfflineMode } = this.state;
+    const connected = !isOfflineMode && config.connected === 1;
+    const server = config.host ? `${config.host}:${config.port}` : '';
+    return (
+      <SettingsCard>
+        <View style={styles.statusRow}>
+          <View style={[styles.dot, connected ? styles.dotOn : styles.dotOff]} />
+          <Text style={styles.statusText} testID="ElectrumStatus">
+            {isOfflineMode ? 'Offline mode is on' : connected ? loc.settings.electrum_connected : loc.settings.electrum_connected_not}
+          </Text>
         </View>
-      );
-    });
+        {!isOfflineMode && server ? (
+          <Text style={styles.hostname} onPress={this.checkServer} numberOfLines={1} ellipsizeMode="middle" testID="ElectrumHost">
+            {server}
+          </Text>
+        ) : null}
+        <Text style={styles.statusNote}>
+          {isOfflineMode
+            ? 'Balances and transactions are not being updated.'
+            : connected
+              ? 'The app chose this server and will move to another by itself if this one stops answering.'
+              : 'The app keeps trying by itself. You do not need to do anything.'}
+        </Text>
+      </SettingsCard>
+    );
+  };
 
+  renderElectrumSettings = () => {
+    const usesSSL = this.state.sslPort?.trim() > 0;
     return (
       <>
-        <BlueCard>
-          <BlueText style={styles.status}>{loc.settings.electrum_status}</BlueText>
-          <View style={styles.connectWrap}>
-            <View style={[styles.container, this.state.config.connected === 1 ? styles.containerConnected : styles.containerDisconnected]}>
-              <BlueText style={this.state.config.connected === 1 ? styles.textConnected : styles.textDisconnected}>
-                {this.state.config.connected === 1 ? loc.settings.electrum_connected : loc.settings.electrum_connected_not}
-              </BlueText>
-            </View>
-          </View>
-          <BlueSpacing20 />
-          <BlueText style={styles.hostname} onPress={this.checkServer}>
-            {this.state.config.host}:{this.state.config.port}
-          </BlueText>
-        </BlueCard>
+        <SettingsSection label="YOUR OWN SERVER" />
         <KeyboardAvoidingView>
-          <BlueCard>
-            <View style={styles.inputWrap}>
-              <TextInput
-                placeholder={loc.formatString(loc.settings.electrum_host, { example: '10.20.30.40' })}
-                value={this.state.host}
-                onChangeText={text => {
-                  const host = text.trim();
-                  this.setState({ host }, () => {
-                    if (host.endsWith('.onion')) {
-                      this.useSSLPortToggled(false);
-                    }
-                  });
-                }}
-                numberOfLines={1}
-                style={styles.inputText}
-                editable={!this.state.isLoading}
-                placeholderTextColor="#81868e"
-                autoCorrect={false}
-                autoCapitalize="none"
-                underlineColorAndroid="transparent"
-                inputAccessoryViewID={BlueDoneAndDismissKeyboardInputAccessory.InputAccessoryViewID}
-                testID="HostInput"
-                onFocus={() => this.setState({ isAndroidAddressKeyboardVisible: true })}
-                onBlur={() => this.setState({ isAndroidAddressKeyboardVisible: false })}
-              />
-            </View>
-            <BlueSpacing20 />
+          <SettingsCard style={styles.form}>
+            <Text style={styles.formNote}>
+              Optional. Leave these empty and the app uses its own servers. Fill them in only if you run a Marscoin Electrum server
+              yourself.
+            </Text>
+            <SettingsField
+              label="ADDRESS"
+              placeholder={loc.formatString(loc.settings.electrum_host, { example: '10.20.30.40' })}
+              value={this.state.host}
+              onChangeText={text => {
+                const host = text.trim();
+                this.setState({ host }, () => {
+                  if (host.endsWith('.onion')) {
+                    this.useSSLPortToggled(false);
+                  }
+                });
+              }}
+              editable={!this.state.isLoading}
+              inputAccessoryViewID={BlueDoneAndDismissKeyboardInputAccessory.InputAccessoryViewID}
+              testID="HostInput"
+              onFocus={() => this.setState({ isAndroidAddressKeyboardVisible: true })}
+              onBlur={() => this.setState({ isAndroidAddressKeyboardVisible: false })}
+            />
             <View style={styles.portWrap}>
-              <View style={styles.inputWrap}>
-                <TextInput
+              <View style={styles.flex}>
+                <SettingsField
+                  label="PORT"
                   placeholder={loc.formatString(loc.settings.electrum_port, { example: '50001' })}
                   value={this.state.sslPort?.trim() === '' || this.state.sslPort === null ? this.state.port : this.state.sslPort}
                   onChangeText={text =>
@@ -339,13 +337,7 @@ export default class ElectrumSettings extends Component {
                       }
                     })
                   }
-                  numberOfLines={1}
-                  style={styles.inputText}
                   editable={!this.state.isLoading}
-                  placeholderTextColor="#81868e"
-                  underlineColorAndroid="transparent"
-                  autoCorrect={false}
-                  autoCapitalize="none"
                   keyboardType="number-pad"
                   inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
                   testID="PortInput"
@@ -353,28 +345,30 @@ export default class ElectrumSettings extends Component {
                   onBlur={() => this.setState({ isAndroidNumericKeyboardFocused: false })}
                 />
               </View>
-              <BlueText style={styles.usePort}>{loc.settings.use_ssl}</BlueText>
-              <Switch
-                testID="SSLPortInput"
-                value={this.state.sslPort?.trim() > 0}
-                onValueChange={this.useSSLPortToggled}
-                disabled={this.state.host?.endsWith('.onion') ?? false}
-              />
+              <View style={styles.ssl}>
+                <Text style={styles.usePort}>{loc.settings.use_ssl}</Text>
+                <Switch
+                  testID="SSLPortInput"
+                  accessibilityLabel={loc.settings.use_ssl}
+                  value={usesSSL}
+                  onValueChange={this.useSSLPortToggled}
+                  disabled={this.state.host?.endsWith('.onion') ?? false}
+                  trackColor={SWITCH_TRACK}
+                  thumbColor={settingsColors.text}
+                  ios_backgroundColor={settingsColors.border}
+                />
+              </View>
             </View>
-            <BlueSpacing20 />
-
-            <View style={styles.serverAddTitle}>
-              <BlueText style={styles.explain}>{loc.settings.electrum_settings_explain}</BlueText>
-              <TouchableOpacity accessibilityRole="button" testID="ResetToDefault" onPress={() => this.resetToDefault()}>
-                <BlueText>{loc.settings.electrum_reset}</BlueText>
-              </TouchableOpacity>
+            <View style={styles.actions}>
+              {this.state.isLoading ? (
+                <ActivityIndicator color={settingsColors.orange} testID="ElectrumSaving" />
+              ) : (
+                <CivicButton testID="Save" onPress={this.save} title={loc.settings.save} />
+              )}
             </View>
-            <BlueSpacing20 />
-            {this.state.isLoading ? <BlueLoading /> : <Button testID="Save" onPress={this.save} title={loc.settings.save} />}
-            <BlueSpacing20 />
-            <BlueButtonLink title={loc.wallets.import_scan_qr} onPress={this.importScan} />
-            <BlueSpacing20 />
-          </BlueCard>
+            <SettingsLink title="Scan a server code" onPress={this.importScan} testID="ElectrumScan" />
+            <SettingsLink title="Go back to the app’s servers" onPress={() => this.resetToDefault()} testID="ResetToDefault" />
+          </SettingsCard>
           {Platform.select({
             ios: <BlueDismissKeyboardInputAccessory />,
             android: this.state.isAndroidNumericKeyboardFocused && <BlueDismissKeyboardInputAccessory />,
@@ -404,16 +398,23 @@ export default class ElectrumSettings extends Component {
             ),
           })}
         </KeyboardAvoidingView>
-        {serverHistoryItems.length > 0 && !this.state.isLoading && (
-          <BlueCard>
-            <View style={styles.serverHistoryTitle}>
-              <BlueText style={styles.explain}>{loc.settings.electrum_history}</BlueText>
-              <TouchableOpacity accessibilityRole="button" onPress={() => this.clearHistoryAlert()}>
-                <BlueText>{loc.settings.electrum_clear}</BlueText>
-              </TouchableOpacity>
-            </View>
-            {serverHistoryItems}
-          </BlueCard>
+        {this.state.serverHistory.length > 0 && !this.state.isLoading && (
+          <SettingsSection
+            label="SERVERS YOU HAVE USED"
+            action={loc.settings.electrum_clear}
+            onAction={() => this.clearHistoryAlert()}
+            actionTestID="ElectrumClearHistory"
+          >
+            {this.state.serverHistory.map((server, i) => (
+              <SettingsRow
+                key={i}
+                title={`${server.host}:${server.port || server.sslPort}`}
+                value={loc.settings.electrum_select}
+                onPress={() => this.selectServer(server)}
+                chevron={false}
+              />
+            ))}
+          </SettingsSection>
         )}
       </>
     );
@@ -421,21 +422,20 @@ export default class ElectrumSettings extends Component {
 
   render() {
     return (
-      <ScrollView keyboardShouldPersistTaps="always" automaticallyAdjustContentInsets contentInsetAdjustmentBehavior="automatic">
-        <ListItem
-          Component={Pressable}
-          title={loc.settings.electrum_offline_mode}
-          switch={{
-            onValueChange: this.onElectrumConnectionEnabledSwitchValueChanged,
-            value: this.state.isOfflineMode,
-            testID: 'ElectrumConnectionEnabledSwitch',
-          }}
-        />
-        <BlueCard>
-          <BlueText>{loc.settings.electrum_offline_description}</BlueText>
-        </BlueCard>
+      <SettingsScreen overline="MCR / SETTINGS / NETWORK" title="Marscoin server" keyboardShouldPersistTaps="always">
+        {this.renderStatus()}
+        <SettingsSection>
+          <SettingsSwitchRow
+            icon="wifi-off"
+            title={loc.settings.electrum_offline_mode}
+            note={loc.settings.electrum_offline_description}
+            value={this.state.isOfflineMode}
+            onValueChange={this.onElectrumConnectionEnabledSwitchValueChanged}
+            switchTestID="ElectrumConnectionEnabledSwitch"
+          />
+        </SettingsSection>
         {!this.state.isOfflineMode && this.renderElectrumSettings()}
-      </ScrollView>
+      </SettingsScreen>
     );
   }
 }
@@ -453,107 +453,28 @@ ElectrumSettings.propTypes = {
   }),
 };
 
-ElectrumSettings.navigationOptions = navigationStyle({}, opts => ({ ...opts, title: loc.settings.electrum_settings_server }));
+ElectrumSettings.navigationOptions = settingsNavigation(() => loc.settings.electrum_settings_server);
+
+const SWITCH_TRACK = { false: settingsColors.border, true: settingsColors.orange };
 
 const styles = StyleSheet.create({
-  status: {
-    textAlign: 'center',
-    color: BlueCurrentTheme.colors.feeText,
-    marginBottom: 4,
-  },
-  connectWrap: {
-    width: 'auto',
-    height: 34,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  container: {
-    paddingTop: 6,
-    paddingBottom: 6,
-    paddingLeft: 16,
-    paddingRight: 16,
-    borderRadius: 20,
-  },
-  containerConnected: {
-    backgroundColor: BlueCurrentTheme.colors.feeLabel,
-  },
-  containerDisconnected: {
-    backgroundColor: BlueCurrentTheme.colors.redBG,
-  },
-  textConnected: {
-    color: BlueCurrentTheme.colors.feeValue,
-    fontWeight: 'bold',
-  },
-  textDisconnected: {
-    color: BlueCurrentTheme.colors.redText,
-    fontWeight: 'bold',
-  },
+  flex: { flex: 1 },
+  statusRow: { flexDirection: 'row', alignItems: 'center' },
+  dot: { width: 10, height: 10, borderRadius: 5, marginRight: 10 },
+  dotOn: { backgroundColor: settingsColors.good },
+  dotOff: { backgroundColor: settingsColors.orange },
+  statusText: { color: settingsColors.text, fontFamily: 'ChakraPetch-Bold', fontSize: 20 },
   hostname: {
-    textAlign: 'center',
-    color: BlueCurrentTheme.colors.foregroundColor,
+    color: settingsColors.muted,
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
+    fontSize: 14,
+    marginTop: 8,
   },
-  usePort: {
-    textAlign: 'center',
-    color: BlueCurrentTheme.colors.foregroundColor,
-    marginHorizontal: 8,
-  },
-  explain: {
-    color: BlueCurrentTheme.colors.feeText,
-    marginBottom: -24,
-    flexShrink: 1,
-  },
-  inputWrap: {
-    flex: 1,
-    flexDirection: 'row',
-    borderColor: BlueCurrentTheme.colors.formBorder,
-    borderBottomColor: BlueCurrentTheme.colors.formBorder,
-    borderWidth: 1,
-    borderBottomWidth: 0.5,
-    backgroundColor: BlueCurrentTheme.colors.inputBackgroundColor,
-    minHeight: 44,
-    height: 44,
-    alignItems: 'center',
-    borderRadius: 4,
-  },
-  portWrap: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  inputText: {
-    flex: 1,
-    marginHorizontal: 8,
-    minHeight: 36,
-    color: '#81868e',
-    height: 36,
-  },
-  serverAddTitle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 16,
-  },
-  serverHistoryTitle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-  },
-  serverHistoryItem: {
-    flexDirection: 'row',
-    paddingVertical: 20,
-    borderBottomColor: BlueCurrentTheme.colors.formBorder,
-    borderBottomWidth: 0.5,
-    flexWrap: 'nowrap',
-  },
-  serverRow: {
-    flexGrow: 2,
-    maxWidth: '80%',
-    color: BlueCurrentTheme.colors.foregroundColor,
-  },
-  selectButton: {
-    flexGrow: 1,
-    marginLeft: 16,
-    alignItems: 'flex-end',
-  },
+  statusNote: { color: settingsColors.faint, fontSize: 13, lineHeight: 19, marginTop: 10 },
+  form: { paddingBottom: 6 },
+  formNote: { color: settingsColors.faint, fontSize: 13, lineHeight: 19, marginBottom: 8 },
+  portWrap: { flexDirection: 'row', alignItems: 'flex-end' },
+  ssl: { alignItems: 'center', marginLeft: 16, marginBottom: 12 },
+  usePort: { color: settingsColors.faint, fontFamily: 'ChakraPetch-SemiBold', fontSize: 11, letterSpacing: 2, marginBottom: 6 },
+  actions: { marginTop: 12, minHeight: 56, justifyContent: 'center' },
 });
