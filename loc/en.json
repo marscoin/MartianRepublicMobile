@@ -141,7 +141,7 @@
     "create_details": "Details",
     "create_fee": "Fee",
     "create_memo": "Memo",
-    "create_satoshi_per_vbyte": "Satoshi per vByte",
+    "create_satoshi_per_vbyte": "Zubrins per byte",
     "create_this_is_hex": "This is your transaction’s hex—signed and ready to be broadcasted to the network.",
     "create_to": "To",
     "create_tx_size": "Transaction Size",
@@ -182,8 +182,8 @@
     "fee_custom": "Custom",
     "fee_fast": "Fast",
     "fee_medium": "Medium",
-    "fee_replace_minvb": "The total fee rate (satoshi per vByte) you want to pay should be higher than {min} sat/vByte.",
-    "fee_satvbyte": "in sat/vByte",
+    "fee_replace_minvb": "The total fee rate (zubrins per byte) you want to pay should be higher than {min} zubrins/byte.",
+    "fee_satvbyte": "in zubrins per byte",
     "fee_slow": "Slow",
     "header": "Send",
     "input_clear": "Clear",
@@ -572,7 +572,7 @@
   "units": {
     "BTC": "BTC",
     "MAX": "Max",
-    "sat_vbyte": "sat/vByte",
+    "sat_vbyte": "zubrins/byte",
     "sats": "sats"
   },
   "addresses": {

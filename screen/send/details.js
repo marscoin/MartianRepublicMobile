@@ -1,5 +1,7 @@
 import { marsAlert } from '../../components/MarsDialog';
-import { parseMarsAmount } from '../../blue_modules/mars-amount';
+import { parseMarsAmount, sendAmountProblem } from '../../blue_modules/mars-amount';
+import { COINS_UNREACHABLE, loadFreshCoins } from '../../blue_modules/mars-coins';
+import { feeAmountText, feeRateText, feeSummaryText } from '../../blue_modules/mars-fee-text';
 import { parseMarsPaymentURI } from '../../blue_modules/mars-payment-uri';
 import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, useLayoutEffect } from 'react';
 import {
@@ -87,6 +89,11 @@ const SendDetails = () => {
   const [payjoinUrl, setPayjoinUrl] = useState(null);
   const [changeAddress, setChangeAddress] = useState();
   const [dumb, setDumb] = useState(false);
+  // The wallet's coins as the network reports them: 'loading', 'ready' or
+  // 'failed'. Fees and the transaction are worked out only from 'ready'.
+  const [coins, setCoins] = useState({ status: 'loading', at: 0 });
+  const coinsRequest = useRef(0);
+  const amountInputs = useRef({});
   const { isEditable } = routeParams;
   // if utxo is limited we use it to calculate available balance
   const balance = utxo ? utxo.reduce((prev, curr) => prev + curr.value, 0) : wallet?.getBalance();
@@ -115,6 +122,9 @@ const SendDetails = () => {
   // if there are no funds for even Slow option, use 1 sat/vbyte fee
   const feeRate = useMemo(() => {
     if (customFee) return customFee;
+    // Until the coins are loaded no fee can be worked out: show the rate that
+    // will normally apply, not the 1 that means "cannot afford more".
+    if (coins.status !== 'ready') return String(networkTransactionFees.fastestFee);
     if (feePrecalc.slowFee === null) return '1'; // wait for precalculated fees
     let initialFee;
     if (feePrecalc.fastestFee !== null) {
@@ -125,7 +135,7 @@ const SendDetails = () => {
       initialFee = String(networkTransactionFees.slowFee);
     }
     return initialFee;
-  }, [customFee, feePrecalc, networkTransactionFees]);
+  }, [customFee, feePrecalc, networkTransactionFees, coins.status]);
 
   useLayoutEffect(() => {
     if (wallet) {
@@ -255,6 +265,28 @@ const SendDetails = () => {
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Ask the network for the wallet's coins and wait for the answer. Returns
+  // whether they arrived; the screen says so plainly when they did not.
+  const refreshCoins = async target => {
+    const request = ++coinsRequest.current;
+    setCoins({ status: 'loading', at: 0 });
+    try {
+      await loadFreshCoins(target);
+      if (request === coinsRequest.current) setCoins({ status: 'ready', at: Date.now() });
+      return true;
+    } catch (e) {
+      console.log('could not load coins:', e.cause?.message || e.message);
+      if (request === coinsRequest.current) setCoins({ status: 'failed', at: 0 });
+      return false;
+    }
+  };
+
+  // After an address arrives by scan or paste the amount is what is missing:
+  // put the cursor there, so the keyboard does not type into the note.
+  const focusAmountSoon = index => {
+    setTimeout(() => amountInputs.current[index]?.focus?.(), 600); // after the scanner has closed
+  };
+
   // change header and reset state on wallet change
   useEffect(() => {
     if (!wallet) return;
@@ -265,14 +297,8 @@ const SendDetails = () => {
     setChangeAddress(null);
     setIsTransactionReplaceable(wallet.type === HDSegwitBech32Wallet.type && !routeParams.noRbf);
 
-    // update wallet UTXO
-    wallet
-      .fetchUtxo()
-      .then(() => {
-        // we need to re-calculate fees
-        setDumb(v => !v);
-      })
-      .catch(e => console.log('fetchUtxo error', e));
+    // Load the coins this wallet can spend; fees are worked out once they arrive.
+    refreshCoins(wallet);
   }, [wallet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const UnitFromCoinType = (coinType) => {
@@ -288,6 +314,12 @@ const SendDetails = () => {
   // recalc fees in effect so we don't block render
   useEffect(() => {
     if (!wallet) return; // wait for it
+    if (coins.status !== 'ready') {
+      // No fee can be worked out without the coins; the rates are shown meanwhile.
+      setFeePrecalc({ current: null, slowFee: null, mediumFee: null, fastestFee: null });
+      setFrozenBlance(0);
+      return;
+    }
     const fees = networkTransactionFees;
 
     const change = getChangeAddressFast();
@@ -366,7 +398,7 @@ const SendDetails = () => {
 
     setFeePrecalc(newFeePrecalc);
     setFrozenBlance(frozen);
-  }, [wallet, networkTransactionFees, utxo, addresses, feeRate, dumb]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wallet, networkTransactionFees, utxo, addresses, feeRate, dumb, coins]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // we need to re-calculate fees if user opens-closes coin control
   useFocusEffect(
@@ -424,6 +456,7 @@ const SendDetails = () => {
       }
       if (payment.memo) setTransactionMemo(payment.memo);
       setPayjoinUrl('');
+      if (payment.amountSats === undefined && !addresses[index]?.amount) focusAmountSoon(index);
     } catch (error) {
       presentAlert({ title: loc.errors.error, message: error.message });
     } finally {
@@ -443,14 +476,21 @@ const SendDetails = () => {
         if (!wallet.isAddressValid(transaction.address)) {
           error = 'Enter a valid Marscoin address.';
         } else if (transaction.amount !== BitcoinUnit.MAX) {
-          const value = Number(transaction.amountSats);
-          if (!Number.isSafeInteger(value) || value <= 500) error = 'Enter an amount greater than 500 zubrins, with no more than eight decimal places.';
-          else if (value > balance) error = 'The sending amount exceeds the available balance.';
+          error = sendAmountProblem({ amount: transaction.amount, amountSats: transaction.amountSats, balance });
         }
         if (error) {
           scrollView.current?.scrollToIndex({ index });
           throw new Error(error);
         }
+      }
+      // Plan the payment only from coins the network has just reported.
+      if ((coins.status !== 'ready' || Date.now() - coins.at > 60000) && !(await refreshCoins(wallet))) {
+        triggerHapticFeedback(HapticFeedbackTypes.NotificationError);
+        marsAlert('Coins not loaded', COINS_UNREACHABLE, [
+          { text: loc._.cancel, style: 'cancel' },
+          { text: loc.wallets.list_tryagain, onPress: () => createTransaction() },
+        ]);
+        return;
       }
       await createPsbtTransaction();
     } catch (error) {
@@ -1137,10 +1177,9 @@ const SendDetails = () => {
                   </View>
                 </View>
                 <View style={styles.feeModalRow}>
-                  {marsRate &&
-                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>{fee} zubrins / ${(fee*marsRate/ 100000000).toFixed(8)}</Text>}
+                  <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>{feeAmountText(fee, marsRate) || ''}</Text>
                   <Text style={[disabled ? stylesHook.feeModalItemTextDisabled : stylesHook.feeModalValue, {fontSize: 12}]}>
-                    {rate} zubrins/vB
+                    {feeRateText(rate)}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -1307,6 +1346,10 @@ const SendDetails = () => {
     return (
       <View style={{ width }} testID={'Transaction' + index}>
         <AmountInput
+          ref={input => {
+            amountInputs.current[index] = input;
+          }}
+          label={loc.send.create_amount}
           isLoading={isLoading}
           amount={item.amount ? String(item.amount) : ''}
           onAmountUnitChange={(unit, atomic) => {
@@ -1331,6 +1374,8 @@ const SendDetails = () => {
             }
             setAddresses(current => current.map((recipient, i) => i === index ? { ...recipient, address: value } : recipient));
             setPayjoinUrl('');
+            // A whole address arriving at once was pasted: the amount comes next.
+            if (value.length - (item.address || '').length > 1 && wallet.isAddressValid(value) && !item.amount) focusAmountSoon(index);
           }}
           onBarScanned={processAddressData}
           address={item.address}
@@ -1405,11 +1450,16 @@ const SendDetails = () => {
                   <Text style={[stylesHook.feeValue, {fontSize: 12}]}>
                     {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' ' + loc.units.sat_vbyte} */}
                     {/* {feePrecalc.current ? formatFee(feePrecalc.current) : feeRate + ' zubrin'} */}
-                    {(feePrecalc.current || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' zubrin' }
+                    {feeSummaryText({ fee: feePrecalc.current, rate: feeRate, usdRate: marsRate })}
                   </Text>
                 </View>
               )}
             </TouchableOpacity>
+            {coins.status === 'failed' ? (
+              <TouchableOpacity accessibilityRole="button" onPress={() => refreshCoins(wallet)} style={styles.coinsNotice} testID="RetryCoins">
+                <Text style={styles.coinsNoticeText}>{COINS_UNREACHABLE} Tap here to retry.</Text>
+              </TouchableOpacity>
+            ) : null}
             {renderCreateButton()}
             {renderFeeSelectionModal()}
             {renderOptionsModal()}
@@ -1457,6 +1507,17 @@ SendDetails.actionIcons = {
 };
 
 const styles = StyleSheet.create({
+  coinsNotice: {
+    marginHorizontal: 20,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  coinsNoticeText: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#FF7400',
+    fontFamily: 'Orbitron-Regular',
+  },
   loading: {
     flex: 1,
     paddingTop: 20,
