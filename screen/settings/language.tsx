@@ -1,35 +1,16 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useContext, useEffect, useState } from 'react';
-import { FlatList, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import presentAlert from '../../components/Alert';
-import ListItem from '../../components/ListItem';
-import { useTheme } from '../../components/themes';
+import { SettingsList, SettingsRow } from '../../components/SettingsUi';
 import loc, { saveLanguage } from '../../loc';
 import { AvailableLanguages, TLanguage } from '../../loc/languages';
-
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-});
 
 const Language = () => {
   const { setLanguage, language } = useContext(BlueStorageContext);
   const [selectedLanguage, setSelectedLanguage] = useState<string>(loc.getLanguage());
   const { setOptions } = useNavigation();
-  const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const stylesHook = StyleSheet.create({
-    flex: {
-      backgroundColor: colors.background,
-    },
-    content: {
-      paddingBottom: insets.bottom,
-    },
-  });
 
   useEffect(() => {
     setOptions({ title: loc.settings.language });
@@ -47,20 +28,25 @@ const Language = () => {
     });
   };
 
-  const renderItem = ({ item }: { item: TLanguage }) => {
-    return <ListItem title={item.label} checkmark={selectedLanguage === item.value} onPress={() => onLanguageSelect(item)} />;
+  const renderItem = ({ item, index }: { item: TLanguage; index: number }) => {
+    return (
+      <SettingsRow
+        title={item.label}
+        checked={selectedLanguage === item.value ? true : undefined}
+        chevron={false}
+        last={index === AvailableLanguages.length - 1}
+        onPress={() => onLanguageSelect(item)}
+      />
+    );
   };
 
   return (
-    <FlatList
-      style={[styles.flex, stylesHook.flex]}
-      contentContainerStyle={stylesHook.content}
-      keyExtractor={(_item, index) => `${index}`}
+    <SettingsList
+      title={loc.settings.language}
+      keyExtractor={(_item: TLanguage, index: number) => `${index}`}
       data={AvailableLanguages}
       renderItem={renderItem}
       initialNumToRender={25}
-      contentInsetAdjustmentBehavior="automatic"
-      automaticallyAdjustContentInsets
     />
   );
 };
