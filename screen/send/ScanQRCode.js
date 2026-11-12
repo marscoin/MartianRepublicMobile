@@ -51,6 +51,8 @@ const styles = StyleSheet.create({
   // dimmed surround always lines up with the brackets.
   band: { flex: 1, backgroundColor: DIM, paddingHorizontal: 20 },
   bandSolid: { backgroundColor: civicColors.background },
+  // Without the camera the top and bottom take only the room they need.
+  bandFit: { flex: 0, paddingBottom: 12 },
   bandBottom: { justifyContent: 'flex-end' },
   middle: { flexDirection: 'row' },
   side: { flex: 1, backgroundColor: DIM },
@@ -538,7 +540,7 @@ const ScanQRCode = () => {
   const percent = urTotal > 0 ? Math.max(0, Math.min(100, Math.round((urHave / urTotal) * 100))) : 0;
 
   const header = (
-    <View style={[styles.band, !cameraReady && styles.bandSolid, { paddingTop: insets.top + 18 }]}>
+    <View style={[styles.band, !cameraReady && styles.bandSolid, !cameraReady && styles.bandFit, { paddingTop: insets.top + 18 }]}>
       <View style={styles.overlineRow}>
         <View style={styles.tick} />
         <Text style={styles.overline}>MCR / SCAN</Text>
@@ -575,7 +577,15 @@ const ScanQRCode = () => {
   );
 
   const footer = (
-    <View style={[styles.band, styles.bandBottom, !cameraReady && styles.bandSolid, { paddingBottom: insets.bottom + 16 }]}>
+    <View
+      style={[
+        styles.band,
+        styles.bandBottom,
+        !cameraReady && styles.bandSolid,
+        !cameraReady && styles.bandFit,
+        { paddingBottom: insets.bottom + 16 },
+      ]}
+    >
       {urTotal > 0 && (
         <View style={styles.progress} testID="UrProgressBar" accessible accessibilityRole="progressbar">
           <View style={styles.progressRow}>
