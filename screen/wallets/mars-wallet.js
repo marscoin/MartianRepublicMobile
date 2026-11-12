@@ -20,6 +20,8 @@ const coinSelect = require("coinselect");
 const coinSelectSplit = require("coinselect/split");
 const bitcoin = require("bitcoinjs-lib");
 
+const seedCache = new WeakMap();
+
 export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   static NETWORK = "MARS";
   static type = "marscoin";
@@ -208,7 +210,14 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   _getSeed() {
     const mnemonic = this.secret;
     const passphrase = this.passphrase;
-    return bip39.mnemonicToSeedSync(mnemonic, passphrase);
+    // Turning the words into a seed is deliberately slow (thousands of hash
+    // rounds). A key is needed for every coin, so do it once per wallet and
+    // keep the result in memory only: the WeakMap is never written to storage.
+    const cached = seedCache.get(this);
+    if (cached && cached.mnemonic === mnemonic && cached.passphrase === passphrase) return cached.seed;
+    const seed = bip39.mnemonicToSeedSync(mnemonic, passphrase);
+    seedCache.set(this, { mnemonic, passphrase, seed });
+    return seed;
   }
 
   getXpub() {

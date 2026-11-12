@@ -170,3 +170,19 @@ describe('the wallet spends only coins the network reported', () => {
     expect(planned.fee).toBeGreaterThan(0);
   });
 });
+
+describe('signing keys for many coins', () => {
+  it('derives the seed from the words once, not once per coin', () => {
+    const bip39 = require('bip39');
+    const spy = jest.spyOn(bip39, 'mnemonicToSeedSync');
+    const { MarsElectrumWallet } = require('../../screen/wallets/mars-wallet');
+    const wallet = new MarsElectrumWallet();
+    wallet.setSecret('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about');
+    const first = wallet._getWIFByIndex(false, 0);
+    for (let i = 1; i < 40; i++) wallet._getWIFByIndex(i % 2 === 1, i);
+    expect(first).toBe(wallet._getWIFByIndex(false, 0));
+    expect(spy.mock.calls.length).toBeLessThanOrEqual(1);
+    expect(JSON.stringify(wallet)).not.toContain('seed');
+    spy.mockRestore();
+  });
+});

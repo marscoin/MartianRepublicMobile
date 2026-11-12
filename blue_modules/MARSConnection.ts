@@ -389,6 +389,8 @@ module.exports.multiGetUtxoByAddress = async function (addresses, batchsize) {
     }
 
     for (const utxos of results) {
+      // One address the server could not answer for must not sink the others.
+      if (!Array.isArray(utxos?.result)) throw new Error(`The server could not list coins for one address${utxos?.error?.message ? `: ${utxos.error.message}` : '.'}`);
       ret[scripthash2addr[utxos.param]] = utxos.result;
       for (const utxo of ret[scripthash2addr[utxos.param]]) {
         utxo.address = scripthash2addr[utxos.param];
