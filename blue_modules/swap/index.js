@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import { assertMarsMainnet } from '../mars-electrum-peer';
+import { MarsNetworkError, describeConnectionFailure, isConnectionFailure } from '../mars-electrum-link';
 import { createBtcWallet } from './btc-wallet';
 import { createSwapEngine, isSwapFinished } from './engine';
 import { createEsplora } from './esplora';
@@ -59,13 +60,32 @@ async function connect() {
     );
   } catch {
     next.close?.();
-    throw new Error('Unable to reach the Marscoin swap relay. Check your connection and try again.');
+    const failure = new MarsNetworkError('Unable to reach the Marscoin swap relay. Check your connection and try again.');
+    failure.whileConnecting = true;
+    throw failure;
   }
   client = next;
   return next;
 }
 
+// Requests that change nothing on the relay or the chain, and so can be sent
+// a second time when the connection died under the first.
+const REPEATABLE = /^(server\.|blockchain\.(?!transaction\.broadcast)|atomicswap\.(get_|features$|watch_status$))/;
+
+// A request that was in flight when the socket closed fails inside
+// electrum-client with "close connect". The relay connection is replaced on
+// demand, so a read is simply asked again; nothing above this function ever
+// sees the library's wording.
 async function request(method, params) {
+  try {
+    return await requestOnce(method, params);
+  } catch (error) {
+    if (error?.code !== 'MARS_NETWORK' || error.whileConnecting || !REPEATABLE.test(method)) throw error;
+    return requestOnce(method, params);
+  }
+}
+
+async function requestOnce(method, params) {
   if (client && client.status === 0) client = null;
   if (!client) {
     connecting = connecting || connect().finally(() => (connecting = null));
@@ -87,7 +107,8 @@ async function request(method, params) {
     if (error instanceof Error) {
       if (client === current) client = null;
       current.close?.();
-      throw error;
+      // Our own time limit keeps its wording; anything else is the library's.
+      throw new MarsNetworkError(isConnectionFailure(error) && !/swap relay/.test(error.message) ? undefined : error.message, error);
     }
     throw new Error(typeof error?.message === 'string' ? error.message : 'The swap relay refused the request.');
   } finally {
@@ -271,7 +292,7 @@ let makerRecords = null;
 let makerLoading = null;
 let makerSnapshot = [];
 let makerConfig = null;
-let makerStatus = { market: 0, marsUsd: 0, position: null, message: null, checkedAt: 0 };
+let makerStatus = { market: 0, marsUsd: 0, marketUnavailable: false, position: null, message: null, checkedAt: 0 };
 const makerListeners = new Set();
 const publishMaker = () => {
   makerSnapshot = makerRecords ? [...makerRecords.values()].sort((a, b) => b.createdAt - a.createdAt).map(record => ({ ...record })) : [];
@@ -381,7 +402,13 @@ const PLAUSIBLE_MARS_USD = [0.0005, 50];
 const within = (value, [low, high]) => Number.isFinite(value) && value >= low && value <= high;
 
 async function fetchMarket() {
-  const [mars, btcPrices] = await Promise.all([fetchJson(PRICE_FEED), fetchJson(BTC_PRICE_FEED)]);
+  let mars;
+  let btcPrices;
+  try {
+    [mars, btcPrices] = await Promise.all([fetchJson(PRICE_FEED), fetchJson(BTC_PRICE_FEED)]);
+  } catch {
+    throw new Error('The market price is unavailable right now. Trying again shortly.');
+  }
   const marsUsd = Object.values(mars?.data || {})[0]?.quote?.USD?.price;
   const btcUsd = btcPrices?.USD;
   if (!within(marsUsd, PLAUSIBLE_MARS_USD) || !within(btcUsd, PLAUSIBLE_BTC_USD))
@@ -398,8 +425,21 @@ const setMakerStatus = patch => {
 async function refreshOffers(wallet) {
   const { engine, btcWallet } = getMakerServices(wallet);
   await engine.withdraw();
+  // Show the price as soon as it is known. It used to be published only after
+  // the wallet's coins, the Bitcoin wallet and the relay had all answered as
+  // well, so one lost connection left the screen on "Checking…".
+  const priced = fetchMarket().then(
+    found => {
+      setMakerStatus({ market: found.market, marsUsd: found.marsUsd, marketUnavailable: false });
+      return found;
+    },
+    error => {
+      setMakerStatus({ marketUnavailable: true });
+      throw error;
+    },
+  );
   const [{ marsUsd, market }, position, book, { receiveAddress }] = await Promise.all([
-    fetchMarket(),
+    priced,
     engine.position(),
     swapChain.rawOffers().catch(() => []),
     btcWallet.sync(),
@@ -429,6 +469,17 @@ async function refreshOffers(wallet) {
   });
 }
 
+const RETRY_SECONDS = 30;
+// What the maker screen says when offers could not be renewed: never the
+// connection library's own wording.
+export function describeMakerFailure(error) {
+  return (
+    describeConnectionFailure(error, { retrying: true }) ||
+    (typeof error?.message === 'string' && error.message) ||
+    'Offers could not be refreshed. Trying again shortly.'
+  );
+}
+
 let makerRunningSince = 0;
 let lastRefresh = 0;
 const hasSeed = wallet => wallet && typeof wallet._getSeed === 'function';
@@ -448,9 +499,11 @@ export async function runMaker(wallet, { force = false, wallets = [] } = {}) {
     }
     if (hasSeed(wallet) && makerConfig.enabled && (force || Date.now() - lastRefresh >= REFRESH_SECONDS * 1000)) {
       lastRefresh = Date.now();
-      await refreshOffers(wallet).catch(error =>
-        setMakerStatus({ message: error?.message || 'Offers could not be refreshed. Trying again shortly.' }),
-      );
+      await refreshOffers(wallet).catch(error => {
+        // Try again at the next pass or two, not in five minutes.
+        lastRefresh = Date.now() - (REFRESH_SECONDS - RETRY_SECONDS) * 1000;
+        setMakerStatus({ message: describeMakerFailure(error) });
+      });
     }
     publishMaker();
   } catch {
@@ -508,6 +561,9 @@ export function useMakerRunner(wallet, wallets) {
     };
   }, []);
 }
+
+// The maker's market status, for callers outside React.
+export const getMakerStatus = () => makerStatus;
 
 const subscribeMaker = listener => {
   makerListeners.add(listener);
