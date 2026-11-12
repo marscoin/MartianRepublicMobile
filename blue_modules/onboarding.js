@@ -84,6 +84,13 @@ export const ordinal = number => {
 // The journey after setup, as shown on the home screen. Each step is done,
 // current (the one to do now) or ahead.
 //
+// Nothing here asks a newcomer to find Marscoin first. The introduction is
+// written before any fee is due, and when it comes to publishing, the Republic
+// offers a welcome gift that covers it (see welcome-gift.js). Reading the
+// community terms stays ahead of the introduction: once an introduction is
+// started that step counts as done, so placed after it nobody would ever be
+// shown the terms.
+//
 // The server marks an application 'submitted' as soon as its first page is
 // saved, long before anything is published. So 'submitted' alone proves
 // nothing: the introduction counts as made only when the server says it was
@@ -96,7 +103,6 @@ export function introductionPublished({ status = null, applicationStage = null, 
 }
 
 export function journey({
-  balance = 0,
   termsAccepted = false,
   status = null,
   applicationSaved = false,
@@ -109,14 +115,6 @@ export function journey({
   const member = ['public_member', 'citizen'].includes(status);
   const steps = [
     { key: 'wallet', title: 'Create your wallet', detail: 'Done. Keep your twelve words safe.', done: true },
-    {
-      key: 'funds',
-      title: 'Get your first Marscoin',
-      detail: 'Swap a little Bitcoin, or ask a citizen to send you some. A fraction of one Marscoin covers your application.',
-      done: balance > 0,
-      action: 'Get Marscoin',
-      route: 'SwapHome',
-    },
     {
       key: 'terms',
       title: 'Meet the community',
@@ -132,7 +130,7 @@ export function journey({
         ? 'Your introduction is saved on this phone. Pick up where you left off.'
         : unfinished
           ? 'You have started your introduction, but it is not published yet. Pick up where you left off.'
-          : 'A name, a photo and a few words. It is published on the Marscoin chain as your public record.',
+          : 'A name, a photo and a few words, published as your public record. It is free to start, and the Republic covers the network fee with a welcome gift when available.',
       done: applied,
       action: applicationSaved || unfinished ? 'Continue' : 'Start',
       route: 'JoinGeneralPublicApplicationScreen',
@@ -159,3 +157,14 @@ export function journey({
 }
 
 export const journeyProgress = steps => ({ done: steps.filter(step => step.done).length, total: steps.length });
+
+// What takes the path's place on the home screen. Joining is optional: someone
+// who only wants a wallet can put the path away and is shown a small invitation
+// instead. Once an introduction is published the path is shown regardless, so
+// its progress is never hidden.
+export function pathCard(steps, { walletOnly = false } = {}) {
+  if (!steps.some(step => !step.done && step.key !== 'vote')) return { mode: 'none', canSkip: false };
+  const introduced = steps.some(step => step.key === 'apply' && step.done);
+  if (walletOnly && !introduced) return { mode: 'invite', canSkip: false };
+  return { mode: 'path', canSkip: !introduced };
+}

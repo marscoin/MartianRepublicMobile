@@ -6,7 +6,8 @@ import { civicColors as c } from '../../components/CivicUi';
 
 // The newcomer's path, shown on the home screen until it is complete: what is
 // done, the one thing to do now, and what lies ahead.
-export default function Journey({ steps, onOpen }) {
+// `onSkip`, when given, offers to put the path away and just use the wallet.
+export default function Journey({ steps, onOpen, onSkip }) {
   const progress = journeyProgress(steps);
   const [showAll, setShowAll] = useState(false);
   const current = steps.find(step => step.state === 'current');
@@ -49,7 +50,32 @@ export default function Journey({ steps, onOpen }) {
           <Text style={styles.moreText}>{showAll ? 'Show less' : 'See what comes after'}</Text>
         </TouchableOpacity>
       ) : null}
+      {onSkip ? (
+        <TouchableOpacity accessibilityRole="button" onPress={onSkip} style={styles.skip} testID="JourneySkip">
+          <Text style={styles.skipText}>Just use the wallet for now</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
+  );
+}
+
+// What stands in for the path after "Just use the wallet for now": one quiet
+// row that brings it back.
+export function JoinInvite({ onJoin }) {
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel="Join the Republic. Introduce yourself when you are ready. Your wallet works either way."
+      onPress={onJoin}
+      style={styles.invite}
+      testID="JoinInvite"
+    >
+      <View style={styles.text}>
+        <Text style={styles.title}>Join the Republic</Text>
+        <Text style={styles.inviteNote}>Introduce yourself when you are ready. Your wallet works either way.</Text>
+      </View>
+      <Icon name="arrow-right" type="feather" size={20} color={c.orange} />
+    </TouchableOpacity>
   );
 }
 
@@ -91,4 +117,18 @@ const styles = StyleSheet.create({
   actionText: { fontFamily: 'ChakraPetch-Bold', fontSize: 16, color: c.background },
   more: { minHeight: 36, justifyContent: 'center', alignItems: 'center' },
   moreText: { fontFamily: 'ChakraPetch-Medium', fontSize: 14, color: c.muted },
+  skip: { minHeight: 44, justifyContent: 'center', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#FFFFFF14' },
+  skipText: { fontFamily: 'ChakraPetch-Medium', fontSize: 14, color: c.muted },
+  invite: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: c.border,
+    backgroundColor: c.panel,
+  },
+  inviteNote: { fontSize: 14, lineHeight: 20, color: c.muted },
 });

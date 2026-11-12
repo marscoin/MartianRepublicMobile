@@ -7,8 +7,11 @@ import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { OnboardingFrame, Paragraph, styles } from './OnboardingUi';
 
 const NEXT = [
-  { title: 'Get your first Marscoin', text: 'Swap a little Bitcoin right in the app, or have a citizen send you some.' },
-  { title: 'Introduce yourself', text: 'A name, a photo and a few words, published as your public record.' },
+  { title: 'Meet the community', text: 'Read the short community terms and see who is already here.' },
+  {
+    title: 'Introduce yourself',
+    text: 'A name, a photo and a few words, published as your public record. It is free to start, and the Republic covers the network fee with a welcome gift when available.',
+  },
   { title: 'Be recognised, then vote', text: 'Citizens endorse real people. Citizens decide what the Republic does.' },
 ];
 
@@ -102,7 +105,10 @@ export default function OnboardingReady() {
           <Text style={styles.note}>{item.text}</Text>
         </View>
       ))}
-      <Text style={styles.note}>Your home screen will keep track of these for you.</Text>
+      <Text style={styles.note}>
+        Your home screen will keep track of these for you. None of it is required: your wallet works on its own, and you can join the
+        Republic later.
+      </Text>
     </OnboardingFrame>
   );
 }

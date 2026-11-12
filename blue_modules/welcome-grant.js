@@ -9,10 +9,10 @@ export const GRANT_API = 'https://martianrepublic.org/api';
 
 const REQUEST_TIMEOUT = 15000;
 const REASONS = {
-  unavailable: 'The welcome grant is not available right now.',
-  not_eligible: 'This civic address cannot receive a welcome grant.',
-  already: 'A welcome grant was already sent to this civic address.',
-  failed: 'The welcome grant could not be requested. Check your connection and try again.',
+  unavailable: 'The welcome gift is not available right now.',
+  not_eligible: 'This civic address cannot receive a welcome gift.',
+  already: 'A welcome gift was already sent to this civic address.',
+  failed: 'The welcome gift could not be requested. Check your connection and try again.',
   mismatch: 'The server asked for an unexpected signature, so nothing was signed.',
   invalid_signature: 'The server did not accept the proof of your civic key.',
   expired: 'The request took too long and expired. Try again.',
@@ -43,8 +43,68 @@ function within(promise, ms) {
 // feature being switched off. Anything else is a failure worth retrying.
 const fromError = error => (error?.response?.status === 404 ? result('unavailable') : result('failed'));
 
-export async function requestWelcomeGrant({
+// Never sign text merely because the server supplied it. The address must be
+// this wallet's civic address and the message exactly the expected one.
+const asExpected = (challenge, address) =>
+  !!challenge &&
+  challenge.address === address &&
+  typeof challenge.nonce === 'string' &&
+  /^[\x21-\x7e]{1,256}$/.test(challenge.nonce) &&
+  challenge.message === grantMessage(address, challenge.nonce);
+
+const session = async (getToken, timeout) => {
+  const token = await within(getToken(), timeout);
+  return typeof token === 'string' && token ? { headers: { Authorization: `Bearer ${token}` }, timeout } : null;
+};
+
+// Step one: ask whether a grant is on offer. This only asks. Nothing is signed
+// and no coins move until the offer is claimed, so it is safe to call before
+// the newcomer has agreed to anything.
+//
+// Outcomes: 'available' (with the `challenge` to claim it), 'already',
+// 'unavailable', 'not_eligible', 'failed'.
+export async function fetchGrantOffer({ wallet, http, getToken, baseURL = GRANT_API, timeout = REQUEST_TIMEOUT } = {}) {
+  let address;
+  try {
+    if (!wallet?.civic) return result('failed', { reason: 'Restore your civic wallet first.' });
+    address = wallet._getExternalAddressByIndex(0);
+  } catch {
+    return result('failed');
+  }
+
+  let challenge;
+  try {
+    const config = await session(getToken, timeout);
+    if (!config) return result('failed');
+    challenge = (await within(http.post(`${baseURL}/grant/challenge`, {}, config), timeout + 1000))?.data;
+  } catch (error) {
+    return fromError(error);
+  }
+  if (!challenge || typeof challenge !== 'object') return result('failed');
+
+  const offered = { txid: challenge.txid, amount: challenge.amount_zubrins };
+  if (challenge.status === 'already_granted') return result('already', offered);
+  if (challenge.status === 'unavailable') return result('unavailable');
+  if (challenge.status === 'not_eligible') return result('not_eligible', { reason: said(challenge.reason, REASONS.not_eligible) });
+  if (challenge.status !== 'available' || challenge.eligible !== true) return result('failed');
+  // An offer that could not be claimed safely is not shown as one.
+  if (!asExpected(challenge, address)) return result('failed', { reason: REASONS.mismatch });
+  return {
+    ...result('available', { amount: challenge.amount_zubrins }),
+    challenge: { address, nonce: challenge.nonce, message: challenge.message },
+  };
+}
+
+// Step two, only after the newcomer accepts: prove ownership of the civic key
+// and ask for the grant to be sent. The offer is checked again here, so this
+// signs nothing but the exact expected message for this wallet's own address.
+//
+// Outcomes: 'sent', 'already', 'unavailable', 'not_eligible', 'failed'. A
+// challenge that ran out while the offer was being read is 'failed' with
+// `expired: true`; fetch a new offer and claim that.
+export async function claimGrantOffer({
   wallet,
+  offer,
   http,
   getToken,
   sign = signCivicMessage,
@@ -58,48 +118,23 @@ export async function requestWelcomeGrant({
   } catch {
     return result('failed');
   }
-
-  let config;
-  let challenge;
-  try {
-    const token = await within(getToken(), timeout);
-    if (typeof token !== 'string' || !token) return result('failed');
-    config = { headers: { Authorization: `Bearer ${token}` }, timeout };
-    challenge = (await within(http.post(`${baseURL}/grant/challenge`, {}, config), timeout + 1000))?.data;
-  } catch (error) {
-    return fromError(error);
-  }
-  if (!challenge || typeof challenge !== 'object') return result('failed');
-
-  const offered = { txid: challenge.txid, amount: challenge.amount_zubrins };
-  if (challenge.status === 'already_granted') return result('already', offered);
-  if (challenge.status === 'unavailable') return result('unavailable');
-  if (challenge.status === 'not_eligible') return result('not_eligible', { reason: said(challenge.reason, REASONS.not_eligible) });
-  if (challenge.status !== 'available' || challenge.eligible !== true) return result('failed');
-
-  // Never sign text merely because the server supplied it. The address must be
-  // this wallet's civic address and the message exactly the expected one.
-  const { nonce } = challenge;
-  if (
-    challenge.address !== address ||
-    typeof nonce !== 'string' ||
-    !/^[\x21-\x7e]{1,256}$/.test(nonce) ||
-    challenge.message !== grantMessage(address, nonce)
-  ) {
-    return result('failed', { reason: REASONS.mismatch });
-  }
+  const challenge = offer?.challenge;
+  if (offer?.outcome !== 'available' || !asExpected(challenge, address)) return result('failed', { reason: REASONS.mismatch });
 
   let claim;
   try {
+    const config = await session(getToken, timeout);
+    if (!config) return result('failed');
     const signature = await sign(wallet, challenge.message);
     if (typeof signature !== 'string' || !signature) return result('failed');
-    claim = (await within(http.post(`${baseURL}/grant/claim`, { address, nonce, signature }, config), timeout + 1000))?.data;
+    claim = (await within(http.post(`${baseURL}/grant/claim`, { address, nonce: challenge.nonce, signature }, config), timeout + 1000))
+      ?.data;
   } catch (error) {
     return fromError(error);
   }
   if (!claim || typeof claim !== 'object') return result('failed');
 
-  const sent = { txid: claim.txid, amount: Number.isSafeInteger(claim.amount_zubrins) ? claim.amount_zubrins : challenge.amount_zubrins };
+  const sent = { txid: claim.txid, amount: Number.isSafeInteger(claim.amount_zubrins) ? claim.amount_zubrins : offer.amountZubrins };
   switch (claim.status) {
     case 'sent':
       return result('sent', sent);
@@ -112,10 +147,16 @@ export async function requestWelcomeGrant({
     case 'invalid_signature':
       return result('failed', { reason: REASONS.invalid_signature });
     case 'expired':
-      return result('failed', { reason: REASONS.expired });
+      return { ...result('failed', { reason: REASONS.expired }), expired: true };
     default:
       return result('failed');
   }
+}
+
+// Both steps at once, for a caller that already has the newcomer's consent.
+export async function requestWelcomeGrant(options = {}) {
+  const offer = await fetchGrantOffer(options);
+  return offer.outcome === 'available' ? claimGrantOffer({ ...options, offer }) : offer;
 }
 
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
