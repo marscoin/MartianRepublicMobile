@@ -209,12 +209,13 @@ export function deriveOlderAddress(wallet, variation, chain, index) {
 
 // The app's own addresses, worked out here without touching the wallet's
 // caches, as far as the scan has gone. Anything in this set is not "older".
-function standardAddresses(wallet) {
+function standardAddresses(wallet, pause) {
   const known = new Set();
   let upTo = 0;
   return {
-    extend(count) {
+    async extend(count) {
       for (; upTo < count; upTo++) {
+        if (pause && upTo % 2 === 0) await pause();
         known.add(addressAt(wallet, SEED_STANDARD, STANDARD_PATH, 0, upTo));
         known.add(addressAt(wallet, SEED_STANDARD, STANDARD_PATH, 1, upTo));
       }
@@ -281,15 +282,18 @@ async function coinsOf(connection, addresses) {
  * @param connection  { multiGetHistoryByAddress, multiGetBalanceByAddress, multiGetUtxoByAddress }
  * @param onProgress  called as each place is started and finished
  * @param variations  the places to check; defaults to all of them
+ * @param pause       optional; awaited every few addresses so that an app can
+ *                    stay responsive while keys are worked out
  * @returns {Promise<{variations: Array, coins: Array, confirmed: number, unconfirmed: number, total: number}>}
  *          amounts are exact whole zubrins
  * @throws OlderFundsError code OLDER_FUNDS_NETWORK when the network could not
  *         be asked. A failure is never reported as "nothing found".
  */
-export async function scanOlderFunds({ wallet, connection, onProgress, variations }) {
+export async function scanOlderFunds({ wallet, connection, onProgress, variations, pause }) {
   const places = (variations || olderFundsVariations(wallet)).map(requireVariation);
   if (!isOlderFundsWallet(wallet)) throw refuse('OLDER_FUNDS_WALLET', 'This wallet was not made from recovery words.');
-  const standard = standardAddresses(wallet);
+  const rest = typeof pause === 'function' ? pause : null;
+  const standard = standardAddresses(wallet, rest);
   const seen = new Set();
   const report = state => {
     if (typeof onProgress === 'function') onProgress(state);
@@ -319,9 +323,10 @@ export async function scanOlderFunds({ wallet, connection, onProgress, variation
 
     for (const chain of [0, 1]) {
       for (let start = 0; start < SCAN_MAX_PER_CHAIN; start += SCAN_CHUNK) {
-        standard.extend(start + SCAN_CHUNK);
+        await standard.extend(start + SCAN_CHUNK);
         const where = new Map();
         for (let index = start; index < start + SCAN_CHUNK; index++) {
+          if (rest && index % 4 === 0) await rest();
           const address = deriveOlderAddress(wallet, variation, chain, index);
           // The wallet's own coins, and anything already counted, are left alone.
           if (isStandardVariation(variation) || standard.has(address)) {

@@ -14,7 +14,7 @@ import {
   scanOlderFunds,
   selectSweepCoins,
 } from '../../blue_modules/older-funds';
-import { olderFundsNetwork, sweepFeeRate } from '../../blue_modules/older-funds-flow';
+import { olderFundsNetwork, sweepFeeRate, yieldToScreen } from '../../blue_modules/older-funds-flow';
 import { formatMars } from '../../blue_modules/swap/present';
 import { CivicButton, civicColors } from '../../components/CivicUi';
 import { Copyable, Row, swapStyles } from '../swap/SwapUi';
@@ -74,6 +74,7 @@ export default function FindOlderFunds() {
       const result = await scanOlderFunds({
         wallet,
         connection,
+        pause: yieldToScreen,
         onProgress: step => {
           if (!current()) return;
           setPlaces(list =>

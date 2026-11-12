@@ -15,6 +15,9 @@ export async function olderFundsNetwork() {
   return connection;
 }
 
+// Hands the phone back to the screen for a moment between batches of key work.
+export const yieldToScreen = () => new Promise(resolve => setTimeout(resolve, 0));
+
 // Zubrins per byte: the rate the send screen starts from, never below 1.
 export async function sweepFeeRate() {
   const fees = await NetworkTransactionFees.recommendedFees();
@@ -41,7 +44,7 @@ export async function offerOlderFundsAfterRestore(
     offered.add(id);
     // Let the restore finish drawing the home screen first.
     await new Promise(resolve => setTimeout(resolve, delay));
-    const scan = await scanOlderFunds({ wallet, connection: await network() });
+    const scan = await scanOlderFunds({ wallet, connection: await network(), pause: yieldToScreen });
     if (scan.total > 0) {
       alert(
         `We found ${formatMars(scan.total)} on older addresses of this wallet`,

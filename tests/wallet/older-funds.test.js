@@ -292,6 +292,18 @@ describe('scanning', () => {
     ]);
   });
 
+  it('rests between batches of key work when asked to, with the same result', async () => {
+    const wallet = sharedWallet();
+    const address = 'MPfb4NUfbgswmwiEoP4njzY9XoFz3ZntQ5';
+    const ledger = { [address]: { coins: [serverCoin(fundingTx(address, 31337))] } };
+    const pause = jest.fn(async () => {});
+    const rested = await scanOlderFunds({ wallet, connection: fakeConnection(ledger), pause });
+    const straight = await scanOlderFunds({ wallet, connection: fakeConnection(ledger) });
+    expect(rested).toEqual(straight);
+    expect(rested.total).toBe(31337);
+    expect(pause.mock.calls.length).toBeGreaterThanOrEqual(5 * 2 * 5);
+  });
+
   it('never asks the network about the wallet’s own addresses', async () => {
     const wallet = sharedWallet();
     const connection = fakeConnection();

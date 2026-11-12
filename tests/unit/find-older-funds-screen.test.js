@@ -211,6 +211,9 @@ describe('Find older funds screen', () => {
       await act(async () => new Promise(resolve => setTimeout(resolve, 10)));
     }
     await act(async () => release(true));
+    for (let turn = 0; turn < 6000 && mockNet.multiGetHistoryByAddress.mock.calls.length < 5; turn++) {
+      await act(async () => new Promise(resolve => setTimeout(resolve, 10)));
+    }
     await until(tree, 'Checking…');
     expect(text(tree)).toContain('CHECKING');
     expect(text(tree).match(/^Nothing$/gm)).toHaveLength(2);
