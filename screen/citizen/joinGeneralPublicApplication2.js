@@ -1,19 +1,19 @@
 import { marsAlert } from '../../components/MarsDialog';
 import { saveCitizenshipDraft, ipfsURL } from '../../blue_modules/citizenship-draft';
 import { getCivicToken } from '../../blue_modules/civic-api';
-import { citizenshipVideoFile, citizenshipVideoUploadError, MAX_CITIZENSHIP_VIDEO_BYTES } from '../../blue_modules/citizenship-media';
-import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Platform, SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, Modal, View, Text, PermissionsAndroid, TouchableOpacity, TextInput, I18nManager, FlatList } from 'react-native';
+import { citizenshipVideoFile, citizenshipVideoUploadError } from '../../blue_modules/citizenship-media';
+import React, { useEffect, useState } from 'react';
+import { SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import loc from '../../loc';
 import { Icon } from 'react-native-elements';
-import { requestCameraAuthorization } from '../../helpers/scan-qr';
 import { useTheme } from '../../components/themes';
 import Video from 'react-native-video';
 import LinearGradient from 'react-native-linear-gradient';
 import RNFS from 'react-native-fs';
 import { Video as CompressorVideo } from 'react-native-compressor';
-import { RNCamera } from 'react-native-camera';
+import { launchCamera } from 'react-native-image-picker';
+import { recordCitizenshipVideo, spokenCodeText } from '../../blue_modules/citizenship-video';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -23,13 +23,19 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
   const route = useRoute();
   const {firstName, lastName, displayName, bio, photo, video} = route.params;
 
-  const [modalVisible, setModalVisible] = useState(false);
   const [capturedVideo, setCapturedVideo] = useState(route.params.video);
   const [isVideoPaused, setIsVideoPaused] = useState(true);
   const [isFormValid, setIsFormValid] = useState(false);
   const [videoIPFS, setVideoIPFS] = useState(null);
-  const [capturedUri, setCapturedUri] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [sayCode, setSayCode] = useState(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem('civicAddress')
+      .then(address => setSayCode(spokenCodeText(address)))
+      .catch(() => {});
+  }, []);
   
   const onVideoCaptured = (videoUri) => {
     setCapturedVideo(videoUri);
@@ -37,26 +43,21 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
 
   }; 
 
-  async function requestPermissions() {
-    if (Platform.OS === 'android') {
-      const result = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-      ]);
-      return Object.values(result).every(value => value === PermissionsAndroid.RESULTS.GRANTED);
-    }
-    return true;
-  }
-  
   async function openVideoCamera() {
+    if (preparing) return;
+    setPreparing(true);
+    setIsVideoPaused(true);
     try {
-      if (!(await requestPermissions())) {
-        marsAlert('Camera access needed', 'Allow camera and microphone access in Settings to record your citizenship video.');
-        return;
-      }
-      setModalVisible(true);
-    } catch {
-      marsAlert('Camera unavailable', 'Camera and microphone access could not be checked. Please try again.');
+      const recording = await recordCitizenshipVideo({
+        launchCamera,
+        compress: (uri, options) => CompressorVideo.compress(uri, options),
+        fileSize: async uri => (await RNFS.stat(uri)).size,
+      });
+      if (recording) onVideoCaptured(recording.uri);
+    } catch (error) {
+      marsAlert('Recording not saved', error.message);
+    } finally {
+      setPreparing(false);
     }
   }
 
@@ -208,6 +209,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       borderWidth: 0.7,
       borderColor: 'white',
       alignSelf: 'center',
+      alignItems: 'center',
       justifyContent: 'center',
       marginTop: 10
     },
@@ -290,211 +292,6 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       },
   });
 
-  const VideoCameraModal = ({ isVisible, onClose, onVideoCaptured, onRetake, onSave  }) => {
-    const cameraRef = useRef(null);
-    // const [capturedUri, setCapturedUri] = useState(null);
-    const [isRecording, setIsRecording] = useState(false);
-    const [videoPaused, setVideoPaused] = useState(true);
-    const [videoEnded, setVideoEnded] = useState(false);
-    const [remainingTime, setRemainingTime] = useState(60); // Countdown from 60 seconds
-
-    const handleSave = () => {
-      // compressed = compressImage(capturedUri)
-       onVideoCaptured(capturedUri);
-       setCapturedUri(null); // Reset after saving
-       onClose(); // Close the modal
-     };
-
-     const handleRetake = () => {
-       setCapturedVideo(null); // Reset the imageUri to go back to the camera screen
-     };
-
-     const stopRecording = () => {
-      if (cameraRef.current && isRecording) {
-          cameraRef.current.stopRecording();
-          setIsRecording(false);
-          setRemainingTime(60);
-      }
-  };
-
-    const togglePlayPause = () => {
-      if (videoEnded) { // If video has ended, replay from start
-          setVideoPaused(false);
-          setVideoEnded(false); // Reset video end status
-      } else {
-          setVideoPaused(!videoPaused);
-      }
-    };
-
-    const onVideoEnd = () => {
-        setVideoPaused(true);
-        setVideoEnded(true); // Set video end status to true
-    };
-
-    useEffect(() => {
-        let interval;
-        if (isRecording && remainingTime > 0) {
-            interval = setInterval(() => {
-                setRemainingTime(remainingTime => remainingTime - 1);
-            }, 1000);
-        } else if (remainingTime <= 0) {
-            stopRecording(); // Function to stop recording
-            clearInterval(interval);
-        }
-        return () => clearInterval(interval);
-    }, [isRecording, remainingTime]);
-
-
-    async function compressVideo(videoUri) {
-      try {
-        const options = {
-          compressionMethod: 'manual',
-          maxSize: 480,
-          bitrate: 450000,
-        };
-        const compressedVideoUri = await CompressorVideo.compress(videoUri, options);
-
-        return compressedVideoUri;
-      } catch (error) {
-        // Keep the camera output if compression fails; the upload size check
-        // still runs before anything is sent.
-        return videoUri;
-      }
-    }
-
-    const handleRecord = async () => {
-      if (cameraRef.current && !isRecording) {
-        setIsRecording(true);
-        setRemainingTime(60); // Reset the timer
-        try {
-          const options = {
-            quality: RNCamera.Constants.VideoQuality["480p"],
-            maxDuration: 60,
-            maxFileSize: MAX_CITIZENSHIP_VIDEO_BYTES,
-          };
-          const video = await cameraRef.current.recordAsync(options);
-          const compressedVideoUri = await compressVideo(video.uri);
-          onVideoCaptured(compressedVideoUri);
-          setCapturedUri(compressedVideoUri);
-        } catch (err) {
-          marsAlert('Recording failed', 'The video could not be recorded. Check camera and microphone access and try again.');
-        } finally {
-          setIsRecording(false);
-        }
-      } else if (isRecording) {
-        stopRecording();
-      }
-    };
-
-    const handleModalClose = () => {
-      setVideoPaused(true);
-      setVideoEnded(false);
-      onClose();
-    };
-
-    return (
-        <Modal
-            animationType="slide"
-            transparent={false}
-            visible={isVisible}
-            onRequestClose={handleModalClose}
-        >
-          {capturedVideo ? (
-              <View style={styles.videoReviewContainer}>
-                  <TouchableOpacity 
-                    style={{flexDirection:'row', justifyContent:'space-between', alignSelf:'flex-start', marginTop: 20, marginLeft: 20}}
-                    onPress={()=>onClose()}
-                  >
-                    <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
-                  </TouchableOpacity>
-                  <Video
-                        source={{ uri: capturedVideo }}
-                        style={styles.videoPlayer}
-                        paused={videoPaused}
-                        resizeMode="contain"
-                        onEnd={onVideoEnd} // Handle video end
-                        repeat={true} // Control if the video should loop
-                    />
-                  <View style={styles.controlBar}>
-                      <TouchableOpacity onPress={togglePlayPause} style={styles.controlButton}>
-                          <Icon name={videoPaused ? 'play-circle-outline' : 'pause'} size={40} color={'white'} />
-                      </TouchableOpacity>
-                  </View>
-
-                  <View style = {styles.buttonContainer1}>
-                    <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                      <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-                        <Text style={styles.buttonText}>Save</Text>
-                      </TouchableOpacity>
-                    </LinearGradient>
-                    <LinearGradient colors={['#FFB67D','#FF8A3E', '#FF7400']} style={styles.joinButtonGradient}>
-                      <TouchableOpacity onPress={handleRetake} style={styles.saveButton}>
-                        <Text style={styles.buttonText}>Retake</Text>
-                      </TouchableOpacity>
-                    </LinearGradient>
-                  </View>
-              </View>
-            ) : (    
-                <RNCamera
-                    ref={cameraRef}
-                    style={styles.preview}
-                    type={RNCamera.Constants.Type.front}
-                    flashMode={RNCamera.Constants.FlashMode.off}
-                    androidCameraPermissionOptions={{
-                        title: 'Permission to use camera',
-                        message: 'We need your permission to use your camera',
-                        buttonPositive: 'Ok',
-                        buttonNegative: 'Cancel',
-                    }}
-                    androidRecordAudioPermissionOptions={{
-                        title: 'Permission to use audio recording',
-                        message: 'We need your permission to use your microphone',
-                        buttonPositive: 'Ok',
-                        buttonNegative: 'Cancel',
-                    }}
-                >
-                    {({ camera, status }) => {
-                        if (status !== 'READY') return <View/>;
-                        return (
-                            <View style={styles.captureContainer}>
-                                <TouchableOpacity 
-                                    style={{flexDirection:'row', justifyContent:'space-between', marginTop: 90, marginLeft: 20}}
-                                    onPress={() => {
-                                        onClose();
-                                        setIsRecording(false);
-                                    }}
-                                >
-                                    <Icon name="chevron-left" size={20} type="font-awesome-5" color={'white'} />
-                                </TouchableOpacity>
-
-                                {!isRecording &&
-                                <Text style={[styles.infoText, {marginTop: 200 }]}>Please hold your phone horizontally (landscape) during the recording.</Text>}
-
-                                {isRecording &&
-                                <View style={{flexDirection:'row'}}>
-                                  
-                                  <Text style={[styles.infoText, {marginTop: 200 }]}>If you don't know what to say, read this: "I herewith declare that I, (your name), am human and a member of the Martian Republic."</Text>
-                                </View>}
-
-                                <TouchableOpacity 
-                                    onPress={handleRecord} 
-                                    style={[
-                                        styles.capture, 
-                                        { backgroundColor: isRecording ? '#FF7400' : 'white' },  
-                                        { borderColor: isRecording ? 'white' : 'gray' }
-                                    ]}
-                                >
-                                    {isRecording ? <Text style={styles.timerText}>{remainingTime}</Text> : <Text/>}
-                                </TouchableOpacity>
-                            </View>
-                        );
-                    }}
-                </RNCamera>
-            )}
-        </Modal>
-     );
-  };
-
   return (
     <SafeAreaView style={{flex: 1, marginBottom:-80}}> 
     {/* ////margin -80 sticks screen to the tabbar///// */}
@@ -520,32 +317,49 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         </View>
 
         <View style={{ marginTop: 30, marginHorizontal: 20 }}>   
-          {!capturedVideo && 
-            <TouchableOpacity 
-              style={styles.cameraButton}
-              onPress={openVideoCamera}
-            >
+          {preparing ? (
+            <View style={styles.cameraButton}>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+              <Text style={[styles.smallText, { marginTop: 12 }]}>Preparing your recording…</Text>
+            </View>
+          ) : !capturedVideo ? (
+            <TouchableOpacity style={styles.cameraButton} onPress={openVideoCamera} testID="RecordCitizenshipVideo" accessibilityRole="button" accessibilityLabel="Record your video">
               <Icon name="video" size={36} type="font-awesome-5" color={'lightgray'} />
+              <Text style={[styles.smallText, { marginTop: 12 }]}>Tap to record</Text>
             </TouchableOpacity>
-          }
-          {capturedVideo &&
-            <TouchableOpacity 
-              //style={styles.cameraButton}
-              onPress={openVideoCamera}
-            >
-              <Video
-                source={{ uri: capturedVideo }}
-                paused={isVideoPaused}
-                style={styles.videoPlayerMain}
-                resizeMode='contain'
-              />
-            </TouchableOpacity>
-          }
+          ) : (
+            <View>
+              <TouchableOpacity onPress={() => setIsVideoPaused(paused => !paused)} accessibilityRole="button" accessibilityLabel={isVideoPaused ? 'Play your recording' : 'Pause your recording'}>
+                <Video
+                  source={{ uri: capturedVideo }}
+                  paused={isVideoPaused}
+                  onEnd={() => setIsVideoPaused(true)}
+                  style={styles.videoPlayerMain}
+                  resizeMode='contain'
+                />
+                {isVideoPaused && (
+                  <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }} pointerEvents="none">
+                    <Icon name="play-circle" size={48} type="font-awesome-5" color={'white'} />
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={openVideoCamera} style={{ alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 20 }} testID="RecordCitizenshipVideoAgain">
+                <Text style={[styles.medText, { color: '#FF7400' }]}>Record again</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           <View>
               <Text style={[styles.smallText, {marginTop: 20}]}>Please record a brief video to verify your identity.</Text>
               <Text style={[styles.medText, {marginTop: 20, color:'#FF7400' }]}>INSTRUCTIONS</Text>
-              <Text style={[styles.medText, {marginTop: 20 }]}>1. Hold your phone horizontally (landscape) during the recording.</Text>
-              <Text style={[styles.medText, {marginTop: 20 }]}>2. Display your CIVIC ADDRESS clearly on a piece of paper within the video frame.</Text>
+              <Text style={[styles.medText, {marginTop: 20 }]}>1. Hold your phone horizontally (landscape) and keep your face in view.</Text>
+              {sayCode ? (
+                <View>
+                  <Text style={[styles.medText, {marginTop: 20 }]}>2. Say your name, then read these four characters aloud. They are the end of your civic address, and they tie this recording to you.</Text>
+                  <Text style={{ color: '#FF7400', fontSize: 34, letterSpacing: 6, textAlign: 'center', marginTop: 14, fontFamily: fonts.regular.fontFamily }} testID="SpokenCode">{sayCode}</Text>
+                </View>
+              ) : (
+                <Text style={[styles.medText, {marginTop: 20 }]}>2. Say your name clearly at the start.</Text>
+              )}
               <Text style={[styles.medText, {marginTop: 20 }]}>3. Describe your reasons for wanting to join the Martian Congressional Republic.</Text>
               <Text style={[styles.medText, {marginTop: 20, color:'#FF7400' }]}>Keep your recording under 60 seconds and 5 MB.</Text>
           </View>
@@ -571,11 +385,6 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
             }
         </View> 
 
-        <VideoCameraModal
-            isVisible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            onVideoCaptured={onVideoCaptured}
-        />
       </ScrollView>  
     </SafeAreaView>
   );
