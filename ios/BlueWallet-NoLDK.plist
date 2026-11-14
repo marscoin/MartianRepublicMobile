@@ -163,9 +163,11 @@
 		</dict>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>In order to quickly scan the recipient's address, we need your permission to use the camera to scan their QR Code.</string>
+	<string>The camera scans QR codes, and records the photo and short video in your citizenship application.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>In order to use FaceID please confirm your permission.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The microphone records the sound of the short video in your citizenship application.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Your authorization is required to save this image.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

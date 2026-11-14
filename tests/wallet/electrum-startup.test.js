@@ -28,6 +28,8 @@ describe('app startup Electrum client', () => {
     ElectrumClient.mockImplementation(() => client);
   });
   afterEach(() => jest.restoreAllMocks());
+  // Stop the quiet retries that follow a failed connection.
+  afterAll(() => electrum.forceDisconnect());
   it.each([null, '161.35.136.251', '164.90.138.207'])(
     'uses the current Marscoin server for a fresh install or former default %s',
     async host => {

@@ -17,6 +17,12 @@ export const formatMars = atomic => `${formatCoins(atomic)} MARS`;
 export const formatSats = sats => `${group(String(sats))} sats`;
 export const formatBtc = sats => `${(sats / 100000000).toFixed(8)} BTC`;
 // Price of one Marscoin in satoshis, to one decimal.
+// The maker's market price row: a price, or why there is none yet.
+export function marketPriceText(status) {
+  if (status?.market) return `${(status.market * 100000000).toFixed(1)} sats per MARS`;
+  return status?.marketUnavailable ? 'Unavailable. Retrying…' : 'Checking…';
+}
+
 export const satsPerMars = offer => ((offer.btcAmount / offer.marsAmount) * 100000000).toFixed(1);
 
 const STEPS = ['Reserve offer', 'Marscoin locked for you', 'Pay Bitcoin', 'Receive Marscoin'];

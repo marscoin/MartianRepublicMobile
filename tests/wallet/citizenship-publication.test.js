@@ -1,5 +1,9 @@
 import * as bitcoin from 'bitcoinjs-lib';
-import { prepareCitizenshipPublication, publishCitizenshipTransaction } from '../../blue_modules/citizenship-publication';
+import {
+  isInsufficientFunds,
+  prepareCitizenshipPublication,
+  publishCitizenshipTransaction,
+} from '../../blue_modules/citizenship-publication';
 function setup() {
   const address = 'MHBba2wdTaxZkRisBTe69VJW5JHjTtjCU1';
   const tx = new bitcoin.Transaction();
@@ -39,6 +43,42 @@ function setup() {
   };
 }
 describe('Citizenship publication and interrupted connections', () => {
+  it('marks an empty civic wallet as something more Marscoin fixes, before uploading', async () => {
+    const options = setup();
+    options.wallet.getUtxo = () => [];
+    const error = await prepareCitizenshipPublication(options).catch(e => e);
+    expect(error.message).toMatch(/Receive Marscoin/);
+    expect(isInsufficientFunds(error)).toBe(true);
+    expect(options.pin).not.toHaveBeenCalled();
+  });
+  it('notices too few coins before uploading anything', async () => {
+    const options = setup();
+    options.wallet.coinselect = jest.fn(() => {
+      throw new Error('Not enough balance');
+    });
+    const error = await prepareCitizenshipPublication(options).catch(e => e);
+    expect(isInsufficientFunds(error)).toBe(true);
+    expect(error.message).toMatch(/does not hold enough Marscoin/);
+    expect(options.pin).not.toHaveBeenCalled();
+    expect(options.wallet.createTransaction).not.toHaveBeenCalled();
+    expect(options.draft).toEqual({});
+    // The trial run is sized like the real record: fee rate, change address and a data output.
+    const [utxos, targets, feeRate, change] = options.wallet.coinselect.mock.calls[0];
+    expect(utxos).toHaveLength(1);
+    expect(targets[0]).toEqual({ address: change });
+    expect(targets[1].value).toBe(0);
+    expect(targets[1].script.length).toBe(51); // OP_RETURN, one push, "GP_" and a 46-character reference
+    expect(feeRate).toBe(3);
+  });
+  it('still reports too few coins if only signing finds out', async () => {
+    const options = setup();
+    options.wallet.createTransaction.mockRejectedValueOnce(new Error('Not enough balance'));
+    expect(isInsufficientFunds(await prepareCitizenshipPublication(options).catch(e => e))).toBe(true);
+    // Other failures are not mistaken for an empty wallet.
+    const other = setup();
+    other.pin.mockRejectedValueOnce(new Error('Network Error'));
+    expect(isInsufficientFunds(await prepareCitizenshipPublication(other).catch(e => e))).toBe(false);
+  });
   it('prepares and persists the exact fee and transaction without broadcasting', async () => {
     const options = setup();
     const publication = await prepareCitizenshipPublication(options);

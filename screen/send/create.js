@@ -166,7 +166,7 @@ const SendCreate = () => {
       <Text style={[styles.transactionDetailsTitle, styleHooks.transactionDetailsTitle]}>{loc.send.create_tx_size}</Text>
       <Text style={[styles.transactionDetailsSubtitle, styleHooks.transactionDetailsSubtitle]}>{size} vbytes</Text>
       <Text style={[styles.transactionDetailsTitle, styleHooks.transactionDetailsTitle]}>Network fee rate</Text>
-      <Text style={[styles.transactionDetailsSubtitle, styleHooks.transactionDetailsSubtitle]}>{satoshiPerByte} zubrins/vB</Text>
+      <Text style={[styles.transactionDetailsSubtitle, styleHooks.transactionDetailsSubtitle]}>{satoshiPerByte} zubrins/byte</Text>
       {memo?.length > 0 && (
         <>
           <Text style={[styles.transactionDetailsTitle, styleHooks.transactionDetailsTitle]}>{loc.send.create_memo}</Text>

@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { runMaker, saveMakerConfig, useMaker } from '../../blue_modules/swap';
-import { describeMakerSwap, formatCoins, formatMars, formatSats, parseCoins } from '../../blue_modules/swap/present';
+import { describeMakerSwap, formatCoins, formatMars, formatSats, marketPriceText, parseCoins } from '../../blue_modules/swap/present';
 import { CivicButton, civicColors } from '../../components/CivicUi';
 import { SectionHeading, SmallAction, WorkspaceField, WorkspaceNotice, WorkspaceScreen, styles } from '../workspace/WorkspaceUi';
 import { Row, Steps, swapStyles, useSwapWallet } from './SwapUi';
@@ -146,7 +146,7 @@ export default function SwapMaker() {
       {config.enabled ? (
         <View style={styles.card}>
           <Text style={styles.caption}>RIGHT NOW</Text>
-          <Row label="Market price" value={status.market ? `${(status.market * COIN).toFixed(1)} sats per MARS` : 'Checking…'} />
+          <Row label="Market price" value={marketPriceText(status)} />
           <Row
             label="Your base price"
             value={status.market ? `${(status.market * COIN * (1 + config.feePercent / 100)).toFixed(1)} sats per MARS` : '—'}

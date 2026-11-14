@@ -12,7 +12,11 @@ export const MARS_MIN_CONFIRMATIONS = 2;
 export const MARS_BLOCK_SECONDS = 123;
 export const BTC_BLOCK_SECONDS = 600;
 // Pessimistic drift: Marscoin blocks arriving faster, Bitcoin blocks slower.
-const MARS_FAST = 0.85;
+// Marscoin is mined in bursts. Measured over October and November 2026, the
+// fastest 234 blocks took 3.25 hours (0.41 of nominal) and the fastest 360 took
+// 7.3 hours (0.60). At half speed a lock needs about 352 blocks left to be
+// safe, so the old 234-block lock is refused and the 480-block lock passes.
+const MARS_FAST = 0.5;
 const BTC_SLOW = 1.25;
 export const MIN_REFUND_GAP_SECONDS = 3600;
 export const MIN_BTC_WINDOW_SECONDS = 7200;

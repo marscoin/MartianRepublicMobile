@@ -1,5 +1,6 @@
 import { marsAlert } from '../../components/MarsDialog';
 import { hasUnfinishedMakerSwaps, hasUnfinishedSwaps } from '../../blue_modules/swap';
+import { isOlderFundsWallet } from '../../blue_modules/older-funds';
 import React, { useEffect, useState, useCallback, useContext, useRef, useMemo, useLayoutEffect } from 'react';
 import {
   View,
@@ -219,6 +220,11 @@ const WalletDetails = (navigation) => {
 
   const navigateToAddresses = () =>
     navigate('WalletAddresses', {
+      walletID: wallet.getID(),
+    });
+
+  const navigateToFindOlderFunds = () =>
+    navigate('FindOlderFunds', {
       walletID: wallet.getID(),
     });
 
@@ -593,6 +599,15 @@ const WalletDetails = (navigation) => {
               />
               {(wallet instanceof AbstractHDElectrumWallet || (wallet.type === WatchOnlyWallet.type && wallet.isHd())) && (
                 <DetailAction icon="list" title={loc.wallets.details_show_addresses} note="Every address this wallet has used." onPress={navigateToAddresses} />
+              )}
+              {isOlderFundsWallet(wallet) && (
+                <DetailAction
+                  icon="search"
+                  title="Find older funds"
+                  note="Check the addresses earlier versions of the Republic's wallet used for these recovery words."
+                  onPress={navigateToFindOlderFunds}
+                  testID="FindOlderFunds"
+                />
               )}
               {wallet.allowBIP47() && isBIP47Enabled && <DetailAction icon="at-sign" title="Show payment codes" onPress={navigateToPaymentCodes} />}
               {walletTransactionsLength > 0 && (
