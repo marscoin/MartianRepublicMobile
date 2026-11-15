@@ -7,6 +7,8 @@ import WidgetCommunication from './WidgetCommunication';
 import presentAlert from '../components/Alert';
 import { Marscoin } from './constants';
 import { assertMarsMainnet, defaultMarsElectrumPeer, selectMarsElectrumPeer } from './mars-electrum-peer';
+import { MarsNetworkError, SEND_INTERRUPTED, createElectrumLink, guarded } from './mars-electrum-link';
+import { AppState } from 'react-native';
 const bitcoin = require('bitcoinjs-lib');
 const ElectrumClient = require('electrum-client');
 const BigNumber = require('bignumber.js');
@@ -56,11 +58,10 @@ const hardcodedPeers = [defaultMarsElectrumPeer];
 /** @type {ElectrumClient} */
 let mainClient;
 // console.log('MAIN CLIENT', mainClient)
-let mainConnected = false;
 let wasConnectedAtLeastOnce = false;
 let serverName = false;
 let disableBatching = false;
-let connectionAttempt = 0;
+let networkAlertOpen = false;
 const currentPeerIndex = Math.floor(Math.random() * hardcodedPeers.length);
 
 let latestBlockheight = false;
@@ -87,108 +88,99 @@ async function setDisabled(disabled = true) {
   return AsyncStorage.setItem(ELECTRUM_CONNECTION_DISABLED, disabled ? '1' : '');
 }
 
+// One connection, replaced whenever it is lost. electrum-client's own
+// reconnection is switched off (see the persistence policy below): it returns
+// to the same server only, and when it failed the app gave up for good after
+// five quick attempts.
+const link = createElectrumLink({
+  pickPeer: async failures => {
+    if (await isDisabled()) {
+      console.log('Electrum connection disabled by user. Skipping connectMain call');
+      return null;
+    }
+    return selectMarsElectrumPeer(await getSavedPeer(), failures);
+  },
+  openClient: peer => new ElectrumClient(net, tls, peer.ssl || peer.tcp, peer.host, peer.ssl ? 'tls' : 'tcp'),
+  handshake: async (client, usingPeer) => {
+    try {
+      await DefaultPreference.setName('group.io.bluewallet.bluewallet');
+      const shown = usingPeer.host.endsWith('onion') ? await getCurrentPeer() : usingPeer;
+      await DefaultPreference.set(ELECTRUM_HOST, shown.host);
+      await DefaultPreference.set(ELECTRUM_TCP_PORT, shown.tcp);
+      await DefaultPreference.set(ELECTRUM_SSL_PORT, shown.ssl);
+      WidgetCommunication.reloadAllTimelines();
+    } catch (e) {
+      // Must be running on Android
+      console.log(e);
+    }
+    const ver = await client.initElectrum({ client: 'martianrepublic', version: '1.4' }, { maxRetry: 0, callback: null });
+    assertMarsMainnet(await client.server_features());
+    if (!ver || !ver[0]) throw new Error('The server did not identify itself.');
+    const header = await client.blockchainHeaders_subscribe();
+    return { ver, header };
+  },
+  onUp: (client, { ver, header }) => {
+    console.log('BlueElectrum is connected to ', ver);
+    mainClient = client;
+    wasConnectedAtLeastOnce = true;
+    networkAlertOpen = false;
+    serverName = ver[0];
+    if (ver[0].startsWith('ElectrumPersonalServer') || ver[0].startsWith('electrs') || ver[0].startsWith('Fulcrum')) {
+      disableBatching = true;
+
+      // exeptions for versions:
+      const [electrumImplementation, electrumVersion] = ver[0].split(' ');
+      switch (electrumImplementation) {
+        case 'electrs':
+          if (semVerToInt(electrumVersion) >= semVerToInt('0.9.0')) {
+            disableBatching = false;
+          }
+          break;
+        case 'electrs-esplora':
+          // its a different one, and it does NOT support batching
+          // nop
+          break;
+        case 'Fulcrum':
+          if (semVerToInt(electrumVersion) >= semVerToInt('1.9.0')) {
+            disableBatching = false;
+          }
+          break;
+      }
+    }
+    if (header && header.height) {
+      latestBlockheight = header.height;
+      latestBlockheightTimestamp = Math.floor(+new Date() / 1000);
+    }
+  },
+  // Attempts made quietly in the background do not interrupt with an alert.
+  onGiveUp: (usingPeer, error, { background }) => {
+    if (!background) presentNetworkErrorAlert(usingPeer);
+  },
+  connectTimeout: peer => (peer.host.endsWith('.onion') ? 25000 : 12000),
+  log: (...args) => console.log('electrum main:', ...args),
+});
+
+// Start afresh (the server setting may have changed). Resolves once the
+// attempt has finished, whatever its outcome.
 async function connectMain() {
-  if (await isDisabled()) {
-    console.log('Electrum connection disabled by user. Skipping connectMain call');
-    return;
-  }
-  const usingPeer = selectMarsElectrumPeer(await getSavedPeer(), connectionAttempt);
-
-  await DefaultPreference.setName('group.io.bluewallet.bluewallet');
   try {
-    if (usingPeer.host.endsWith('onion')) {
-      const randomPeer = await getCurrentPeer();
-      await DefaultPreference.set(ELECTRUM_HOST, randomPeer.host);
-      await DefaultPreference.set(ELECTRUM_TCP_PORT, randomPeer.tcp);
-      await DefaultPreference.set(ELECTRUM_SSL_PORT, randomPeer.ssl);
-    } else {
-      await DefaultPreference.set(ELECTRUM_HOST, usingPeer.host);
-      await DefaultPreference.set(ELECTRUM_TCP_PORT, usingPeer.tcp);
-      await DefaultPreference.set(ELECTRUM_SSL_PORT, usingPeer.ssl);
-    }
-
-    WidgetCommunication.reloadAllTimelines();
+    link.disconnect();
+    await link.ensureConnected({ force: true });
   } catch (e) {
-    // Must be running on Android
-    console.log(e);
-  }
-
-  try {
-    console.log('begin connection:', JSON.stringify(usingPeer));
-    mainClient = new ElectrumClient(net, tls, usingPeer.ssl || usingPeer.tcp, usingPeer.host, usingPeer.ssl ? 'tls' : 'tcp');
-
-    mainClient.onError = function (e) {
-      console.log('electrum mainClient.onError():', e.message);
-      if (mainConnected) {
-        // most likely got a timeout from electrum ping. lets reconnect
-        // but only if we were previously connected (mainConnected), otherwise theres other
-        // code which does connection retries
-        mainClient.close();
-        mainConnected = false;
-        // dropping `mainConnected` flag ensures there wont be reconnection race condition if several
-        // errors triggered
-        console.log('reconnecting after socket error');
-        setTimeout(connectMain, usingPeer.host.endsWith('.onion') ? 4000 : 500);
-      }
-    };
-    const ver = await mainClient.initElectrum({
-      client: 'martianrepublic',
-      version: '1.4',
-    });
-    assertMarsMainnet(await mainClient.server_features());
-    if (ver && ver[0]) {
-      console.log('BlueElectrum is connected to ', ver);
-      serverName = ver[0];
-      mainConnected = true;
-      connectionAttempt = 0;
-      wasConnectedAtLeastOnce = true;
-      if (ver[0].startsWith('ElectrumPersonalServer') || ver[0].startsWith('electrs') || ver[0].startsWith('Fulcrum')) {
-        disableBatching = true;
-
-        // exeptions for versions:
-        const [electrumImplementation, electrumVersion] = ver[0].split(' ');
-        switch (electrumImplementation) {
-          case 'electrs':
-            if (semVerToInt(electrumVersion) >= semVerToInt('0.9.0')) {
-              disableBatching = false;
-            }
-            break;
-          case 'electrs-esplora':
-            // its a different one, and it does NOT support batching
-            // nop
-            break;
-          case 'Fulcrum':
-            if (semVerToInt(electrumVersion) >= semVerToInt('1.9.0')) {
-              disableBatching = false;
-            }
-            break;
-        }
-      }
-      const header = await mainClient.blockchainHeaders_subscribe();
-      if (header && header.height) {
-        latestBlockheight = header.height;
-        latestBlockheightTimestamp = Math.floor(+new Date() / 1000);
-      }
-      // AsyncStorage.setItem(storageKey, JSON.stringify(peers));  TODO: refactor
-    }
-  } catch (e) {
-    mainConnected = false;
-    console.log('bad connection:', JSON.stringify(usingPeer), e);
-  }
-
-  if (!mainConnected) {
-    console.log('retry');
-    connectionAttempt = connectionAttempt + 1;
-    mainClient?.close?.();
-    if (connectionAttempt >= 5) {
-      presentNetworkErrorAlert(usingPeer);
-    } else {
-      console.log('reconnection attempt #', connectionAttempt);
-      await new Promise(resolve => setTimeout(resolve, 500)); // sleep
-      return connectMain();
-    }
+    console.log('bad connection:', e.message);
   }
 }
+
+// A phone suspends the app in the background and its sockets die there,
+// often without any event. Check the connection on the way back.
+try {
+  AppState?.addEventListener?.('change', state => {
+    if (state === 'active' && wasConnectedAtLeastOnce) link.resume();
+  });
+} catch (e) {
+  console.log(e);
+}
+
 
 async function presentNetworkErrorAlert(usingPeer) {
   if (await isDisabled()) {
@@ -197,6 +189,9 @@ async function presentNetworkErrorAlert(usingPeer) {
     );
     return;
   }
+  // Once per outage: later attempts go on quietly behind it.
+  if (networkAlertOpen) return;
+  networkAlertOpen = true;
   marsAlert(
     loc.errors.network,
     loc.formatString(
@@ -207,15 +202,15 @@ async function presentNetworkErrorAlert(usingPeer) {
       {
         text: loc.wallets.list_tryagain,
         onPress: () => {
-          connectionAttempt = 0;
-          mainClient?.close?.();
-          setTimeout(connectMain, 500);
+          networkAlertOpen = false;
+          link.resume();
         },
         style: 'default',
       },
       {
         text: loc.settings.electrum_reset,
         onPress: () => {
+          networkAlertOpen = false;
           marsAlert(
             loc.settings.electrum_reset,
             loc.settings.electrum_reset_to_default,
@@ -249,16 +244,13 @@ async function presentNetworkErrorAlert(usingPeer) {
             ],
             { cancelable: true },
           );
-          connectionAttempt = 0;
-          mainClient?.close?.();
         },
         style: 'destructive',
       },
       {
         text: loc._.cancel,
         onPress: () => {
-          connectionAttempt = 0;
-          mainClient?.close?.();
+          networkAlertOpen = false;
         },
         style: 'cancel',
       },
@@ -375,13 +367,7 @@ module.exports.getMempoolTransactionsByAddress = async function (address) {
 };
 
 module.exports.ping = async function () {
-  try {
-    await mainClient.server_ping();
-  } catch (_) {
-    mainConnected = false;
-    return false;
-  }
-  return true;
+  return link.ping();
 };
 
 module.exports.getTransactionsFullByAddress = async function (address) {
@@ -744,35 +730,22 @@ module.exports.multiGetTransactionByTxid = async function (txids, batchsize, ver
  * @returns {Promise<Promise<*> | Promise<*>>}
  */
 module.exports.waitTillConnected = async function () {
-  let waitTillConnectedInterval = false;
-  let retriesCounter = 0;
   if (await isDisabled()) {
     console.warn('Electrum connections disabled by user. waitTillConnected skipping...');
     return;
   }
-  return new Promise(function (resolve, reject) {
-    waitTillConnectedInterval = setInterval(() => {
-      if (mainConnected) {
-        clearInterval(waitTillConnectedInterval);
-        return resolve(true);
-      }
-
-      if (wasConnectedAtLeastOnce && mainClient.status === 1) {
-        clearInterval(waitTillConnectedInterval);
-        mainConnected = true;
-        connectionAttempt = 0;
-        return resolve(true);
-      }
-
-      if (wasConnectedAtLeastOnce && retriesCounter++ >= 150) {
-        // `wasConnectedAtLeastOnce` needed otherwise theres gona be a race condition with the code that connects
-        // electrum during app startup
-        clearInterval(waitTillConnectedInterval);
-        presentNetworkErrorAlert();
-        reject(new Error('Waiting for Electrum connection timeout'));
-      }
-    }, 100);
-  });
+  let timer;
+  try {
+    await Promise.race([
+      link.ensureConnected(),
+      new Promise((resolve, reject) => {
+        timer = setTimeout(() => reject(new MarsNetworkError()), 30000);
+      }),
+    ]);
+    return true;
+  } finally {
+    clearTimeout(timer);
+  }
 };
 
 // Returns the value at a given percentile in a sorted numeric array.
@@ -961,7 +934,7 @@ module.exports.testConnection = async function (host, tcpPort, sslPort) {
 };
 
 module.exports.forceDisconnect = () => {
-  mainClient.close();
+  link.disconnect();
 };
 
 module.exports.setBatchingDisabled = () => {
@@ -971,6 +944,30 @@ module.exports.setBatchingDisabled = () => {
 module.exports.setBatchingEnabled = () => {
   disableBatching = false;
 };
+// Every request connects first if it has to. Reads that die with the
+// connection are repeated once on a fresh one; callers get plain words, never
+// the library's "close connect".
+for (const name of [
+  'getBalanceByAddress',
+  'getTransactionsByAddress',
+  'getMempoolTransactionsByAddress',
+  'getTransactionsFullByAddress',
+  'multiGetBalanceByAddress',
+  'multiGetUtxoByAddress',
+  'multiGetHistoryByAddress',
+  'multiGetTransactionByTxid',
+  'estimateFees',
+  'estimateFee',
+  'serverFeatures',
+]) {
+  module.exports[name] = guarded(link, module.exports[name]);
+}
+// A broadcast is never repeated: the first copy may have reached the server.
+for (const name of ['broadcast', 'broadcastV2']) {
+  module.exports[name] = guarded(link, module.exports[name], { retry: false, interrupted: SEND_INTERRUPTED });
+}
+module.exports.reconnect = () => link.resume();
+module.exports.isConnected = () => link.isConnected();
 module.exports.connectMain = connectMain;
 module.exports.isDisabled = isDisabled;
 module.exports.setDisabled = setDisabled;

@@ -6,6 +6,7 @@ import * as MARSConnection from '../../blue_modules/MARSConnection';
 import startMarsImport from '../../class/mars-wallet-import';
 import { createCivicAuthRequest } from '../../blue_modules/civic-auth';
 import * as bitcoinMessage from 'bitcoinjs-message';
+import { isInsufficientFunds, prepareCivicPublication } from '../../blue_modules/citizenship-publication';
 
 // Isolate the native storage/UI inheritance and network. The Marscoin methods,
 // BIP39, BIP32 and secp256k1 implementations under test remain real.
@@ -216,6 +217,39 @@ describe('Marscoin receive and change discovery', () => {
     expect(fee).toBeGreaterThanOrEqual(tx.virtualSize() * 3);
     expect(bitcoin.script.decompile(tx.outs[1].script)[1].toString()).toBe(message);
     expect(fee).toBeLessThan((tx.virtualSize() + 5) * 3);
+  });
+  it('finds a civic wallet too poor for the fee before the application is uploaded', async () => {
+    const wallet = new MarsElectrumWallet();
+    wallet.setSecret(mnemonic);
+    wallet.civic = true;
+    const address = wallet._getExternalAddressByIndex(0);
+    const previous = new bitcoin.Transaction();
+    previous.addInput(Buffer.alloc(32, 1), 0);
+    previous.addOutput(bitcoin.address.toOutputScript(address, Marscoin.mainnet), 1000000);
+    MARSConnection.getTxHex.mockResolvedValue(previous.toHex());
+    let coins = [{ txId: previous.getId(), vout: 0, address, value: 300 }];
+    wallet.fetchBalance = jest.fn();
+    wallet.fetchUtxo = jest.fn();
+    wallet.getUtxo = () => coins;
+    const draft = {};
+    const options = {
+      wallet,
+      data: { message: 'Synthetic test' },
+      prefix: 'GP_',
+      feeRate: 3,
+      pin: jest.fn(async () => 'Qm' + 'a'.repeat(44)),
+      readDraft: async () => draft,
+      saveDraft: jest.fn(async (_address, patch) => Object.assign(draft, patch)),
+    };
+    const error = await prepareCivicPublication(options).catch(e => e);
+    expect(isInsufficientFunds(error)).toBe(true);
+    expect(options.pin).not.toHaveBeenCalled();
+    // The same wallet with enough coins passes the check and signs.
+    coins = [{ txId: previous.getId(), vout: 0, address, value: 1000000 }];
+    const publication = await prepareCivicPublication(options);
+    expect(options.pin).toHaveBeenCalledTimes(1);
+    expect(publication.status).toBe('prepared');
+    expect(publication.fee).toBeGreaterThan(0);
   });
 });
 

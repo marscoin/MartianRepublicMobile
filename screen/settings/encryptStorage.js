@@ -1,16 +1,21 @@
 import { marsAlert } from '../../components/MarsDialog';
 import React, { useEffect, useState, useCallback, useContext } from 'react';
-import { View, ScrollView, TouchableOpacity, TouchableWithoutFeedback, Text, StyleSheet, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import navigationStyle from '../../components/navigationStyle';
-import { BlueLoading, BlueSpacing20, BlueCard, BlueText } from '../../BlueComponents';
+import {
+  SettingsLoading,
+  SettingsNote,
+  SettingsRow,
+  SettingsScreen,
+  SettingsSection,
+  SettingsSwitchRow,
+  settingsNavigation,
+} from '../../components/SettingsUi';
 import Biometric from '../../class/biometrics';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import presentAlert from '../../components/Alert';
-import ListItem from '../../components/ListItem';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
-import { useTheme } from '../../components/themes';
 const prompt = require('../../helpers/prompt');
 
 const EncryptStorage = () => {
@@ -19,15 +24,6 @@ const EncryptStorage = () => {
   const [biometrics, setBiometrics] = useState({ isDeviceBiometricCapable: false, isBiometricsEnabled: false, biometricsType: '' });
   const [storageIsEncryptedSwitchEnabled, setStorageIsEncryptedSwitchEnabled] = useState(false);
   const { navigate, popToTop } = useNavigation();
-  const { colors } = useTheme();
-  const styleHooks = StyleSheet.create({
-    root: {
-      backgroundColor: colors.background,
-    },
-    headerText: {
-      color: colors.foregroundColor,
-    },
-  });
 
   const initialState = useCallback(async () => {
     const isBiometricsEnabled = await Biometric.isBiometricUseEnabled();
@@ -135,72 +131,53 @@ const EncryptStorage = () => {
     }
 
     return isCapable ? (
-      <>
-        <BlueText />
-
-        <BlueText>{loc.formatString(loc.settings.biometrics_fail, { type: biometrics.biometricsType })}</BlueText>
-      </>
+      <SettingsNote>{loc.formatString(loc.settings.biometrics_fail, { type: biometrics.biometricsType })}</SettingsNote>
     ) : null;
   };
 
   return isLoading ? (
-    <ScrollView centerContent>
-      <BlueLoading />
-    </ScrollView>
+    <SettingsLoading />
   ) : (
-    <ScrollView contentContainerStyle={styles.root} automaticallyAdjustContentInsets contentInsetAdjustmentBehavior="automatic">
-      <View style={styles.paddingTop} />
+    <SettingsScreen title={loc.settings.encrypt_title}>
       {biometrics.isDeviceBiometricCapable && (
         <>
-          <Text adjustsFontSizeToFit style={[styles.headerText, styleHooks.headerText]}>
-            {loc.settings.biometrics}
-          </Text>
-          <ListItem
-            title={loc.formatString(loc.settings.encrypt_use, { type: biometrics.biometricsType })}
-            Component={TouchableWithoutFeedback}
-            switch={{ value: biometrics.isBiometricsEnabled, onValueChange: onUseBiometricSwitch }}
-          />
-          <BlueCard>
-            <BlueText>{loc.formatString(loc.settings.encrypt_use_expl, { type: biometrics.biometricsType })}</BlueText>
-            {renderPasscodeExplanation()}
-          </BlueCard>
-          <BlueSpacing20 />
+          <SettingsSection label={String(loc.settings.biometrics).toUpperCase()} first>
+            <SettingsSwitchRow
+              icon="user-check"
+              title={loc.formatString(loc.settings.encrypt_use, { type: biometrics.biometricsType })}
+              note={loc.formatString(loc.settings.encrypt_use_expl, { type: biometrics.biometricsType })}
+              value={biometrics.isBiometricsEnabled}
+              onValueChange={onUseBiometricSwitch}
+            />
+          </SettingsSection>
+          {renderPasscodeExplanation()}
         </>
       )}
-      <Text adjustsFontSizeToFit style={[styles.headerText, styleHooks.headerText]}>
-        {loc.settings.encrypt_tstorage}
-      </Text>
-      <ListItem
-        testID="EncyptedAndPasswordProtected"
-        hideChevron
-        title={loc.settings.encrypt_enc_and_pass}
-        Component={TouchableWithoutFeedback}
-        switch={{ onValueChange: onEncryptStorageSwitch, value: storageIsEncryptedSwitchEnabled }}
-      />
-      {storageIsEncryptedSwitchEnabled && (
-        <ListItem
-          onPress={navigateToPlausibleDeniability}
-          title={loc.settings.plausible_deniability}
-          chevron
-          testID="PlausibleDeniabilityButton"
-          Component={TouchableOpacity}
+      <SettingsSection label={String(loc.settings.encrypt_tstorage).toUpperCase()} first={!biometrics.isDeviceBiometricCapable}>
+        <SettingsSwitchRow
+          testID="EncyptedAndPasswordProtected"
+          icon="lock"
+          title={loc.settings.encrypt_enc_and_pass}
+          note="Locks everything this app keeps on the phone behind a password you choose."
+          value={storageIsEncryptedSwitchEnabled}
+          onValueChange={onEncryptStorageSwitch}
         />
-      )}
-    </ScrollView>
+        {storageIsEncryptedSwitchEnabled && (
+          <SettingsRow
+            icon="eye-off"
+            onPress={navigateToPlausibleDeniability}
+            title={loc.settings.plausible_deniability}
+            note="A second password that opens a separate, decoy storage."
+            testID="PlausibleDeniabilityButton"
+          />
+        )}
+      </SettingsSection>
+      <SettingsNote>
+        The password is not kept anywhere else. If you forget it, you will need your recovery words to get your wallets back.
+      </SettingsNote>
+    </SettingsScreen>
   );
 };
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  paddingTop: { paddingTop: 19 },
-  headerText: {
-    fontWeight: 'bold',
-    fontSize: 30,
-    marginLeft: 17,
-  },
-});
-
 export default EncryptStorage;
-EncryptStorage.navigationOptions = navigationStyle({}, opts => ({ ...opts, headerTitle: loc.settings.encrypt_title }));
+EncryptStorage.navigationOptions = settingsNavigation(() => loc.settings.encrypt_title);

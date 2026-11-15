@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import { Marscoin } from "../../blue_modules/constants";
 import { BitcoinUnit } from "../../models/bitcoinUnits";
 import { randomBytes } from "../../class/rng";
@@ -14,11 +13,14 @@ const bip32Instance = BIP32Factory(ecc);
 // import checkReporting
 
 const MARSConnection = require("../../blue_modules/MARSConnection");
+const { isExactCoinValue, marsToExactZubrins } = require("../../blue_modules/mars-coins");
 
 const bip39 = require("bip39");
 const coinSelect = require("coinselect");
 const coinSelectSplit = require("coinselect/split");
 const bitcoin = require("bitcoinjs-lib");
+
+const seedCache = new WeakMap();
 
 export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   static NETWORK = "MARS";
@@ -208,7 +210,14 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
   _getSeed() {
     const mnemonic = this.secret;
     const passphrase = this.passphrase;
-    return bip39.mnemonicToSeedSync(mnemonic, passphrase);
+    // Turning the words into a seed is deliberately slow (thousands of hash
+    // rounds). A key is needed for every coin, so do it once per wallet and
+    // keep the result in memory only: the WeakMap is never written to storage.
+    const cached = seedCache.get(this);
+    if (cached && cached.mnemonic === mnemonic && cached.passphrase === passphrase) return cached.seed;
+    const seed = bip39.mnemonicToSeedSync(mnemonic, passphrase);
+    seedCache.set(this, { mnemonic, passphrase, seed });
+    return seed;
   }
 
   getXpub() {
@@ -527,13 +536,11 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
 
   getUtxo(respectFrozen = false) {
 
-    let ret = [];
-
-    if (this._utxo.length === 0) {
-      ret = this.getDerivedUtxoFromOurTransaction(); // oy vey, no stored utxo. lets attempt to derive it from stored transactions
-    } else {
-      ret = this._utxo;
-    }
+    // Only coins the network reported. This used to fall back to coins worked
+    // out from stored transactions when there were none: that list is stale by
+    // construction (it cannot see spends or receipts the phone has not
+    // fetched) and so must never be spent from.
+    let ret = this._utxo || [];
     if (!respectFrozen) {
       ret = ret.filter(
         ({ txid, vout }) => !this.getUTXOMetadata(txid, vout).frozen
@@ -586,9 +593,9 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
           address = output.scriptPubKey.addresses[0];
         }
         if (ownedAddressesHashmap[address]) {
-          const value = new BigNumber(output.value)
-            .multipliedBy(100000000)
-            .toNumber();
+          // Exact zubrins or nothing: never a rounded or missing amount.
+          const value = marsToExactZubrins(output.value);
+          if (value === null) continue;
           utxos.push({
             txid: tx.txid,
             txId: tx.txid,
@@ -766,11 +773,18 @@ export class MarsElectrumWallet extends HDLegacyP2PKHWallet {
     //console.log('!!!!!!!!!!!!!!!addressess', addressess)
     const fetchedUtxo = await MARSConnection.multiGetUtxoByAddress(addressess);
     //console.log('!!!!!!!!!!!!!!!fetchedUtxo', fetchedUtxo)
-    this._utxo = [];
+    let fresh = [];
     for (const arr of Object.values(fetchedUtxo)) {
       //console.log(arr);
-      this._utxo = this._utxo.concat(arr);
+      fresh = fresh.concat(arr);
     }
+    // A coin without an exact, positive value (an empty output someone sent to
+    // one of our addresses, for instance) cannot be spent. Leave it out rather
+    // than refuse the whole wallet because of it.
+    const usable = fresh.filter(coin => isExactCoinValue(coin?.value));
+    this._unusableCoins = fresh.length - usable.length;
+    if (this._unusableCoins) console.log(`fetchUtxo: left out ${this._unusableCoins} coin(s) without a spendable value`);
+    this._utxo = usable;
 
     // backward compatibility TODO: remove when we make sure `.utxo` is not used
     this.utxo = this._utxo;

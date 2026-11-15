@@ -20,8 +20,10 @@ const ForumThreadScreen = () => {
     const { colors } = useTheme();
     const route = useRoute();
     const maxContentLength = 25000;
-    const threadTitle = route.params.thread.title;
-    const threadId = route.params.thread.id;
+    // The forum list passes the whole thread; the Public Square passes its id and title.
+    const threadParam = route.params?.thread;
+    const threadTitle = threadParam?.title ?? route.params?.title ?? '';
+    const threadId = threadParam?.id ?? route.params?.threadId;
     const [threadData, setThreadData] = useState('');
     const [replyToPostId, setReplyToPostId] = useState(null);
     const [isModalVisible, setModalVisible] = useState(false);

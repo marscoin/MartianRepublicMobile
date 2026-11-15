@@ -16,6 +16,15 @@ const nodes = (overrides = {}) =>
   networkNodes({ fetch, relayTip: async () => 3598750, walletServer: async () => ({ host: 'electrum.marscoin.org' }), ...overrides });
 
 describe('live network view', () => {
+  it('includes the quantum test network when its nodes can be reached', async () => {
+    const quantumPeers = async () => [{ height: 22394, agent: '/Marscoin:28.1.0(marsqnet-v2)/' }, null, { height: 22393, agent: '/Marscoin:28.1.0(marsqnet-v2)/' }];
+    const node = nodes({ quantumPeers }).find(item => item.id === 'quantum');
+    expect(await probeNode(node)).toMatchObject({ ok: true, quantumHeight: 22394, host: 'Marscoin:28.1.0(marsqnet-v2)', detail: 'Block 22,394 · 2 nodes answering' });
+    const silent = nodes({ quantumPeers: async () => [null, null, null] }).find(item => item.id === 'quantum');
+    expect(await probeNode(silent)).toMatchObject({ ok: false, error: 'None of its nodes answered.' });
+    expect(nodes().some(item => item.id === 'quantum')).toBe(false);
+  });
+
   it('asks every service a real question and reports what it said', async () => {
     const results = await Promise.all(nodes().map(node => probeNode(node)));
     expect(results.every(result => result.ok && result.ms >= 1)).toBe(true);

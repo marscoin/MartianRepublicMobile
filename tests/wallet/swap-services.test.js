@@ -32,17 +32,21 @@ const A = 'https://a.example/api';
 const B = 'https://b.example/api';
 
 describe('Swap timelock safety', () => {
-  const fresh = { marsHeight: 1000, marsLocktime: 1234, btcHeight: 500, btcLocktime: 524 };
+  const fresh = { marsHeight: 1000, marsLocktime: 1480, btcHeight: 500, btcLocktime: 524 };
 
-  it('matches the reference margins for a fresh offer', () => {
-    expect(Math.round(refundGapSeconds(fresh))).toBe(6465);
+  it('accepts a fresh offer with the 480-block Marscoin lock', () => {
+    expect(Math.round(refundGapSeconds(fresh))).toBe(11520);
     expect(refundOrderProblem(fresh)).toBeNull();
     expect(btcWindowProblem(fresh)).toBeNull();
   });
 
+  it('refuses the old 234-block lock, which a burst of blocks can outrun', () => {
+    expect(refundOrderProblem({ ...fresh, marsLocktime: 1234 })).toMatch(/too close/);
+  });
+
   it('refuses an offer that has aged past the one-hour refund gap', () => {
-    expect(refundOrderProblem({ ...fresh, marsHeight: 1027 })).toBeNull();
-    expect(refundOrderProblem({ ...fresh, marsHeight: 1028 })).toMatch(/too close/);
+    expect(refundOrderProblem({ ...fresh, marsHeight: 1128 })).toBeNull();
+    expect(refundOrderProblem({ ...fresh, marsHeight: 1129 })).toMatch(/too close/);
   });
 
   it('requires two hours of Bitcoin window and known heights', () => {
@@ -105,7 +109,7 @@ describe('Swap timelock safety', () => {
       { ...normalizeOffer(raw), id: 'stale', btcAmount: 5000, marsLocktime: 3598300 },
       { ...normalizeOffer(raw), id: 'cheap' },
     ];
-    const ranked = rankOffers(offers, { marsHeight: 3598218, btcHeight: 975000, feeRate: 4, now: 1794256000 });
+    const ranked = rankOffers(offers, { marsHeight: 3597972, btcHeight: 975000, feeRate: 4, now: 1794256000 });
     expect(ranked.map(offer => offer.id)).toEqual(['cheap', 'expensive', 'stale']);
     expect(ranked[2].problem).toMatch(/too close/);
     expect(ranked[0].problem).toBeNull();

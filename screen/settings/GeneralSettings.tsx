@@ -1,19 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Platform, ScrollView, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
-import { BlueCard, BlueLoading, BlueSpacing20, BlueText } from '../../BlueComponents';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import { clearUseURv1, isURv1Enabled, setUseURv1 } from '../../blue_modules/ur';
-import ListItem, { PressableWrapper } from '../../components/ListItem';
-import { useTheme } from '../../components/themes';
+import { SettingsLoading, SettingsRow, SettingsScreen, SettingsSection, SettingsSwitchRow } from '../../components/SettingsUi';
 import loc from '../../loc';
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-});
 
 const GeneralSettings: React.FC = () => {
   const { isAdvancedModeEnabled, setIsAdvancedModeEnabled, wallets, isHandOffUseEnabled, setIsHandOffUseEnabledAsyncStorage } =
@@ -22,7 +14,6 @@ const GeneralSettings: React.FC = () => {
   const [isAdvancedModeSwitchEnabled, setIsAdvancedModeSwitchEnabled] = useState(false);
   const [isURv1SwitchEnabled, setIsURv1SwitchEnabled] = useState(false);
   const { navigate } = useNavigation();
-  const { colors } = useTheme();
   const onAdvancedModeSwitch = async (value: boolean) => {
     await setIsAdvancedModeEnabled(value);
     setIsAdvancedModeSwitchEnabled(value);
@@ -45,53 +36,59 @@ const GeneralSettings: React.FC = () => {
     navigate('SettingsPrivacy');
   };
 
-  const stylesWithThemeHook = {
-    root: {
-      backgroundColor: colors.background,
-    },
-  };
-
   return isLoading ? (
-    <BlueLoading />
+    <SettingsLoading />
   ) : (
-    <ScrollView style={[styles.root, stylesWithThemeHook.root]}>
-      {wallets.length > 1 && (
-        <>
-          {/* @ts-ignore: Fix later */}
-          <ListItem onPress={() => navigate('DefaultView')} title={loc.settings.default_title} chevron />
-        </>
-      )}
-      <ListItem title={loc.settings.privacy} onPress={navigateToPrivacy} testID="SettingsPrivacy" chevron />
-      {Platform.OS === 'ios' ? (
-        <>
-          <ListItem
-            hideChevron
-            title={loc.settings.general_continuity}
-            Component={PressableWrapper}
-            switch={{ onValueChange: setIsHandOffUseEnabledAsyncStorage, value: isHandOffUseEnabled }}
+    <SettingsScreen title={loc.settings.general}>
+      <SettingsSection label="START AND PRIVACY" first>
+        {wallets.length > 1 && (
+          <SettingsRow
+            icon="home"
+            title={loc.settings.default_title}
+            note="Open on all your wallets, or straight into one of them."
+            // @ts-ignore: Fix later
+            onPress={() => navigate('DefaultView')}
           />
-          <BlueCard>
-            <BlueText>{loc.settings.general_continuity_e}</BlueText>
-          </BlueCard>
-          <BlueSpacing20 />
-        </>
+        )}
+        <SettingsRow
+          icon="shield"
+          title={loc.settings.privacy}
+          note="The clipboard, home screen shortcuts and diagnostics."
+          onPress={navigateToPrivacy}
+          testID="SettingsPrivacy"
+        />
+      </SettingsSection>
+
+      {Platform.OS === 'ios' ? (
+        <SettingsSection label="YOUR OTHER DEVICES">
+          <SettingsSwitchRow
+            icon="monitor"
+            title={loc.settings.general_continuity}
+            note="See the wallets and transactions you pick on your other Apple devices signed in to iCloud."
+            value={isHandOffUseEnabled}
+            onValueChange={setIsHandOffUseEnabledAsyncStorage}
+          />
+        </SettingsSection>
       ) : null}
-      <ListItem
-        Component={PressableWrapper}
-        title={loc.settings.general_adv_mode}
-        switch={{ onValueChange: onAdvancedModeSwitch, value: isAdvancedModeSwitchEnabled, testID: 'AdvancedMode' }}
-      />
-      <BlueCard>
-        <BlueText>{loc.settings.general_adv_mode_e}</BlueText>
-      </BlueCard>
-      <BlueSpacing20 />
-      <ListItem
-        Component={PressableWrapper}
-        title="Legacy URv1 QR"
-        switch={{ onValueChange: onLegacyURv1Switch, value: isURv1SwitchEnabled }}
-      />
-      <BlueSpacing20 />
-    </ScrollView>
+
+      <SettingsSection label="FOR EXPERIENCED USERS">
+        <SettingsSwitchRow
+          icon="sliders"
+          title={loc.settings.general_adv_mode}
+          note="Shows extra options, such as more wallet types and adding your own randomness when a wallet is created."
+          value={isAdvancedModeSwitchEnabled}
+          onValueChange={onAdvancedModeSwitch}
+          switchTestID="AdvancedMode"
+        />
+        <SettingsSwitchRow
+          icon="grid"
+          title="Older multi-part QR codes"
+          note="Show multi-part QR codes in the first format (URv1), for devices that cannot read the current one."
+          value={isURv1SwitchEnabled}
+          onValueChange={onLegacyURv1Switch}
+        />
+      </SettingsSection>
+    </SettingsScreen>
   );
 };
 

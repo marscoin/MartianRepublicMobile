@@ -1,4 +1,3 @@
-#import <Bugsnag/Bugsnag.h>
 #import "AppDelegate.h"
 #import <React/RCTLinkingManager.h>
 #import <React/RCTBundleURLProvider.h>
@@ -20,7 +19,8 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-  [Bugsnag start];
+  // No crash reporting service is started: the key that came with the BlueWallet code
+  // sent reports to an account that is not ours.
   [self copyDeviceUID];
   
   [[NSUserDefaults standardUserDefaults] addObserver:self

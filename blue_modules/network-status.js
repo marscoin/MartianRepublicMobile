@@ -14,7 +14,7 @@ const within = (promise, milliseconds) => {
 
 const group = value => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-export function networkNodes({ fetch, relayTip, walletServer }) {
+export function networkNodes({ fetch, relayTip, walletServer, quantumPeers }) {
   const json = async url => {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Answered with error ${response.status}.`);
@@ -84,6 +84,31 @@ export function networkNodes({ fetch, relayTip, walletServer }) {
         return { detail: snapshot?.mode === 'live' ? `${offers} offer${offers === 1 ? '' : 's'} open` : 'Not trading right now' };
       },
     },
+    ...(quantumPeers
+      ? [
+          {
+            id: 'quantum',
+            short: 'Quantum net',
+            chain: 'quantum',
+            name: 'Marsqnet, the quantum test network',
+            host: 'marsqnet',
+            role:
+              'Marscoin’s post-quantum test network: RandomX mining and signatures built to withstand quantum computers. ' +
+              'Your phone only greets its nodes and asks how far their chain has come. No coins are involved.',
+            probe: async () => {
+              // [{ height, agent } | null] per node.
+              const answers = (await quantumPeers()).filter(Boolean);
+              if (!answers.length) throw new Error('None of its nodes answered.');
+              const height = Math.max(...answers.map(answer => answer.height));
+              return {
+                quantumHeight: height,
+                host: answers[0].agent.replace(/^\/|\/$/g, ''),
+                detail: `Block ${group(height)} · ${answers.length} node${answers.length === 1 ? '' : 's'} answering`,
+              };
+            },
+          },
+        ]
+      : []),
     {
       id: 'mempool',
       short: 'Bitcoin A',

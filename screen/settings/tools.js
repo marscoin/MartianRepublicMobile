@@ -1,12 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { ScrollView, View } from 'react-native';
 import Dialog from 'react-native-dialog';
 import { useNavigation } from '@react-navigation/native';
 import RNRestart from 'react-native-restart'; 
 
-import navigationStyle from '../../components/navigationStyle';
+import { SettingsRow, SettingsScreen, SettingsSection, settingsNavigation } from '../../components/SettingsUi';
 import loc from '../../loc';
-import ListItem from '../../components/ListItem';
 const BlueApp = require('../../BlueApp');
 
 const NetworkSettings = () => {
@@ -55,12 +53,32 @@ const NetworkSettings = () => {
 
   return (
     <>
-    <ScrollView contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>
-      <ListItem title={loc.is_it_my_address.title} onPress={navigateToIsItMyAddress} testID="IsItMyAddress" chevron />
-      <ListItem title={loc.settings.network_broadcast} onPress={navigateToBroadcast} testID="Broadcast" chevron />
-      <ListItem title={loc.autofill_word.title} onPress={navigateToGenerateWord} testID="GenerateWord" chevron />
-      {/* <ListItem title={'Complete App Reset'} onPress={showDialog} testID="ResetApp" chevron /> */}
-    </ScrollView>
+    <SettingsScreen title={loc.settings.tools}>
+      <SettingsSection first>
+        <SettingsRow
+          icon="search"
+          title={loc.is_it_my_address.title}
+          note="Check whether an address belongs to one of your wallets."
+          onPress={navigateToIsItMyAddress}
+          testID="IsItMyAddress"
+        />
+        <SettingsRow
+          icon="radio"
+          title={loc.settings.network_broadcast}
+          note="Send a signed transaction to the Marscoin network."
+          onPress={navigateToBroadcast}
+          testID="Broadcast"
+        />
+        <SettingsRow
+          icon="key"
+          title={loc.autofill_word.title}
+          note="Work out the last word of a recovery phrase from the others."
+          onPress={navigateToGenerateWord}
+          testID="GenerateWord"
+        />
+        {/* <ListItem title={'Complete App Reset'} onPress={showDialog} testID="ResetApp" chevron /> */}
+      </SettingsSection>
+    </SettingsScreen>
 
     <Dialog.Container visible={dialogVisible}>
         <Dialog.Title>App Reset Confirmation</Dialog.Title>
@@ -79,6 +97,6 @@ const NetworkSettings = () => {
   );
 };
 
-NetworkSettings.navigationOptions = navigationStyle({}, opts => ({ ...opts, headerTitle: loc.settings.tools }));
+NetworkSettings.navigationOptions = settingsNavigation(() => loc.settings.tools);
 
 export default NetworkSettings;

@@ -1,8 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import React, { useContext, useLayoutEffect, useState, useEffect } from 'react';
-import { FlatList, NativeSyntheticEvent, StyleSheet, View , Text} from 'react-native';
-import { BlueCard, BlueSpacing10, BlueText } from '../../BlueComponents';
 import {
   CurrencyRate,
   getPreferredCurrency,
@@ -12,8 +10,7 @@ import {
 } from '../../blue_modules/currency';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import presentAlert from '../../components/Alert';
-import ListItem from '../../components/ListItem';
-import { useTheme } from '../../components/themes';
+import { SettingsNote, SettingsRow, SettingsScreen, SettingsSection } from '../../components/SettingsUi';
 import loc from '../../loc';
 import { FiatUnit, FiatUnitSource, FiatUnitType, getFiatRate } from '../../models/fiatUnit';
 dayjs.extend(require('dayjs/plugin/calendar'));
@@ -23,25 +20,9 @@ const Currency = () => {
   const [isSavingNewPreferredCurrency, setIsSavingNewPreferredCurrency] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<FiatUnitType>(FiatUnit.USD);
   const [currencyRate, setCurrencyRate] = useState<CurrencyRate>({ LastUpdated: null, Rate: null });
-  const { colors } = useTheme();
   const { setOptions } = useNavigation<any>();
   const [search, setSearch] = useState('');
   const data = Object.values(FiatUnit).filter(item => item.endPointKey.toLowerCase().includes(search.toLowerCase()));
-
-  const styles = StyleSheet.create({
-    flex: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    infoText: {
-      color:'white', 
-      textAlign: 'center',
-      fontSize: 16,
-      fontWeight:"400",
-      fontFamily: 'Orbitron-Regular',
-      letterSpacing: 1.1, 
-    },
-  });
 
   const [price, setPrice] = useState(null);
   const [date, setDate] = useState(null);
@@ -92,33 +73,25 @@ const Currency = () => {
     fetchCurrency();
   }, [setOptions]);
 
-  const renderItem = ({ item }: { item: FiatUnitType }) => (
-    <ListItem
-      disabled={isSavingNewPreferredCurrency || selectedCurrency.endPointKey === item.endPointKey}
-      title={`${item.endPointKey} (${item.symbol})`}
-      //containerStyle={StyleSheet.flatten([styles.flex, { minHeight: 60 }])}
-      checkmark={selectedCurrency.endPointKey === item.endPointKey}
-    />
-  );
-
   return (
-    <View style={styles.flex}>
-      <View>
-        <FlatList
-          keyExtractor={(_item, index) => `${index}`}
-          data={data}
-          renderItem={renderItem}
-        />
-      </View>
-       <View style ={{flex:1, marginHorizontal: 20, marginTop: 20}}>
-         <Text style={styles.infoText}>Price is obtained from marscoin.org</Text>
-         <BlueSpacing10 />
-         <Text style={[styles.infoText, {color:'#FF7400'}]}> Rate: ${price?? loc._.never}</Text>
-         <BlueSpacing10 />
-         <Text style={styles.infoText}> Last Updated: {dayjs(date).calendar() ?? loc._.never} </Text>
-      </View>
-      
-    </View>
+    <SettingsScreen title={loc.settings.currency}>
+      <SettingsSection label="AMOUNTS ARE ALSO SHOWN IN" first>
+        {data.map(item => (
+          <SettingsRow
+            key={item.endPointKey}
+            disabled={isSavingNewPreferredCurrency || selectedCurrency.endPointKey === item.endPointKey}
+            title={`${item.endPointKey} (${item.symbol})`}
+            checked={selectedCurrency.endPointKey === item.endPointKey ? true : undefined}
+          />
+        ))}
+      </SettingsSection>
+
+      <SettingsSection label="PRICE">
+        <SettingsRow title="1 MARS" value={price ? `$${price}` : loc._.never} testID="CurrencyRate" />
+        <SettingsRow title={loc.settings.last_updated} value={date ? dayjs(date).calendar() : loc._.never} testID="CurrencyUpdated" />
+      </SettingsSection>
+      <SettingsNote>The price comes from marscoin.org.</SettingsNote>
+    </SettingsScreen>
   );
 };
 

@@ -9,7 +9,7 @@ import { noteAsked, noteOpen, shouldAskForReview } from './app-review-policy';
 const KEY = 'org.martianrepublic.review.v1';
 export const STORE_OPTIONS = {
   AppleAppID: '6480416861',
-  GooglePackageName: 'com.martianrepublic.app',
+  GooglePackageName: 'org.martianrepublic',
   preferredAndroidMarket: AndroidMarket.Google,
 };
 
