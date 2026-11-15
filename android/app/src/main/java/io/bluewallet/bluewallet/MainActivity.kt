@@ -44,16 +44,20 @@ class MainActivity : ReactActivity() {
     val content = findViewById<View>(android.R.id.content)
     // Shows through behind the transparent system bars: the background of both app themes.
     content.setBackgroundColor(Color.parseColor("#080A0C"))
-    WindowCompat.getInsetsController(window, window.decorView).apply {
-      isAppearanceLightStatusBars = false
-      isAppearanceLightNavigationBars = false
+    // The bars sit on that dark colour on every screen, so their icons stay light, also on the
+    // screens that ask for dark icons (they were written for the grey bar Android used to draw).
+    val bars = WindowCompat.getInsetsController(window, window.decorView)
+    window.decorView.viewTreeObserver.addOnPreDrawListener {
+      if (bars.isAppearanceLightStatusBars) bars.isAppearanceLightStatusBars = false
+      if (bars.isAppearanceLightNavigationBars) bars.isAppearanceLightNavigationBars = false
+      true
     }
     ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
-      val bars =
+      val edges =
           insets.getInsets(
               WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
       val keyboard = insets.getInsets(WindowInsetsCompat.Type.ime())
-      view.setPadding(bars.left, bars.top, bars.right, max(bars.bottom, keyboard.bottom))
+      view.setPadding(edges.left, edges.top, edges.right, max(edges.bottom, keyboard.bottom))
       WindowInsetsCompat.CONSUMED
     }
   }
