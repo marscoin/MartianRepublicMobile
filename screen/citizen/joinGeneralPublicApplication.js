@@ -12,7 +12,7 @@ import { Icon } from 'react-native-elements';
 import LinearGradient from 'react-native-linear-gradient';
 import RNFS from 'react-native-fs';
 import { Image as CompressorImage } from 'react-native-compressor';
-import { RNCamera } from 'react-native-camera';
+import { Camera, CameraType } from 'react-native-camera-kit';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -175,8 +175,7 @@ const JoinGeneralPublicApplicationScreen = () => {
   
     const takePicture = async () => {
       if (cameraRef.current) {
-        const options = { quality: 0.5, base64: true };
-        const data = await cameraRef.current.takePictureAsync(options);
+        const data = await cameraRef.current.capture();
         setCapturedUri(data.uri); // Set the captured image URI
       }
     };
@@ -224,13 +223,8 @@ const JoinGeneralPublicApplicationScreen = () => {
               </View>
             </View>
           ) : (
-            <RNCamera
-              ref={cameraRef}
-              style={{ flex: 1 }}
-              type={RNCamera.Constants.Type.front}
-              flashMode={RNCamera.Constants.FlashMode.off}
-              captureAudio={false}
-            >
+            <View style={{ flex: 1, backgroundColor: 'black' }}>
+              <Camera ref={cameraRef} style={StyleSheet.absoluteFill} cameraType={CameraType.Front} flashMode="off" />
               <View style={styles.buttonContainer}>
                 <TouchableOpacity 
                   style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 90, marginLeft: 20 }}
@@ -240,7 +234,7 @@ const JoinGeneralPublicApplicationScreen = () => {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={takePicture} style={[styles.capture]} />
               </View>
-            </RNCamera>
+            </View>
           )}
         </View>
       </Modal>
