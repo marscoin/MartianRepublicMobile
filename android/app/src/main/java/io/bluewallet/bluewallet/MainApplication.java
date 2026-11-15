@@ -13,7 +13,6 @@ import com.facebook.soloader.SoLoader;
 import java.lang.reflect.InvocationTargetException;
 import com.facebook.react.modules.i18nmanager.I18nUtil;
 import java.util.List;
-import com.bugsnag.android.Bugsnag;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -57,7 +56,8 @@ public class MainApplication extends Application implements ReactApplication {
   @Override
   public void onCreate() {
     super.onCreate();
-    Bugsnag.start(this);
+    // No crash reporting service is started: the key that came with the BlueWallet code
+    // sent reports to an account that is not ours.
     I18nUtil sharedI18nUtilInstance = I18nUtil.getInstance();
     sharedI18nUtilInstance.allowRTL(getApplicationContext(), true);
     SoLoader.init(this, /* native exopackage */ false);
