@@ -13,7 +13,10 @@ describe('no crash reporting service', () => {
   });
 
   it('is not started by the Android app', () => {
-    expect(read('android/app/src/main/java/io/bluewallet/bluewallet/MainApplication.java')).not.toMatch(/Bugsnag\.start|import com\.bugsnag/);
+    expect(read('android/app/src/main/java/io/bluewallet/bluewallet/MainApplication.kt')).not.toMatch(/Bugsnag\.start|import com\.bugsnag/);
+    expect(read('android/build.gradle')).not.toMatch(/bugsnag/i);
+    expect(read('android/app/src/main/AndroidManifest.xml')).not.toMatch(/bugsnag/i);
+    expect(read('package.json')).not.toMatch(/bugsnag/i);
   });
 
   it('is not started by the iOS app', () => {

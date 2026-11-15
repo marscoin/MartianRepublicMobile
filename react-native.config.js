@@ -5,7 +5,8 @@ module.exports = {
     'rn-ldk': {
       platforms: {
         ios: null, // Disable autolinking for ios
-        // android: null, // Uncomment if you also want to disable autolinking for Android
+        // No JavaScript calls rn-ldk, and its prebuilt Android library is not 16 KB page aligned.
+        android: null,
       },
     },
   },

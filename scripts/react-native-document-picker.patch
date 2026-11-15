@@ -1,0 +1,54 @@
+diff -ruN a/node_modules/react-native-document-picker/android/src/main/java/com/reactnativedocumentpicker/GuardedResultAsyncTask.java b/node_modules/react-native-document-picker/android/src/main/java/com/reactnativedocumentpicker/GuardedResultAsyncTask.java
+--- a/node_modules/react-native-document-picker/android/src/main/java/com/reactnativedocumentpicker/GuardedResultAsyncTask.java	1969-12-31 19:00:00
++++ b/node_modules/react-native-document-picker/android/src/main/java/com/reactnativedocumentpicker/GuardedResultAsyncTask.java	2026-11-15 10:39:24
+@@ -0,0 +1,39 @@
++package com.reactnativedocumentpicker;
++
++import android.os.AsyncTask;
++import com.facebook.react.bridge.JSExceptionHandler;
++
++/**
++ * React Native removed com.facebook.react.bridge.GuardedResultAsyncTask in 0.81.
++ * This is the same class, kept with the one module that still uses it.
++ */
++abstract class GuardedResultAsyncTask<Result> extends AsyncTask<Void, Void, Result> {
++  private final JSExceptionHandler mExceptionHandler;
++
++  protected GuardedResultAsyncTask(JSExceptionHandler exceptionHandler) {
++    mExceptionHandler = exceptionHandler;
++  }
++
++  @Override
++  protected final Result doInBackground(Void... params) {
++    try {
++      return doInBackgroundGuarded();
++    } catch (RuntimeException e) {
++      mExceptionHandler.handleException(e);
++      throw e;
++    }
++  }
++
++  @Override
++  protected final void onPostExecute(Result result) {
++    try {
++      onPostExecuteGuarded(result);
++    } catch (RuntimeException e) {
++      mExceptionHandler.handleException(e);
++    }
++  }
++
++  protected abstract Result doInBackgroundGuarded();
++
++  protected abstract void onPostExecuteGuarded(Result result);
++}
+diff -ruN a/node_modules/react-native-document-picker/android/src/main/java/com/reactnativedocumentpicker/RNDocumentPickerModule.java b/node_modules/react-native-document-picker/android/src/main/java/com/reactnativedocumentpicker/RNDocumentPickerModule.java
+--- a/node_modules/react-native-document-picker/android/src/main/java/com/reactnativedocumentpicker/RNDocumentPickerModule.java	2026-11-15 10:37:29
++++ b/node_modules/react-native-document-picker/android/src/main/java/com/reactnativedocumentpicker/RNDocumentPickerModule.java	2026-11-15 10:37:29
+@@ -18,7 +18,6 @@
+ import com.facebook.react.bridge.ActivityEventListener;
+ import com.facebook.react.bridge.Arguments;
+ import com.facebook.react.bridge.BaseActivityEventListener;
+-import com.facebook.react.bridge.GuardedResultAsyncTask;
+ import com.facebook.react.bridge.Promise;
+ import com.facebook.react.bridge.ReactApplicationContext;
+ import com.facebook.react.bridge.ReactContext;

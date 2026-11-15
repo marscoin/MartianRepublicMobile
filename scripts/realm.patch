@@ -1,0 +1,20 @@
+diff -ruN a/node_modules/realm/binding/android/src/main/cpp/io_realm_react_RealmReactModule.cpp b/node_modules/realm/binding/android/src/main/cpp/io_realm_react_RealmReactModule.cpp
+--- a/node_modules/realm/binding/android/src/main/cpp/io_realm_react_RealmReactModule.cpp	2026-11-15 10:48:49
++++ b/node_modules/realm/binding/android/src/main/cpp/io_realm_react_RealmReactModule.cpp	2026-11-15 10:48:49
+@@ -123,7 +123,15 @@
+         throw std::invalid_argument("Expected call_invoker to be CallInvokerHolderImpl");
+     }
+     auto hybridDataField = env->GetFieldID(callInvokerHolderClass, "mHybridData", "Lcom/facebook/jni/HybridData;");
+-    auto hybridDataObj = env->GetObjectField(call_invoker, hybridDataField);
++    jobject hybridDataObj;
++    if (hybridDataField == nullptr) {
++        // React Native 0.81: CallInvokerHolderImpl extends HybridClassBase, which is itself the HybridData.
++        env->ExceptionClear();
++        hybridDataObj = call_invoker;
++    }
++    else {
++        hybridDataObj = env->GetObjectField(call_invoker, hybridDataField);
++    }
+ 
+     // 2. Get the destructor Java object referred to by the mDestructor field from the myHybridData Java object
+     auto hybridDataClass = env->FindClass("com/facebook/jni/HybridData");
