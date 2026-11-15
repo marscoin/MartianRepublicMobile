@@ -45,10 +45,10 @@ const LNDViewInvoice = () => {
   });
 
   useEffect(() => {
-    BackHandler.addEventListener('hardwareBackPress', handleBackButton);
+    const backSubscription = BackHandler.addEventListener('hardwareBackPress', handleBackButton);
 
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress', handleBackButton);
+      backSubscription.remove();
       clearInterval(fetchInvoiceInterval.current);
       fetchInvoiceInterval.current = undefined;
     };

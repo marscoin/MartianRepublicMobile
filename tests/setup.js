@@ -1,5 +1,7 @@
 /* global jest */
 
+import '../blue_modules/react-default-props'; // the app loads this from shim.js
+
 import mockClipboard from '@react-native-clipboard/clipboard/jest/clipboard-mock.js';
 
 const consoleWarnOrig = console.warn;

@@ -1,4 +1,5 @@
 /* global __DEV__, localStorage */
+require('./blue_modules/react-default-props'); // before any component is rendered
 if (typeof Buffer === 'undefined') global.Buffer = require('buffer').Buffer;
 if (typeof TextEncoder === 'undefined') {
   global.TextEncoder = class TextEncoder {

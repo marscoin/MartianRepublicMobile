@@ -209,10 +209,10 @@ const TransactionsStatus = () => {
   };
 
   useEffect(() => {
-    BackHandler.addEventListener('hardwareBackPress', handleBackButton);
+    const backSubscription = BackHandler.addEventListener('hardwareBackPress', handleBackButton);
 
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress', handleBackButton);
+      backSubscription.remove();
       clearInterval(fetchTxInterval.current);
       fetchTxInterval.current = undefined;
     };

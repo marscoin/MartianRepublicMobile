@@ -43,10 +43,10 @@ const PleaseBackupLdk = () => {
 
   useEffect(() => {
     enableBlur();
-    BackHandler.addEventListener('hardwareBackPress', handleBackButton);
+    const backSubscription = BackHandler.addEventListener('hardwareBackPress', handleBackButton);
     return () => {
       disableBlur();
-      BackHandler.removeEventListener('hardwareBackPress', handleBackButton);
+      backSubscription.remove();
     };
   }, [disableBlur, enableBlur, handleBackButton]);
 
