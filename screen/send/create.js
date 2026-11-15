@@ -1,4 +1,3 @@
-import { marsAlert } from '../../components/MarsDialog';
 import React, { useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { TextInput, FlatList, Linking, TouchableOpacity, StyleSheet, Text, View, Platform } from 'react-native';
@@ -6,6 +5,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { Icon } from 'react-native-elements';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
+import { saveFileToDevice } from '../../blue_modules/fs';
 import BigNumber from 'bignumber.js';
 import { BlueText } from '../../BlueComponents';
 import navigationStyle from '../../components/navigationStyle';
@@ -15,7 +15,6 @@ import { DynamicQRCode } from '../../components/DynamicQRCode';
 import { isDesktop } from '../../blue_modules/environment';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import presentAlert from '../../components/Alert';
-import { PERMISSIONS, RESULTS, request } from 'react-native-permissions';
 import { useTheme } from '../../components/themes';
 import { satoshiToBTC } from '../../blue_modules/currency';
 import usePrivacy from '../../hooks/usePrivacy';
@@ -71,29 +70,13 @@ const SendCreate = () => {
           RNFS.unlink(filePath);
         });
     } else if (Platform.OS === 'android') {
-      const granted = await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
-      if (granted === RESULTS.GRANTED) {
-        console.log('Storage Permission: Granted');
-        const filePath = RNFS.DownloadDirectoryPath + `/${fileName}`;
-        try {
-          await RNFS.writeFile(filePath, tx);
-          presentAlert({ message: loc.formatString(loc.send.txSaved, { filePath }) });
-        } catch (e) {
-          console.log(e);
-          presentAlert({ message: e.message });
-        }
-      } else {
-        console.log('Storage Permission: Denied');
-        marsAlert(loc.send.permission_storage_title, loc.send.permission_storage_denied_message, [
-          {
-            text: loc.send.open_settings,
-            onPress: () => {
-              Linking.openSettings();
-            },
-            style: 'default',
-          },
-          { text: loc._.cancel, onPress: () => {}, style: 'cancel' },
-        ]);
+      // The system "save as" screen: the app needs no storage permission.
+      try {
+        const saved = await saveFileToDevice(fileName, tx);
+        if (saved) presentAlert({ message: loc.formatString(loc.send.txSaved, { filePath: fileName }) });
+      } catch (e) {
+        console.log(e);
+        presentAlert({ message: e.message });
       }
     }
   }, [tx]);

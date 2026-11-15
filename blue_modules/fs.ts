@@ -1,5 +1,4 @@
-import { marsAlert } from './mars-alert';
-import { Linking, PermissionsAndroid, Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import loc from '../loc';
@@ -35,42 +34,27 @@ export const writeFileAndExport = async function (filename: string, contents: st
     await RNFS.writeFile(filePath, contents);
     await _shareOpen(filePath);
   } else if (Platform.OS === 'android') {
-    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE, {
-      title: loc.send.permission_storage_title,
-      message: loc.send.permission_storage_message,
-      buttonNeutral: loc.send.permission_storage_later,
-      buttonNegative: loc._.cancel,
-      buttonPositive: loc._.ok,
-    });
-
-    // In Android 13 no WRITE_EXTERNAL_STORAGE permission is needed
-    // @see https://stackoverflow.com/questions/76311685/permissionandroid-request-always-returns-never-ask-again-without-any-prompt-r
-    if (granted === PermissionsAndroid.RESULTS.GRANTED || Platform.Version >= 33) {
-      const filePath = RNFS.DocumentDirectoryPath + `/${filename}`;
-      try {
-        await RNFS.writeFile(filePath, contents);
-        console.log(`file saved to ${filePath}`);
-        await _shareOpen(filePath);
-      } catch (e: any) {
-        console.log(e);
-        //presentAlert({ message: e.message });
-      }
-    } else {
-      console.log('Storage Permission: Denied');
-      marsAlert(loc.send.permission_storage_title, loc.send.permission_storage_denied_message, [
-        {
-          text: loc.send.open_settings,
-          onPress: () => {
-            Linking.openSettings();
-          },
-          style: 'default',
-        },
-        { text: loc._.cancel, onPress: () => {}, style: 'cancel' },
-      ]);
+    // The file is written inside the app and handed to the share sheet; no storage permission is involved.
+    const filePath = RNFS.DocumentDirectoryPath + `/${filename}`;
+    try {
+      await RNFS.writeFile(filePath, contents);
+      console.log(`file saved to ${filePath}`);
+      await _shareOpen(filePath);
+    } catch (e: any) {
+      console.log(e);
     }
   } else {
     presentAlert({ message: 'Not implemented for this platform' });
   }
+};
+
+/**
+ * Android: lets the person choose where to keep a text file, through the system "save as" screen.
+ * No storage permission is needed. Resolves true when the file was written, false when the screen was closed.
+ */
+export const saveFileToDevice = async function (filename: string, contents: string, mimeType = 'application/octet-stream'): Promise<boolean> {
+  if (Platform.OS !== 'android') throw new Error('saveFileToDevice is for Android');
+  return NativeModules.MarsFileExport.save(filename, mimeType, contents);
 };
 
 /**

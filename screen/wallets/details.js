@@ -12,7 +12,6 @@ import {
   TouchableWithoutFeedback,
   Switch,
   Platform,
-  Linking,
   StyleSheet,
   ScrollView,
   InteractionManager,
@@ -45,8 +44,7 @@ import { isDesktop } from '../../blue_modules/environment';
 import { AbstractHDElectrumWallet } from '../../class/wallets/abstract-hd-electrum-wallet';
 import presentAlert from '../../components/Alert';
 import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
-import { writeFileAndExport } from '../../blue_modules/fs';
-import { PERMISSIONS, RESULTS, request } from 'react-native-permissions';
+import { saveFileToDevice, writeFileAndExport } from '../../blue_modules/fs';
 import { useTheme } from '../../components/themes';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 
@@ -276,29 +274,13 @@ const WalletDetails = (navigation) => {
           RNFS.unlink(filePath);
         });
     } else if (Platform.OS === 'android') {
-      const granted = await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
-      if (granted === RESULTS.GRANTED) {
-        console.log('Storage Permission: Granted');
-        const filePath = RNFS.DownloadDirectoryPath + `/${fileName}`;
-        try {
-          await RNFS.writeFile(filePath, contents);
-          presentAlert({ message: loc.formatString(loc.send.txSaved, { filePath: fileName }) });
-        } catch (e) {
-          console.log(e);
-          presentAlert({ message: e.message });
-        }
-      } else {
-        console.log('Storage Permission: Denied');
-        marsAlert(loc.send.permission_storage_title, loc.send.permission_storage_denied_message, [
-          {
-            text: loc.send.open_settings,
-            onPress: () => {
-              Linking.openSettings();
-            },
-            style: 'default',
-          },
-          { text: loc._.cancel, onPress: () => {}, style: 'cancel' },
-        ]);
+      // The system "save as" screen: the app needs no storage permission.
+      try {
+        const saved = await saveFileToDevice(fileName, contents);
+        if (saved) presentAlert({ message: loc.formatString(loc.send.txSaved, { filePath: fileName }) });
+      } catch (e) {
+        console.log(e);
+        presentAlert({ message: e.message });
       }
     }
   };
