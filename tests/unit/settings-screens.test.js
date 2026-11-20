@@ -259,6 +259,11 @@ describe('Settings', () => {
     }
     for (const testID of ['TermsOfService', 'ResetApp', 'DeleteApp']) expect(pressable(tree, testID)).toBeDefined();
   });
+
+  it('says which version and build is running, at the bottom', async () => {
+    const tree = await render(<Settings />);
+    expect(text(tree)).toContain('Martian Republic 1.0.14 (20)');
+  });
 });
 
 describe('General', () => {

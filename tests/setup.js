@@ -59,6 +59,8 @@ jest.mock('react-native-device-info', () => {
     getDeviceType: jest.fn().mockReturnValue(false),
     hasGmsSync: jest.fn().mockReturnValue(true),
     hasHmsSync: jest.fn().mockReturnValue(false),
+    getVersion: jest.fn().mockReturnValue('1.0.14'),
+    getBuildNumber: jest.fn().mockReturnValue('20'),
   };
 });
 
