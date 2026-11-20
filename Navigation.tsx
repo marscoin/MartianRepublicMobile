@@ -116,6 +116,7 @@ import JoinGeneralPublicApplication2Screen from './screen/citizen/joinGeneralPub
 import JoinGeneralPublicApplication3Screen from './screen/citizen/joinGeneralPublicApplication3';
 import JoinGeneralPublicApplicationSuccessScreen from './screen/citizen/joinGeneralPublicApplicationSuccess';
 import EndorseConfirmationScreen from './screen/citizen/endorseConfirmationScreen';
+import RepublicLoginScreen from './screen/citizen/republicLoginScreen';
 import EndorseSuccessScreen from './screen/citizen/endorseSuccessScreen';
 import ProposalsScreen from './screen/congress/proposals';
 import ProposalDetail from './screen/congress/proposalDetail';
@@ -1020,6 +1021,7 @@ const Navigation = () => {
       <RootStack.Screen name="LNDCreateInvoiceRoot" component={LNDCreateInvoiceRoot} options={NavigationDefaultOptions} />
       <RootStack.Screen name="ScanLndInvoiceRoot" component={ScanLndInvoiceRoot} options={NavigationDefaultOptions} />
       <RootStack.Screen name="AztecoRedeemRoot" component={AztecoRedeemRoot} options={NavigationDefaultOptions} />
+      <RootStack.Screen name="RepublicLogin" component={RepublicLoginScreen} options={NavigationDefaultOptions} />
       {/* screens */}
       <RootStack.Screen
         name="WalletExportRoot"
