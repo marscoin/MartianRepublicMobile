@@ -47,6 +47,15 @@ export function parseRepublicLogin(text) {
   return { sid, challenge, t: t.toLowerCase(), issuedAt: parseInt(t, 16) };
 }
 
+/**
+ * Where a scanned or pasted text should go when it is the website's sign-in code: the confirmation screen.
+ * Null for anything else. Used by the Scan tab (the send screen's camera) and the home screen's scanner.
+ */
+export function republicLoginRoute(text) {
+  if (!parseRepublicLogin(text)) return null;
+  return ['RepublicLogin', { url: String(text).trim() }];
+}
+
 /** Seconds the code stays usable (0 when it has run out, or comes from the future). */
 export function secondsLeft(login, now = Date.now()) {
   const nowS = Math.floor(now / 1000);

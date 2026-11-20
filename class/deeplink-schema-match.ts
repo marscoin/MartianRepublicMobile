@@ -4,7 +4,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import URL from 'url';
 
 import { readFileOutsideSandbox } from '../blue_modules/fs';
-import { parseRepublicLogin } from '../blue_modules/republic-login';
+import { republicLoginRoute } from '../blue_modules/republic-login';
 import { Chain } from '../models/bitcoinUnits';
 import { LightningCustodianWallet, WatchOnlyWallet } from './';
 import Azteco from './azteco';
@@ -59,8 +59,9 @@ class DeeplinkSchemaMatch {
 
     // The Martian Republic website's sign-in code: a confirmation screen, nothing is signed before the citizen agrees.
     // A look-alike (another host, http, another path) is not matched and falls through to be ignored.
-    if (parseRepublicLogin(event.url)) {
-      completionHandler(['RepublicLogin', { url: event.url.trim() }]);
+    const signIn = republicLoginRoute(event.url);
+    if (signIn) {
+      completionHandler(signIn as TCompletionHandlerParams);
       return;
     }
 

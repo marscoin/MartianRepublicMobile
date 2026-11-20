@@ -6,6 +6,7 @@ import {
   LOGIN_MAX_AGE_S,
   parseRepublicLogin,
   republicLoginMessage,
+  republicLoginRoute,
   republicLoginUrl,
   secondsLeft,
   signRepublicLogin,
@@ -69,6 +70,15 @@ describe('Signing in on martianrepublic.org with the phone', () => {
     ['an address, not a code', civicAddress],
   ])('ignores %s', (_, text) => {
     expect(parseRepublicLogin(text)).toBeNull();
+  });
+
+  it('sends the code from the Scan tab, which is the send screen camera, to the sign-in screen, and an address to the payment', () => {
+    expect(republicLoginRoute(code)).toEqual(['RepublicLogin', { url: code }]);
+    expect(republicLoginRoute(` ${code}\n`)).toEqual(['RepublicLogin', { url: code }]);
+    expect(republicLoginRoute(civicAddress)).toBeNull();
+    expect(republicLoginRoute(`marscoin:${civicAddress}?amount=1`)).toBeNull();
+    expect(republicLoginRoute(code.replace('martianrepublic.org', 'martianrepub1ic.org'))).toBeNull();
+    expect(republicLoginRoute(undefined)).toBeNull();
   });
 
   it('only signs while the code is fresh, as the website does (600 seconds)', () => {
