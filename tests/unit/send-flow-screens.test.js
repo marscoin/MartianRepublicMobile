@@ -632,6 +632,40 @@ describe('Send from the Scan tab', () => {
   });
 });
 
+describe('The website sign-in code in the send screen camera', () => {
+  const SIGN_IN = 'https://martianrepublic.org/api/marsauth?sid=1795689600_0123456789abcdef0123&c=fedcba9876543210fedc_1795689600&t=6b3e5d80';
+
+  it('from the Scan tab, opens the sign-in confirmation instead of a payment', async () => {
+    mockRoute = { name: 'QuickSendDetails', params: { isEditable: true, triggerScan: true } };
+    let scanned;
+    mockScan.mockReturnValue(
+      new Promise(resolve => {
+        scanned = resolve;
+      }),
+    );
+    const tree = await render(<QuickSendDetails />, sendContext(fakeWallet()));
+    await act(async () => scanned(SIGN_IN));
+    await settle();
+    expect(mockNav.navigate).toHaveBeenCalledWith('RepublicLogin', { url: SIGN_IN });
+    expect(hostById(tree, 'SendRecipientAddress')).toHaveLength(0);
+  });
+
+  it('from the scan button on the send screen, too', async () => {
+    let scanned;
+    mockScan.mockReturnValue(
+      new Promise(resolve => {
+        scanned = resolve;
+      }),
+    );
+    const tree = await render(<SendDetails />, sendContext(fakeWallet()));
+    await tap(tree, 'BlueAddressInputScanQrButton');
+    await act(async () => scanned(SIGN_IN));
+    await settle();
+    expect(mockNav.navigate).toHaveBeenCalledWith('RepublicLogin', { url: SIGN_IN });
+    expect(hostById(tree, 'SendRecipientAddress')).toHaveLength(0);
+  });
+});
+
 describe('Review', () => {
   // A real, unsigned transaction, so that its ID can be read back.
   const transaction = new bitcoin.Transaction();
