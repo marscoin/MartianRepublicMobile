@@ -274,9 +274,9 @@ function RecipientCard({ address, valid, ownLabel, editable, onChangeText, onSca
     [],
   );
 
-  // The Scan tab opens the camera by itself the first time it is shown. The camera covers this screen, which
-  // loses focus and turns triggerScan off again while the scan is still open: what the camera reads must still
-  // arrive. Only a card that is gone drops it (until 20 November 2026 the blur dropped every scan from the tab).
+  // The Scan tab opens the camera by itself: triggerScan counts its requests (first showing, each tab press), and
+  // every new count opens the camera once. What the camera reads must arrive even though the screen changed in
+  // between; only a card that is gone drops it (until 20 November 2026 a re-render dropped every scan from the tab).
   useEffect(() => {
     if (!triggerScan) return;
     Keyboard.dismiss();

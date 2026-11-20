@@ -47,3 +47,14 @@ describe('unit - the Martian Republic sign-in code from the scanner', () => {
     assert.strictEqual(routes[0][0], 'SendDetailsRoot');
   });
 });
+
+describe('unit - the sign-in screen is reachable where citizens are', () => {
+  // Citizens run on InitRoot's tabs, not on RootStack. On 20 November 2026 the screen was registered only in
+  // RootStack, and navigating to it from the Scan tab did nothing on a phone (an unhandled action is silent in release).
+  it('is registered next to the citizen tabs in InitRoot', () => {
+    const source = require('fs').readFileSync(require('path').join(__dirname, '../../Navigation.tsx'), 'utf8');
+    const initRoot = source.slice(source.indexOf('const InitRoot = () => {'), source.indexOf('</InitStack.Navigator>'));
+    assert.ok(initRoot.includes('<InitStack.Screen name="BottomTabs"'));
+    assert.ok(initRoot.includes('<InitStack.Screen name="RepublicLogin" component={RepublicLoginScreen}'));
+  });
+});

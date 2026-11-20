@@ -9,7 +9,15 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import * as bitcoin from 'bitcoinjs-lib';
 import { Marscoin } from '../../blue_modules/constants';
 
-const mockParent = { pop: jest.fn() };
+// The tab's navigation: the Scan tab tells its screen when it is pressed.
+const mockTabListeners = {};
+const mockParent = {
+  pop: jest.fn(),
+  addListener: jest.fn((event, listener) => {
+    mockTabListeners[event] = listener;
+    return () => delete mockTabListeners[event];
+  }),
+};
 const mockNav = {
   navigate: jest.fn(),
   goBack: jest.fn(),
@@ -666,6 +674,19 @@ describe('The website sign-in code in the send screen camera', () => {
     const tree = await scanFromTheScanTab(SIGN_IN);
     expect(mockNav.navigate).toHaveBeenCalledWith('RepublicLogin', { url: SIGN_IN });
     expect(hostById(tree, 'SendRecipientAddress')).toHaveLength(0);
+  });
+
+  it('opens the camera again every time the Scan tab is pressed, also on the send screen', async () => {
+    mockRoute = { name: 'QuickSendDetails', params: { isEditable: true, triggerScan: true } };
+    mockScan.mockReturnValue(new Promise(() => {}));
+    await render(<QuickSendDetails />, sendContext(fakeWallet()));
+    expect(mockScan).toHaveBeenCalledTimes(1);
+    await act(async () => mockTabListeners.tabPress());
+    await settle();
+    expect(mockScan).toHaveBeenCalledTimes(2);
+    await act(async () => mockTabListeners.tabPress());
+    await settle();
+    expect(mockScan).toHaveBeenCalledTimes(3);
   });
 
   it('from the Scan tab, still fills in a scanned address after the camera took the focus', async () => {

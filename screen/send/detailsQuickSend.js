@@ -4,7 +4,7 @@ import { COINS_UNREACHABLE, loadFreshCoins } from '../../blue_modules/mars-coins
 import { parseMarsPaymentURI } from '../../blue_modules/mars-payment-uri';
 import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, useLayoutEffect } from 'react';
 import { ActivityIndicator, Keyboard, LayoutAnimation, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useNavigation, useRoute, useFocusEffect, useIsFocused  } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EXCHANGE_RATES_STORAGE_KEY } from '../../blue_modules/currency';
@@ -73,12 +73,7 @@ const  QuickSendDetails = () => {
   const { isEditable } = routeParams;
   // if utxo is limited we use it to calculate available balance
   const balance = utxo ? utxo.reduce((prev, curr) => prev + curr.value, 0) : wallet?.getBalance();
-  const [triggerScan, setTriggerScan] = useState(false);
-  const [firstTriggerDone, setFirstTriggerDone] = useState(false);
-  const [scanInitiated, setScanInitiated] = useState(false);
-  const [hasScanned, setHasScanned] = useState(false);
-  const [tabPressed, setTabPressed] = useState(false);
-  const isFocused = useIsFocused();
+  const [triggerScan, setTriggerScan] = useState(0);
   const [marsRate, setMarsRate] = useState(null);
   const [loading, setLoading] = useState(true);
   const fetchMarscoinRate = async () => {
@@ -98,16 +93,19 @@ const  QuickSendDetails = () => {
     fetchMarscoinRate();
   }, []);
 
-  /////AUTO SCAN///////
+  // The Scan tab is the app's camera: it opens the scanner when the screen first appears and every time the tab is
+  // pressed again, also while this screen is already showing. triggerScan counts the requests; each new number
+  // opens the camera once (SendComposer's RecipientCard).
   useEffect(() => {
-    // Trigger scan only if it has never been initiated
-    if (!scanInitiated) {
-      setTriggerScan(true); // Trigger the scan
-      setScanInitiated(true); // Set that the scan has been initiated
-    } 
-    // Clean up to reset triggerScan on unmount or re-render
-    return () => setTriggerScan(false);
-  }, [isFocused]); 
+    if (routeParams.triggerScan) setTriggerScan(n => n + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    const tab = navigation.getParent?.();
+    if (!routeParams.triggerScan || !tab?.addListener) return;
+    return tab.addListener('tabPress', () => setTriggerScan(n => n + 1));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation]);
 
 
 //   useEffect(() => {
@@ -158,9 +156,6 @@ useFocusEffect(
   //   }
   // }, [isFocused]);
 
-  useEffect(() => {
-
-  }, [isFocused]);
 
 
   // if cutomFee is not set, we need to choose highest possible fee for wallet balance

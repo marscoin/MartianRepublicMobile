@@ -929,7 +929,11 @@ const InitRoot = () => {
       {!walletsInitialized ? (
         <InitStack.Screen name="UnlockWithScreenRoot" component={UnlockWithScreenRoot} options={{ headerShown: false }} />
       ) : initialRoute === 'BottomTabs' ? (
-        <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
+        <>
+          <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
+          {/* Citizens run on these tabs, not on RootStack: the website sign-in must be reachable from them (the Scan tab). */}
+          <InitStack.Screen name="RepublicLogin" component={RepublicLoginScreen} options={NavigationDefaultOptions} />
+        </>
       ) : (
         <InitStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} />
       )}
