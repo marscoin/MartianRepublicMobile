@@ -265,19 +265,24 @@ function RecipientCard({ address, valid, ownLabel, editable, onChangeText, onSca
   const handlers = useRef({});
   handlers.current = { navigate, scanName, onScanned };
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+      clearTimeout(timer.current);
+    },
+    [],
+  );
 
-  // The Scan tab opens the camera by itself the first time it is shown.
+  // The Scan tab opens the camera by itself the first time it is shown. The camera covers this screen, which
+  // loses focus and turns triggerScan off again while the scan is still open: what the camera reads must still
+  // arrive. Only a card that is gone drops it (until 20 November 2026 the blur dropped every scan from the tab).
   useEffect(() => {
     if (!triggerScan) return;
-    let current = true;
     Keyboard.dismiss();
     scanQrHelper(handlers.current.navigate, handlers.current.scanName).then(data => {
-      if (current) handlers.current.onScanned({ data });
+      if (mounted.current && data) handlers.current.onScanned({ data });
     });
-    return () => {
-      current = false;
-    };
   }, [triggerScan]);
 
   useEffect(() => {
