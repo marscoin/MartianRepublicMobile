@@ -116,6 +116,7 @@ import JoinGeneralPublicApplication2Screen from './screen/citizen/joinGeneralPub
 import JoinGeneralPublicApplication3Screen from './screen/citizen/joinGeneralPublicApplication3';
 import JoinGeneralPublicApplicationSuccessScreen from './screen/citizen/joinGeneralPublicApplicationSuccess';
 import EndorseConfirmationScreen from './screen/citizen/endorseConfirmationScreen';
+import RepublicLoginScreen from './screen/citizen/republicLoginScreen';
 import EndorseSuccessScreen from './screen/citizen/endorseSuccessScreen';
 import ProposalsScreen from './screen/congress/proposals';
 import ProposalDetail from './screen/congress/proposalDetail';
@@ -928,7 +929,11 @@ const InitRoot = () => {
       {!walletsInitialized ? (
         <InitStack.Screen name="UnlockWithScreenRoot" component={UnlockWithScreenRoot} options={{ headerShown: false }} />
       ) : initialRoute === 'BottomTabs' ? (
-        <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
+        <>
+          <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
+          {/* Citizens run on these tabs, not on RootStack: the website sign-in must be reachable from them (the Scan tab). */}
+          <InitStack.Screen name="RepublicLogin" component={RepublicLoginScreen} options={NavigationDefaultOptions} />
+        </>
       ) : (
         <InitStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} />
       )}
@@ -1020,6 +1025,7 @@ const Navigation = () => {
       <RootStack.Screen name="LNDCreateInvoiceRoot" component={LNDCreateInvoiceRoot} options={NavigationDefaultOptions} />
       <RootStack.Screen name="ScanLndInvoiceRoot" component={ScanLndInvoiceRoot} options={NavigationDefaultOptions} />
       <RootStack.Screen name="AztecoRedeemRoot" component={AztecoRedeemRoot} options={NavigationDefaultOptions} />
+      <RootStack.Screen name="RepublicLogin" component={RepublicLoginScreen} options={NavigationDefaultOptions} />
       {/* screens */}
       <RootStack.Screen
         name="WalletExportRoot"

@@ -9,7 +9,15 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import * as bitcoin from 'bitcoinjs-lib';
 import { Marscoin } from '../../blue_modules/constants';
 
-const mockParent = { pop: jest.fn() };
+// The tab's navigation: the Scan tab tells its screen when it is pressed.
+const mockTabListeners = {};
+const mockParent = {
+  pop: jest.fn(),
+  addListener: jest.fn((event, listener) => {
+    mockTabListeners[event] = listener;
+    return () => delete mockTabListeners[event];
+  }),
+};
 const mockNav = {
   navigate: jest.fn(),
   goBack: jest.fn(),
@@ -20,10 +28,12 @@ const mockNav = {
   getParent: jest.fn(() => mockParent),
 };
 let mockRoute = { name: 'SendDetails', params: {} };
+// Real screens lose focus while the scanner is open on top of them; tests can say so.
+let mockFocused = true;
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNav,
   useRoute: () => mockRoute,
-  useIsFocused: () => true,
+  useIsFocused: () => mockFocused,
   useFocusEffect: callback => {
     const { useEffect } = require('react');
     useEffect(() => callback(), [callback]);
@@ -256,6 +266,7 @@ beforeEach(() => {
   for (const key of Object.keys(mockStorage)) delete mockStorage[key];
   mockStorage.currency = JSON.stringify({ MARS_USD: RATE });
   mockRoute = { name: 'SendDetails', params: { isEditable: true } };
+  mockFocused = true;
   mockRecommendedFees.mockResolvedValue({ fastestFee: 6, mediumFee: 3, slowFee: 1 });
   mockLoadFreshCoins.mockResolvedValue(undefined);
   mockClipboardContent.mockResolvedValue('');
@@ -629,6 +640,73 @@ describe('Send from the Scan tab', () => {
     await type(tree, 'MarsAmountInput', '10');
     await settle();
     expect(wordsOf(button(tree, 'CreateTransactionButton'))).toBe('Review payment');
+  });
+});
+
+describe('The website sign-in code in the send screen camera', () => {
+  const SIGN_IN = 'https://martianrepublic.org/api/marsauth?sid=1795689600_0123456789abcdef0123&c=fedcba9876543210fedc_1795689600&t=6b3e5d80';
+
+  // The Scan tab opens the camera by itself; the camera covers the send screen, which loses focus, and then
+  // hands back what it read. On 20 November 2026 that blur cancelled the pending scan on a real phone: the
+  // screen came back empty for addresses and sign-in codes alike.
+  const scanFromTheScanTab = async (data, context = sendContext(fakeWallet())) => {
+    mockRoute = { name: 'QuickSendDetails', params: { isEditable: true, triggerScan: true } };
+    let scanned;
+    mockScan.mockReturnValue(
+      new Promise(resolve => {
+        scanned = resolve;
+      }),
+    );
+    const tree = await render(<QuickSendDetails />, context);
+    expect(mockScan).toHaveBeenCalledTimes(1);
+    const again = () => tree.update(<BlueStorageContext.Provider value={context}><QuickSendDetails /></BlueStorageContext.Provider>);
+    mockFocused = false; // the camera is on top
+    await act(async () => again());
+    mockFocused = true; // back from the camera
+    await act(async () => again());
+    await act(async () => scanned(data));
+    await settle();
+    expect(mockScan).toHaveBeenCalledTimes(1);
+    return tree;
+  };
+
+  it('from the Scan tab, opens the sign-in confirmation instead of a payment', async () => {
+    const tree = await scanFromTheScanTab(SIGN_IN);
+    expect(mockNav.navigate).toHaveBeenCalledWith('RepublicLogin', { url: SIGN_IN });
+    expect(hostById(tree, 'SendRecipientAddress')).toHaveLength(0);
+  });
+
+  it('opens the camera again every time the Scan tab is pressed, also on the send screen', async () => {
+    mockRoute = { name: 'QuickSendDetails', params: { isEditable: true, triggerScan: true } };
+    mockScan.mockReturnValue(new Promise(() => {}));
+    await render(<QuickSendDetails />, sendContext(fakeWallet()));
+    expect(mockScan).toHaveBeenCalledTimes(1);
+    await act(async () => mockTabListeners.tabPress());
+    await settle();
+    expect(mockScan).toHaveBeenCalledTimes(2);
+    await act(async () => mockTabListeners.tabPress());
+    await settle();
+    expect(mockScan).toHaveBeenCalledTimes(3);
+  });
+
+  it('from the Scan tab, still fills in a scanned address after the camera took the focus', async () => {
+    const tree = await scanFromTheScanTab(OTHER);
+    expect(wordsOf(hostById(tree, 'SendRecipientAddress')[0])).toBe(OTHER);
+  });
+
+  it('from the scan button on the send screen, too', async () => {
+    let scanned;
+    mockScan.mockReturnValue(
+      new Promise(resolve => {
+        scanned = resolve;
+      }),
+    );
+    const tree = await render(<SendDetails />, sendContext(fakeWallet()));
+    await tap(tree, 'BlueAddressInputScanQrButton');
+    await act(async () => scanned(SIGN_IN));
+    await settle();
+    expect(mockNav.navigate).toHaveBeenCalledWith('RepublicLogin', { url: SIGN_IN });
+    expect(hostById(tree, 'SendRecipientAddress')).toHaveLength(0);
   });
 });
 
