@@ -27,6 +27,7 @@ import { requestCameraAuthorization, scanQrHelper } from '../../helpers/scan-qr'
 import { useTheme } from '../../components/themes';
 import triggerHapticFeedback, { HapticFeedbackTypes } from '../../blue_modules/hapticFeedback';
 import { btcToSatoshi, fiatToBTC } from '../../blue_modules/currency';
+import { republicLoginRoute } from '../../blue_modules/republic-login';
 import presentAlert from '../../components/Alert';
 const fs = require('../../blue_modules/fs');
 const btcAddressRx = /^[a-zA-Z0-9]{26,35}$/;
@@ -393,6 +394,12 @@ const SendDetails = () => {
    * @param data {String} Can be address or `bitcoin:xxxxxxx` uri scheme, or invalid garbage
    */
   const processAddressData = data => {
+    // The Scan tab is the app's camera: the website's sign-in code goes to its confirmation screen, not to a payment.
+    const signIn = republicLoginRoute(typeof data === 'object' ? data?.data : data);
+    if (signIn) {
+      navigation.navigate(...signIn);
+      return;
+    }
     setIsLoading(true);
     try {
       const payment = parseMarsPaymentURI(typeof data === 'object' ? data?.data : data);

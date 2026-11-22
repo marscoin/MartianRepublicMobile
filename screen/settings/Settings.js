@@ -4,6 +4,7 @@ import { StyleSheet, Platform, Linking, Text, TouchableOpacity, View } from 'rea
 import { Icon } from 'react-native-elements';
 import { marsAlert } from '../../components/MarsDialog';
 import { useNavigation } from '@react-navigation/native';
+import { getBuildNumber, getVersion } from 'react-native-device-info';
 import Dialog from 'react-native-dialog';
 import RNRestart from 'react-native-restart'; 
 import axios from 'axios';
@@ -18,6 +19,7 @@ const BlueApp = require('../../BlueApp');
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 150 },
+  version: { color: '#ADB3BA', fontSize: 13, textAlign: 'center', marginTop: 24 },
   androidTop: { height: 24 },
   flex: { flex: 1 },
   feature: {
@@ -164,6 +166,10 @@ const Settings = () => {
         <SettingsRow icon="refresh-ccw" title="Reset this app" note="Removes every wallet from this phone. Your coins stay on the chain; you need your twelve words to get back to them." onPress={showDialog} testID="ResetApp" danger />
         <SettingsRow icon="user-x" title="Delete account" note="Deletes your Republic account and removes every wallet from this phone." onPress={showDialogDelete} testID="DeleteApp" danger />
       </SettingsSection>
+      {/* Testers and support need to know which build is running; the About screen is no longer in this menu. */}
+      <Text style={styles.version} selectable testID="AppVersion">
+        Martian Republic {getVersion()} ({getBuildNumber()})
+      </Text>
     </SettingsScreen>
 
     <Dialog.Container visible={dialogVisible}>

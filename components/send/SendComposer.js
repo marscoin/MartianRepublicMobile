@@ -265,19 +265,24 @@ function RecipientCard({ address, valid, ownLabel, editable, onChangeText, onSca
   const handlers = useRef({});
   handlers.current = { navigate, scanName, onScanned };
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+      clearTimeout(timer.current);
+    },
+    [],
+  );
 
-  // The Scan tab opens the camera by itself the first time it is shown.
+  // The Scan tab opens the camera by itself: triggerScan counts its requests (first showing, each tab press), and
+  // every new count opens the camera once. What the camera reads must arrive even though the screen changed in
+  // between; only a card that is gone drops it (until 20 November 2026 a re-render dropped every scan from the tab).
   useEffect(() => {
     if (!triggerScan) return;
-    let current = true;
     Keyboard.dismiss();
     scanQrHelper(handlers.current.navigate, handlers.current.scanName).then(data => {
-      if (current) handlers.current.onScanned({ data });
+      if (mounted.current && data) handlers.current.onScanned({ data });
     });
-    return () => {
-      current = false;
-    };
   }, [triggerScan]);
 
   useEffect(() => {
