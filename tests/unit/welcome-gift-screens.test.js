@@ -24,6 +24,12 @@ jest.mock('react-native-linear-gradient', () => {
   return ({ children }) => children || null;
 });
 jest.mock('react-native-elements', () => ({ Icon: () => null }));
+// The strip at the top of the home screen asks real servers; it has its own tests (mars-frame-and-strip.test.js).
+jest.mock('../../components/StatusStrip', () => () => {
+  const { createElement } = require('react');
+  const { View } = require('react-native');
+  return createElement(View, { testID: 'StatusStrip' });
+});
 jest.mock('react-native-snackbar', () => ({ show: jest.fn(), LENGTH_SHORT: 0 }));
 jest.mock('@react-native-async-storage/async-storage', () => {
   const data = {};
@@ -272,6 +278,7 @@ describe('The home screen', () => {
   it('shows a newcomer the path, and keeps a way to get Marscoin that is not a step', async () => {
     mockWorkspace = { citizenship: { status: 'new', terms_accepted: false } };
     const tree = await home();
+    expect(byTestID(tree, 'StatusStrip')).toHaveLength(1);
     expect(byTestID(tree, 'Journey')).toHaveLength(1);
     expect(byTestID(tree, 'JoinInvite')).toHaveLength(0);
     expect(text(tree)).toContain('Just use the wallet for now');

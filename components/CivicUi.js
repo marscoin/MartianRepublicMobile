@@ -9,6 +9,10 @@ export const civicColors = {
   text: '#F5F1EB',
   muted: '#ADB3BA',
   orange: '#FF812D',
+  // Status: green when all is well, a cool cyan for warnings (it stands out against the warm screens), red only for danger.
+  ok: '#8FCEAB',
+  warn: '#6FD3E6',
+  danger: '#E0705A',
 };
 
 export function CivicBack({ onPress }) {

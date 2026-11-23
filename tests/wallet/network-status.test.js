@@ -1,4 +1,12 @@
-import { networkNodes, networkSummary, probeNode, pulseDuration, ringPositions } from '../../blue_modules/network-status';
+import {
+  networkNodes,
+  networkSummary,
+  probeNode,
+  pulseDuration,
+  ringPositions,
+  STRIP_NODES,
+  stripReadings,
+} from '../../blue_modules/network-status';
 
 const answers = {
   'https://explore.marscoin.org/api/status': { info: { blocks: 3598750 } },
@@ -79,5 +87,60 @@ describe('live network view', () => {
       expect(point.y).toBeGreaterThan(0.05);
       expect(point.y).toBeLessThan(0.95);
     });
+  });
+});
+
+describe('the status strip on the home screen', () => {
+  const ok = (id, extra = {}) => ({ id, ok: true, ms: 40, ...extra });
+  const down = id => ({ id, ok: false, ms: null, error: 'No answer in time.' });
+
+  it('asks only the three Marscoin servers and the Republic', () => {
+    expect(STRIP_NODES).toEqual(['wallet', 'relay', 'explorer', 'republic']);
+    expect(
+      nodes()
+        .filter(node => STRIP_NODES.includes(node.id))
+        .map(node => node.chain),
+    ).toEqual(['mars', 'mars', 'mars', 'republic']);
+  });
+
+  it('says "…" while it is still asking, and fills in each reading as its answers arrive', () => {
+    expect(stripReadings([])).toEqual({
+      chain: { text: '…', tone: 'idle' },
+      republic: { text: '…', tone: 'idle' },
+      servers: { text: '…', tone: 'idle' },
+    });
+    const some = stripReadings([ok('explorer', { marsHeight: 3607909 }), ok('republic')]);
+    expect(some.chain).toEqual({ text: '3,607,909', tone: 'ok' });
+    expect(some.republic).toEqual({ text: 'OK', tone: 'ok' });
+    expect(some.servers).toEqual({ text: '…', tone: 'idle' });
+  });
+
+  it('shows the highest block any Marscoin server reports, and 3/3 when all three answer', () => {
+    const all = stripReadings([
+      ok('wallet'),
+      ok('relay', { marsHeight: 3607908 }),
+      ok('explorer', { marsHeight: 3607909 }),
+      ok('republic'),
+    ]);
+    expect(all).toEqual({
+      chain: { text: '3,607,909', tone: 'ok' },
+      republic: { text: 'OK', tone: 'ok' },
+      servers: { text: '3/3', tone: 'ok' },
+    });
+  });
+
+  it('warns, without alarm, when a server or the Republic does not answer', () => {
+    const some = stripReadings([
+      down('wallet'),
+      ok('relay', { marsHeight: 3607909 }),
+      ok('explorer', { marsHeight: 3607909 }),
+      down('republic'),
+    ]);
+    expect(some.servers).toEqual({ text: '2/3', tone: 'warn' });
+    expect(some.republic).toEqual({ text: 'DOWN', tone: 'warn' });
+    expect(some.chain.tone).toBe('ok');
+    const none = stripReadings([down('wallet'), down('relay'), down('explorer')]);
+    expect(none.chain).toEqual({ text: '—', tone: 'warn' });
+    expect(none.servers).toEqual({ text: '0/3', tone: 'warn' });
   });
 });

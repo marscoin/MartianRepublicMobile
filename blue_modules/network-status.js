@@ -159,6 +159,29 @@ export function networkSummary(results) {
   return { tone: 'warn', text: `${known.length - down} of ${known.length} connections are answering.` };
 }
 
+// The home screen's status strip asks only these: the three Marscoin servers and the Republic.
+export const STRIP_NODES = ['wallet', 'relay', 'explorer', 'republic'];
+const MARS_SERVERS = ['wallet', 'relay', 'explorer'];
+
+// The strip's three readings, each { text, tone } with tone 'ok', 'warn' or 'idle' (still asking).
+// `results` are probeNode() answers; some are missing while the checks run.
+export function stripReadings(results) {
+  const byId = {};
+  for (const result of results) if (result) byId[result.id] = result;
+  const asked = MARS_SERVERS.map(id => byId[id]).filter(Boolean);
+  const allAsked = asked.length === MARS_SERVERS.length;
+  const up = asked.filter(result => result.ok).length;
+  const height = Math.max(0, ...asked.map(result => (result.ok && result.marsHeight) || 0));
+  const republic = byId.republic;
+  return {
+    chain: height ? { text: group(height), tone: 'ok' } : allAsked ? { text: '—', tone: 'warn' } : { text: '…', tone: 'idle' },
+    republic: !republic ? { text: '…', tone: 'idle' } : republic.ok ? { text: 'OK', tone: 'ok' } : { text: 'DOWN', tone: 'warn' },
+    servers: allAsked
+      ? { text: `${up}/${MARS_SERVERS.length}`, tone: up === MARS_SERVERS.length ? 'ok' : 'warn' }
+      : { text: '…', tone: 'idle' },
+  };
+}
+
 // How long a pulse takes to travel a link, from the measured response time:
 // a quick server sends quick pulses.
 export const pulseDuration = ms => (ms ? Math.min(3200, Math.max(700, 500 + ms * 2.2)) : 0);
