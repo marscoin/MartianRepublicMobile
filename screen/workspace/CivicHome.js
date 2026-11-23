@@ -1,6 +1,6 @@
 import { marsAlert } from '../../components/MarsDialog';
 import React, { useCallback, useRef, useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useCivicSession } from '../../blue_modules/civic-api';
@@ -10,6 +10,7 @@ import { readCitizenshipDraft } from '../../blue_modules/citizenship-draft';
 import { assertWorkspaceIdentity, workspaceStore } from '../../blue_modules/workspace-api';
 import { useWorkspaceData } from '../../blue_modules/workspace-hooks';
 import { CivicButton, civicColors } from '../../components/CivicUi';
+import CivicCard from '../../components/CivicCard';
 import MarsFrame from '../../components/MarsFrame';
 import StatusStrip from '../../components/StatusStrip';
 import Journey, { JoinInvite } from '../onboarding/Journey';
@@ -228,28 +229,14 @@ export default function CivicHome() {
         </View>
       ) : (
         <>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Open your civic ID" onPress={openID} style={home.identity}>
-            <View style={home.identityTop}>
-              <Text style={home.identityLabel}>CIVIC IDENTITY</Text>
-              <Icon name="credit-card" type="feather" size={22} color="#242222" />
-            </View>
-            <View style={home.identityRow}>
-              <Image
-                style={home.portrait}
-                source={!imageFailed && identity?.avatar ? { uri: identity.avatar } : require('../../img/genericprofile.png')}
-                onError={() => setImageFailed(true)}
-              />
-              <View style={styles.flex}>
-                <Text style={home.name}>{name}</Text>
-                <Text style={home.identityStatus}>
-                  {status === 'citizen' ? 'CITIZEN' : status === 'public_member' ? 'PUBLIC MEMBER' : 'YOUR REPUBLIC IDENTITY'}
-                </Text>
-              </View>
-            </View>
-            <Text numberOfLines={1} style={home.address}>
-              {address}
-            </Text>
-          </TouchableOpacity>
+          <CivicCard
+            name={name}
+            status={status === 'citizen' ? 'CITIZEN' : status === 'public_member' ? 'PUBLIC MEMBER' : 'YOUR REPUBLIC IDENTITY'}
+            address={address}
+            avatar={!imageFailed && identity?.avatar ? { uri: identity.avatar } : require('../../img/genericprofile.png')}
+            onAvatarError={() => setImageFailed(true)}
+            onPress={openID}
+          />
           {preferenceKnown && card.mode === 'path' && (
             <Journey
               steps={path}
@@ -366,48 +353,6 @@ const home = StyleSheet.create({
   tileIcon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   tileTitle: { color: civicColors.text, fontFamily: 'ChakraPetch-Bold', fontSize: 17, marginBottom: 4 },
   tileNote: { color: civicColors.muted, fontSize: 13, lineHeight: 18 },
-  identity: {
-    backgroundColor: '#EAE2D5',
-    borderRadius: 18,
-    padding: 22,
-    gap: 18,
-  },
-  identityTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  identityLabel: {
-    color: '#5A534C',
-    fontFamily: 'ChakraPetch-SemiBold',
-    fontSize: 11,
-    letterSpacing: 2,
-  },
-  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  portrait: {
-    width: 62,
-    height: 72,
-    borderRadius: 9,
-    backgroundColor: '#D7CCBE',
-  },
-  name: {
-    color: '#171A1D',
-    fontFamily: 'ChakraPetch-Bold',
-    fontSize: 24,
-    lineHeight: 29,
-  },
-  identityStatus: {
-    color: '#615549',
-    fontFamily: 'ChakraPetch-SemiBold',
-    fontSize: 11,
-    letterSpacing: 1.5,
-    marginTop: 8,
-  },
-  address: {
-    color: '#615549',
-    fontFamily: 'ChakraPetch-Regular',
-    fontSize: 12,
-  },
   nextStep: { padding: 20, gap: 12 },
   card: { padding: 20, gap: 14 },
 });
