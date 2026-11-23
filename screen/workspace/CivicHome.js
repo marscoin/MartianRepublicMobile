@@ -10,6 +10,8 @@ import { readCitizenshipDraft } from '../../blue_modules/citizenship-draft';
 import { assertWorkspaceIdentity, workspaceStore } from '../../blue_modules/workspace-api';
 import { useWorkspaceData } from '../../blue_modules/workspace-hooks';
 import { CivicButton, civicColors } from '../../components/CivicUi';
+import MarsFrame from '../../components/MarsFrame';
+import StatusStrip from '../../components/StatusStrip';
 import Journey, { JoinInvite } from '../onboarding/Journey';
 import {
   OrganizationCard,
@@ -170,7 +172,7 @@ export default function CivicHome() {
       <SectionHeading title="Around the Republic" />
       <View style={home.grid}>
         {AROUND.map(place => (
-          <TouchableOpacity
+          <MarsFrame
             key={place.route}
             accessibilityRole="button"
             accessibilityLabel={`${place.title}. ${place.note}`}
@@ -179,31 +181,31 @@ export default function CivicHome() {
             testID={`Around-${place.route}`}
           >
             <View style={home.tileTop}>
-              <View style={home.tileIcon}>
+              <MarsFrame cut={8} fill={TILE_ICON} border={TILE_ICON} style={home.tileIcon}>
                 <Icon name={place.icon} type="feather" size={20} color={civicColors.orange} />
-              </View>
+              </MarsFrame>
               <Icon name="arrow-up-right" type="feather" size={18} color="#6B7178" />
             </View>
             <Text style={home.tileTitle}>{place.title}</Text>
             <Text style={home.tileNote}>{place.note}</Text>
-          </TouchableOpacity>
+          </MarsFrame>
         ))}
       </View>
-      <TouchableOpacity
+      <MarsFrame
         accessibilityRole="button"
         style={home.wide}
         onPress={() => navigation.navigate('NetworkLive')}
         testID="Around-NetworkLive"
       >
-        <View style={home.tileIcon}>
+        <MarsFrame cut={8} fill={TILE_ICON} border={TILE_ICON} style={home.tileIcon}>
           <Icon name="activity" type="feather" size={20} color={civicColors.orange} />
-        </View>
+        </MarsFrame>
         <View style={home.wideText}>
           <Text style={home.tileTitle}>The network, live</Text>
           <Text style={home.tileNote}>Watch your phone talk to the Marscoin and Bitcoin networks.</Text>
         </View>
         <Icon name="arrow-up-right" type="feather" size={18} color="#6B7178" />
-      </TouchableOpacity>
+      </MarsFrame>
     </>
   );
 
@@ -212,6 +214,7 @@ export default function CivicHome() {
       title="At home in the Republic."
       eyebrow="MCR / CIVIC HOME"
       back={false}
+      top={<StatusStrip />}
       onRefresh={() => {
         resource.refresh();
         loadLocal();
@@ -263,14 +266,14 @@ export default function CivicHome() {
             </WorkspaceNotice>
           )}
           {nextStep && data && (pathComplete || publicationWaiting || introduced) && (
-            <View style={home.nextStep}>
+            <MarsFrame tab style={home.nextStep}>
               <Text style={styles.cardTitle}>{nextStep.title}</Text>
               <Text style={styles.secondaryText}>{nextStep.body}</Text>
               <SmallAction title={nextStep.action} icon="arrow-right" onPress={() => navigation.navigate(nextStep.route)} />
-            </View>
+            </MarsFrame>
           )}
           {(data?.invitations || []).map(invite => (
-            <View key={invite.organization_id} style={styles.card}>
+            <MarsFrame key={invite.organization_id} accent style={home.card}>
               <Text style={styles.caption}>INVITATION FROM {invite.invited_by?.name || 'A FELLOW MARTIAN'}</Text>
               <Text style={styles.cardTitle}>{invite.name}</Text>
               {!!invite.description && <Text style={styles.secondaryText}>{invite.description}</Text>}
@@ -281,7 +284,7 @@ export default function CivicHome() {
                 icon="users"
               />
               <SmallAction title="Decline invitation" disabled={!!busy} onPress={() => respond(invite, false)} />
-            </View>
+            </MarsFrame>
           ))}
           {!!data?.tasks?.length && (
             <>
@@ -326,7 +329,7 @@ export default function CivicHome() {
           ) : data ? (
             <>
               <SectionHeading title="Organizations" />
-              <View style={styles.card}>
+              <MarsFrame style={home.card}>
                 <Text style={styles.secondaryText}>
                   Groups for shared work: tasks, members and a record of what you accomplish together.
                 </Text>
@@ -335,7 +338,7 @@ export default function CivicHome() {
                   icon="plus"
                   onPress={() => navigation.navigate('WorkspaceCompose', { kind: 'organization' })}
                 />
-              </View>
+              </MarsFrame>
             </>
           ) : null}
         </>
@@ -352,31 +355,15 @@ const AROUND = [
   { route: 'SwapHome', icon: 'repeat', title: 'Get Marscoin', note: 'Swap Bitcoin for Marscoin, person to person.' },
 ];
 
+const TILE_ICON = '#1D2126';
+
 const home = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  tile: {
-    width: '48.4%',
-    minHeight: 148,
-    backgroundColor: civicColors.panel,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: civicColors.border,
-    padding: 16,
-    marginBottom: 12,
-  },
-  wide: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: civicColors.panel,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: civicColors.border,
-    padding: 16,
-    marginBottom: 12,
-  },
+  tile: { width: '48.4%', minHeight: 148, padding: 16, marginBottom: 12 },
+  wide: { flexDirection: 'row', alignItems: 'center', padding: 16, marginBottom: 12 },
   wideText: { flex: 1, marginLeft: 14 },
   tileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 },
-  tileIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#1D2126', alignItems: 'center', justifyContent: 'center' },
+  tileIcon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   tileTitle: { color: civicColors.text, fontFamily: 'ChakraPetch-Bold', fontSize: 17, marginBottom: 4 },
   tileNote: { color: civicColors.muted, fontSize: 13, lineHeight: 18 },
   identity: {
@@ -421,12 +408,6 @@ const home = StyleSheet.create({
     fontFamily: 'ChakraPetch-Regular',
     fontSize: 12,
   },
-  nextStep: {
-    padding: 20,
-    gap: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: civicColors.orange,
-    backgroundColor: '#171613',
-    borderRadius: 12,
-  },
+  nextStep: { padding: 20, gap: 12 },
+  card: { padding: 20, gap: 14 },
 });

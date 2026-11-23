@@ -31,11 +31,13 @@ export function WorkspaceScreen({
   listItems,
   renderListItem,
   listFooter,
+  top,
 }) {
   const navigation = useNavigation();
   const focused = useIsFocused();
   const header = (
     <>
+      {top}
       {(back || action) && (
         <View style={styles.rowBetween}>
           {back ? <CivicBack onPress={() => navigation.goBack()} /> : <View />}
