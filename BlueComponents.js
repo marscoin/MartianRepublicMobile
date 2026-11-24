@@ -66,7 +66,7 @@ export const SecondButton = forwardRef((props, ref) => {
     >
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
         {props.icon && <Icon name={props.icon.name} type={props.icon.type} color={props.icon.color} />}
-        {props.title && <Text style={{ marginHorizontal: 8, fontSize: 16, color: fontColor , fontFamily: 'Orbitron-SemiBold', }}>{props.title}</Text>}
+        {props.title && <Text style={{ marginHorizontal: 8, fontSize: 16, color: fontColor , fontFamily: 'ChakraPetch-SemiBold', }}>{props.title}</Text>}
       </View>
     </TouchableOpacity>
   );
@@ -94,7 +94,7 @@ export const BitcoinButton = props => {
             <Image style={{ width: 34, height: 34, marginRight: 8 }} source={require('./img/addWallet/bitcoin.png')} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.newBlue, fontWeight: 'bold', fontFamily: 'Orbitron-Black',fontSize: 18, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }}>
+            <Text style={{ color: colors.newBlue, fontWeight: 'bold', fontFamily: 'ChakraPetch-Bold',fontSize: 18, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }}>
               {loc.wallets.add_bitcoin}
             </Text>
             <Text
@@ -102,7 +102,7 @@ export const BitcoinButton = props => {
                 color: colors.alternativeTextColor,
                 fontSize: 13,
                 fontWeight: '500',
-                fontFamily: 'Orbitron-Black', 
+                fontFamily: 'ChakraPetch-Bold', 
                 writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
               }}
             >
@@ -138,7 +138,7 @@ export const MarscoinButton = props => {
             <Image style={{ width: 34, height: 34, marginRight: 8 }} source={require('./img/addWallet/marscoin.png')} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Orbitron-Regular', color: colors.newBlue, fontWeight: 'bold', fontSize: 18, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }}>
+            <Text style={{ fontFamily: 'ChakraPetch-Regular', color: colors.newBlue, fontWeight: 'bold', fontSize: 18, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }}>
               Marscoin
             </Text>
             <Text
@@ -146,7 +146,7 @@ export const MarscoinButton = props => {
                 color: colors.alternativeTextColor,
                 fontSize: 13,
                 fontWeight: '500',
-                fontFamily: 'Orbitron-Regular', 
+                fontFamily: 'ChakraPetch-Regular', 
                 writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
               }}
             >
@@ -185,7 +185,7 @@ export const VaultButton = props => {
                 color: colors.foregroundColor,
                 fontWeight: '300',
                 fontSize: 18,
-                fontFamily: 'Orbitron-Black', 
+                fontFamily: 'ChakraPetch-Bold', 
                 writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
               }}
             >
@@ -196,7 +196,7 @@ export const VaultButton = props => {
                 color: colors.alternativeTextColor,
                 fontSize: 13,
                 fontWeight: '500',
-                fontFamily: 'Orbitron-Regular', 
+                fontFamily: 'ChakraPetch-Regular', 
                 writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
               }}
             >
@@ -271,7 +271,7 @@ export const BlueButtonLink = forwardRef((props, ref) => {
       {...props}
       ref={ref}
     >
-      <Text style={{ color: colors.foregroundColor, textAlign: 'center', fontSize: 16 , fontFamily: 'Orbitron-Regular', }}>{props.title}</Text>
+      <Text style={{ color: colors.foregroundColor, textAlign: 'center', fontSize: 16 , fontFamily: 'ChakraPetch-Regular', }}>{props.title}</Text>
     </TouchableOpacity>
   );
 });
@@ -303,7 +303,7 @@ export const BluePrivateBalance = () => {
 export const BlueCopyToClipboardButton = ({ stringToCopy, displayText = false }) => {
   return (
     <TouchableOpacity accessibilityRole="button" onPress={() => Clipboard.setString(stringToCopy)}>
-      <Text style={{ fontSize: 13, fontWeight: '400', color: '#68bbe1', fontFamily: 'Orbitron-Regular',  }}>{displayText || loc.transactions.details_copy}</Text>
+      <Text style={{ fontSize: 13, fontWeight: '400', color: '#68bbe1', fontFamily: 'ChakraPetch-Regular',  }}>{displayText || loc.transactions.details_copy}</Text>
     </TouchableOpacity>
   );
 };
@@ -371,7 +371,7 @@ const styleCopyTextToClipboard = StyleSheet.create({
     marginVertical: 32,
     fontSize: 15,
     color: '#9aa0aa',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
     textAlign: 'center',
   },
 });
@@ -382,7 +382,7 @@ export const BlueCard = props => {
 
 export const BlueText = props => {
   const { colors } = useTheme();
-  const style = StyleSheet.compose({ color: colors.foregroundColor, fontFamily: 'Orbitron-Regular', letterSpacing: 1.2, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }, props.style);
+  const style = StyleSheet.compose({ color: colors.foregroundColor, fontFamily: 'ChakraPetch-Regular', letterSpacing: 1.2, writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' }, props.style);
   return <Text {...props} style={style} />;
 };
 
@@ -400,7 +400,7 @@ export const BlueFormLabel = props => {
       style={{
         color: colors.foregroundColor,
         fontWeight: '400',
-        fontFamily: 'Orbitron-Regular', 
+        fontFamily: 'ChakraPetch-Regular', 
         marginHorizontal: 20,
         writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
       }}
@@ -431,7 +431,7 @@ export const BlueFormMultiInput = props => {
         backgroundColor: colors.inputBackgroundColor,
         color: colors.foregroundColor,
         textAlignVertical: 'top',
-        fontFamily: 'Orbitron-Regular', 
+        fontFamily: 'ChakraPetch-Regular', 
         letterSpacing:1.2
       }}
       autoCorrect={false}
@@ -466,7 +466,7 @@ export const BlueHeaderDefaultSub = props => {
               //     fontWeight: '700', 
               //   }}),
               fontSize: 30,
-              fontFamily: 'Orbitron-Bold', 
+              fontFamily: 'ChakraPetch-Bold', 
               color: colors.foregroundColor,
             }}
           >
@@ -690,7 +690,7 @@ export class BlueReplaceFeeSuggestions extends Component {
               ]}
             >
               <View style={{ justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ fontSize: 22, color: BlueCurrentTheme.colors.successColor, fontWeight: '600', fontFamily: 'Orbitron-Black',  }}>{label}</Text>
+                <Text style={{ fontSize: 22, color: BlueCurrentTheme.colors.successColor, fontWeight: '600', fontFamily: 'ChakraPetch-Bold',  }}>{label}</Text>
                 <View
                   style={{
                     backgroundColor: BlueCurrentTheme.colors.successColor,
@@ -719,7 +719,7 @@ export class BlueReplaceFeeSuggestions extends Component {
           ]}
         >
           <View style={{ justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontSize: 22, color: BlueCurrentTheme.colors.successColor, fontWeight: '600', fontFamily: 'Orbitron-Regular',  }}>
+            <Text style={{ fontSize: 22, color: BlueCurrentTheme.colors.successColor, fontWeight: '600', fontFamily: 'ChakraPetch-Regular',  }}>
               {formatStringAddTwoWhiteSpaces(loc.send.fee_custom)}
             </Text>
           </View>

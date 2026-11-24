@@ -8,7 +8,7 @@ export const BlueDefaultTheme = {
   scanImage: require('../img/scan-white.png'),
   fonts:{
     regular:{
-      fontFamily: 'Orbitron-Regular', 
+      fontFamily: 'ChakraPetch-Regular', 
       color: 'white',
     }
   },
@@ -140,7 +140,7 @@ export const BlueDarkTheme: Theme = {
   ...DarkTheme,
   fonts:{
     regular:{
-      fontFamily: 'Orbitron-Regular', 
+      fontFamily: 'ChakraPetch-Regular', 
       color: 'white',
     }
   },

@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 8,
     color: '#81868e',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
   },
   buttons: {
     flexDirection: 'column',
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     fontWeight:'500',
-    fontFamily: 'Orbitron-SemiBold',
+    fontFamily: 'ChakraPetch-SemiBold',
     letterSpacing: 1.5, 
     color:'white'
   },
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     fontWeight:'800',
-    fontFamily: 'Orbitron-SemiBold',
+    fontFamily: 'ChakraPetch-SemiBold',
     letterSpacing: 1.5, 
     color:'#FF7400'
   },

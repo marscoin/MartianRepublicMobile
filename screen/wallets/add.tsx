@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 8,
     color: '#81868e',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
   },
   buttons: {
     flexDirection: 'column',
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   },
   advancedText: {
     fontWeight: '500',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
   },
   lndUri: {
     flexDirection: 'row',

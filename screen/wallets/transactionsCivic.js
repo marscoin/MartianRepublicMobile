@@ -285,7 +285,7 @@ const WalletTransactionsCivic = ({ navigation }) => {
           </View>
         )}
         <View style={styles.listHeaderTextRow}>
-          <Text style={[styles.listHeaderText, stylesHook.listHeaderText, { fontFamily: 'Orbitron-Bold' }]}>
+          <Text style={[styles.listHeaderText, stylesHook.listHeaderText]}>
             {loc.transactions.list_title}
           </Text>
         </View>
@@ -721,10 +721,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: 'bold',
     fontSize: 24,
-    fontFamily: Platform.select({
-      ios: 'Orbitron-Bold',
-      android: 'Orbitron_Bold', // or the exact filename of your font
-    }),
+    fontFamily: 'ChakraPetch-Bold',
   },
   browserButton2: {
     borderRadius: 9,
@@ -739,7 +736,7 @@ const styles = StyleSheet.create({
   },
   marketpalceText1: {
     fontSize: 18,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   list: {
     flex: 1,
@@ -749,14 +746,14 @@ const styles = StyleSheet.create({
     color: '#9aa0aa',
     textAlign: 'center',
     marginVertical: 16,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   emptyTxsLightning: {
     fontSize: 18,
     color: '#9aa0aa',
     textAlign: 'center',
     fontWeight: '600',
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   sendIcon: {
     transform: [{ rotate: I18nManager.isRTL ? '-225deg' : '225deg' }],

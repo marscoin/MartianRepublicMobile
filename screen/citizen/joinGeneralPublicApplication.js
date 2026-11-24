@@ -405,7 +405,7 @@ const getStyles = (colors, fonts) => StyleSheet.create({
       textAlign: 'center',
       justifyContent:'center',
       fontSize: 24,
-      fontFamily: 'Orbitron-Black',
+      fontFamily: 'ChakraPetch-Bold',
       marginTop: 30
   },
   smallText: {
@@ -413,14 +413,14 @@ const getStyles = (colors, fonts) => StyleSheet.create({
       textAlign: 'center',
       justifyContent:'center',
       fontSize: 10,
-      fontFamily: 'Orbitron-SemiBold'
+      fontFamily: 'ChakraPetch-SemiBold'
   },
   medText: {
     color:'white', 
     fontSize: 16,
     fontFamily: fonts.fontFamily,
     fontWeight:"400",
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   buttonText: {
       color:'white', 
@@ -451,7 +451,7 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     marginTop: 30,
   },
   textFieldWrapStyle: {
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     height: 40,
     marginTop: 10,
     borderRadius: 8,

@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     header: {
         fontSize: 18,
         color:  'white',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"500",
         letterSpacing: 1.1, 
         marginHorizontal: 20,
@@ -396,13 +396,13 @@ const styles = StyleSheet.create({
     filterButtonText: {
         color:'white', 
         fontSize: 10,
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.2, 
     },
     filterDescriptionText: {
         color:'white', 
         fontSize: 15,
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         letterSpacing: 1.2, 
     },
     filterButtonGradientActive: {
@@ -432,28 +432,28 @@ const styles = StyleSheet.create({
     threadTitle: {
         fontSize: 17,
         color: 'white',
-        fontFamily: 'Orbitron-Bold',
+        fontFamily: 'ChakraPetch-Bold',
         marginBottom: 10,
         letterSpacing: 1.1
     },
     threadAuthor: {
         fontSize: 14,
         color: '#FF7400',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         marginBottom: 3,
         letterSpacing: 1.1
     },
     threadDate: {
         fontSize: 14,
         color: 'grey',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         marginBottom: 3,
         letterSpacing: 1.1
     },
     threadReplies: {
         fontSize: 14,
         color: 'white',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         marginBottom: 3,
         letterSpacing: 1.1,
         marginTop: 5
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
         color:'white', 
         textAlign: 'center',
         fontSize: 15,
-        fontFamily: 'Orbitron-Bold',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.1, 
     },
     modalContainer: {
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#2F2D2B',
         padding: 10,
         paddingTop: 12,
-        fontFamily: "Orbitron-Regular",
+        fontFamily: "ChakraPetch-Regular",
         color: 'white',
         fontWeight:"400",
         letterSpacing: 1.1, 
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     charCount: {
         color: 'white',
         fontSize: 12,
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         letterSpacing: 1.1,
         marginTop: 5,
         alignSelf: "flex-end"

@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#9aa0aa',
     textAlign: 'center',
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     marginTop: 30
   },
   footerStart: {
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
     color: '#9aa0aa',
     textAlign: 'center',
     fontWeight: '600',
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     marginTop: 10
   },
   transaction: {

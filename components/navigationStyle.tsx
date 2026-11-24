@@ -70,7 +70,7 @@ const navigationStyle = (
         headerShadowVisible: false,
         headerTitleStyle: {
           fontWeight: '800',
-          fontFamily: 'Orbitron-Black',
+          fontFamily: 'ChakraPetch-Bold',
           fontSize: 20,
           color: theme.colors.foregroundColor,
         },

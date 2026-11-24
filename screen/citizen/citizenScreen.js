@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         justifyContent:'center',
         fontSize: 24,
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         marginTop: 30
     },
     smallText: {
@@ -741,14 +741,14 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         justifyContent:'center',
         fontSize: 10,
-        fontFamily: 'Orbitron-SemiBold',
+        fontFamily: 'ChakraPetch-SemiBold',
         letterSpacing: 1.5, 
     },
     buttonText: {
         color:'white', 
         textAlign: 'center',
         fontSize: 18,
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.5, 
     },
     joinButton: {
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
     },
     transparentText: {
         backgroundColor: 'transparent',
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.5, 
     },
     label: {
@@ -799,7 +799,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#fff',
         writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.5, 
     },
     balance: {
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
         color: '#fff',
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.1, 
     },
     gradient: {
@@ -854,7 +854,7 @@ const styles = StyleSheet.create({
         color:'white', 
         textAlign: 'center',
         fontSize: 18,
-        fontFamily: 'Orbitron-Bold',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.1, 
     },
     filterButton: {
@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
     filterButtonText: {
         color:'white', 
         fontSize: 10,
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.5, 
     },
     filterButtonGradientActive: {
@@ -934,43 +934,43 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#FFF',
         marginTop: 5,
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         letterSpacing: 1.2,
     },
     missingFieldsText: {
         fontSize: 10,
         color: '#FFF',
         marginTop: 3,
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
     },
     donateText: {
         fontSize: 9,
         color: '#FFF',
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
     },
     citizenDate: {
         fontSize: 12,
         color: '#AAA',
         marginTop: 5,
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
     },
     citizenName: {
         fontSize: 18,
         color:  '#FF7400',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"500",
         letterSpacing: 1.1, 
     },
     endorsTxt1: {
         fontSize: 8,
         color:  '#FF7400',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"500",
     },
     endorsTxt: {
         fontSize: 8.5,
         color:'white',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"500",
     },
     endorseButton: {
@@ -1010,7 +1010,7 @@ const styles = StyleSheet.create({
     },
     label: {
         color: '#FF8A3E',
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         alignSelf: "center",
         fontSize: 12
     },
@@ -1018,7 +1018,7 @@ const styles = StyleSheet.create({
         color: '#FF8A3E', 
         marginVertical: 5,
         fontSize: 12,
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.5, 
     },
     tosText: {

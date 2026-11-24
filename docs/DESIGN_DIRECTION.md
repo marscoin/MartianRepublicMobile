@@ -7,7 +7,8 @@ Build on Yanina's original work and its Expanse influence. Refine the existing i
 ## Design decisions
 
 - Use orange to identify the next important action and the selected state. Give secondary controls quiet charcoal surfaces and clear white text.
-- Use Orbitron for identity and occasional display moments; Chakra Petch for readable instructions, names, balances and controls. Show financial precision without crowding the screen.
+- Use Chakra Petch for all text: Bold for identity and display moments, Regular, Medium and SemiBold for instructions, names, balances and controls. Show financial precision without crowding the screen.
+- Orbitron was retired in November 2026. The iOS release target (`BlueWallet-NoLDK.plist`) never registered it, so iPhones showed the system font wherever a screen asked for it.
 - Give receive requests, payment confirmation and the civic ID enough space to feel deliberate. Use plain labels such as “Receive Marscoin”; keep internal route names out of the interface.
 - Make every state understandable: saved locally, connecting, ready to review, submitted, awaiting confirmation, or ready to retry. A connection failure must not erase a wallet or restart a publication from scratch.
 - Invite permissions at the relevant action. Explicit Paste and payment-alert controls replace unexpected prompts while opening the app or showing an address.

@@ -46,7 +46,7 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     lineHeight:16,
     fontFamily: fonts.fontFamily,
     fontWeight:"400",
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     letterSpacing: 1.5,
     textAlign: 'center'
   },
@@ -56,7 +56,7 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     lineHeight:28,
     fontFamily: fonts.fontFamily,
     fontWeight:"600",
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     letterSpacing: 1.5,
     textAlign: 'center'
   },

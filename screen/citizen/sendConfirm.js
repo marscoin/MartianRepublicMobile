@@ -50,7 +50,7 @@ const SendConfirm = () => {
     text: {
       fontSize: 33,
       fontWeight: '700',
-      fontFamily: 'Orbitron-Black', 
+      fontFamily: 'ChakraPetch-Bold', 
       color:'white'
     },
     line: {
@@ -293,14 +293,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 17,
     marginBottom: 2,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     letterSpacing: 1.2
   },
   transactionDetailsSubtitle: {
     fontWeight: '400',
     fontSize: 15,
     marginBottom: 20,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     letterSpacing: 1.2,
     alignSelf: 'center'
   },
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginVertical: 8,
     textAlign: 'center',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   valueWrap: {
     flexDirection: 'row',
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   valueValue: {
     fontSize: 36,
     fontWeight: '700',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   valueUnit: {
     fontSize: 16,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     fontWeight: '600',
     alignSelf: 'flex-end',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   valueOf: {
     alignSelf: 'flex-end',
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     fontWeight: '500',
     alignSelf: 'center',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   txDetails: {
     alignItems: 'center',
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   txText: {
     fontSize: 15,
     fontWeight: '600',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   payjoinWrapper: {
     flexDirection: 'row',
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     color: '#81868e',
     fontSize: 15,
     fontWeight: 'bold',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
 });
 

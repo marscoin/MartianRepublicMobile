@@ -125,7 +125,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         textAlign: 'center',
         justifyContent:'center',
         fontSize: 24,
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         marginTop: 30
     },
     smallText: {
@@ -133,14 +133,14 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
         textAlign: 'center',
         justifyContent:'center',
         fontSize: 10,
-        fontFamily: 'Orbitron-SemiBold'
+        fontFamily: 'ChakraPetch-SemiBold'
     },
     medText: {
       color:'white', 
       fontSize: 16,
       fontFamily: fonts.fontFamily,
       fontWeight:"400",
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
     },
     infoText: {
       color:'white', 
@@ -148,7 +148,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       fontFamily: fonts.fontFamily,
       fontWeight:"600",
       letterSpacing: 1.2,
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
       transform: [{ rotate: '90deg' }] ,
       alignSelf:'flex-end'
     },
@@ -196,7 +196,7 @@ const JoinGeneralPublicApplication2Screen = ({params}) => {
       borderWidth: 0.7,
       paddingHorizontal: 5,
       paddingVertical: 5,
-      fontFamily: 'Orbitron-Regular', 
+      fontFamily: 'ChakraPetch-Regular', 
       letterSpacing: 1.1,
       fontSize: 14,
       color: 'white'
