@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     citizenName: {
         fontSize: 28,
         color:  '#FF7400',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"500",
         letterSpacing: 1.1, 
         marginHorizontal: 20,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     header: {
         fontSize: 18,
         color:  'white',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"500",
         letterSpacing: 1.1, 
         marginHorizontal: 20,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     displayname: {
         fontSize: 18,
         color:  'white',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"500",
         letterSpacing: 1.1, 
         marginHorizontal: 20,
@@ -199,13 +199,13 @@ const styles = StyleSheet.create({
     txt: {
         fontSize: 14,
         color:  'white',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"400",
         letterSpacing: 1.1, 
     },
     txtCont: {
         backgroundColor: '#2F2D2B',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"400",
         letterSpacing: 1.1, 
         marginHorizontal: 20,

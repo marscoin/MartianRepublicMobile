@@ -285,8 +285,8 @@ class AmountInput extends Component {
         color: disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2, 
         fontSize: amount.length > 10 ? 20 : 36,
         fontFamily: Platform.select({
-          ios: 'Orbitron-Black',
-          android: 'Orbitron-Black'
+          ios: 'ChakraPetch-Bold',
+          android: 'ChakraPetch-Bold'
         }),
       },
       cryptoCurrency: { color: disabled ? colors.buttonDisabledTextColor : colors.alternativeTextColor2 },
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginHorizontal: 4,
     fontWeight: 'bold',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     alignSelf: 'center',
     justifyContent: 'center',
   },
@@ -440,11 +440,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.2,
     color: '#81868e',
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   input: {
     fontWeight: 'bold',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     fontSize: 36, // Match the MarscoinSymbol size
     height: 44, // Match the container1 height
     padding: 0, // Remove default padding
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     alignSelf: 'flex-end',
     justifyContent: 'center',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   secondaryRoot: {
     alignItems: 'center',
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9BA0A9',
     fontWeight: '600',
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     marginTop: 7
   },
   changeAmountUnit: {
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: 'white',
     fontWeight: '600',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     lineHeight: 44, 
     includeFontPadding: false, // Remove extra padding (Android)
     textAlignVertical: 'center', 

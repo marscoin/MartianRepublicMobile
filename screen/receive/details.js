@@ -130,7 +130,7 @@ const ReceiveDetails = () => {
     text: {
       fontSize: 36,
       fontWeight: '700',
-      fontFamily: 'Orbitron-Black', 
+      fontFamily: 'ChakraPetch-Bold', 
       color: 'white'
     },
     line: {

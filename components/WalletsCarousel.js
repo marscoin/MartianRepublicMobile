@@ -22,15 +22,13 @@ const nStyles = StyleSheet.create({
   },
   addAWAllet: {
     fontWeight: '600',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     fontSize: 24,
     marginBottom: 4,
-    letterSpacing: 1.2, 
   },
   addLine: {
     fontSize: 13,
-    fontFamily: 'Orbitron-Regular',
-    letterSpacing: 1.5, 
+    fontFamily: 'ChakraPetch-Regular',
   },
   button: {
     marginTop: 12,
@@ -40,8 +38,8 @@ const nStyles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    fontFamily: 'Orbitron-Black',
-    letterSpacing: 1.5, 
+    fontFamily: 'ChakraPetch-Bold',
+    letterSpacing: 0.5,
   },
 });
 
@@ -109,36 +107,42 @@ const iStyles = StyleSheet.create({
   },
   br: {
     backgroundColor: 'transparent',
+    height: 8,
   },
   label: {
     backgroundColor: 'transparent',
+    includeFontPadding: false,
     fontSize: 19,
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   address: {
     backgroundColor: 'transparent',
+    includeFontPadding: false,
     marginTop:5,
     fontSize: 16,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   balance: {
     backgroundColor: 'transparent',
-    fontFamily: 'Orbitron-Black',
+    includeFontPadding: false,
+    fontFamily: 'ChakraPetch-Bold',
     fontSize: 34,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
     marginTop: 3
   },
   latestTx: {
     backgroundColor: 'transparent',
+    includeFontPadding: false,
     fontSize: 13,
+    fontFamily: 'ChakraPetch-Regular',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   latestTxTime: {
     backgroundColor: 'transparent',
-    fontWeight: 'bold',
-    fontFamily: 'Orbitron-Black',
+    includeFontPadding: false,
+    fontFamily: 'ChakraPetch-Bold',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
     fontSize: 16,
   },
@@ -194,12 +198,13 @@ export const WalletCarouselItem = ({ item, _, onPress, handleLongPress, isSelect
     },
     text: {
       fontSize: 34,
-      fontFamily: 'Orbitron-Black', 
+      fontFamily: 'ChakraPetch-Bold',
+      includeFontPadding: false,
       color: 'black',
     },
     line: {
       position: 'absolute',
-      top: 6, 
+      top: 4,
       left: 2,
       right: 2,
       height: 4,

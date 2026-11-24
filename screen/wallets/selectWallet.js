@@ -60,17 +60,17 @@ const SelectWallet = () => {
       right: 0,
     },
     transparentText: {
-      fontFamily: 'Orbitron-Bold',
+      fontFamily: 'ChakraPetch-Bold',
     },
     label: {
       fontSize: 19,
       color: 'black',
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-      fontFamily: 'Orbitron-Bold',
+      fontFamily: 'ChakraPetch-Bold',
     },
     balance: {
       fontWeight: 'bold',
-      fontFamily: 'Orbitron-Bold',
+      fontFamily: 'ChakraPetch-Bold',
       fontSize: 36,
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
       color: 'black',
@@ -79,13 +79,13 @@ const SelectWallet = () => {
       fontSize: 13,
       color: 'black',
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
     },
     latestTxValue: {
       fontWeight: 'bold',
       fontSize: 16,
       writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
       color: 'black',
     },
     noWallets: {
@@ -105,13 +105,13 @@ const SelectWallet = () => {
     text: {
       fontSize: 30,
       fontWeight: '900',
-      fontFamily: 'Orbitron-Black', 
+      fontFamily: 'ChakraPetch-Bold', 
     },
     chooseText: {
       textAlign: 'center',
       fontSize: 20,
       fontWeight: '600',
-      fontFamily: 'Orbitron-Black', 
+      fontFamily: 'ChakraPetch-Bold', 
       marginTop: 40
     },
     line: {

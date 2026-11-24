@@ -70,7 +70,7 @@ const TransactionsStatus = () => {
     text: {
       fontSize: 30,
       fontWeight: '900',
-      fontFamily: 'Orbitron-Black', 
+      fontFamily: 'ChakraPetch-Bold', 
       color:'white'
     },
     line: {
@@ -527,13 +527,13 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 36,
     fontWeight: '600',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
     justifyContent:'center',
   },
   valueUnit: {
     fontSize: 16,
     fontWeight: '600',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
     justifyContent:'center',
   },
   memo: {
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
   memoText: {
     color: '#9aa0aa',
     fontSize: 14,
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
   },
   iconRoot: {
     width: 120,
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: '#00c49f',
     alignSelf: 'center',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
   },
   confirmations: {
     alignSelf: 'center',
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   confirmationsText: {
     color: '#9aa0aa',
     fontSize: 13,
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
     letterSpacing: 1.2
   },
   eta: {
@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
   },
   details: {
     alignItems: 'center',
@@ -625,13 +625,13 @@ const styles = StyleSheet.create({
   detailsText: {
     fontSize: 15,
     fontWeight: '600',
-    fontFamily: 'Orbitron-Regular', 
+    fontFamily: 'ChakraPetch-Regular', 
   },
   walletBalance: {
     backgroundColor: 'transparent',
     fontWeight: 'bold',
     justifyContent:'center',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     fontSize: 33,
     color: 'white',
     marginTop: 5,

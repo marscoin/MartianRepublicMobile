@@ -387,7 +387,7 @@ const WalletsRoot = () => {
         },
         headerTitleStyle: {
           color: 'white', 
-          fontFamily: 'Orbitron-Black',
+          fontFamily: 'ChakraPetch-Bold',
           fontSize: 18, 
         },
     }}>
@@ -584,7 +584,7 @@ const AddWalletRoot = () => {
             backgroundColor: 'black',
           },
           headerTitleStyle: {
-            fontFamily: 'Orbitron-Black', 
+            fontFamily: 'ChakraPetch-Bold', 
             fontSize: 20, 
             color: 'white', 
           }

@@ -458,21 +458,21 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     textAlign: 'center',
     justifyContent:'center',
     fontSize: 10,
-    fontFamily: 'Orbitron-SemiBold'
+    fontFamily: 'ChakraPetch-SemiBold'
   },
   medText: {
     color:'white', 
     fontSize: 16,
     fontFamily: fonts.fontFamily,
     fontWeight:"400",
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   headerText: {
     color:'#FF7400',
     fontSize: 14,
     fontFamily: fonts.fontFamily,
     fontWeight:"600",
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     alignSelf: 'flex-start'
   },
   contentText: {
@@ -480,7 +480,7 @@ const getStyles = (colors, fonts) => StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.fontFamily,
     fontWeight:"400",
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     lineHeight:16
   },
   buttonText: {

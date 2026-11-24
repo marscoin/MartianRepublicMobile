@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     minHeight: 33,
     color: '#81868e',
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     letterSpacing: 1.2
   },
   scan: {
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   },
   scanText: {
     marginLeft: 4,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
     letterSpacing: 1.2,
   },
 });

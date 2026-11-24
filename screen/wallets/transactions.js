@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: 'bold',
     fontSize: 24,
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   browserButton2: {
     borderRadius: 9,
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
   },
   marketpalceText1: {
     fontSize: 18,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   list: {
     flex: 1,
@@ -761,14 +761,14 @@ const styles = StyleSheet.create({
     color: '#9aa0aa',
     textAlign: 'center',
     marginVertical: 16,
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   emptyTxsLightning: {
     fontSize: 18,
     color: '#9aa0aa',
     textAlign: 'center',
     fontWeight: '600',
-    fontFamily: 'Orbitron-Regular',
+    fontFamily: 'ChakraPetch-Regular',
   },
   sendIcon: {
     transform: [{ rotate: I18nManager.isRTL ? '-225deg' : '225deg' }],
