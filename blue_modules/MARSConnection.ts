@@ -1,12 +1,13 @@
 /* global alert */
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Alert } from "react-native";
+import { Alert, AppState } from "react-native";
 import { LegacyWallet, SegwitBech32Wallet, SegwitP2SHWallet } from "../class";
 import DefaultPreference from "react-native-default-preference";
 import loc from "../loc";
 import { isTorCapable } from "./environment";
 import { Marscoin } from "./constants";
 import { assertMarsMainnet, defaultMarsElectrumPeer, selectMarsElectrumPeer } from "./mars-electrum-peer";
+import { MarsNetworkError, SEND_INTERRUPTED, createElectrumLink, guarded, isConnectionFailure } from "./mars-electrum-link";
 const bitcoin = require("bitcoinjs-lib");
 const ElectrumClient = require("electrum-client");
 const reverse = require("buffer-reverse");
@@ -63,110 +64,11 @@ let mainConnected = false;
 let wasConnectedAtLeastOnce = false;
 let serverName = false;
 let disableBatching = false;
-let connectionAttempt = 0;
 
 let latestBlockheight = false;
 let latestBlockheightTimestamp = false;
 
 const txhashHeightCache = {};
-
-async function connectMain() {
-  const usingPeer = selectMarsElectrumPeer(await getSavedPeer(), connectionAttempt);
-
-  await DefaultPreference.setName("group.io.bluewallet.bluewallet");
-  try {
-    if (usingPeer.host.endsWith("onion")) {
-      const randomPeer = await getRandomHardcodedPeer();
-      await DefaultPreference.set(ELECTRUM_HOST, randomPeer.host);
-      await DefaultPreference.set(ELECTRUM_TCP_PORT, randomPeer.tcp);
-      await DefaultPreference.set(ELECTRUM_SSL_PORT, randomPeer.ssl);
-    } else {
-      await DefaultPreference.set(ELECTRUM_HOST, usingPeer.host);
-      await DefaultPreference.set(ELECTRUM_TCP_PORT, usingPeer.tcp);
-      await DefaultPreference.set(ELECTRUM_SSL_PORT, usingPeer.ssl);
-    }
-  } catch (e) {
-    // Must be running on Android
-    console.log(e);
-  }
-
-  try {
-    console.log("begin connection:", JSON.stringify(usingPeer));
-    // mainClient = new ElectrumClient(
-    //   net, tls,
-    //   usingPeer.host.endsWith(".onion") && isTorCapable ? torrific : global.net,
-    //   global.tls,
-    //   usingPeer.ssl || usingPeer.tcp,
-    //   usingPeer.host,
-    //   usingPeer.ssl ? "tls" : "tcp"
-    // );
-    mainClient = new ElectrumClient(net, tls, usingPeer.ssl || usingPeer.tcp, usingPeer.host, usingPeer.ssl ? 'tls' : 'tcp');
-
-
-    mainClient.onError = function (e) {
-      console.log("electrum marsClient.onError():", e.message);
-      if (mainConnected) {
-        // most likely got a timeout from electrum ping. lets reconnect
-        // but only if we were previously connected (mainConnected), otherwise theres other
-        // code which does connection retries
-        mainClient.close();
-        mainConnected = false;
-        // dropping `mainConnected` flag ensures there wont be reconnection race condition if several
-        // errors triggered
-        console.log("reconnecting after socket error");
-        setTimeout(connectMain, usingPeer.host.endsWith(".onion") ? 4000 : 500);
-      }
-    };
-    const ver = await mainClient.initElectrum({
-      client: "bluewallet",
-      version: "1.4",
-    });
-    // Check the chain before requesting addresses, balances or broadcasting.
-    assertMarsMainnet(await mainClient.server_features());
-    if (ver && ver[0]) {
-      console.log("Connected to ElectrumMARS", ver);
-      serverName = ver[0];
-      mainConnected = true;
-      connectionAttempt = 0;
-      wasConnectedAtLeastOnce = true;
-      if (
-        ver[0].startsWith("ElectrumPersonalServer") ||
-        ver[0].startsWith("electrs") ||
-        ver[0].startsWith("Fulcrum")
-      ) {
-        // TODO: once they release support for batching - disable batching only for lower versions
-        disableBatching = true;
-      }
-      const header = await mainClient.blockchainHeaders_subscribe();
-      if (header && header.height) {
-        latestBlockheight = header.height;
-        latestBlockheightTimestamp = Math.floor(+new Date() / 1000);
-      }
-      // AsyncStorage.setItem(storageKey, JSON.stringify(peers));  TODO: refactor
-    }
-  } catch (e) {
-    mainConnected = false;
-    console.log("bad connection:", JSON.stringify(usingPeer), e);
-  }
-
-  if (!mainConnected) {
-    console.log("retry");
-    connectionAttempt = connectionAttempt + 1;
-    mainClient?.close?.();
-    if (connectionAttempt >= 5) {
-      presentNetworkErrorAlert(usingPeer);
-    } else {
-      console.log("reconnection attempt #", connectionAttempt);
-      setTimeout(connectMain, 500);
-    }
-  }
-}
-
-connectMain();
-
-async function presentNetworkErrorAlert(usingPeer) {
-  console.error("CANNOT CONNECT", usingPeer);
-}
 
 /**
  * Returns random hardcoded electrum server guaranteed to work
@@ -183,6 +85,75 @@ async function getSavedPeer() {
   const port = await AsyncStorage.getItem(ELECTRUM_TCP_PORT);
   const sslPort = await AsyncStorage.getItem(ELECTRUM_SSL_PORT);
   return { host, tcp: port, ssl: sslPort };
+}
+
+// One connection, replaced whenever it is lost. electrum-client's own
+// reconnection is switched off (see the persistence policy below): it returns
+// to the same server only, reports itself connected before the socket is, and
+// when it failed nothing here tried again.
+const link = createElectrumLink({
+  pickPeer: async failures => selectMarsElectrumPeer(await getSavedPeer(), failures),
+  openClient: peer => new ElectrumClient(net, tls, peer.ssl || peer.tcp, peer.host, peer.ssl ? "tls" : "tcp"),
+  handshake: async (client, usingPeer) => {
+    try {
+      await DefaultPreference.setName("group.io.bluewallet.bluewallet");
+      const shown = usingPeer.host.endsWith("onion") ? await getRandomHardcodedPeer() : usingPeer;
+      await DefaultPreference.set(ELECTRUM_HOST, shown.host);
+      await DefaultPreference.set(ELECTRUM_TCP_PORT, shown.tcp);
+      await DefaultPreference.set(ELECTRUM_SSL_PORT, shown.ssl);
+    } catch (e) {
+      // Must be running on Android
+      console.log(e);
+    }
+    const ver = await client.initElectrum({ client: "bluewallet", version: "1.4" }, { maxRetry: 0, callback: null });
+    // Check the chain before requesting addresses, balances or broadcasting.
+    assertMarsMainnet(await client.server_features());
+    if (!ver || !ver[0]) throw new Error("The server did not identify itself.");
+    const header = await client.blockchainHeaders_subscribe();
+    return { ver, header };
+  },
+  onUp: (client, { ver, header }) => {
+    console.log("Connected to ElectrumMARS", ver);
+    mainClient = client;
+    mainConnected = true;
+    wasConnectedAtLeastOnce = true;
+    serverName = ver[0];
+    if (
+      ver[0].startsWith("ElectrumPersonalServer") ||
+      ver[0].startsWith("electrs") ||
+      ver[0].startsWith("Fulcrum")
+    ) {
+      // TODO: once they release support for batching - disable batching only for lower versions
+      disableBatching = true;
+    }
+    if (header && header.height) {
+      latestBlockheight = header.height;
+      latestBlockheightTimestamp = Math.floor(+new Date() / 1000);
+    }
+  },
+  onDown: () => {
+    mainConnected = false;
+  },
+  onGiveUp: usingPeer => console.log("CANNOT CONNECT", usingPeer),
+  connectTimeout: peer => (peer.host.endsWith(".onion") ? 25000 : 12000),
+  log: (...args) => console.log("electrum mars:", ...args),
+});
+
+// Resolves once connected; rejects in plain words when no server answers.
+async function connectMain() {
+  return link.ensureConnected({ force: true });
+}
+
+connectMain().catch(() => {});
+
+// A phone suspends the app in the background and its sockets die there,
+// often without any event. Check the connection on the way back.
+try {
+  AppState?.addEventListener?.("change", state => {
+    if (state === "active") link.resume();
+  });
+} catch (e) {
+  console.log(e);
 }
 
 /**
@@ -272,13 +243,7 @@ module.exports.getTransactionsByAddress = async function (address) {
 };
 
 module.exports.ping = async function () {
-  try {
-    await mainClient.server_ping();
-  } catch (_) {
-    mainConnected = false;
-    return false;
-  }
-  return true;
+  return link.ping();
 };
 
 module.exports.getTransactionsFullByAddress = async function (address) {
@@ -424,6 +389,8 @@ module.exports.multiGetUtxoByAddress = async function (addresses, batchsize) {
     }
 
     for (const utxos of results) {
+      // One address the server could not answer for must not sink the others.
+      if (!Array.isArray(utxos?.result)) throw new Error(`The server could not list coins for one address${utxos?.error?.message ? `: ${utxos.error.message}` : '.'}`);
       ret[scripthash2addr[utxos.param]] = utxos.result;
       for (const utxo of ret[scripthash2addr[utxos.param]]) {
         utxo.address = scripthash2addr[utxos.param];
@@ -679,22 +646,18 @@ module.exports.getTxHex = async function (txid) {
  * @returns {Promise<Promise<*> | Promise<*>>}
  */
 module.exports.waitTillConnected = async function () {
-  let waitTillConnectedInterval = false;
-  let retriesCounter = 0;
-  return new Promise(function (resolve, reject) {
-    waitTillConnectedInterval = setInterval(() => {
-      if (mainConnected) {
-        clearInterval(waitTillConnectedInterval);
-        return resolve(true);
-      }
-
-      if (retriesCounter++ >= 60) {
-        clearInterval(waitTillConnectedInterval);
-        presentNetworkErrorAlert();
-        reject(new Error("Waiting for Electrum connection timeout"));
-      }
-    }, 500);
-  });
+  let timer;
+  try {
+    await Promise.race([
+      link.ensureConnected(),
+      new Promise((resolve, reject) => {
+        timer = setTimeout(() => reject(new MarsNetworkError()), 30000);
+      }),
+    ]);
+    return true;
+  } finally {
+    clearTimeout(timer);
+  }
 };
 
 // Returns the value at a given percentile in a sorted numeric array.
@@ -767,10 +730,13 @@ module.exports.estimateFees = async function () {
       mainClient.mempool_getFeeHistogram(),
       new Promise((resolve) => setTimeout(resolve, 29000)),
     ]);
-  } catch (_) {}
+  } catch (error) {
+    // A lost connection is handled by the caller's reconnection; a server
+    // that merely refuses the request is not a reason to drop it.
+    if (isConnectionFailure(error)) throw error;
+  }
 
-  if (!histogram)
-    throw new Error("timeout while getting mempool_getFeeHistogram");
+  if (!histogram) throw new Error("The server did not return its fee histogram.");
 
   // fetching what electrum (which uses bitcoin core) thinks about fees:
   const _fast = await module.exports.estimateFee(1);
@@ -901,7 +867,7 @@ module.exports.testConnection = async function (host, tcpPort, sslPort) {
 };
 
 module.exports.forceDisconnect = () => {
-  mainClient.close();
+  link.disconnect();
 };
 
 module.exports.setBatchingDisabled = () => {
@@ -912,6 +878,33 @@ module.exports.setBatchingEnabled = () => {
   disableBatching = false;
 };
 
+// Every request connects first if it has to. Reads that die with the
+// connection are repeated once on a fresh one; callers get plain words, never
+// the library's "close connect".
+for (const name of [
+  "getBalanceByAddress",
+  "getTransactionsByAddress",
+  "getTransactionsFullByAddress",
+  "multiGetBalanceByAddress",
+  "multiGetUtxoByAddress",
+  "getMempoolTransactionsByAddress",
+  "multiGetHistoryByAddress",
+  "multiGetTransactionByTxid",
+  "getTxHex",
+  "estimateFees",
+  "estimateFee",
+  "serverFeatures",
+]) {
+  module.exports[name] = guarded(link, module.exports[name]);
+}
+// A broadcast is never repeated: the first copy may have reached the server.
+for (const name of ["broadcast", "broadcastV2"]) {
+  module.exports[name] = guarded(link, module.exports[name], { retry: false, interrupted: SEND_INTERRUPTED });
+}
+
+module.exports.connectMain = connectMain;
+module.exports.reconnect = () => link.resume();
+module.exports.isConnected = () => link.isConnected();
 module.exports.hardcodedPeers = hardcodedPeers;
 module.exports.getRandomHardcodedPeer = getRandomHardcodedPeer;
 module.exports.ELECTRUM_HOST = ELECTRUM_HOST;

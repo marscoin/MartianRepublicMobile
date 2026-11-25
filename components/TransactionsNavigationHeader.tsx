@@ -41,7 +41,9 @@ const stylesM = StyleSheet.create({
   text: {
     fontSize: 36,
     //fontWeight: '700',
-    fontFamily: 'ChakraPetch-Bold', 
+    fontFamily: 'ChakraPetch-Bold',
+    // Android otherwise pads Chakra Petch by its full glyph box (1.8 em) and the header cuts the balance in half.
+    includeFontPadding: false,
     color: 'black'
   },
   line: {
@@ -424,6 +426,7 @@ const styles = StyleSheet.create({
   },
   walletBalance: {
     fontFamily: 'ChakraPetch-Bold',
+    includeFontPadding: false,
     fontSize: 36,
     color: 'black',
     marginTop: 5,

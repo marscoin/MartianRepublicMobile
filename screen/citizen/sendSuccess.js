@@ -88,7 +88,7 @@ export const SuccessView = ({ amount, amountUnit, fee, invoiceDescription, shoul
     text: {
       fontSize: 33,
       fontWeight: '700',
-      fontFamily: 'Orbitron-Black', 
+      fontFamily: 'ChakraPetch-Bold', 
       color:'white'
     },
     line: {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   amountValue: {
     fontSize: 36,
     fontWeight: '600',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   amountUnit: {
     fontSize: 16,
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     fontWeight: '600',
     alignSelf: 'flex-end',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
   },
   feeText: {
     color: '#FF7400',
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     fontWeight: '500',
     alignSelf: 'center',
-    fontFamily: 'Orbitron-Black',
+    fontFamily: 'ChakraPetch-Bold',
     letterSpacing: 1.2
   },
   ready: {

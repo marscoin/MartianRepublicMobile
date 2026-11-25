@@ -1,16 +1,23 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, TouchableWithoutFeedback, I18nManager, StyleSheet, Linking, View, TextInput } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
-import { Button as ButtonRNElements } from 'react-native-elements';
-
-import navigationStyle from '../../components/navigationStyle';
-import { BlueCard, BlueCopyToClipboardButton, BlueLoading, BlueSpacing20, BlueText } from '../../BlueComponents';
+import { BlueCopyToClipboardButton } from '../../BlueComponents';
 import loc from '../../loc';
-import { BlueCurrentTheme, useTheme } from '../../components/themes';
 import Notifications from '../../blue_modules/notifications';
 import presentAlert from '../../components/Alert';
-import { Button } from '../../components/Button';
-import ListItem from '../../components/ListItem';
+import { CivicButton } from '../../components/CivicUi';
+import {
+  SettingsCard,
+  SettingsCardText,
+  SettingsField,
+  SettingsLoading,
+  SettingsNote,
+  SettingsRow,
+  SettingsScreen,
+  SettingsSection,
+  SettingsSwitchRow,
+  settingsNavigation,
+} from '../../components/SettingsUi';
 
 const NotificationSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -18,8 +25,6 @@ const NotificationSettings = () => {
   const [isShowTokenInfo, setShowTokenInfo] = useState(0);
   const [tokenInfo, setTokenInfo] = useState('<empty>');
   const [URI, setURI] = useState();
-
-  const { colors } = useTheme();
 
   const onNotificationsSwitch = async value => {
     setNotificationsEnabled(value); // so the slider is not 'jumpy'
@@ -57,21 +62,6 @@ const NotificationSettings = () => {
     })();
   }, []);
 
-  const stylesWithThemeHook = {
-    root: {
-      ...styles.root,
-      backgroundColor: colors.background,
-    },
-    scroll: {
-      ...styles.scroll,
-      backgroundColor: colors.background,
-    },
-    scrollBody: {
-      ...styles.scrollBody,
-      backgroundColor: colors.background,
-    },
-  };
-
   const save = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -93,103 +83,68 @@ const NotificationSettings = () => {
     setIsLoading(false);
   }, [URI]);
 
+  const revealTokenInfo = () => setShowTokenInfo(isShowTokenInfo + 1);
+
   return isLoading ? (
-    <BlueLoading />
+    <SettingsLoading />
   ) : (
-    <ScrollView style={stylesWithThemeHook.scroll} automaticallyAdjustContentInsets contentInsetAdjustmentBehavior="automatic">
-      <ListItem
-        Component={TouchableWithoutFeedback}
-        title={loc.settings.push_notifications}
-        switch={{ onValueChange: onNotificationsSwitch, value: isNotificationsEnabled, testID: 'NotificationsSwitch' }}
-      />
-      <BlueSpacing20 />
+    <SettingsScreen overline="MCR / SETTINGS / NETWORK" title={loc.settings.notifications}>
+      <SettingsSection first>
+        <SettingsSwitchRow
+          icon="bell"
+          title={loc.settings.push_notifications}
+          note="Be told when coins arrive in one of your wallets."
+          value={isNotificationsEnabled}
+          onValueChange={onNotificationsSwitch}
+          switchTestID="NotificationsSwitch"
+        />
+      </SettingsSection>
 
-      <BlueCard>
-        <BlueText>{loc.settings.groundcontrol_explanation}</BlueText>
-      </BlueCard>
-
-      <ButtonRNElements
-        icon={{
-          name: 'github',
-          type: 'font-awesome',
-          color: colors.foregroundColor,
-        }}
-        onPress={() => Linking.openURL('https://github.com/BlueWallet/GroundControl')}
-        titleStyle={{ color: colors.buttonAlternativeTextColor }}
-        title="github.com/BlueWallet/GroundControl"
-        color={colors.buttonTextColor}
-        buttonStyle={styles.buttonStyle}
-      />
-
-      <BlueCard>
-        <View style={styles.uri}>
-          <TextInput
-            placeholder={Notifications.getDefaultUri()}
-            value={URI}
-            onChangeText={setURI}
-            numberOfLines={1}
-            style={styles.uriText}
-            placeholderTextColor="#81868e"
-            editable={!isLoading}
-            textContentType="URL"
-            autoCapitalize="none"
-            underlineColorAndroid="transparent"
-          />
+      <SettingsSection label="NOTIFICATION SERVER" />
+      <SettingsCard>
+        <SettingsCardText>{loc.settings.groundcontrol_explanation}</SettingsCardText>
+        <SettingsField
+          placeholder={Notifications.getDefaultUri()}
+          value={URI}
+          onChangeText={setURI}
+          editable={!isLoading}
+          textContentType="URL"
+          testID="NotificationsUri"
+        />
+        <View style={styles.save}>
+          <CivicButton onPress={save} title={loc.settings.save} testID="NotificationsSave" />
         </View>
+      </SettingsCard>
 
-        <BlueSpacing20 />
-        <BlueText style={styles.centered} onPress={() => setShowTokenInfo(isShowTokenInfo + 1)}>
-          ♪ Ground Control to Major Tom ♪
-        </BlueText>
-        <BlueText style={styles.centered} onPress={() => setShowTokenInfo(isShowTokenInfo + 1)}>
-          ♪ Commencing countdown, engines on ♪
-        </BlueText>
+      <SettingsSection>
+        <SettingsRow
+          icon="github"
+          title="GroundControl on GitHub"
+          note="The open-source project behind the notification server."
+          onPress={() => Linking.openURL('https://github.com/BlueWallet/GroundControl')}
+        />
+      </SettingsSection>
 
-        {isShowTokenInfo >= 9 && (
-          <View>
-            <BlueCopyToClipboardButton stringToCopy={tokenInfo} displayText={tokenInfo} />
-          </View>
-        )}
+      <SettingsNote centered onPress={revealTokenInfo}>
+        ♪ Ground Control to Major Tom ♪
+      </SettingsNote>
+      <SettingsNote centered onPress={revealTokenInfo}>
+        ♪ Commencing countdown, engines on ♪
+      </SettingsNote>
 
-        <BlueSpacing20 />
-        <Button onPress={save} title={loc.settings.save} />
-      </BlueCard>
-    </ScrollView>
+      {isShowTokenInfo >= 9 && (
+        <View>
+          <BlueCopyToClipboardButton stringToCopy={tokenInfo} displayText={tokenInfo} />
+        </View>
+      )}
+    </SettingsScreen>
   );
 };
 
-NotificationSettings.navigationOptions = navigationStyle({}, opts => ({ ...opts, title: loc.settings.notifications }));
+NotificationSettings.navigationOptions = settingsNavigation(() => loc.settings.notifications);
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  uri: {
-    flexDirection: 'row',
-    borderColor: BlueCurrentTheme.colors.formBorder,
-    borderBottomColor: BlueCurrentTheme.colors.formBorder,
-    borderWidth: 1,
-    borderBottomWidth: 0.5,
-    backgroundColor: BlueCurrentTheme.colors.inputBackgroundColor,
-    minHeight: 44,
-    height: 44,
-    alignItems: 'center',
-    borderRadius: 4,
-  },
-  centered: {
-    textAlign: 'center',
-  },
-  uriText: {
-    flex: 1,
-    color: '#81868e',
-    marginHorizontal: 8,
-    minHeight: 36,
-    height: 36,
-  },
-  buttonStyle: {
-    backgroundColor: 'transparent',
-    flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row',
-  },
+  save: { marginTop: 8 },
 });
 
 export default NotificationSettings;

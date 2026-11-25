@@ -1,6 +1,13 @@
 import sha256 from 'crypto-js/sha256';
 import * as bitcoin from 'bitcoinjs-lib';
 
+// Marks the failures a newcomer can fix by receiving Marscoin, so a screen can
+// offer the welcome grant or a way to get coins instead of a bare error.
+export const INSUFFICIENT_FUNDS = 'insufficient_funds';
+const insufficient = message => Object.assign(new Error(message), { code: INSUFFICIENT_FUNDS });
+const TOO_FEW = 'Your civic wallet does not hold enough Marscoin to cover the publication fee.';
+export const isInsufficientFunds = error => error?.code === INSUFFICIENT_FUNDS;
+
 export async function prepareCitizenshipPublication({ wallet, form, feeRate, pin, readDraft, saveDraft }) {
   if (!wallet?.civic) throw new Error('Restore your civic wallet before publishing.');
   for (const field of ['firstName', 'lastName', 'displayName', 'bio', 'photo', 'video']) {
@@ -35,7 +42,20 @@ export async function prepareCivicPublication({ wallet, data, prefix, feeRate, p
   await wallet.fetchBalance();
   await wallet.fetchUtxo();
   const utxos = wallet.getUtxo().filter(input => input.address === address);
-  if (!utxos.length) throw new Error('Receive Marscoin in your civic wallet to cover the publication fee.');
+  if (!utxos.length) throw insufficient('Receive Marscoin in your civic wallet to cover the publication fee.');
+  // Find out that the coins are too few before uploading anything. The record
+  // is a prefix plus an IPFS reference; a stand-in of the same size gives the
+  // same fee. Wallets without coin selection of their own skip this check and
+  // fail at signing as before.
+  if (typeof wallet.coinselect === 'function') {
+    const standIn = bitcoin.payments.embed({ data: [Buffer.from(`${prefix}${'Q'.repeat(46)}`, 'utf8')] }).output;
+    try {
+      wallet.coinselect(utxos, [{ address }, { script: standIn, value: 0 }], feeRate, address);
+    } catch (error) {
+      if (/^Not enough balance/.test(error?.message || '')) throw insufficient(TOO_FEW);
+      throw error;
+    }
+  }
   let cid = draft.metadataFingerprint === fingerprint ? draft.metadataCID : null;
   if (!cid) {
     cid = await pin({ data, meta: { hash: fingerprint } }, address);
@@ -46,16 +66,11 @@ export async function prepareCivicPublication({ wallet, data, prefix, feeRate, p
       metadataFingerprint: fingerprint,
     });
   }
-  const { tx, fee } = await wallet.createTransaction(
-    utxos,
-    [{ address }],
-    feeRate,
-    address,
-    0xffffffff,
-    false,
-    undefined,
-    `${prefix}${cid}`,
-  );
+  const { tx, fee } = await wallet
+    .createTransaction(utxos, [{ address }], feeRate, address, 0xffffffff, false, undefined, `${prefix}${cid}`)
+    .catch(error => {
+      throw /^Not enough balance/.test(error?.message || '') ? insufficient(TOO_FEW) : error;
+    });
   const publication = {
     address,
     fingerprint,

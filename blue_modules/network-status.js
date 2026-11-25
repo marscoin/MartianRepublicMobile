@@ -14,7 +14,7 @@ const within = (promise, milliseconds) => {
 
 const group = value => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-export function networkNodes({ fetch, relayTip, walletServer }) {
+export function networkNodes({ fetch, relayTip, walletServer, quantumPeers }) {
   const json = async url => {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Answered with error ${response.status}.`);
@@ -84,6 +84,31 @@ export function networkNodes({ fetch, relayTip, walletServer }) {
         return { detail: snapshot?.mode === 'live' ? `${offers} offer${offers === 1 ? '' : 's'} open` : 'Not trading right now' };
       },
     },
+    ...(quantumPeers
+      ? [
+          {
+            id: 'quantum',
+            short: 'Quantum net',
+            chain: 'quantum',
+            name: 'Marsqnet, the quantum test network',
+            host: 'marsqnet',
+            role:
+              'Marscoin’s post-quantum test network: RandomX mining and signatures built to withstand quantum computers. ' +
+              'Your phone only greets its nodes and asks how far their chain has come. No coins are involved.',
+            probe: async () => {
+              // [{ height, agent } | null] per node.
+              const answers = (await quantumPeers()).filter(Boolean);
+              if (!answers.length) throw new Error('None of its nodes answered.');
+              const height = Math.max(...answers.map(answer => answer.height));
+              return {
+                quantumHeight: height,
+                host: answers[0].agent.replace(/^\/|\/$/g, ''),
+                detail: `Block ${group(height)} · ${answers.length} node${answers.length === 1 ? '' : 's'} answering`,
+              };
+            },
+          },
+        ]
+      : []),
     {
       id: 'mempool',
       short: 'Bitcoin A',
@@ -132,6 +157,29 @@ export function networkSummary(results) {
   if (!down) return { tone: 'good', text: `All ${known.length} connections are answering.` };
   if (down === known.length) return { tone: 'bad', text: 'Nothing is answering. Check your internet connection.' };
   return { tone: 'warn', text: `${known.length - down} of ${known.length} connections are answering.` };
+}
+
+// The home screen's status strip asks only these: the three Marscoin servers and the Republic.
+export const STRIP_NODES = ['wallet', 'relay', 'explorer', 'republic'];
+const MARS_SERVERS = ['wallet', 'relay', 'explorer'];
+
+// The strip's three readings, each { text, tone } with tone 'ok', 'warn' or 'idle' (still asking).
+// `results` are probeNode() answers; some are missing while the checks run.
+export function stripReadings(results) {
+  const byId = {};
+  for (const result of results) if (result) byId[result.id] = result;
+  const asked = MARS_SERVERS.map(id => byId[id]).filter(Boolean);
+  const allAsked = asked.length === MARS_SERVERS.length;
+  const up = asked.filter(result => result.ok).length;
+  const height = Math.max(0, ...asked.map(result => (result.ok && result.marsHeight) || 0));
+  const republic = byId.republic;
+  return {
+    chain: height ? { text: group(height), tone: 'ok' } : allAsked ? { text: '—', tone: 'warn' } : { text: '…', tone: 'idle' },
+    republic: !republic ? { text: '…', tone: 'idle' } : republic.ok ? { text: 'OK', tone: 'ok' } : { text: 'DOWN', tone: 'warn' },
+    servers: allAsked
+      ? { text: `${up}/${MARS_SERVERS.length}`, tone: up === MARS_SERVERS.length ? 'ok' : 'warn' }
+      : { text: '…', tone: 'idle' },
+  };
 }
 
 // How long a pulse takes to travel a link, from the measured response time:

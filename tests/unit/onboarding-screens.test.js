@@ -233,7 +233,13 @@ describe('Finishing', () => {
 
   it('makes it the civic wallet and saves only at the very end', async () => {
     const { tree, wallet } = await start(1);
-    expect(text(tree)).toContain('Get your first Marscoin');
+    expect(text(tree)).not.toContain('Get your first Marscoin');
+    expect(text(tree)).toContain('1. Meet the community');
+    expect(text(tree)).toContain('2. Introduce yourself');
+    expect(text(tree)).toContain('free to start');
+    expect(text(tree)).toContain('welcome gift when available');
+    // Joining is presented as optional.
+    expect(text(tree)).toContain('None of it is required');
     expect(wallet.civic).toBe(false);
     await press(tree, 'Enter the Republic');
     expect(wallet.civic).toBe(true);

@@ -1,13 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import navigationStyle from '../../components/navigationStyle';
-import { BlueCard, BlueText } from '../../BlueComponents';
+import { SettingsRow, SettingsScreen, SettingsSection, SettingsSwitchRow, settingsNavigation } from '../../components/SettingsUi';
 import OnAppLaunch from '../../class/on-app-launch';
 import loc from '../../loc';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
-import ListItem from '../../components/ListItem';
 
 const DefaultView = () => {
   const [defaultWalletLabel, setDefaultWalletLabel] = useState('');
@@ -53,28 +50,24 @@ const DefaultView = () => {
   };
 
   return (
-    <ScrollView automaticallyAdjustContentInsets contentInsetAdjustmentBehavior="automatic">
-      <View>
-        <ListItem
+    <SettingsScreen overline="MCR / SETTINGS / GENERAL" title={loc.settings.default_title}>
+      <SettingsSection first>
+        <SettingsSwitchRow
+          icon="layers"
           title={loc.settings.default_wallets}
-          Component={TouchableWithoutFeedback}
-          switch={{
-            onValueChange: onViewAllWalletsSwitchValueChanged,
-            value: viewAllWalletsEnabled,
-            disabled: wallets.length <= 0,
-          }}
+          note="When off, the app opens straight into the wallet you choose."
+          value={viewAllWalletsEnabled}
+          onValueChange={onViewAllWalletsSwitchValueChanged}
+          disabled={wallets.length <= 0}
         />
-        <BlueCard>
-          <BlueText>{loc.settings.default_desc}</BlueText>
-        </BlueCard>
         {!viewAllWalletsEnabled && (
-          <ListItem title={loc.settings.default_info} onPress={selectWallet} rightTitle={defaultWalletLabel} chevron />
+          <SettingsRow icon="credit-card" title="Wallet to open" value={defaultWalletLabel} onPress={selectWallet} />
         )}
-      </View>
-    </ScrollView>
+      </SettingsSection>
+    </SettingsScreen>
   );
 };
 
-DefaultView.navigationOptions = navigationStyle({}, opts => ({ ...opts, title: loc.settings.default_title }));
+DefaultView.navigationOptions = settingsNavigation(() => loc.settings.default_title);
 
 export default DefaultView;

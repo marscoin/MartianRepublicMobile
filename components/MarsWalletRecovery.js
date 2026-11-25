@@ -6,6 +6,7 @@ import { Icon } from 'react-native-elements';
 import IdleTimerManager from 'react-native-idle-timer';
 import startImport from '../class/mars-wallet-import';
 import { BlueStorageContext } from '../blue_modules/storage-context';
+import { offerOlderFundsAfterRestore } from '../blue_modules/older-funds-flow';
 import prompt from '../helpers/prompt';
 import usePrivacy from '../hooks/usePrivacy';
 import { CivicBack, CivicBrand, CivicButton, civicColors as c, civicStyles as ui } from './CivicUi';
@@ -66,6 +67,8 @@ export default function MarsWalletRecovery({ civic = false }) {
       if (saved) {
         setPhase('complete');
         navigation.navigate('BottomTabs');
+        // In the background, once: the restore is finished and does not wait for this.
+        offerOlderFundsAfterRestore(wallet);
       } else {
         setFailure({
           title: 'Wallet already restored',

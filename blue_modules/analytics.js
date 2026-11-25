@@ -1,36 +1,11 @@
-import { getUniqueId } from 'react-native-device-info';
-import Bugsnag from '@bugsnag/react-native';
-const BlueApp = require('../BlueApp');
-
 /**
- * in case Bugsnag was started, but user decided to opt out while using the app, we have this
- * flag `userHasOptedOut` and we forbid logging in `onError` handler
- * @type {boolean}
+ * The app sends no analytics and no crash reports.
+ *
+ * The BlueWallet code this app grew from started Bugsnag here with BlueWallet's
+ * own key, so reports (with a device ID) went to an account that is not ours.
+ * That is switched off, here and in the native start-up code. The functions
+ * stay so that callers do not have to change.
  */
-let userHasOptedOut = false;
-
-if (process.env.NODE_ENV !== 'development') {
-  (async () => {
-    const uniqueID = await getUniqueId();
-    const doNotTrack = await BlueApp.isDoNotTrackEnabled();
-
-    if (doNotTrack) {
-      // dont start Bugsnag at all
-      return;
-    }
-
-    Bugsnag.start({
-      collectUserIp: false,
-      user: {
-        id: uniqueID,
-      },
-      onError: function (event) {
-        return !userHasOptedOut;
-      },
-    });
-  })();
-}
-
 const A = async event => {};
 
 A.ENUM = {
@@ -43,13 +18,10 @@ A.ENUM = {
   NAVIGATED_TO_WALLETS_HODLHODL: 'NAVIGATED_TO_WALLETS_HODLHODL',
 };
 
-A.setOptOut = value => {
-  if (value) userHasOptedOut = true;
-};
+A.setOptOut = value => {};
 
 A.logError = errorString => {
   console.error(errorString);
-  Bugsnag.notify(new Error(String(errorString)));
 };
 
 module.exports = A;

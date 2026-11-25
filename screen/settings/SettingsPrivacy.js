@@ -1,21 +1,24 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { ScrollView, TouchableWithoutFeedback, StyleSheet, Platform, Pressable, Text } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 import { openSettings } from 'react-native-permissions';
 
-import navigationStyle from '../../components/navigationStyle';
-import { BlueText, BlueSpacing20, BlueCard, BlueHeaderDefaultSub, BlueSpacing40 } from '../../BlueComponents';
+import {
+  SettingsHeader,
+  SettingsRow,
+  SettingsScreen,
+  SettingsSection,
+  SettingsSwitchRow,
+  settingsNavigation,
+} from '../../components/SettingsUi';
 import loc from '../../loc';
 import DeviceQuickActions from '../../class/quick-actions';
 import BlueClipboard from '../../blue_modules/clipboard';
 import { BlueStorageContext } from '../../blue_modules/storage-context';
 import WidgetCommunication from '../../blue_modules/WidgetCommunication';
-import { useTheme } from '../../components/themes';
-import ListItem from '../../components/ListItem';
 
 const A = require('../../blue_modules/analytics');
 
 const SettingsPrivacy = () => {
-  const { colors } = useTheme();
   const { isStorageEncrypted, setDoNotTrack, isDoNotTrackEnabled, setIsPrivacyBlurEnabled } = useContext(BlueStorageContext);
   const sections = Object.freeze({ ALL: 0, CLIPBOARDREAD: 1, QUICKACTION: 2, WIDGETS: 3 });
   const [isLoading, setIsLoading] = useState(sections.ALL);
@@ -26,11 +29,6 @@ const SettingsPrivacy = () => {
   const [isQuickActionsEnabled, setIsQuickActionsEnabled] = useState(false);
   const [storageIsEncrypted, setStorageIsEncrypted] = useState(true);
   const [isPrivacyBlurEnabledTapped, setIsPrivacyBlurEnabledTapped] = useState(0);
-  const styleHooks = StyleSheet.create({
-    widgetsHeader: {
-      color: colors.foregroundColor,
-    },
-  });
 
   useEffect(() => {
     (async () => {
@@ -93,12 +91,6 @@ const SettingsPrivacy = () => {
     setIsLoading(false);
   };
 
-  const stylesWithThemeHook = StyleSheet.create({
-    root: {
-      backgroundColor: colors.background,
-    },
-  });
-
   const openApplicationSettings = () => {
     openSettings();
   };
@@ -108,89 +100,82 @@ const SettingsPrivacy = () => {
     setIsPrivacyBlurEnabledTapped(prev => prev + 1);
   };
 
-  return (
-    <ScrollView style={[styles.root, stylesWithThemeHook.root]} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustContentInsets>
-      <Pressable accessibilityRole="button" onPress={onDisablePrivacyTapped}>
-        {Platform.OS === 'android' ? <BlueHeaderDefaultSub leftText={loc.settings.general} /> : <></>}
-      </Pressable>
-      <ListItem
-        hideChevron
-        title={loc.settings.privacy_read_clipboard}
-        Component={TouchableWithoutFeedback}
-        switch={{ onValueChange, value: isReadClipboardAllowed, disabled: isLoading === sections.ALL, testID: 'ClipboardSwitch' }}
-      />
-      <BlueCard>
-        <BlueText>{loc.settings.privacy_clipboard_explanation}</BlueText>
-      </BlueCard>
-      <BlueSpacing20 />
-      {!storageIsEncrypted && (
-        <>
-          <ListItem
-            hideChevron
-            title={loc.settings.privacy_quickactions}
-            Component={TouchableWithoutFeedback}
-            switch={{
-              onValueChange: onQuickActionsValueChange,
-              value: isQuickActionsEnabled,
-              disabled: isLoading === sections.ALL,
-              testID: 'QuickActionsSwitch',
-            }}
-          />
-          <BlueCard>
-            <BlueText>{loc.settings.privacy_quickactions_explanation}</BlueText>
-          </BlueCard>
-        </>
-      )}
-      <ListItem
-        hideChevron
-        title={loc.settings.privacy_do_not_track}
-        Component={TouchableWithoutFeedback}
-        switch={{ onValueChange: onDoNotTrackValueChange, value: doNotTrackSwitchValue, disabled: isLoading === sections.ALL }}
-      />
-      <BlueCard>
-        <BlueText>{loc.settings.privacy_do_not_track_explanation}</BlueText>
-      </BlueCard>
-      {Platform.OS === 'ios' && !storageIsEncrypted && (
-        <>
-          <BlueSpacing40 />
-          <Text adjustsFontSizeToFit style={[styles.widgetsHeader, styleHooks.widgetsHeader]}>
-            {loc.settings.widgets}
-          </Text>
-          <ListItem
-            hideChevron
-            title={loc.settings.total_balance}
-            Component={TouchableWithoutFeedback}
-            switch={{
-              onValueChange: onWidgetsTotalBalanceValueChange,
-              value: isDisplayWidgetBalanceAllowed,
-              disabled: isLoading === sections.ALL,
-            }}
-          />
-          <BlueCard>
-            <BlueText>{loc.settings.total_balance_explanation}</BlueText>
-          </BlueCard>
-        </>
-      )}
-      <BlueSpacing20 />
+  const busy = isLoading === sections.ALL;
+  const header = <SettingsHeader overline="MCR / SETTINGS / GENERAL" title={loc.settings.privacy} />;
 
-      <BlueSpacing20 />
-      <ListItem title={loc.settings.privacy_system_settings} chevron onPress={openApplicationSettings} testID="PrivacySystemSettings" />
-      <BlueSpacing20 />
-    </ScrollView>
+  return (
+    <SettingsScreen
+      header={
+        // Android only, as before: tapping the heading ten times switches the privacy blur off.
+        Platform.OS === 'android' ? (
+          <Pressable accessibilityRole="button" onPress={onDisablePrivacyTapped}>
+            {header}
+          </Pressable>
+        ) : (
+          header
+        )
+      }
+    >
+      <SettingsSection label="CLIPBOARD" first>
+        <SettingsSwitchRow
+          icon="clipboard"
+          title={loc.settings.privacy_read_clipboard}
+          note="Lets the app offer a shortcut, or paste for you, when an address or a payment code is on your clipboard."
+          value={isReadClipboardAllowed}
+          onValueChange={onValueChange}
+          disabled={busy}
+          switchTestID="ClipboardSwitch"
+        />
+      </SettingsSection>
+
+      {!storageIsEncrypted && (
+        <SettingsSection label="HOME SCREEN">
+          <SettingsSwitchRow
+            icon="zap"
+            title={loc.settings.privacy_quickactions}
+            note="Touch and hold the Martian Republic icon to see your wallet’s balance."
+            value={isQuickActionsEnabled}
+            onValueChange={onQuickActionsValueChange}
+            disabled={busy}
+            switchTestID="QuickActionsSwitch"
+          />
+          {Platform.OS === 'ios' ? (
+            <SettingsSwitchRow
+              icon="layout"
+              title="Total balance in widgets"
+              note="Show the total of all your wallets in home screen widgets."
+              value={isDisplayWidgetBalanceAllowed}
+              onValueChange={onWidgetsTotalBalanceValueChange}
+              disabled={busy}
+            />
+          ) : null}
+        </SettingsSection>
+      )}
+
+      <SettingsSection label="DIAGNOSTICS">
+        <SettingsSwitchRow
+          icon="bar-chart-2"
+          title={loc.settings.privacy_do_not_track}
+          note="When on, no performance or reliability information is sent for analysis."
+          value={doNotTrackSwitchValue}
+          onValueChange={onDoNotTrackValueChange}
+          disabled={busy}
+        />
+      </SettingsSection>
+
+      <SettingsSection label="THIS PHONE">
+        <SettingsRow
+          icon="settings"
+          title={loc.settings.privacy_system_settings}
+          note="Camera, photos and notifications are allowed or refused in the phone’s own Settings."
+          onPress={openApplicationSettings}
+          testID="PrivacySystemSettings"
+        />
+      </SettingsSection>
+    </SettingsScreen>
   );
 };
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  widgetsHeader: {
-    fontWeight: 'bold',
-    fontSize: 30,
-    marginLeft: 17,
-  },
-});
-
-SettingsPrivacy.navigationOptions = navigationStyle({ headerLargeTitle: true }, opts => ({ ...opts, title: loc.settings.privacy }));
+SettingsPrivacy.navigationOptions = settingsNavigation(() => loc.settings.privacy);
 
 export default SettingsPrivacy;

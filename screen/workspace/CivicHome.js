@@ -1,16 +1,19 @@
 import { marsAlert } from '../../components/MarsDialog';
-import React, { useCallback, useContext, useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import { useCivicSession } from '../../blue_modules/civic-api';
-import { journey } from '../../blue_modules/onboarding';
-import { BlueStorageContext } from '../../blue_modules/storage-context';
+import { introductionPublished, journey, pathCard } from '../../blue_modules/onboarding';
+import { readWalletOnly, saveWalletOnly } from '../../blue_modules/path-preference';
 import { readCitizenshipDraft } from '../../blue_modules/citizenship-draft';
 import { assertWorkspaceIdentity, workspaceStore } from '../../blue_modules/workspace-api';
 import { useWorkspaceData } from '../../blue_modules/workspace-hooks';
 import { CivicButton, civicColors } from '../../components/CivicUi';
-import Journey from '../onboarding/Journey';
+import CivicCard from '../../components/CivicCard';
+import MarsFrame from '../../components/MarsFrame';
+import StatusStrip from '../../components/StatusStrip';
+import Journey, { JoinInvite } from '../onboarding/Journey';
 import {
   OrganizationCard,
   ResourceStatus,
@@ -24,15 +27,22 @@ import {
 
 export default function CivicHome() {
   const navigation = useNavigation();
-  const { wallets } = useContext(BlueStorageContext);
   const { address } = useCivicSession();
   const resource = useWorkspaceData(address, 'home', '/workspace');
   const refresh = resource.refresh;
   const [local, setLocal] = useState({});
   const [busy, setBusy] = useState('');
   const [imageFailed, setImageFailed] = useState(false);
+  // Whether this person chose to use the app as a wallet only. Unknown until
+  // read, and nothing is drawn in the path's place until then.
+  const [preference, setPreference] = useState({});
+  const chosen = useRef(null);
   const loadLocal = useCallback(async () => {
     if (!address) return;
+    // A choice made on this screen wins over a read that was already under way.
+    readWalletOnly(address).then(walletOnly =>
+      setPreference(chosen.current?.address === address ? chosen.current : { address, walletOnly }),
+    );
     try {
       const [workspace, application] = await Promise.all([workspaceStore.read(address), readCitizenshipDraft(address)]);
       setLocal({ address, workspace, application });
@@ -58,17 +68,33 @@ export default function CivicHome() {
     .size;
   const application = currentLocal.application;
   const status = data?.citizenship?.status;
-  const publicationWaiting = status === 'new' && ['pending', 'submitted'].includes(application?.publication?.status);
+  const publicationStatus = application?.publication?.status || null;
+  const publicationWaiting = status === 'new' && ['pending', 'submitted'].includes(publicationStatus);
+  // 'submitted' on the server only means the first page was saved. Say the
+  // introduction is on its way only when it was really published, or when a
+  // transaction this phone signed still has to be sent again.
+  const applicationStage = data?.application_stage || data?.citizenship?.application_stage || null;
+  const introduced =
+    status === 'submitted' && (introductionPublished({ status, applicationStage, publicationStatus }) || publicationStatus === 'pending');
   // The newcomer's path. Until it is complete it takes the place of the
   // single next-step card below, except while a publication is in flight.
-  const civicWallet = wallets.find(candidate => candidate.civic);
   const path = journey({
-    balance: civicWallet ? civicWallet.getBalance() : 0,
     termsAccepted: !!data?.citizenship?.terms_accepted,
     status: status || null,
+    applicationStage,
+    publicationStatus,
     applicationSaved: !!application && Object.keys(application).length > 0,
   });
   const pathComplete = !path.some(step => !step.done && step.key !== 'vote');
+  // Joining is optional. "Just use the wallet for now" puts the path away and
+  // leaves a small invitation that brings it back.
+  const preferenceKnown = preference.address === address;
+  const card = pathCard(path, { walletOnly: preferenceKnown && preference.walletOnly });
+  const chooseWalletOnly = walletOnly => {
+    chosen.current = { address, walletOnly };
+    setPreference(chosen.current);
+    saveWalletOnly(address, walletOnly);
+  };
   const name = identity?.name && identity.name !== 'UserWithoutWallet' ? identity.name : 'Fellow Martian';
   const openID = () =>
     navigation.navigate('CivicIDScreen', {
@@ -112,7 +138,7 @@ export default function CivicHome() {
         action: 'Open the community',
         route: 'CitizenScreen',
       }
-    : publicationWaiting || status === 'submitted'
+    : publicationWaiting || introduced
       ? {
           title: application?.publication?.status === 'pending' ? 'Your submission is saved.' : 'Your introduction is on its way.',
           body:
@@ -122,10 +148,13 @@ export default function CivicHome() {
           action: application?.publication?.status === 'pending' ? 'Continue application' : 'Meet the community',
           route: application?.publication?.status === 'pending' ? 'JoinGeneralPublicApplicationScreen' : 'CitizenScreen',
         }
-      : status === 'new'
+      : status === 'new' || status === 'submitted'
         ? {
-            title: 'Introduce yourself.',
-            body: 'Add your name, a photo, and a short introduction to begin your civic journey.',
+            title: status === 'submitted' ? 'Finish your introduction.' : 'Introduce yourself.',
+            body:
+              status === 'submitted'
+                ? 'Your introduction is started but not published yet. Pick up where you left off.'
+                : 'Add your name, a photo, and a short introduction to begin your civic journey.',
             action: 'Continue application',
             route: 'JoinGeneralPublicApplicationScreen',
           }
@@ -144,7 +173,7 @@ export default function CivicHome() {
       <SectionHeading title="Around the Republic" />
       <View style={home.grid}>
         {AROUND.map(place => (
-          <TouchableOpacity
+          <MarsFrame
             key={place.route}
             accessibilityRole="button"
             accessibilityLabel={`${place.title}. ${place.note}`}
@@ -153,31 +182,31 @@ export default function CivicHome() {
             testID={`Around-${place.route}`}
           >
             <View style={home.tileTop}>
-              <View style={home.tileIcon}>
+              <MarsFrame cut={8} fill={TILE_ICON} border={TILE_ICON} style={home.tileIcon}>
                 <Icon name={place.icon} type="feather" size={20} color={civicColors.orange} />
-              </View>
+              </MarsFrame>
               <Icon name="arrow-up-right" type="feather" size={18} color="#6B7178" />
             </View>
             <Text style={home.tileTitle}>{place.title}</Text>
             <Text style={home.tileNote}>{place.note}</Text>
-          </TouchableOpacity>
+          </MarsFrame>
         ))}
       </View>
-      <TouchableOpacity
+      <MarsFrame
         accessibilityRole="button"
         style={home.wide}
         onPress={() => navigation.navigate('NetworkLive')}
         testID="Around-NetworkLive"
       >
-        <View style={home.tileIcon}>
+        <MarsFrame cut={8} fill={TILE_ICON} border={TILE_ICON} style={home.tileIcon}>
           <Icon name="activity" type="feather" size={20} color={civicColors.orange} />
-        </View>
+        </MarsFrame>
         <View style={home.wideText}>
           <Text style={home.tileTitle}>The network, live</Text>
           <Text style={home.tileNote}>Watch your phone talk to the Marscoin and Bitcoin networks.</Text>
         </View>
         <Icon name="arrow-up-right" type="feather" size={18} color="#6B7178" />
-      </TouchableOpacity>
+      </MarsFrame>
     </>
   );
 
@@ -186,6 +215,7 @@ export default function CivicHome() {
       title="At home in the Republic."
       eyebrow="MCR / CIVIC HOME"
       back={false}
+      top={<StatusStrip />}
       onRefresh={() => {
         resource.refresh();
         loadLocal();
@@ -199,31 +229,22 @@ export default function CivicHome() {
         </View>
       ) : (
         <>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Open your civic ID" onPress={openID} style={home.identity}>
-            <View style={home.identityTop}>
-              <Text style={home.identityLabel}>CIVIC IDENTITY</Text>
-              <Icon name="credit-card" type="feather" size={22} color="#242222" />
-            </View>
-            <View style={home.identityRow}>
-              <Image
-                style={home.portrait}
-                source={!imageFailed && identity?.avatar ? { uri: identity.avatar } : require('../../img/genericprofile.png')}
-                onError={() => setImageFailed(true)}
-              />
-              <View style={styles.flex}>
-                <Text style={home.name}>{name}</Text>
-                <Text style={home.identityStatus}>
-                  {status === 'citizen' ? 'CITIZEN' : status === 'public_member' ? 'PUBLIC MEMBER' : 'YOUR REPUBLIC IDENTITY'}
-                </Text>
-              </View>
-            </View>
-            <Text numberOfLines={1} style={home.address}>
-              {address}
-            </Text>
-          </TouchableOpacity>
-          {path.some(step => !step.done && step.key !== 'vote') && (
-            <Journey steps={path} onOpen={step => navigation.navigate(step.route)} />
+          <CivicCard
+            name={name}
+            status={status === 'citizen' ? 'CITIZEN' : status === 'public_member' ? 'PUBLIC MEMBER' : 'YOUR REPUBLIC IDENTITY'}
+            address={address}
+            avatar={!imageFailed && identity?.avatar ? { uri: identity.avatar } : require('../../img/genericprofile.png')}
+            onAvatarError={() => setImageFailed(true)}
+            onPress={openID}
+          />
+          {preferenceKnown && card.mode === 'path' && (
+            <Journey
+              steps={path}
+              onOpen={step => navigation.navigate(step.route)}
+              onSkip={card.canSkip ? () => chooseWalletOnly(true) : undefined}
+            />
           )}
+          {preferenceKnown && card.mode === 'invite' && <JoinInvite onJoin={() => chooseWalletOnly(false)} />}
           <ResourceStatus resource={resource} />
           {currentLocal.error && <WorkspaceNotice error>{currentLocal.error}</WorkspaceNotice>}
           {savedCount > 0 && (
@@ -231,15 +252,15 @@ export default function CivicHome() {
               {savedCount} {savedCount === 1 ? 'draft or saved change' : 'drafts and saved changes'} on this phone.
             </WorkspaceNotice>
           )}
-          {nextStep && data && (pathComplete || publicationWaiting || status === 'submitted') && (
-            <View style={home.nextStep}>
+          {nextStep && data && (pathComplete || publicationWaiting || introduced) && (
+            <MarsFrame tab style={home.nextStep}>
               <Text style={styles.cardTitle}>{nextStep.title}</Text>
               <Text style={styles.secondaryText}>{nextStep.body}</Text>
               <SmallAction title={nextStep.action} icon="arrow-right" onPress={() => navigation.navigate(nextStep.route)} />
-            </View>
+            </MarsFrame>
           )}
           {(data?.invitations || []).map(invite => (
-            <View key={invite.organization_id} style={styles.card}>
+            <MarsFrame key={invite.organization_id} accent style={home.card}>
               <Text style={styles.caption}>INVITATION FROM {invite.invited_by?.name || 'A FELLOW MARTIAN'}</Text>
               <Text style={styles.cardTitle}>{invite.name}</Text>
               {!!invite.description && <Text style={styles.secondaryText}>{invite.description}</Text>}
@@ -250,7 +271,7 @@ export default function CivicHome() {
                 icon="users"
               />
               <SmallAction title="Decline invitation" disabled={!!busy} onPress={() => respond(invite, false)} />
-            </View>
+            </MarsFrame>
           ))}
           {!!data?.tasks?.length && (
             <>
@@ -295,7 +316,7 @@ export default function CivicHome() {
           ) : data ? (
             <>
               <SectionHeading title="Organizations" />
-              <View style={styles.card}>
+              <MarsFrame style={home.card}>
                 <Text style={styles.secondaryText}>
                   Groups for shared work: tasks, members and a record of what you accomplish together.
                 </Text>
@@ -304,7 +325,7 @@ export default function CivicHome() {
                   icon="plus"
                   onPress={() => navigation.navigate('WorkspaceCompose', { kind: 'organization' })}
                 />
-              </View>
+              </MarsFrame>
             </>
           ) : null}
         </>
@@ -321,81 +342,17 @@ const AROUND = [
   { route: 'SwapHome', icon: 'repeat', title: 'Get Marscoin', note: 'Swap Bitcoin for Marscoin, person to person.' },
 ];
 
+const TILE_ICON = '#1D2126';
+
 const home = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  tile: {
-    width: '48.4%',
-    minHeight: 148,
-    backgroundColor: civicColors.panel,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: civicColors.border,
-    padding: 16,
-    marginBottom: 12,
-  },
-  wide: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: civicColors.panel,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: civicColors.border,
-    padding: 16,
-    marginBottom: 12,
-  },
+  tile: { width: '48.4%', minHeight: 148, padding: 16, marginBottom: 12 },
+  wide: { flexDirection: 'row', alignItems: 'center', padding: 16, marginBottom: 12 },
   wideText: { flex: 1, marginLeft: 14 },
   tileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 },
-  tileIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#1D2126', alignItems: 'center', justifyContent: 'center' },
+  tileIcon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   tileTitle: { color: civicColors.text, fontFamily: 'ChakraPetch-Bold', fontSize: 17, marginBottom: 4 },
   tileNote: { color: civicColors.muted, fontSize: 13, lineHeight: 18 },
-  identity: {
-    backgroundColor: '#EAE2D5',
-    borderRadius: 18,
-    padding: 22,
-    gap: 18,
-  },
-  identityTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  identityLabel: {
-    color: '#5A534C',
-    fontFamily: 'ChakraPetch-SemiBold',
-    fontSize: 11,
-    letterSpacing: 2,
-  },
-  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  portrait: {
-    width: 62,
-    height: 72,
-    borderRadius: 9,
-    backgroundColor: '#D7CCBE',
-  },
-  name: {
-    color: '#171A1D',
-    fontFamily: 'ChakraPetch-Bold',
-    fontSize: 24,
-    lineHeight: 29,
-  },
-  identityStatus: {
-    color: '#615549',
-    fontFamily: 'ChakraPetch-SemiBold',
-    fontSize: 11,
-    letterSpacing: 1.5,
-    marginTop: 8,
-  },
-  address: {
-    color: '#615549',
-    fontFamily: 'ChakraPetch-Regular',
-    fontSize: 12,
-  },
-  nextStep: {
-    padding: 20,
-    gap: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: civicColors.orange,
-    backgroundColor: '#171613',
-    borderRadius: 12,
-  },
+  nextStep: { padding: 20, gap: 12 },
+  card: { padding: 20, gap: 14 },
 });

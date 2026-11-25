@@ -126,7 +126,7 @@ export const FButton = ({ text, icon, width, first, last, ...props }: FButtonPro
     },
     text: {
       color: colors.buttonAlternativeTextColor,
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
     },
     textDisabled: {
       color: colors.formBorder,

@@ -28,12 +28,12 @@ const PleaseBackupCivic: React.FC = () => {
     },
     wortText: {
       color: colors.labelText,
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
       letterSpacing: 1.1
     },
     pleaseText: {
       color: colors.foregroundColor,
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
       letterSpacing: 1.1
     },
   });
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     fontSize: 16,
     fontWeight:'500',
-    fontFamily: 'Orbitron-SemiBold',
+    fontFamily: 'ChakraPetch-SemiBold',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
     color: 'red', 
     textAlign:'center'

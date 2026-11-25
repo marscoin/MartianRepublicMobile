@@ -28,12 +28,12 @@ const PleaseBackup: React.FC = () => {
     },
     wortText: {
       color: colors.labelText,
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
       letterSpacing: 1.1
     },
     pleaseText: {
       color: colors.foregroundColor,
-      fontFamily: 'Orbitron-Regular',
+      fontFamily: 'ChakraPetch-Regular',
       letterSpacing: 1.1
     },
   });

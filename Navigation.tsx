@@ -57,6 +57,7 @@ import AztecoRedeem from './screen/receive/aztecoRedeem';
 import ReceiveDetails from './screen/receive/details';
 
 import ScanQRCode from './screen/send/ScanQRCode';
+import { settingsNavigation } from './components/SettingsUi';
 import Broadcast from './screen/send/broadcast';
 import CoinControl from './screen/send/coinControl';
 import Confirm from './screen/send/confirm';
@@ -115,6 +116,7 @@ import JoinGeneralPublicApplication2Screen from './screen/citizen/joinGeneralPub
 import JoinGeneralPublicApplication3Screen from './screen/citizen/joinGeneralPublicApplication3';
 import JoinGeneralPublicApplicationSuccessScreen from './screen/citizen/joinGeneralPublicApplicationSuccess';
 import EndorseConfirmationScreen from './screen/citizen/endorseConfirmationScreen';
+import RepublicLoginScreen from './screen/citizen/republicLoginScreen';
 import EndorseSuccessScreen from './screen/citizen/endorseSuccessScreen';
 import ProposalsScreen from './screen/congress/proposals';
 import ProposalDetail from './screen/congress/proposalDetail';
@@ -131,6 +133,7 @@ import SwapDetail from './screen/swap/SwapDetail';
 import BtcWallet from './screen/swap/BtcWallet';
 import SwapMaker from './screen/swap/SwapMaker';
 import NetworkLive from './screen/network/NetworkLive';
+import FindOlderFunds from './screen/wallets/FindOlderFunds';
 import { SwapBanner, SwapWatcher } from './screen/swap/SwapUi';
 import OnboardingIntro from './screen/onboarding/OnboardingIntro';
 import OnboardingWords from './screen/onboarding/OnboardingWords';
@@ -368,6 +371,7 @@ const CitizenRoot = () => {
       <CitizenStack.Screen name="BtcWallet" component={BtcWallet} options={{headerShown: false}} />
       <CitizenStack.Screen name="SwapMaker" component={SwapMaker} options={{headerShown: false}} />
       <CitizenStack.Screen name="NetworkLive" component={NetworkLive} options={{headerShown: false}} />
+      <CitizenStack.Screen name="FindOlderFunds" component={FindOlderFunds} options={{headerShown: false}} />
     </CitizenStack.Navigator>
   );
 };
@@ -383,7 +387,7 @@ const WalletsRoot = () => {
         },
         headerTitleStyle: {
           color: 'white', 
-          fontFamily: 'Orbitron-Black',
+          fontFamily: 'ChakraPetch-Bold',
           fontSize: 18, 
         },
     }}>
@@ -395,30 +399,31 @@ const WalletsRoot = () => {
       <WalletsStack.Screen name="BtcWallet" component={BtcWallet} options={{headerShown: false}} />
       <WalletsStack.Screen name="SwapMaker" component={SwapMaker} options={{headerShown: false}} />
       <WalletsStack.Screen name="NetworkLive" component={NetworkLive} options={{headerShown: false}} />
+      <WalletsStack.Screen name="FindOlderFunds" component={FindOlderFunds} options={{headerShown: false}} />
       <WalletsStack.Screen name="LdkOpenChannel" component={LdkOpenChannel} options={LdkOpenChannel.navigationOptions(theme)} />
       <WalletsStack.Screen name="LdkInfo" component={LdkInfo} options={LdkInfo.navigationOptions(theme)} />
       <WalletsStack.Screen name="WalletDetails" component={WalletDetails} options={WalletDetails.navigationOptions(theme)} />
       <WalletsStack.Screen name="LdkViewLogs" component={LdkViewLogs} options={LdkViewLogs.navigationOptions(theme)} />
       <WalletsStack.Screen name="TransactionDetails" component={TransactionDetails} options={TransactionDetails.navigationOptions(theme)} />
-      <WalletsStack.Screen name="TransactionStatus" component={TransactionStatus} options={TransactionStatus.navigationOptions(theme)} />
+      <WalletsStack.Screen name="TransactionStatus" component={TransactionStatus} options={{ headerShown: false }} />
       <WalletsStack.Screen name="CPFP" component={CPFP} options={CPFP.navigationOptions(theme)} />
       <WalletsStack.Screen name="RBFBumpFee" component={RBFBumpFee} options={RBFBumpFee.navigationOptions(theme)} />
       <WalletsStack.Screen name="RBFCancel" component={RBFCancel} options={RBFCancel.navigationOptions(theme)} />
       <WalletsStack.Screen name="Settings" component={Settings} options={Settings.navigationOptions(theme)} />
       <WalletsStack.Screen name="SelectWallet" component={SelectWallet} options={SelectWallet.navigationOptions(theme)} />
-      <WalletsStack.Screen name="Currency" component={Currency} options={navigationStyle({ title: loc.settings.currency },)(theme)} />
+      <WalletsStack.Screen name="Currency" component={Currency} options={settingsNavigation(() => loc.settings.currency)(theme)} />
       <WalletsStack.Screen name="About" component={About} options={About.navigationOptions(theme)} />
       <WalletsStack.Screen name="ReleaseNotes" component={ReleaseNotes} options={ReleaseNotes.navigationOptions(theme)} />
       <WalletsStack.Screen name="Selftest" component={Selftest} options={Selftest.navigationOptions(theme)} />
       <WalletsStack.Screen name="Licensing" component={Licensing} options={Licensing.navigationOptions(theme)} />
       <WalletsStack.Screen name="DefaultView" component={DefaultView} options={DefaultView.navigationOptions(theme)} />
-      <WalletsStack.Screen name="Language" component={Language} options={navigationStyle({ title: loc.settings.language })(theme)} />
+      <WalletsStack.Screen name="Language" component={Language} options={settingsNavigation(() => loc.settings.language)(theme)} />
       <WalletsStack.Screen name="EncryptStorage" component={EncryptStorage} options={EncryptStorage.navigationOptions(theme)} />
 
       <WalletsStack.Screen
         name="GeneralSettings"
         component={GeneralSettings}
-        options={navigationStyle({ title: loc.settings.general })(theme)}
+        options={settingsNavigation(() => loc.settings.general)(theme)}
       />
       <WalletsStack.Screen name="NetworkSettings" component={NetworkSettings} options={NetworkSettings.navigationOptions(theme)} />
       <WalletsStack.Screen
@@ -579,7 +584,7 @@ const AddWalletRoot = () => {
             backgroundColor: 'black',
           },
           headerTitleStyle: {
-            fontFamily: 'Orbitron-Black', 
+            fontFamily: 'ChakraPetch-Bold', 
             fontSize: 20, 
             color: 'white', 
           }
@@ -924,7 +929,11 @@ const InitRoot = () => {
       {!walletsInitialized ? (
         <InitStack.Screen name="UnlockWithScreenRoot" component={UnlockWithScreenRoot} options={{ headerShown: false }} />
       ) : initialRoute === 'BottomTabs' ? (
-        <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
+        <>
+          <InitStack.Screen name="BottomTabs" component={BottomTabNavigator} options={{ headerShown: false }} />
+          {/* Citizens run on these tabs, not on RootStack: the website sign-in must be reachable from them (the Scan tab). */}
+          <InitStack.Screen name="RepublicLogin" component={RepublicLoginScreen} options={NavigationDefaultOptions} />
+        </>
       ) : (
         <InitStack.Screen name="AppNavigator" component={AppNavigator} options={{ headerShown: false }} />
       )}
@@ -1016,6 +1025,7 @@ const Navigation = () => {
       <RootStack.Screen name="LNDCreateInvoiceRoot" component={LNDCreateInvoiceRoot} options={NavigationDefaultOptions} />
       <RootStack.Screen name="ScanLndInvoiceRoot" component={ScanLndInvoiceRoot} options={NavigationDefaultOptions} />
       <RootStack.Screen name="AztecoRedeemRoot" component={AztecoRedeemRoot} options={NavigationDefaultOptions} />
+      <RootStack.Screen name="RepublicLogin" component={RepublicLoginScreen} options={NavigationDefaultOptions} />
       {/* screens */}
       <RootStack.Screen
         name="WalletExportRoot"

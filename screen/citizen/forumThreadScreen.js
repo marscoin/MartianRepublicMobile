@@ -20,8 +20,10 @@ const ForumThreadScreen = () => {
     const { colors } = useTheme();
     const route = useRoute();
     const maxContentLength = 25000;
-    const threadTitle = route.params.thread.title;
-    const threadId = route.params.thread.id;
+    // The forum list passes the whole thread; the Public Square passes its id and title.
+    const threadParam = route.params?.thread;
+    const threadTitle = threadParam?.title ?? route.params?.title ?? '';
+    const threadId = threadParam?.id ?? route.params?.threadId;
     const [threadData, setThreadData] = useState('');
     const [replyToPostId, setReplyToPostId] = useState(null);
     const [isModalVisible, setModalVisible] = useState(false);
@@ -426,7 +428,7 @@ const styles = StyleSheet.create({
     headerTxt: {
         fontSize: 18,
         color:  'white',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         fontWeight:"500",
         letterSpacing: 1.1, 
         marginHorizontal: 20,
@@ -449,13 +451,13 @@ const styles = StyleSheet.create({
     filterButtonText: {
         color:'white', 
         fontSize: 10,
-        fontFamily: 'Orbitron-Black',
+        fontFamily: 'ChakraPetch-Bold',
         letterSpacing: 1.2, 
     },
     filterDescriptionText: {
         color:'white', 
         fontSize: 15,
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         letterSpacing: 1.2, 
     },
     filterButtonGradientActive: {
@@ -492,14 +494,14 @@ const styles = StyleSheet.create({
     threadAuthor: {
         fontSize: 14,
         color: '#FF7400',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         marginBottom: 3,
         letterSpacing: 1.1
     },
     threadDate: {
         fontSize: 14,
         color: 'grey',
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         marginBottom: 3,
         letterSpacing: 1.1
     },
@@ -536,7 +538,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 15,
         fontWeight:"600",
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         letterSpacing: 1.1, 
     },
     modalContainer: {
@@ -561,7 +563,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#2F2D2B',
         padding: 10,
         paddingTop: 12,
-        fontFamily: "Orbitron-Regular",
+        fontFamily: "ChakraPetch-Regular",
         color: 'white',
         fontWeight:"400",
         letterSpacing: 1.1, 
@@ -574,7 +576,7 @@ const styles = StyleSheet.create({
     charCount: {
         color: 'white',
         fontSize: 12,
-        fontFamily: 'Orbitron-Regular',
+        fontFamily: 'ChakraPetch-Regular',
         letterSpacing: 1.1,
         marginTop: 5,
         alignSelf: "flex-end"
